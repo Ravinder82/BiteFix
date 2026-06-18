@@ -5,7 +5,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
 import { SugarPile } from '../../components/features/SugarPile';
-import { Mascot } from '../../components/features/Mascot';
+import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
 import { ScanBarcode, Keyboard, ArrowLeft, Camera as CameraIcon, HelpCircle, AlertCircle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';

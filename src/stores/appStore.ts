@@ -46,7 +46,7 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       onboardingComplete: false,
-      theme: 'system',
+      theme: 'light',
       unit: 'mg/dL',
       logs: [],
       scans: [],
@@ -117,7 +117,7 @@ export const useAppStore = create<AppState>()(
 
       clearAllData: () => set({
         onboardingComplete: false,
-        theme: 'system',
+        theme: 'light',
         unit: 'mg/dL',
         logs: [],
         scans: [],
@@ -126,6 +126,13 @@ export const useAppStore = create<AppState>()(
     {
       name: '@goodbye-sugar-storage',
       storage: createJSONStorage(() => AsyncStorage),
+      version: 1,
+      migrate: (persistedState: any, version: number) => {
+        if (version === 0) {
+          persistedState.theme = 'light';
+        }
+        return persistedState as AppState;
+      },
     }
   )
 );

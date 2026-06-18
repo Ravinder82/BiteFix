@@ -2,67 +2,67 @@ export type ColorScheme = 'light' | 'dark';
 
 export const Colors = {
   light: {
-    primary:        '#701a75',   // Deep Plum / Berry
-    primaryLight:   '#a21caf',
-    primaryDark:    '#4a044e',
-    secondary:      '#f97316',   // Peach / Orange accent
+    primary:        '#E8820C',   // Warm Amber
+    primaryLight:   '#FEF3E4',   // Amber Tint
+    primaryDark:    '#C06A00',   // Deep Amber
+    secondary:      '#F5A623',   // Golden Amber
 
     // Backgrounds
-    background:     '#faf8f5',   // Sugar Cream
-    surface:        '#ffffff',
-    surfaceRaised:  '#f5ebe0',   // Warm surface card overlay
-    overlay:        'rgba(0,0,0,0.4)',
+    background:     '#FFFFFF',   // Bright white shiny like silk
+    surface:        '#F9F9F9',   // Light surface
+    surfaceRaised:  '#F0F0F0',   // Nested surface
+    overlay:        'rgba(0,0,0,0.35)',
 
     // Text
-    text:           '#1c1917',   // Stone-900 / dark charcoal
-    textSecondary:  '#78716c',   // Stone-500 / warm gray
-    textMuted:      '#a8a29e',   // Stone-400 / muted gray
-    textInverse:    '#ffffff',
+    text:           '#1A1008',   // Near-black warm
+    textSecondary:  '#7A6E60',   // Warm grey
+    textMuted:      '#B0A898',   // Muted warm grey
+    textInverse:    '#FFFFFF',
 
     // Borders
-    border:         '#f3ebe1',
-    borderFocus:    '#701a75',
+    border:         '#EFEFEC',   // Hairline warm
+    borderFocus:    '#E8820C',
 
     // Semantic
-    error:          '#ef4444',
-    errorLight:     '#fef2f2',
-    success:        '#10b981',
-    successLight:   '#ecfdf5',
-    warning:        '#f59e0b',
-    warningLight:   '#fffbeb',
-    info:           '#3b82f6',
-    infoLight:      '#eff6ff',
+    error:          '#DC2626',
+    errorLight:     '#FEF2F2',
+    success:        '#22C55E',
+    successLight:   '#F0FDF4',
+    warning:        '#F5A623',
+    warningLight:   '#FEF3E4',
+    info:           '#3B82F6',
+    infoLight:      '#EFF6FF',
   },
   dark: {
-    primary:        '#e879f9',   // Vibrant Neon Plum
-    primaryLight:   '#fdf4ff',
-    primaryDark:    '#701a75',
-    secondary:      '#fb923c',   // Warm Peach / Orange
+    primary:        '#E8820C',   // Warm Amber / Orange
+    primaryLight:   '#F5A623',   // Light Amber
+    primaryDark:    '#C06A00',   // Deep Amber
+    secondary:      '#F5A623',   // Glowing Gold
 
     // Backgrounds
-    background:     '#120e10',   // Obsidian Plum (near black with deep berry undertone)
-    surface:        '#1e161a',   // Tinted dark surface
-    surfaceRaised:  '#2a1f24',   // Lighter raised dark surface
-    overlay:        'rgba(0,0,0,0.6)',
+    background:     '#000000',   // Ultra shiny darkest black
+    surface:        '#111111',   // Deep dark surface
+    surfaceRaised:  '#1A1A1A',   // Elevated dark grey
+    overlay:        'rgba(0,0,0,0.7)',
 
     // Text
-    text:           '#fafaf9',   // Bright off-white
-    textSecondary:  '#a8a29e',   // Stone-400
-    textMuted:      '#78716c',   // Stone-500
-    textInverse:    '#120e10',
+    text:           '#FFFFFF',   // Pure White
+    textSecondary:  '#9E9EA7',   // Silver-grey
+    textMuted:      '#6C6C75',   // Muted slate
+    textInverse:    '#121214',
 
     // Borders
-    border:         '#2a1f24',
-    borderFocus:    '#e879f9',
+    border:         'rgba(255, 255, 255, 0.08)',   // Subtle shiny border
+    borderFocus:    '#FF9500',
 
     // Semantic
     error:          '#f87171',
-    errorLight:     '#250c0c',
+    errorLight:     '#1a0505',
     success:        '#34d399',
-    successLight:   '#062318',
-    warning:        '#fbbf24',
-    warningLight:   '#221600',
+    successLight:   '#051a10',
+    warning:        '#F5A623',
+    warningLight:   '#1a1000',
     info:           '#60a5fa',
-    infoLight:      '#0b1d33',
+    infoLight:      '#050f1a',
   },
 } as const;

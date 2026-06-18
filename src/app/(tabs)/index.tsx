@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
-import { Mascot } from '../../components/features/Mascot';
+import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { SugarPile } from '../../components/features/SugarPile';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
 import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle } from 'lucide-react-native';
