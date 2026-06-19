@@ -14,17 +14,22 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
+          position: 'absolute',
+          bottom: 24,
+          left: 16,
+          right: 16,
           backgroundColor: colors.surface,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-          height: 64,
-          paddingBottom: 10,
-          paddingTop: 8,
+          borderRadius: 32,
+          borderWidth: 1.5,
+          borderColor: colors.border,
+          height: 72,
+          paddingBottom: 0,
+          paddingTop: 0,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.03,
-          shadowRadius: 8,
-          elevation: 5,
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.08,
+          shadowRadius: 16,
+          elevation: 10,
         },
         tabBarLabelStyle: {
           fontSize: 11,
@@ -65,11 +70,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Settings',
-          tabBarIcon: ({ color }) => <Settings size={22} color={color} />,
-        }}
-        listeners={{
-          tabPress: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light),
+          href: null,
         }}
       />
     </Tabs>

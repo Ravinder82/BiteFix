@@ -6,7 +6,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { ChevronRight, ArrowLeft, ShieldAlert, HeartHandshake, Eye, Moon, Layers, RotateCcw } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
-export default function SettingsScreen() {
+export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   const { colors, theme, toggleTheme } = useTheme();
   const { unit, setUnit, clearScans, clearAllData } = useAppStore();
 
@@ -64,6 +64,18 @@ export default function SettingsScreen() {
         style={{ borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.surface }} 
         className="flex-row items-center px-6 py-4"
       >
+        {onClose && (
+          <TouchableOpacity 
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onClose();
+            }}
+            style={{ backgroundColor: colors.surfaceRaised }}
+            className="mr-3 p-2 rounded-full"
+          >
+            <ArrowLeft size={18} color={colors.text} />
+          </TouchableOpacity>
+        )}
         <Text style={{ color: colors.text }} className="text-lg font-black tracking-tight">App Settings</Text>
       </View>
 
@@ -201,7 +213,8 @@ export default function SettingsScreen() {
           >
             <TouchableOpacity 
               onPress={() => setLegalModalVisible(false)} 
-              className="p-2 bg-stone-100 dark:bg-stone-800 rounded-full"
+              style={{ backgroundColor: colors.surfaceRaised }}
+              className="p-2 rounded-full"
             >
               <ArrowLeft size={18} color={colors.text} />
             </TouchableOpacity>
@@ -221,12 +234,20 @@ export default function SettingsScreen() {
 
 // Internal Settings Helpers
 function SettingsGroup({ title, children, colors }: { title: string; children: React.ReactNode; colors: any }) {
+  const isDarkMode = colors.background === '#000000';
   return (
     <View className="mb-6">
       <Text style={{ color: colors.textSecondary }} className="font-black uppercase tracking-wider text-[9px] mb-2 px-1">{title}</Text>
       <View 
-        style={{ borderColor: colors.border }} 
-        className="rounded-[24px] overflow-hidden border shadow-sm"
+        style={{ 
+          borderColor: colors.border,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: isDarkMode ? 0.35 : 0.03,
+          shadowRadius: 8,
+          elevation: 1,
+        }} 
+        className="rounded-[24px] overflow-hidden border"
       >
         {children}
       </View>
@@ -246,13 +267,16 @@ interface RowProps {
 function SettingsRowItem({ label, icon, onPress, textColor = 'normal', colors, isLast = false }: RowProps) {
   return (
     <TouchableOpacity
-      onPress={onPress}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress();
+      }}
       style={{ 
         backgroundColor: colors.surface,
         borderBottomWidth: isLast ? 0 : 1,
         borderBottomColor: colors.border
       }}
-      className="flex-row items-center justify-between p-4 active:bg-stone-50/50"
+      className="flex-row items-center justify-between p-4 active:opacity-75"
     >
       <View className="flex-row items-center gap-3">
         {icon}

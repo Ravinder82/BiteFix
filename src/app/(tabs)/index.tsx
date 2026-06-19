@@ -1,21 +1,40 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, Alert, Modal, PanResponder, Animated } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, Alert, Modal, PanResponder, Animated, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import AnimatedReanimated, { FadeInDown, useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence, withDelay, Easing } from 'react-native-reanimated';
 import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { SugarPile } from '../../components/features/SugarPile';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
-import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle } from 'lucide-react-native';
+import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle, Menu } from 'lucide-react-native';
 import { formatBloodSugarValue, getStatusColor, getStatusLabel } from '../../utils/bloodSugar';
+import SettingsScreen from './settings';
 import * as Haptics from 'expo-haptics';
 import { ScanHistoryItem } from '../../types/app.types';
 
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
-  const { logs, scans, deleteScan, clearScans } = useAppStore();
+  const { logs, scans, deleteScan, clearScans, userName } = useAppStore();
   const [selectedScan, setSelectedScan] = useState<ScanHistoryItem | null>(null);
+  const [settingsVisible, setSettingsVisible] = useState(false);
+
+  // Animated shine coordinate for the CTA button
+  const shineX = useSharedValue(-220);
+
+  useEffect(() => {
+    shineX.value = withRepeat(
+      withSequence(
+        withTiming(450, { duration: 1600, easing: Easing.linear }),
+        withDelay(2200, withTiming(-220, { duration: 0 }))
+      ),
+      -1,
+      false
+    );
+  }, []);
 
   // Animated value and PanResponder for drag/swipe down to close gesture
   const panY = useRef(new Animated.Value(0)).current;
@@ -61,10 +80,23 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Premium Custom Header */}
+      {/* Premium Custom Header (Floating Pill) */}
       <View 
-        style={{ borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.surface }} 
-        className="flex-row items-center justify-between px-6 py-4"
+        style={{ 
+          borderColor: colors.border, 
+          borderWidth: 1.5,
+          backgroundColor: colors.surface,
+          borderRadius: 24,
+          marginHorizontal: 16,
+          marginTop: 12,
+          marginBottom: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: isDark ? 0.35 : 0.04,
+          shadowRadius: 12,
+          elevation: 4,
+        }} 
+        className="flex-row items-center justify-between px-5 py-3.5"
       >
         <View className="flex-row items-center gap-3">
           {/* Cute Miniature Mascot Logo */}
@@ -84,59 +116,124 @@ export default function HomeScreen() {
             </Text>
           </View>
         </View>
-        <View className="p-2 bg-stone-100 dark:bg-stone-800 rounded-full">
-          <Sparkles size={16} color={colors.primary} />
-        </View>
+        <TouchableOpacity 
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setSettingsVisible(true);
+          }}
+          style={{ backgroundColor: colors.surfaceRaised }}
+          className="p-2 active:opacity-80 rounded-full"
+        >
+          <Menu size={18} color={colors.primary} />
+        </TouchableOpacity>
       </View>
 
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 20 }} showsVerticalScrollIndicator={false}>
-        {/* Welcome Card */}
-        <View 
-          style={{ backgroundColor: colors.surface, borderColor: colors.border }} 
-          className="flex-row items-center justify-between p-6 rounded-[28px] border shadow-sm mb-6"
-        >
-          <View className="flex-1 pr-3">
-            <Text 
-              style={{ color: colors.primary }} 
-              className="text-[10px] font-black uppercase tracking-widest"
+      <ScrollView 
+        className="flex-1" 
+        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }} 
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Welcome Card (Premium Liquid Glass) */}
+        <View style={{ borderRadius: 28, overflow: 'hidden', marginBottom: 24 }}>
+          {/* Base Background for depth */}
+          <LinearGradient
+            colors={isDark ? ['#1A1A1A', '#0D0D0D'] : ['#F9FAFB', '#F3F4F6']}
+            style={StyleSheet.absoluteFill}
+          />
+          {/* Abstract blobs for "liquid" look behind glass */}
+          <View style={{ position: 'absolute', top: -40, right: -40, width: 150, height: 150, borderRadius: 75, backgroundColor: isDark ? 'rgba(255, 149, 0, 0.2)' : 'rgba(255, 149, 0, 0.15)', transform: [{ scale: 1.5 }] }} />
+          <View style={{ position: 'absolute', bottom: -50, left: -20, width: 120, height: 120, borderRadius: 60, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)', transform: [{ scale: 1.5 }] }} />
+          
+          <BlurView
+            intensity={isDark ? 30 : 60}
+            tint={isDark ? "dark" : "light"}
+            style={{
+              padding: 24,
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 1.5,
+              borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.6)',
+            }}
+          >
+            <AnimatedReanimated.View 
+              entering={FadeInDown.duration(600).springify()}
+              style={{ alignItems: 'center', zIndex: 10, marginBottom: 20 }}
             >
-              Welcome Back
-            </Text>
-            <Text 
-              style={{ color: colors.text }} 
-              className="text-xl font-black mt-1 leading-tight"
-            >
-              Ready to see the sugar?
-            </Text>
-            <Text 
-              style={{ color: colors.textSecondary }} 
-              className="text-xs mt-2 leading-relaxed"
-            >
-              Let's scan barcodes to reveal hidden sugars and track your glucose log.
-            </Text>
-          </View>
-          <Mascot state={latestScan && latestScan.sugarTeaspoons > 6 ? 'shocked' : 'happy'} size={80} />
+              <Mascot state={latestScan && latestScan.sugarTeaspoons > 6 ? 'shocked' : 'happy'} size={120} />
+            </AnimatedReanimated.View>
+            <View className="items-center" style={{ zIndex: 10 }}>
+              <Text 
+                style={{ color: colors.primary }} 
+                className="text-[10px] font-black uppercase tracking-widest text-center"
+              >
+                {userName ? `Welcome, ${userName}` : 'Welcome Back'}
+              </Text>
+              <Text 
+                style={{ color: colors.text }} 
+                className="text-3xl font-black mt-2 leading-tight text-center"
+              >
+                {userName ? `Ready to see the sugar, ${userName}?` : 'Ready to see the sugar?'}
+              </Text>
+              <Text 
+                style={{ color: colors.textSecondary }} 
+                className="text-sm mt-3 leading-relaxed font-medium text-center px-4"
+              >
+                Let's scan barcodes to reveal hidden sugars and track your glucose log.
+              </Text>
+            </View>
+          </BlurView>
         </View>
 
-        {/* Premium Call To Action Button */}
-        <TouchableOpacity
-          onPress={() => router.push('/scanner')}
-          style={{ backgroundColor: colors.primary }}
-          className="w-full p-5 rounded-[24px] flex-row items-center justify-between shadow-md mb-6 active:opacity-90"
-        >
-          <View className="flex-row items-center gap-4">
-            <View className="p-3 bg-white/10 rounded-xl">
-              <ScanBarcode size={24} color="white" />
+        {/* Premium Call To Action Button with Loop-Reflection Shine */}
+        <View style={{ overflow: 'hidden', position: 'relative', borderRadius: 24 }} className="mb-6 shadow-md">
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push('/scanner');
+            }}
+            style={{ backgroundColor: colors.primary }}
+            className="w-full p-5 flex-row items-center justify-between active:opacity-90"
+            activeOpacity={0.9}
+          >
+            <View className="flex-row items-center gap-4">
+              <View className="p-3 bg-white/10 rounded-xl">
+                <ScanBarcode size={24} color="white" />
+              </View>
+              <View>
+                <Text className="text-white text-base font-black leading-tight">Scan Packaged Food</Text>
+                <Text className="text-white/70 text-xs mt-1">Converts grams of sugar to teaspoons</Text>
+              </View>
             </View>
-            <View>
-              <Text className="text-white text-base font-black leading-tight">Scan Packaged Food</Text>
-              <Text className="text-white/70 text-xs mt-1">Converts grams of sugar to teaspoons</Text>
+            <View className="p-2 bg-white/10 rounded-full">
+              <ArrowRight size={16} color="white" />
             </View>
-          </View>
-          <View className="p-2 bg-white/10 rounded-full">
-            <ArrowRight size={16} color="white" />
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+
+          {/* Animated Shine Overlay */}
+          <AnimatedReanimated.View
+            style={[
+              {
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                width: 140,
+                opacity: 0.22,
+              },
+              useAnimatedStyle(() => ({
+                transform: [{ translateX: shineX.value }, { skewX: '-20deg' }],
+              })),
+            ]}
+            pointerEvents="none"
+          >
+            <LinearGradient
+              colors={['transparent', 'rgba(255, 255, 255, 0.45)', 'transparent']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{ flex: 1 }}
+            />
+          </AnimatedReanimated.View>
+        </View>
 
         {/* Dashboard Grid */}
         <View className="flex-row gap-4 mb-6">
@@ -289,108 +386,112 @@ export default function HomeScreen() {
               </Text>
             </View>
           ) : (
-            scans.map((item) => (
-              <TouchableOpacity
+            scans.map((item, index) => (
+              <AnimatedReanimated.View
                 key={item.id}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  panY.setValue(0);
-                  setSelectedScan(item);
-                }}
-                style={{ 
-                  backgroundColor: colors.surface, 
-                  borderColor: colors.border,
-                  borderWidth: 1,
-                  borderRadius: 20,
-                  padding: 14,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: 12,
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.04,
-                  shadowRadius: 6,
-                  elevation: 1
-                }}
-                activeOpacity={0.95}
+                entering={FadeInDown.delay(Math.min(index * 65, 400)).duration(300)}
               >
-                <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  {/* Product Image */}
-                  {item.imageUrl ? (
-                    <Image
-                      source={{ uri: item.imageUrl }}
-                      style={{ width: 52, height: 52, borderRadius: 12, backgroundColor: '#ffffff' }}
-                      contentFit="contain"
-                      transition={200}
-                    />
-                  ) : (
-                    <View 
-                      style={{ 
-                        width: 52, 
-                        height: 52, 
-                        borderRadius: 12, 
-                        backgroundColor: colors.primary + '12', 
-                        alignItems: 'center', 
-                        justifyContent: 'center' 
-                      }}
-                    >
-                      <ScanBarcode size={22} color={colors.primary} />
-                    </View>
-                  )}
+                <TouchableOpacity
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    panY.setValue(0);
+                    setSelectedScan(item);
+                  }}
+                  style={{ 
+                    backgroundColor: colors.surface, 
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                    borderRadius: 20,
+                    padding: 14,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 12,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.04,
+                    shadowRadius: 6,
+                    elevation: 1
+                  }}
+                  activeOpacity={0.95}
+                >
+                  <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    {/* Product Image */}
+                    {item.imageUrl ? (
+                      <Image
+                        source={{ uri: item.imageUrl }}
+                        style={{ width: 52, height: 52, borderRadius: 12, backgroundColor: '#ffffff' }}
+                        contentFit="contain"
+                        transition={200}
+                      />
+                    ) : (
+                      <View 
+                        style={{ 
+                          width: 52, 
+                          height: 52, 
+                          borderRadius: 12, 
+                          backgroundColor: colors.primary + '12', 
+                          alignItems: 'center', 
+                          justifyContent: 'center' 
+                        }}
+                      >
+                        <ScanBarcode size={22} color={colors.primary} />
+                      </View>
+                    )}
 
-                  {/* Product Metadata */}
-                  <View style={{ flex: 1, paddingRight: 6 }}>
-                    <Text 
-                      numberOfLines={1} 
-                      style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}
-                    >
-                      {item.name}
-                    </Text>
-                    <Text 
-                      numberOfLines={1} 
-                      style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}
-                    >
-                      {item.brand || 'Generic Brand'}
-                    </Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 }}>
-                      <Clock size={10} color={colors.textMuted} />
-                      <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600' }}>
-                        {new Date(item.timestamp).toLocaleDateString()} · {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {/* Product Metadata */}
+                    <View style={{ flex: 1, paddingRight: 6 }}>
+                      <Text 
+                        numberOfLines={1} 
+                        style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}
+                      >
+                        {item.name}
+                      </Text>
+                      <Text 
+                        numberOfLines={1} 
+                        style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}
+                      >
+                        {item.brand || 'Generic Brand'}
+                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 }}>
+                        <Clock size={10} color={colors.textMuted} />
+                        <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600' }}>
+                          {new Date(item.timestamp).toLocaleDateString()} · {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Right Side: Sugar Teaspoons & Delete Action */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <View style={{ alignItems: 'flex-end', marginRight: 2 }}>
+                      <Text 
+                        style={{ color: getSugarColor(item.sugarTeaspoons, colors), fontSize: 15, fontWeight: '900', lineHeight: 15 }}
+                      >
+                        {item.sugarTeaspoons} <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>tsp</Text>
+                      </Text>
+                      <Text style={{ color: colors.textMuted, fontSize: 9, marginTop: 2 }}>
+                        ({item.sugarGrams}g)
                       </Text>
                     </View>
-                  </View>
-                </View>
 
-                {/* Right Side: Sugar Teaspoons & Delete Action */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <View style={{ alignItems: 'flex-end', marginRight: 2 }}>
-                    <Text 
-                      style={{ color: getSugarColor(item.sugarTeaspoons, colors), fontSize: 15, fontWeight: '900', lineHeight: 15 }}
+                    <TouchableOpacity
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        deleteScan(item.id);
+                      }}
+                      style={{ 
+                        backgroundColor: colors.background,
+                        padding: 8,
+                        borderRadius: 10
+                      }}
+                      activeOpacity={0.85}
                     >
-                      {item.sugarTeaspoons} <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>tsp</Text>
-                    </Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 9, marginTop: 2 }}>
-                      ({item.sugarGrams}g)
-                    </Text>
+                      <Trash2 size={13} color={colors.error} />
+                    </TouchableOpacity>
                   </View>
-
-                  <TouchableOpacity
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                      deleteScan(item.id);
-                    }}
-                    style={{ 
-                      backgroundColor: colors.background,
-                      padding: 8,
-                      borderRadius: 10
-                    }}
-                    activeOpacity={0.85}
-                  >
-                    <Trash2 size={13} color={colors.error} />
-                  </TouchableOpacity>
-                </View>
-              </TouchableOpacity>
+                </TouchableOpacity>
+              </AnimatedReanimated.View>
             ))
           )}
         </View>
@@ -564,6 +665,16 @@ export default function HomeScreen() {
             )}
           </Animated.View>
         </View>
+      </Modal>
+
+      {/* App Settings Modal */}
+      <Modal
+        visible={settingsVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setSettingsVisible(false)}
+      >
+        <SettingsScreen onClose={() => setSettingsVisible(false)} />
       </Modal>
     </SafeAreaView>
   );

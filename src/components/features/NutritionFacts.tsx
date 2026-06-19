@@ -20,71 +20,112 @@ export function NutritionFacts({
   proteinGrams,
   servingSize,
 }: NutritionFactsProps) {
+  // Use a softer border for dark mode so it feels premium and integrated
+  const isDarkMode = colors.background === '#000000';
+  const labelColor = colors.text;
+  const labelBorderColor = isDarkMode ? 'rgba(255, 255, 255, 0.15)' : colors.text;
+  const rowDividerColor = isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)';
+
   return (
-    <View 
-      style={{ 
-        backgroundColor: colors.surface, 
-        borderColor: colors.text, 
-        borderWidth: 2, 
-        padding: 16, 
-        borderRadius: 12,
-        marginVertical: 12,
+    <View
+      style={{
+        backgroundColor: colors.surface,
+        borderColor: labelBorderColor,
+        borderWidth: 1.5,
+        padding: 18,
+        borderRadius: 20,
+        marginVertical: 14,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 6,
-        elevation: 1,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: isDarkMode ? 0.4 : 0.04,
+        shadowRadius: 12,
+        elevation: 2,
       }}
     >
       {/* Title */}
-      <Text style={{ color: colors.text, fontSize: 22, fontWeight: '900', letterSpacing: -0.5, paddingBottom: 6 }}>
+      <Text style={{ color: labelColor, fontSize: 24, fontWeight: '900', letterSpacing: -0.6, paddingBottom: 4 }}>
         Nutrition Facts
       </Text>
 
       {/* Serving Size */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderTopWidth: 4, borderTopColor: colors.text, borderBottomWidth: 1, borderBottomColor: colors.textSecondary + '40' }}>
-        <Text style={{ color: colors.text, fontSize: 12, fontWeight: '700' }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          paddingVertical: 8,
+          borderTopWidth: 3,
+          borderTopColor: labelBorderColor,
+          borderBottomWidth: 1,
+          borderBottomColor: rowDividerColor
+        }}
+      >
+        <Text style={{ color: labelColor, fontSize: 12, fontWeight: '700' }}>
           Serving Size
         </Text>
-        <Text style={{ color: colors.text, fontSize: 12, fontWeight: '700' }}>
+        <Text style={{ color: labelColor, fontSize: 12, fontWeight: '700' }}>
           {servingSize || '1 serving'}
         </Text>
       </View>
 
-      {/* Divider */}
-      <View style={{ height: 6, backgroundColor: colors.text, marginVertical: 4 }} />
+      {/* Primary Bold Divider */}
+      <View style={{ height: 6, backgroundColor: labelBorderColor, marginVertical: 6, borderRadius: 2 }} />
 
-      {/* Amount Per Serving & Calories */}
-      <Text style={{ color: colors.text, fontSize: 9, fontWeight: '800' }}>
+      {/* Amount Per Serving */}
+      <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
         Amount Per Serving
       </Text>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', borderBottomWidth: 3, borderBottomColor: colors.text, paddingBottom: 2 }}>
-        <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
+
+      {/* Calories */}
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          borderBottomWidth: 2.5,
+          borderBottomColor: labelBorderColor,
+          paddingBottom: 4,
+          marginTop: 2
+        }}
+      >
+        <Text style={{ color: labelColor, fontSize: 19, fontWeight: '900', letterSpacing: -0.2 }}>
           Calories
         </Text>
-        <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', lineHeight: 24 }}>
+        <Text style={{ color: labelColor, fontSize: 26, fontWeight: '900', lineHeight: 28 }}>
           {calories !== undefined ? Math.round(calories) : '—'}
         </Text>
       </View>
 
-      {/* Daily Value Indicator */}
-      <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800', textAlign: 'right', paddingVertical: 4 }}>
+      {/* Subtitle Value indicator */}
+      <Text style={{ color: colors.textSecondary, fontSize: 8.5, fontWeight: '800', textAlign: 'right', paddingVertical: 5, letterSpacing: 0.5 }}>
         Amount / Serving
       </Text>
 
       {/* Carbs */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: colors.textSecondary + '30' }}>
-        <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700' }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 7.5, borderBottomWidth: 1, borderBottomColor: rowDividerColor }}>
+        <Text style={{ color: labelColor, fontSize: 13, fontWeight: '700' }}>
           Total Carbohydrate
         </Text>
-        <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700' }}>
+        <Text style={{ color: labelColor, fontSize: 13, fontWeight: '700' }}>
           {carbsGrams !== undefined ? `${carbsGrams.toFixed(1)}g` : '—'}
         </Text>
       </View>
 
-      {/* Sugar (Sub-item of Carbs, indented) */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: colors.textSecondary + '30', paddingLeft: 16 }}>
-        <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '800' }}>
+      {/* Sugar (Highlighted brand-color row, indented) */}
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          paddingVertical: 7.5,
+          borderBottomWidth: 1,
+          borderBottomColor: rowDividerColor,
+          paddingLeft: 16,
+          backgroundColor: colors.primary + '08',
+          marginHorizontal: -6,
+          paddingHorizontal: 6,
+          borderRadius: 6
+        }}
+      >
+        <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '900' }}>
           Total Sugars
         </Text>
         <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '900' }}>
@@ -93,21 +134,21 @@ export function NutritionFacts({
       </View>
 
       {/* Fats */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: colors.textSecondary + '30' }}>
-        <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700' }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 7.5, borderBottomWidth: 1, borderBottomColor: rowDividerColor }}>
+        <Text style={{ color: labelColor, fontSize: 13, fontWeight: '700' }}>
           Total Fat
         </Text>
-        <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700' }}>
+        <Text style={{ color: labelColor, fontSize: 13, fontWeight: '700' }}>
           {fatGrams !== undefined ? `${fatGrams.toFixed(1)}g` : '—'}
         </Text>
       </View>
 
       {/* Proteins */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 2, borderBottomColor: colors.text }}>
-        <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700' }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 2, borderBottomColor: labelBorderColor }}>
+        <Text style={{ color: labelColor, fontSize: 13, fontWeight: '700' }}>
           Protein
         </Text>
-        <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700' }}>
+        <Text style={{ color: labelColor, fontSize: 13, fontWeight: '700' }}>
           {proteinGrams !== undefined ? `${proteinGrams.toFixed(1)}g` : '—'}
         </Text>
       </View>

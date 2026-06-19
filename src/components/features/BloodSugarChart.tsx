@@ -1,6 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, useWindowDimensions } from 'react-native';
-import Svg, { Path, Circle, Line, Text as SvgText, Defs, LinearGradient, Stop, G } from 'react-native-svg';
+import Svg, { Path, Circle, Line, Text as SvgText, Defs, LinearGradient, Stop, G, ClipPath, Rect } from 'react-native-svg';
+import Animated, {
+  useSharedValue,
+  useAnimatedProps,
+  withTiming,
+  withSpring,
+  withDelay,
+  Easing,
+} from 'react-native-reanimated';
 import { BloodSugarLog } from '../../types/app.types';
 import { useTheme } from '../../hooks/useTheme';
 import { formatBloodSugarValue } from '../../utils/bloodSugar';
@@ -9,71 +17,139 @@ interface BloodSugarChartProps {
   logs: BloodSugarLog[];
 }
 
+const AnimatedRect = Animated.createAnimatedComponent(Rect);
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const AnimatedPath = Animated.createAnimatedComponent(Path);
+const AnimatedG = Animated.createAnimatedComponent(G);
+
 export function BloodSugarChart({ logs }: BloodSugarChartProps) {
   const { colors } = useTheme();
   const { width: windowWidth } = useWindowDimensions();
 
   // Screen width minus padding
   const chartWidth = windowWidth - 48;
-  const chartHeight = 180;
+  const chartHeight = 220;
   const paddingLeft = 32;
-  const paddingRight = 10;
+  const paddingRight = 15;
   const paddingTop = 24;
-  const paddingBottom = 24;
+  const paddingBottom = 28;
 
   const graphWidth = chartWidth - paddingLeft - paddingRight;
   const graphHeight = chartHeight - paddingTop - paddingBottom;
 
-  // Filter logs for the chart: last 7 readings, sorted oldest to newest (left to right)
-  const chartLogs = [...logs]
-    .slice(0, 7)
-    .reverse();
+  // Animation shared values
+  const drawProgress = useSharedValue(0);
+  const dotScale = useSharedValue(0);
 
-  if (chartLogs.length === 0) {
+  useEffect(() => {
+    drawProgress.value = 0;
+    dotScale.value = 0;
+
+    // Draw the trendlines
+    drawProgress.value = withTiming(1, {
+      duration: 1200,
+      easing: Easing.out(Easing.cubic),
+    });
+
+    // Pop the dots into view
+    dotScale.value = withDelay(
+      800,
+      withSpring(1, { damping: 12, stiffness: 100 })
+    );
+  }, [logs]);
+
+  const clipRectProps = useAnimatedProps(() => ({
+    width: paddingLeft + drawProgress.value * (chartWidth - paddingLeft),
+  }));
+
+  const dotProps = useAnimatedProps(() => ({
+    r: dotScale.value * 4.5,
+  }));
+
+  if (logs.length === 0) {
     return (
       <View 
         style={{ height: chartHeight, borderColor: colors.border, backgroundColor: colors.surface }} 
         className="items-center justify-center border border-dashed rounded-[24px] px-6"
       >
-        <Text style={{ color: colors.textSecondary }} className="font-bold text-sm">No blood sugar logs yet</Text>
+        <Text style={{ color: colors.textSecondary }} className="font-bold text-sm">No logs yet</Text>
         <Text style={{ color: colors.textMuted }} className="text-xs text-center mt-1 leading-relaxed">
-          Add a few readings to view your clinical trend lines.
+          Add readings to view your Fasting vs Post-Meal clinical trends.
         </Text>
       </View>
     );
   }
 
+  // Group logs by day to form a chronological timeline
+  const groupedByDay = logs.reduce((acc, log) => {
+    const d = new Date(log.timestamp);
+    const dayStr = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    if (!acc[dayStr]) {
+      acc[dayStr] = { date: d, timestamp: log.timestamp, fasting: null, postMeal: null };
+    }
+    if (log.type === 'fasting' && (!acc[dayStr].fasting || log.timestamp > acc[dayStr].fasting.timestamp)) {
+      acc[dayStr].fasting = log;
+    }
+    if (log.type === 'post-meal' && (!acc[dayStr].postMeal || log.timestamp > acc[dayStr].postMeal.timestamp)) {
+      acc[dayStr].postMeal = log;
+    }
+    return acc;
+  }, {} as Record<string, { date: Date; timestamp: number; fasting: BloodSugarLog | null; postMeal: BloodSugarLog | null; }>);
+
+  // Take the last 7 distinct days
+  const chartDays = Object.values(groupedByDay)
+    .sort((a, b) => a.timestamp - b.timestamp)
+    .slice(-7);
+
   // Find min and max values to scale Y axis
-  const unit = chartLogs[0].unit;
-  const values = chartLogs.map((l) => l.value);
+  const unit = logs[0].unit;
+  let allValues: number[] = [];
+  chartDays.forEach(day => {
+    if (day.fasting) allValues.push(day.fasting.value);
+    if (day.postMeal) allValues.push(day.postMeal.value);
+  });
   
-  // Set default bounds based on unit
+  if (allValues.length === 0) allValues = [0];
+
   const defaultMin = unit === 'mg/dL' ? 60 : 3.0;
   const defaultMax = unit === 'mg/dL' ? 220 : 12.0;
 
-  const yMin = Math.max(0, Math.min(defaultMin, ...values) - (unit === 'mg/dL' ? 10 : 0.5));
-  const yMax = Math.max(defaultMax, ...values) + (unit === 'mg/dL' ? 20 : 1.0);
+  const yMin = Math.max(0, Math.min(defaultMin, ...allValues) - (unit === 'mg/dL' ? 10 : 0.5));
+  const yMax = Math.max(defaultMax, ...allValues) + (unit === 'mg/dL' ? 20 : 1.0);
   const yRange = yMax - yMin;
 
-  // Map data to coordinates
-  const points = chartLogs.map((log, index) => {
-    // X mapping: spread points equally across width
-    const x = paddingLeft + (index / Math.max(1, chartLogs.length - 1)) * graphWidth;
-    // Y mapping: scale value to height
-    const y = paddingTop + graphHeight - ((log.value - yMin) / yRange) * graphHeight;
-    return { x, y, value: log.value, status: log.status, date: new Date(log.timestamp) };
+  // Build points for fasting and postMeal
+  const fastingPoints: {x: number, y: number, value: number, log: BloodSugarLog}[] = [];
+  const postMealPoints: {x: number, y: number, value: number, log: BloodSugarLog}[] = [];
+  const xLabels: {x: number, label: string}[] = [];
+
+  chartDays.forEach((day, index) => {
+    const x = paddingLeft + (chartDays.length > 1 ? (index / (chartDays.length - 1)) * graphWidth : graphWidth / 2);
+    
+    xLabels.push({
+      x,
+      label: day.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    });
+
+    if (day.fasting) {
+      const y = paddingTop + graphHeight - ((day.fasting.value - yMin) / yRange) * graphHeight;
+      fastingPoints.push({ x, y, value: day.fasting.value, log: day.fasting });
+    }
+    if (day.postMeal) {
+      const y = paddingTop + graphHeight - ((day.postMeal.value - yMin) / yRange) * graphHeight;
+      postMealPoints.push({ x, y, value: day.postMeal.value, log: day.postMeal });
+    }
   });
 
-  // Calculate smooth Bezier path using control points
-  const linePath = (() => {
-    if (points.length === 0) return '';
-    if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+  // Calculate smooth Bezier path
+  const createSmoothPath = (pts: {x: number, y: number}[]) => {
+    if (pts.length === 0) return '';
+    if (pts.length === 1) return `M ${pts[0].x} ${pts[0].y} L ${pts[0].x + 0.1} ${pts[0].y}`;
     
-    let d = `M ${points[0].x} ${points[0].y}`;
-    for (let i = 0; i < points.length - 1; i++) {
-      const curr = points[i];
-      const next = points[i + 1];
-      // Generate control points for a smooth Bezier curve
+    let d = `M ${pts[0].x} ${pts[0].y}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const curr = pts[i];
+      const next = pts[i + 1];
       const cp1x = curr.x + (next.x - curr.x) / 3;
       const cp1y = curr.y;
       const cp2x = curr.x + (2 * (next.x - curr.x)) / 3;
@@ -81,55 +157,51 @@ export function BloodSugarChart({ logs }: BloodSugarChartProps) {
       d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${next.x} ${next.y}`;
     }
     return d;
-  })();
+  };
 
-  // Generate fill area path (under the line)
-  const fillPath = (() => {
-    if (!linePath || points.length === 0) return '';
-    return `${linePath} L ${points[points.length - 1].x} ${paddingTop + graphHeight} L ${points[0].x} ${paddingTop + graphHeight} Z`;
-  })();
+  const fastingPath = createSmoothPath(fastingPoints);
+  const postMealPath = createSmoothPath(postMealPoints);
 
-  // Helper to color code points
   const getPointColor = (status: BloodSugarLog['status']) => {
     switch (status) {
-      case 'low':
-        return '#f97316'; // orange
-      case 'normal':
-        return '#10b981'; // green
-      case 'pre-diabetes':
-        return '#eab308'; // yellow
-      case 'diabetes':
-        return '#ef4444'; // red
-      default:
-        return colors.primary;
+      case 'low': return '#f97316';
+      case 'normal': return '#22C55E';
+      case 'pre-diabetes': return '#F5A623';
+      case 'diabetes': return '#DC2626';
+      default: return colors.primary;
     }
   };
 
-  // Grid line values
   const gridLines = [];
-  const stepCount = 3;
+  const stepCount = 4;
   for (let i = 0; i <= stepCount; i++) {
     const val = yMin + (i / stepCount) * yRange;
     const y = paddingTop + graphHeight - (i / stepCount) * graphHeight;
     gridLines.push({ y, val });
   }
 
+  // iOS Apple Health styled colors
+  const colorFasting = '#0A84FF'; // iOS Blue
+  const colorPostMeal = colors.primary; // App Primary
+
   return (
     <View 
       style={{ backgroundColor: colors.surface, borderColor: colors.border }} 
-      className="border p-5 rounded-[28px] shadow-sm"
+      className="border p-5 rounded-[28px] shadow-sm mb-4"
     >
-      <Text style={{ color: colors.text }} className="font-black text-sm mb-3">Glucose Trend (Last 7 logs)</Text>
+      <View className="flex-row items-center justify-between mb-4">
+        <Text style={{ color: colors.text }} className="font-black text-sm">Clinical Trends</Text>
+        <Text style={{ color: colors.textMuted }} className="font-bold text-[10px] uppercase">Last {chartDays.length} Days</Text>
+      </View>
       
       <Svg width={chartWidth} height={chartHeight}>
         <Defs>
-          <LinearGradient id="chartFillGrad" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0%" stopColor={colors.primary} stopOpacity="0.2" />
-            <Stop offset="100%" stopColor={colors.primary} stopOpacity="0.00" />
-          </LinearGradient>
+          <ClipPath id="chartDrawClip">
+            <AnimatedRect x={0} y={0} height={chartHeight} animatedProps={clipRectProps} />
+          </ClipPath>
         </Defs>
 
-        {/* Grid lines & Y Axis Labels */}
+        {/* Grid lines & Y Axis */}
         {gridLines.map((line, idx) => (
           <G key={`grid-${idx}`}>
             <Line
@@ -139,72 +211,86 @@ export function BloodSugarChart({ logs }: BloodSugarChartProps) {
               y2={line.y}
               stroke={colors.border}
               strokeWidth="1"
-              strokeDasharray="4 4"
+              strokeDasharray="3 4"
             />
             <SvgText
               x={paddingLeft - 8}
               y={line.y + 3}
-              fontSize="8"
+              fontSize="9"
               fill={colors.textMuted}
               textAnchor="end"
-              fontWeight="bold"
+              fontWeight="800"
             >
               {formatBloodSugarValue(line.val, unit)}
             </SvgText>
           </G>
         ))}
 
-        {/* Fill under the curve */}
-        {fillPath && (
-          <Path d={fillPath} fill="url(#chartFillGrad)" />
-        )}
+        {/* X Axis Labels */}
+        {xLabels.map((lbl, idx) => (
+          <SvgText
+            key={`xlbl-${idx}`}
+            x={lbl.x}
+            y={chartHeight - 4}
+            fontSize="8.5"
+            fill={colors.textMuted}
+            textAnchor="middle"
+            fontWeight="700"
+          >
+            {lbl.label}
+          </SvgText>
+        ))}
 
-        {/* The trend line */}
-        {linePath && (
-          <Path
-            d={linePath}
-            fill="none"
-            stroke={colors.primary}
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        )}
+        {/* Clipped Group for animated draw in */}
+        <G clipPath="url(#chartDrawClip)">
+          {/* Post-Meal Line */}
+          {postMealPath && (
+            <Path
+              d={postMealPath}
+              fill="none"
+              stroke={colorPostMeal}
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={0.8}
+            />
+          )}
 
-        {/* Data points & X Labels */}
-        {points.map((pt, idx) => (
+          {/* Fasting Line */}
+          {fastingPath && (
+            <Path
+              d={fastingPath}
+              fill="none"
+              stroke={colorFasting}
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={0.8}
+            />
+          )}
+        </G>
+
+        {/* Data points */}
+        {[...fastingPoints, ...postMealPoints].map((pt, idx) => (
           <G key={`point-${idx}`}>
-            {/* Draw Point Circle */}
-            <Circle
+            <AnimatedCircle
               cx={pt.x}
               cy={pt.y}
-              r="5"
-              fill={getPointColor(pt.status)}
+              fill={getPointColor(pt.log.status)}
               stroke={colors.surface}
-              strokeWidth="2"
+              strokeWidth="2.5"
+              animatedProps={dotProps}
             />
-            {/* Hover Tooltip Value */}
             <SvgText
               x={pt.x}
-              y={pt.y - 8}
-              fontSize="8"
-              fontWeight="black"
+              y={pt.y - 12}
+              fontSize="9"
+              fontWeight="900"
               fill={colors.text}
               textAnchor="middle"
+              opacity={idx < (fastingPoints.length + postMealPoints.length) ? 1 : 0}
             >
               {formatBloodSugarValue(pt.value, unit)}
-            </SvgText>
-
-            {/* Date label at bottom */}
-            <SvgText
-              x={pt.x}
-              y={chartHeight - 4}
-              fontSize="7"
-              fill={colors.textMuted}
-              textAnchor="middle"
-              fontWeight="bold"
-            >
-              {pt.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
             </SvgText>
           </G>
         ))}
@@ -213,22 +299,36 @@ export function BloodSugarChart({ logs }: BloodSugarChartProps) {
       {/* Chart Legend */}
       <View 
         style={{ borderTopColor: colors.border }} 
-        className="flex-row items-center justify-around mt-4 pt-3 border-t"
+        className="mt-5 pt-4 border-t flex-row items-center justify-between px-2"
       >
-        <LegendItem color="#10b981" label="Normal" colors={colors} />
-        <LegendItem color="#eab308" label="Pre-Diab" colors={colors} />
-        <LegendItem color="#ef4444" label="Diabetes" colors={colors} />
-        <LegendItem color="#f97316" label="Low" colors={colors} />
+        <View className="flex-row items-center gap-4">
+          <LegendLineItem color={colorFasting} label="Fasting" colors={colors} />
+          <LegendLineItem color={colorPostMeal} label="Post-Meal" colors={colors} />
+        </View>
+        <View className="flex-row items-center gap-2">
+          <LegendDotItem color="#22C55E" label="Normal" colors={colors} />
+          <LegendDotItem color="#F5A623" label="Pre" colors={colors} />
+          <LegendDotItem color="#DC2626" label="High" colors={colors} />
+        </View>
       </View>
     </View>
   );
 }
 
-function LegendItem({ color, label, colors }: { color: string; label: string; colors: any }) {
+function LegendLineItem({ color, label, colors }: { color: string; label: string; colors: any }) {
   return (
     <View className="flex-row items-center">
-      <View style={{ backgroundColor: color }} className="w-2 h-2 rounded-full mr-1.5" />
-      <Text style={{ color: colors.textSecondary }} className="text-[9px] font-bold">{label}</Text>
+      <View style={{ backgroundColor: color }} className="w-3 h-[3px] rounded-full mr-2" />
+      <Text style={{ color: colors.textSecondary }} className="text-[10px] font-black uppercase tracking-wide">{label}</Text>
+    </View>
+  );
+}
+
+function LegendDotItem({ color, label, colors }: { color: string; label: string; colors: any }) {
+  return (
+    <View className="flex-row items-center">
+      <View style={{ backgroundColor: color }} className="w-1.5 h-1.5 rounded-full mr-1" />
+      <Text style={{ color: colors.textMuted }} className="text-[9px] font-bold">{label}</Text>
     </View>
   );
 }

@@ -10,11 +10,21 @@ interface AppState {
   unit: 'mg/dL' | 'mmol/L';
   logs: BloodSugarLog[];
   scans: ScanHistoryItem[];
+  userName?: string;
+  userGoal?: 'energy' | 'weight' | 'medical' | 'mental' | 'none';
+  sweetTooth?: 'high' | 'moderate' | 'low' | 'none';
+  journeyPace?: 'cold_turkey' | 'gradual' | 'tracking' | 'none';
 
   // Actions
   setOnboardingComplete: (complete: boolean) => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   setUnit: (unit: 'mg/dL' | 'mmol/L') => void;
+  setProfile: (profile: {
+    userName?: string;
+    userGoal?: 'energy' | 'weight' | 'medical' | 'mental' | 'none';
+    sweetTooth?: 'high' | 'moderate' | 'low' | 'none';
+    journeyPace?: 'cold_turkey' | 'gradual' | 'tracking' | 'none';
+  }) => void;
 
   // Log Actions
   addLog: (value: number, type: 'fasting' | 'post-meal', notes?: string, customTimestamp?: number) => void;
@@ -50,10 +60,20 @@ export const useAppStore = create<AppState>()(
       unit: 'mg/dL',
       logs: [],
       scans: [],
+      userName: undefined,
+      userGoal: 'none',
+      sweetTooth: 'none',
+      journeyPace: 'none',
 
       setOnboardingComplete: (complete) => set({ onboardingComplete: complete }),
       setTheme: (theme) => set({ theme }),
       setUnit: (unit) => set({ unit }),
+      setProfile: (profile) => set((state) => ({
+        userName: profile.userName !== undefined ? profile.userName : state.userName,
+        userGoal: profile.userGoal !== undefined ? profile.userGoal : state.userGoal,
+        sweetTooth: profile.sweetTooth !== undefined ? profile.sweetTooth : state.sweetTooth,
+        journeyPace: profile.journeyPace !== undefined ? profile.journeyPace : state.journeyPace,
+      })),
 
       addLog: (value, type, notes, customTimestamp) => set((state) => {
         const timestamp = customTimestamp || Date.now();
@@ -121,6 +141,10 @@ export const useAppStore = create<AppState>()(
         unit: 'mg/dL',
         logs: [],
         scans: [],
+        userName: undefined,
+        userGoal: 'none',
+        sweetTooth: 'none',
+        journeyPace: 'none',
       }),
     }),
     {

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, ScrollView, StyleSheet, SafeAreaView } from 'react-native';
 import { Image } from 'expo-image';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import AnimatedReanimated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence, withDelay, Easing } from 'react-native-reanimated';
 import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
 import { SugarPile } from '../../components/features/SugarPile';
@@ -9,11 +10,12 @@ import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
 import { ScanBarcode, Keyboard, ArrowLeft, Camera as CameraIcon, HelpCircle, AlertCircle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { BlurView } from 'expo-blur';
 
 type ScanMode = 'camera' | 'manual' | 'result';
 
 export default function ScannerScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { addScan } = useAppStore();
   const [permission, requestPermission] = useCameraPermissions();
 
@@ -25,9 +27,33 @@ export default function ScannerScreen() {
   // Synchronous scan ref lock to prevent duplicate scans on camera frame callbacks
   const isScanningRef = useRef(false);
 
+  // Animated laser line Y coordinate
+  const laserY = useSharedValue(0);
+
+  useEffect(() => {
+    if (mode === 'camera' && permission?.granted) {
+      laserY.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.quad) }),
+          withTiming(0, { duration: 1800, easing: Easing.inOut(Easing.quad) })
+        ),
+        -1,
+        true
+      );
+    } else {
+      laserY.value = 0;
+    }
+  }, [mode, permission]);
+
+  const laserStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: laserY.value * 230 }],
+  }));
+
   // Manual Input State
   const [manualName, setManualName] = useState('');
   const [manualSugarGrams, setManualSugarGrams] = useState('');
+  const [focusName, setFocusName] = useState(false);
+  const [focusSugar, setFocusSugar] = useState(false);
 
   // Scan Result State
   const [scanResult, setScanResult] = useState<{
@@ -67,7 +93,7 @@ export default function ScannerScreen() {
         const name = p.product_name || 'Unknown Product';
         const brand = p.brands || 'Generic Brand';
         const imageUrl = p.image_url || undefined;
-        
+
         // Prioritize sugar per serving, fallback to 100g, fallback to 0
         const sugarGrams = p.nutriments?.sugars_serving !== undefined
           ? parseFloat(p.nutriments.sugars_serving)
@@ -111,7 +137,7 @@ export default function ScannerScreen() {
           fatGrams,
           proteinGrams
         );
-        
+
         setScanResult({
           name,
           brand,
@@ -159,7 +185,7 @@ export default function ScannerScreen() {
     const teaspoons = sugarVal / 3.2;
 
     addScan(manualName, sugarVal, 'Custom Entry');
-    
+
     setScanResult({
       name: manualName,
       brand: 'Custom Entry',
@@ -213,7 +239,27 @@ export default function ScannerScreen() {
                   <View style={{ borderColor: colors.primary }} className="absolute top-0 right-0 w-8 h-8 border-t-[5px] border-r-[5px] rounded-tr-[28px]" />
                   <View style={{ borderColor: colors.primary }} className="absolute bottom-0 left-0 w-8 h-8 border-b-[5px] border-l-[5px] rounded-bl-[28px]" />
                   <View style={{ borderColor: colors.primary }} className="absolute bottom-0 right-0 w-8 h-8 border-b-[5px] border-r-[5px] rounded-br-[28px]" />
-                  
+
+                  {/* Pulsing Scanning Laser */}
+                  <AnimatedReanimated.View
+                    style={[
+                      {
+                        position: 'absolute',
+                        top: 2,
+                        left: 8,
+                        right: 8,
+                        height: 3,
+                        backgroundColor: colors.primary,
+                        shadowColor: colors.primary,
+                        shadowOffset: { width: 0, height: 0 },
+                        shadowOpacity: 0.85,
+                        shadowRadius: 6,
+                        borderRadius: 1.5,
+                      },
+                      laserStyle,
+                    ]}
+                  />
+
                   <Text className="text-white/70 text-xs font-bold text-center absolute -bottom-12">
                     Align barcode inside the box
                   </Text>
@@ -238,35 +284,103 @@ export default function ScannerScreen() {
           )}
 
           {/* Top Actions */}
-          <SafeAreaView className="absolute top-0 left-0 right-0 p-4 flex-row items-center justify-between">
-            <Text className="text-white text-lg font-black tracking-tight drop-shadow-md">Barcode Scanner</Text>
-            <TouchableOpacity
-              onPress={() => setMode('manual')}
-              className="flex-row items-center gap-2 py-2 px-4 rounded-full bg-white/20 active:opacity-80"
-            >
-              <Keyboard size={14} color="white" />
-              <Text className="text-white font-bold text-xs">Manual Entry</Text>
-            </TouchableOpacity>
+          <SafeAreaView 
+            className="absolute top-0 left-0 right-0 p-4 items-center justify-center"
+            pointerEvents="box-none"
+          >
+            <View style={{ borderRadius: 99, overflow: 'hidden' }}>
+              <BlurView
+                intensity={50}
+                tint="dark"
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  position: 'absolute', top:10,
+                  paddingVertical: 10,
+                  paddingHorizontal: 20,
+                  borderWidth: 1.5,
+                  borderColor: colors.primary + '40',
+                }}
+              >
+                <Text style={{ color: colors.primary }} className="font-black text-xs uppercase tracking-wider">
+                  Barcode Scanner
+                </Text>
+              </BlurView>
+            </View>
           </SafeAreaView>
+
+          {/* Centered Floating Manual Entry Button */}
+          <View 
+            style={{ position: 'absolute', bottom: 130, left: 0, right: 0, alignItems: 'center', justifyContent: 'center', zIndex: 10 }}
+            pointerEvents="box-none"
+          >
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                setMode('manual');
+              }}
+              style={{ borderRadius: 99, overflow: 'hidden' }}
+              activeOpacity={0.8}
+            >
+              <BlurView
+                intensity={50}
+                tint="dark"
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  paddingVertical: 10,
+                  paddingHorizontal: 18,
+                  borderWidth: 1.5,
+                  borderColor: colors.primary + '40',
+                }}
+              >
+                <Keyboard size={14} color={colors.primary} />
+                <Text style={{ color: colors.primary }} className="font-black text-xs uppercase tracking-wider">
+                  Manual Entry
+                </Text>
+              </BlurView>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
       {/* 2. Manual Input Fallback Mode */}
       {mode === 'manual' && (
         <SafeAreaView style={{ flex: 1 }}>
-          <View 
-            style={{ borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.surface }} 
-            className="flex-row items-center justify-between px-6 py-4"
+          <View
+            style={{ 
+              borderColor: colors.border, 
+              borderWidth: 1.5,
+              backgroundColor: colors.surface,
+              borderRadius: 24,
+              marginHorizontal: 16,
+              marginTop: 12,
+              marginBottom: 8,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: isDark ? 0.35 : 0.04,
+              shadowRadius: 12,
+              elevation: 4,
+            }} 
+            className="flex-row items-center justify-between px-5 py-3.5"
           >
-            <TouchableOpacity 
-              onPress={resetScanner} 
-              className="p-2 bg-stone-100 dark:bg-stone-800 rounded-full"
-            >
-              <ArrowLeft size={18} color={colors.text} />
-            </TouchableOpacity>
-            <Text style={{ color: colors.text }} className="text-base font-black">Manual Sugar Log</Text>
+            <View className="flex-row items-center gap-3">
+              <TouchableOpacity
+                onPress={resetScanner}
+                style={{ backgroundColor: colors.surfaceRaised }}
+                className="p-2 rounded-full"
+              >
+                <ArrowLeft size={18} color={colors.text} />
+              </TouchableOpacity>
+              <Mascot state="idle" size={30} />
+              <Text style={{ color: colors.text }} className="text-base font-black">Manual Sugar Log</Text>
+            </View>
             <TouchableOpacity
-              onPress={() => setMode('camera')}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                setMode('camera');
+              }}
               className="flex-row items-center gap-1.5 py-1.5 px-3 rounded-full bg-purple-50 dark:bg-stone-850"
             >
               <CameraIcon size={12} color={colors.primary} />
@@ -274,13 +388,13 @@ export default function ScannerScreen() {
             </TouchableOpacity>
           </View>
 
-          <ScrollView 
-            contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 20 }} 
+          <ScrollView
+            contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }}
             showsVerticalScrollIndicator={false}
           >
             {errorMsg && (
-              <View 
-                style={{ backgroundColor: colors.error + '10', borderColor: colors.error + '30' }} 
+              <View
+                style={{ backgroundColor: colors.error + '10', borderColor: colors.error + '30' }}
                 className="border p-4 rounded-2xl mb-4 flex-row gap-3"
               >
                 <AlertCircle size={18} color={colors.error} className="mt-0.5" />
@@ -288,15 +402,29 @@ export default function ScannerScreen() {
               </View>
             )}
 
-            <View className="mb-4">
+            <View className="mb-5">
               <Text style={{ color: colors.textSecondary }} className="text-[10px] font-black uppercase tracking-wider mb-2 px-1">Product Name</Text>
               <TextInput
                 value={manualName}
                 onChangeText={setManualName}
-                placeholder="e.g. Cola, Strawberry Yogurt, Ketchup"
+                onFocus={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setFocusName(true);
+                }}
+                onBlur={() => setFocusName(false)}
+                placeholder="e.g. Cola, Yogurt, Ketchup"
                 placeholderTextColor={colors.textMuted}
-                style={{ backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }}
-                className="w-full p-4 rounded-2xl border font-bold text-sm"
+                style={{
+                  backgroundColor: colors.surface,
+                  borderColor: focusName ? colors.primary : colors.border,
+                  borderWidth: 1.5,
+                  shadowColor: colors.primary,
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: focusName ? 0.12 : 0,
+                  shadowRadius: 8,
+                  color: colors.text,
+                }}
+                className="w-full p-4 rounded-2xl font-bold text-sm"
               />
             </View>
 
@@ -308,18 +436,32 @@ export default function ScannerScreen() {
                   setManualSugarGrams(val);
                   setErrorMsg(null);
                 }}
+                onFocus={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setFocusSugar(true);
+                }}
+                onBlur={() => setFocusSugar(false)}
                 keyboardType="numeric"
                 placeholder="e.g. 12.8"
                 placeholderTextColor={colors.textMuted}
-                style={{ backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }}
-                className="w-full p-4 rounded-2xl border font-black text-base"
+                style={{
+                  backgroundColor: colors.surface,
+                  borderColor: focusSugar ? colors.primary : colors.border,
+                  borderWidth: 1.5,
+                  shadowColor: colors.primary,
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: focusSugar ? 0.12 : 0,
+                  shadowRadius: 8,
+                  color: colors.text,
+                }}
+                className="w-full p-4 rounded-2xl font-black text-base"
               />
             </View>
 
             {/* Live Teaspoon Calculator Preview */}
             {parseFloat(manualSugarGrams) > 0 && (
-              <View 
-                style={{ backgroundColor: colors.surface, borderColor: colors.border }} 
+              <View
+                style={{ backgroundColor: colors.surface, borderColor: colors.border }}
                 className="mb-6 p-6 rounded-[24px] border items-center shadow-sm"
               >
                 <Text style={{ color: colors.textSecondary }} className="text-[10px] font-bold uppercase tracking-wider mb-2">Live Conversion Preview</Text>
@@ -328,9 +470,13 @@ export default function ScannerScreen() {
             )}
 
             <TouchableOpacity
-              onPress={handleManualSubmit}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                handleManualSubmit();
+              }}
               style={{ backgroundColor: colors.primary }}
               className="w-full py-4 rounded-2xl items-center justify-center mt-2 active:opacity-90 shadow-sm"
+              activeOpacity={0.9}
             >
               <Text className="text-white font-bold text-sm">Convert to Teaspoons</Text>
             </TouchableOpacity>
@@ -341,25 +487,39 @@ export default function ScannerScreen() {
       {/* 3. Scan Result Display Mode */}
       {mode === 'result' && scanResult && (
         <SafeAreaView style={{ flex: 1 }}>
-          <View 
-            style={{ borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.surface }} 
-            className="flex-row items-center px-6 py-4"
+          <View
+            style={{ 
+              borderColor: colors.border, 
+              borderWidth: 1.5,
+              backgroundColor: colors.surface,
+              borderRadius: 24,
+              marginHorizontal: 16,
+              marginTop: 12,
+              marginBottom: 8,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: isDark ? 0.35 : 0.04,
+              shadowRadius: 12,
+              elevation: 4,
+            }} 
+            className="flex-row items-center px-5 py-3.5"
           >
-            <TouchableOpacity 
-              onPress={resetScanner} 
-              className="p-2 bg-stone-100 dark:bg-stone-800 rounded-full"
+            <TouchableOpacity
+              onPress={resetScanner}
+              style={{ backgroundColor: colors.surfaceRaised }}
+              className="p-2 rounded-full"
             >
               <ArrowLeft size={18} color={colors.text} />
             </TouchableOpacity>
             <Text style={{ color: colors.text }} className="text-base font-black ml-4">Sugar Scan Result</Text>
           </View>
 
-          <ScrollView 
-            contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 20 }} 
+          <ScrollView
+            contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }}
             showsVerticalScrollIndicator={false}
           >
-            <View 
-              style={{ backgroundColor: colors.surface, borderColor: colors.border }} 
+            <View
+              style={{ backgroundColor: colors.surface, borderColor: colors.border }}
               className="border p-6 rounded-[28px] shadow-sm items-center mb-6"
             >
               {scanResult.imageUrl && (
@@ -408,12 +568,12 @@ export default function ScannerScreen() {
             />
 
             {/* Health Interpretation Card */}
-            <View 
-              style={{ backgroundColor: colors.surface, borderColor: colors.border }} 
+            <View
+              style={{ backgroundColor: colors.surface, borderColor: colors.border }}
               className="p-5 rounded-[24px] border shadow-sm mb-8 flex-row items-start gap-4"
             >
-              <View 
-                style={{ backgroundColor: colors.primary + '12' }} 
+              <View
+                style={{ backgroundColor: colors.primary + '12' }}
                 className="p-2 rounded-xl self-start"
               >
                 <HelpCircle size={18} color={colors.primary} />

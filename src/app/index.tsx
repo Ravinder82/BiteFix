@@ -17,8 +17,9 @@ export default function Index() {
     const handleHydration = () => {
       if (__DEV__ && isFirstLoad) {
         isFirstLoad = false;
-        // Automatically reset onboarding completion on startup in development for full flow testing
+        // Automatically reset onboarding completion and theme on startup in development for full flow testing
         useAppStore.getState().setOnboardingComplete(false);
+        useAppStore.getState().setTheme('light');
       }
       setHydrated(true);
     };

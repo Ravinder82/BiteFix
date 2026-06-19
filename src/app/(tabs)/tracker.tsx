@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, SafeAreaView, Alert } from 'react-native';
+import AnimatedReanimated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { useAppStore } from '../../stores/appStore';
 import { BloodSugarLog } from '../../types/app.types';
 import { useTheme } from '../../hooks/useTheme';
@@ -9,13 +10,36 @@ import { Plus, Trash2, Tag, ChevronDown, ChevronUp } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 export default function TrackerScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { logs, addLog, deleteLog, unit } = useAppStore();
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [valueStr, setValueStr] = useState('');
   const [type, setType] = useState<'fasting' | 'post-meal'>('fasting');
   const [notes, setNotes] = useState('');
+
+  // Animated shared value for collapsible form progress
+  const formProgress = useSharedValue(0);
+
+  useEffect(() => {
+    formProgress.value = withTiming(showAddForm ? 1 : 0, {
+      duration: 350,
+      easing: Easing.bezier(0.16, 1, 0.3, 1),
+    });
+  }, [showAddForm]);
+
+  const formAnimatedStyle = useAnimatedStyle(() => {
+    // Form max height is roughly 390px.
+    // Margin bottom animates up to 24px.
+    return {
+      height: formProgress.value * 390,
+      opacity: formProgress.value,
+      marginBottom: formProgress.value * 24,
+      transform: [
+        { translateY: (formProgress.value - 1) * 20 }
+      ],
+    };
+  });
 
   const handleAddReading = () => {
     const readingValue = parseFloat(valueStr);
@@ -53,10 +77,23 @@ export default function TrackerScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Header */}
+      {/* Header (Floating Pill) */}
       <View 
-        style={{ borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.surface }} 
-        className="flex-row items-center justify-between px-6 py-4"
+        style={{ 
+          borderColor: colors.border, 
+          borderWidth: 1.5,
+          backgroundColor: colors.surface,
+          borderRadius: 24,
+          marginHorizontal: 16,
+          marginTop: 12,
+          marginBottom: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: isDark ? 0.35 : 0.04,
+          shadowRadius: 12,
+          elevation: 4,
+        }} 
+        className="flex-row items-center justify-between px-5 py-3.5"
       >
         <View>
           <Text style={{ color: colors.text }} className="text-lg font-black tracking-tight">Blood Sugar Tracker</Text>
@@ -77,14 +114,17 @@ export default function TrackerScreen() {
 
       <ScrollView 
         className="flex-1" 
-        contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 20 }}
+        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Slide-down Input Form */}
-        {showAddForm && (
+        <AnimatedReanimated.View 
+          style={[{ overflow: 'hidden' }, formAnimatedStyle]}
+          pointerEvents={showAddForm ? 'auto' : 'none'}
+        >
           <View 
             style={{ backgroundColor: colors.surface, borderColor: colors.border }} 
-            className="p-5 rounded-[28px] border shadow-sm mb-6"
+            className="p-5 rounded-[28px] border shadow-sm"
           >
             <Text style={{ color: colors.text }} className="text-base font-black mb-4">New Sugar Reading</Text>
             
@@ -155,7 +195,7 @@ export default function TrackerScreen() {
               <Text className="text-white font-bold text-sm">Save Reading</Text>
             </TouchableOpacity>
           </View>
-        )}
+        </AnimatedReanimated.View>
 
         {/* SVG Analytics Chart */}
         <View className="mb-6">
