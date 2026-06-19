@@ -69,11 +69,10 @@ export function BloodSugarChart({ logs }: BloodSugarChartProps) {
   if (logs.length === 0) {
     return (
       <View 
-        style={{ height: chartHeight, borderColor: colors.border, backgroundColor: colors.surface }} 
-        className="items-center justify-center border border-dashed rounded-[24px] px-6"
+        style={[{ height: chartHeight, borderColor: colors.border, backgroundColor: colors.surface }, { alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderStyle: 'dashed', borderRadius: 24, paddingHorizontal: 24 }]} 
       >
-        <Text style={{ color: colors.textSecondary }} className="font-bold text-sm">No logs yet</Text>
-        <Text style={{ color: colors.textMuted }} className="text-xs text-center mt-1 leading-relaxed">
+        <Text style={[{ color: colors.textSecondary }, { fontWeight: 'bold', fontSize: 14 }]}>No logs yet</Text>
+        <Text style={[{ color: colors.textMuted }, { fontSize: 12, textAlign: 'center', marginTop: 4, lineHeight: 20 }]}>
           Add readings to view your Fasting vs Post-Meal clinical trends.
         </Text>
       </View>
@@ -186,12 +185,11 @@ export function BloodSugarChart({ logs }: BloodSugarChartProps) {
 
   return (
     <View 
-      style={{ backgroundColor: colors.surface, borderColor: colors.border }} 
-      className="border p-5 rounded-[28px] shadow-sm mb-4"
+      style={[{ backgroundColor: colors.surface, borderColor: colors.border }, { borderWidth: 1, padding: 20, borderRadius: 28, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2, marginBottom: 16 }]} 
     >
-      <View className="flex-row items-center justify-between mb-4">
-        <Text style={{ color: colors.text }} className="font-black text-sm">Clinical Trends</Text>
-        <Text style={{ color: colors.textMuted }} className="font-bold text-[10px] uppercase">Last {chartDays.length} Days</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <Text style={[{ color: colors.text }, { fontWeight: '900', fontSize: 14 }]}>Clinical Trends</Text>
+        <Text style={[{ color: colors.textMuted }, { fontWeight: 'bold', fontSize: 10, textTransform: 'uppercase' }]}>Last {chartDays.length} Days</Text>
       </View>
       
       <Svg width={chartWidth} height={chartHeight}>
@@ -298,17 +296,16 @@ export function BloodSugarChart({ logs }: BloodSugarChartProps) {
 
       {/* Chart Legend */}
       <View 
-        style={{ borderTopColor: colors.border }} 
-        className="mt-5 pt-4 border-t flex-row items-center justify-between px-2"
+        style={[{ borderColor: colors.border }, { marginTop: 20, paddingTop: 16, borderTopWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8 }]}
       >
-        <View className="flex-row items-center gap-4">
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
           <LegendLineItem color={colorFasting} label="Fasting" colors={colors} />
           <LegendLineItem color={colorPostMeal} label="Post-Meal" colors={colors} />
         </View>
-        <View className="flex-row items-center gap-2">
-          <LegendDotItem color="#22C55E" label="Normal" colors={colors} />
-          <LegendDotItem color="#F5A623" label="Pre" colors={colors} />
-          <LegendDotItem color="#DC2626" label="High" colors={colors} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <LegendDotItem color={colors.warning} label="Pre" colors={colors} />
+          <LegendDotItem color={colors.error} label="High" colors={colors} />
+          <LegendDotItem color={colors.success} label="Normal" colors={colors} />
         </View>
       </View>
     </View>
@@ -317,18 +314,18 @@ export function BloodSugarChart({ logs }: BloodSugarChartProps) {
 
 function LegendLineItem({ color, label, colors }: { color: string; label: string; colors: any }) {
   return (
-    <View className="flex-row items-center">
-      <View style={{ backgroundColor: color }} className="w-3 h-[3px] rounded-full mr-2" />
-      <Text style={{ color: colors.textSecondary }} className="text-[10px] font-black uppercase tracking-wide">{label}</Text>
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <View style={{ backgroundColor: color, width: 12, height: 3, borderRadius: 1.5, marginRight: 8 }} />
+      <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</Text>
     </View>
   );
 }
 
 function LegendDotItem({ color, label, colors }: { color: string; label: string; colors: any }) {
   return (
-    <View className="flex-row items-center">
-      <View style={{ backgroundColor: color }} className="w-1.5 h-1.5 rounded-full mr-1" />
-      <Text style={{ color: colors.textMuted }} className="text-[9px] font-bold">{label}</Text>
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <View style={{ backgroundColor: color, width: 6, height: 6, borderRadius: 3, marginRight: 4 }} />
+      <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700' }}>{label}</Text>
     </View>
   );
 }
