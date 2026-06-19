@@ -26,14 +26,15 @@ import { useTheme } from '../../hooks/useTheme';
 import { SugarPile } from '../../components/features/SugarPile';
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
-import { Keyboard, ArrowLeft, Camera as CameraIcon, HelpCircle, AlertCircle, Zap, ZapOff } from 'lucide-react-native';
+import { Keyboard, ArrowLeft, Camera as CameraIcon, HelpCircle, AlertCircle, Zap, ZapOff, FileText, ScanText } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { BlurView } from 'expo-blur';
+import { parseNutritionLabel } from '../../utils/ocrParser';
 
 // ─────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────
-type ScanMode = 'camera' | 'manual' | 'result';
+type ScanMode = 'camera' | 'manual' | 'result' | 'not-found' | 'ocr-label';
 
 // Timeout for the Open Food Facts API call — 10 seconds
 const API_TIMEOUT_MS = 10_000;
@@ -120,6 +121,10 @@ export default function ScannerScreen() {
   const [manualSugarGrams, setManualSugarGrams] = useState('');
   const [focusName, setFocusName] = useState(false);
   const [focusSugar, setFocusSugar] = useState(false);
+
+  // OCR Input State
+  const [ocrText, setOcrText] = useState('');
+  const [ocrFocus, setOcrFocus] = useState(false);
 
   // Scan Result State
   const [scanResult, setScanResult] = useState<{
@@ -229,12 +234,13 @@ export default function ScannerScreen() {
       if (!mountedRef.current) return;
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       const isTimeout = err?.name === 'AbortError';
-      setErrorMsg(
-        isTimeout
-          ? 'Request timed out. Check your internet connection and try again.'
-          : 'Product not found. Try entering the sugar amount manually!'
-      );
-      setMode('manual');
+      if (isTimeout) {
+        setErrorMsg('Request timed out. Check your internet connection and try again.');
+        setMode('manual');
+      } else {
+        setErrorMsg('Product not found in database.');
+        setMode('not-found');
+      }
     } finally {
       if (!mountedRef.current) return;
       setLoading(false);
@@ -273,6 +279,28 @@ export default function ScannerScreen() {
     setMode('result');
     setManualName('');
     setManualSugarGrams('');
+  };
+
+  const handleOcrSubmit = () => {
+    if (!ocrText.trim()) return;
+    setLoading(true);
+    
+    setTimeout(() => {
+      const parsed = parseNutritionLabel(ocrText);
+      setLoading(false);
+      
+      if (parsed) {
+        setManualSugarGrams(parsed.amount.toString());
+        setErrorMsg(`Found ${parsed.type} sugars: ${parsed.amount}g. Please verify and add a product name.`);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setMode('manual');
+      } else {
+        setErrorMsg("Could not find a valid sugar amount in the scanned text. Please enter it manually.");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        setMode('manual');
+      }
+      setOcrText('');
+    }, 400);
   };
 
   const resetScanner = () => {
@@ -615,6 +643,115 @@ export default function ScannerScreen() {
               activeOpacity={0.9}
             >
               <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 14 }}>Convert to Teaspoons</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </SafeAreaView>
+      )}
+
+      {/* ════════════════════════════════════════════════════
+          4. NOT FOUND FALLBACK MODE
+          ════════════════════════════════════════════════════ */}
+      {mode === 'not-found' && (
+        <SafeAreaView style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
+          <View style={{ alignItems: 'center', marginBottom: 40 }}>
+            <Mascot state="dizzy" size={140} />
+            <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', marginTop: 24, textAlign: 'center' }}>
+              Product Not Found!
+            </Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginTop: 12, lineHeight: 22, paddingHorizontal: 16 }}>
+              We couldn't find this barcode in our database. But don't worry, you can easily scan the ingredients label instead.
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setMode('ocr-label'); }}
+            style={{ backgroundColor: colors.primary, width: '100%', paddingVertical: 18, borderRadius: 20, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: 16 }}
+            activeOpacity={0.9}
+          >
+            <ScanText color="#fff" size={20} />
+            <Text style={{ color: '#ffffff', fontWeight: '900', fontSize: 15, letterSpacing: 0.5 }}>Scan Ingredients Label</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setMode('manual'); }}
+            style={{ backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border, width: '100%', paddingVertical: 18, borderRadius: 20, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10 }}
+            activeOpacity={0.8}
+          >
+            <Keyboard color={colors.text} size={20} />
+            <Text style={{ color: colors.text, fontWeight: '800', fontSize: 15 }}>Enter Manually</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={resetScanner}
+            style={{ marginTop: 32, paddingVertical: 12 }}
+          >
+            <Text style={{ color: colors.textSecondary, fontWeight: '700', fontSize: 14 }}>Back to Barcode Scanner</Text>
+          </TouchableOpacity>
+        </SafeAreaView>
+      )}
+
+      {/* ════════════════════════════════════════════════════
+          5. OCR LABEL SCANNING MODE
+          ════════════════════════════════════════════════════ */}
+      {mode === 'ocr-label' && (
+        <SafeAreaView style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+            <TouchableOpacity onPress={resetScanner} style={{ padding: 8, backgroundColor: colors.surfaceRaised, borderRadius: 99 }}>
+              <ArrowLeft size={18} color={colors.text} />
+            </TouchableOpacity>
+            <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900', marginLeft: 16 }}>Scan Nutrition Label</Text>
+          </View>
+
+          <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 120 }} keyboardShouldPersistTaps="handled">
+            <View style={{ backgroundColor: colors.primary + '15', padding: 20, borderRadius: 20, marginBottom: 24, flexDirection: 'row', gap: 16 }}>
+              <ScanText color={colors.primary} size={28} style={{ marginTop: 2 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', marginBottom: 6 }}>Use your phone's built-in OCR</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20 }}>
+                  Tap the text box below. On iOS, a "Scan Text" icon will appear above the keyboard. Use it to scan the nutrition label and we'll extract the sugar!
+                </Text>
+              </View>
+            </View>
+
+            <View style={{ marginBottom: 24 }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 12, paddingHorizontal: 4 }}>
+                Nutrition Label Text
+              </Text>
+              <TextInput
+                value={ocrText}
+                onChangeText={setOcrText}
+                onFocus={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setOcrFocus(true); }}
+                onBlur={() => setOcrFocus(false)}
+                multiline
+                keyboardType="default"
+                placeholder="Tap here and use the 'Scan Text' camera icon to paste text from the physical label..."
+                placeholderTextColor={colors.textMuted}
+                style={{
+                  backgroundColor: colors.surface,
+                  borderColor: ocrFocus ? colors.primary : colors.border,
+                  borderWidth: 1.5,
+                  shadowColor: colors.primary,
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: ocrFocus ? 0.12 : 0,
+                  shadowRadius: 8,
+                  color: colors.text,
+                  padding: 20,
+                  paddingTop: 20,
+                  borderRadius: 20,
+                  fontSize: 14,
+                  minHeight: 200,
+                  textAlignVertical: 'top',
+                }}
+              />
+            </View>
+
+            <TouchableOpacity
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); handleOcrSubmit(); }}
+              disabled={!ocrText.trim()}
+              style={{ backgroundColor: ocrText.trim() ? colors.primary : colors.surfaceRaised, width: '100%', paddingVertical: 18, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}
+              activeOpacity={0.9}
+            >
+              <Text style={{ color: ocrText.trim() ? '#ffffff' : colors.textMuted, fontWeight: '900', fontSize: 15 }}>Analyze Label Text</Text>
             </TouchableOpacity>
           </ScrollView>
         </SafeAreaView>
