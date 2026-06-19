@@ -95,7 +95,20 @@ function NutritionCard({ cardW, C }: { cardW: number; C: any }) {
       shadowRadius: 24,
       elevation: 8,
       aspectRatio: 1.2,
+      position: 'relative',
     }}>
+      {/* Cool Tilted Pills */}
+      <View style={{ position: 'absolute', top: 20, left: 16, transform: [{ rotate: '-12deg' }], zIndex: 10 }}>
+        <View style={{ backgroundColor: '#FFF5CC', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#FFE066' }}>
+          <Text style={{ color: '#B28600', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 }}>Scan Barcode</Text>
+        </View>
+      </View>
+      <View style={{ position: 'absolute', top: 20, right: 16, transform: [{ rotate: '12deg' }], zIndex: 10 }}>
+        <View style={{ backgroundColor: '#FFEDCC', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#FFC266' }}>
+          <Text style={{ color: '#CC7A00', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 }}>Scan Label</Text>
+        </View>
+      </View>
+
       <View style={{
         width: 140, height: 140, borderRadius: 24, backgroundColor: C.cardInner,
         borderWidth: 1.5, borderColor: C.cardBorder, alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
@@ -699,9 +712,9 @@ const SLIDES: SlideData[] = [
   },
   {
     step: 6,
-    title: 'Real Time Product Analysis',
-    highlight: 'Product Analysis',
-    subtitle: 'Our database instantly analyzes barcodes and nutrition labels, filtering out the marketing noise to give you the raw data.',
+    title: 'Real Time Sugar Scanner',
+    highlight: 'Sugar Scanner',
+    subtitle: 'Scan any barcode or label and App will tell you exact amount of Sugar in that Product',
     buttonLabel: 'Next',
     isLast: false,
     mascotState: 'happy',
