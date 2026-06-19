@@ -220,9 +220,6 @@ export default function ScannerScreen() {
       const response = await fetch('https://api.ocr.space/parse/image', {
         method: 'POST',
         body: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
       });
 
       if (!response.ok) {
@@ -273,9 +270,6 @@ export default function ScannerScreen() {
         const fallbackResponse = await fetch('https://api.ocr.space/parse/image', {
           method: 'POST',
           body: formData,
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
         });
         const fallbackResult = await fallbackResponse.json();
         if (fallbackResult?.ParsedResults && fallbackResult.ParsedResults.length > 0) {
