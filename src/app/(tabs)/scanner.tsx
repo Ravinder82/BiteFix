@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
+import * as FileSystem from 'expo-file-system';
 import AnimatedReanimated, {
   useSharedValue,
   useAnimatedStyle,
@@ -65,7 +66,13 @@ async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Respons
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'GoodbyeSugarApp/1.0.0 (React Native; iOS/Android; contact@goodbyesugar.org)',
+        'Accept': 'application/json',
+      },
+    });
     clearTimeout(timer);
     return response;
   } catch (err) {
@@ -95,6 +102,7 @@ export default function ScannerScreen() {
   // Reference to the camera view for takePictureAsync
   const cameraRef = useRef<CameraView>(null);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isOcrLoading, setIsOcrLoading] = useState(false);
 
   // Synchronous ref-lock prevents duplicate scan callbacks from camera frames
   const isScanningRef = useRef(false);
@@ -189,6 +197,118 @@ export default function ScannerScreen() {
     proteinGrams?: number;
   } | null>(null);
 
+  // Auto-OCR scan execution function
+  const performOcrOnImage = async (imageUri: string) => {
+    if (isOcrLoading || !imageUri) return;
+    setIsOcrLoading(true);
+    setErrorMsg(null);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    try {
+      const base64 = await FileSystem.readAsStringAsync(imageUri, {
+        encoding: 'base64',
+      });
+
+      const formData = new FormData();
+      formData.append('apikey', 'K87595304388957');
+      formData.append('base64Image', `data:image/jpeg;base64,${base64}`);
+      formData.append('language', 'eng');
+      formData.append('isOverlayRequired', 'false');
+      formData.append('detectOrientation', 'true');
+      formData.append('scale', 'true');
+
+      const response = await fetch('https://api.ocr.space/parse/image', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result?.ParsedResults && result.ParsedResults.length > 0) {
+        const text = result.ParsedResults[0].ParsedText;
+        if (text && text.trim()) {
+          setOcrText(text);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+          // Auto-parse sugar value
+          const parsed = parseNutritionLabel(text);
+          if (parsed) {
+            setManualSugarGrams(parsed.amount.toString());
+            setManualName('');
+            setErrorMsg(
+              `Auto-Scan Successful! Found ${parsed.amount}g of sugar. Now enter the product name to save.`
+            );
+            setTimeout(() => {
+              setMode('manual');
+              setOcrText('');
+              setCapturedPhotoUri(null);
+            }, 1000);
+          } else {
+            setErrorMsg('Text scanned successfully, but we could not find the sugar value automatically. Please type it below.');
+          }
+        } else {
+          throw new Error('No text found in the image.');
+        }
+      } else {
+        const errorDetails = result?.ErrorMessage ? result.ErrorMessage.join(', ') : 'Unknown OCR error';
+        throw new Error(errorDetails);
+      }
+    } catch (err: any) {
+      console.error('OCR Error:', err);
+      // Fallback to helloworld key
+      try {
+        const base64 = await FileSystem.readAsStringAsync(imageUri, {
+          encoding: 'base64',
+        });
+        const formData = new FormData();
+        formData.append('apikey', 'helloworld');
+        formData.append('base64Image', `data:image/jpeg;base64,${base64}`);
+        formData.append('language', 'eng');
+        const fallbackResponse = await fetch('https://api.ocr.space/parse/image', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        const fallbackResult = await fallbackResponse.json();
+        if (fallbackResult?.ParsedResults && fallbackResult.ParsedResults.length > 0) {
+          const text = fallbackResult.ParsedResults[0].ParsedText;
+          if (text && text.trim()) {
+            setOcrText(text);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            const parsed = parseNutritionLabel(text);
+            if (parsed) {
+              setManualSugarGrams(parsed.amount.toString());
+              setManualName('');
+              setErrorMsg(`Auto-Scan Successful! Found ${parsed.amount}g of sugar. Now enter the product name to save.`);
+              setTimeout(() => {
+                setMode('manual');
+                setOcrText('');
+                setCapturedPhotoUri(null);
+              }, 1000);
+            } else {
+              setErrorMsg('Text scanned successfully, but we could not find the sugar value automatically. Please type it below.');
+            }
+            return;
+          }
+        }
+      } catch (fbErr) {
+        console.error('Fallback OCR Error:', fbErr);
+      }
+      setErrorMsg(`Auto-Scan failed: ${err.message || err}. You can still use iOS keyboard OCR or type it manually below.`);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setIsOcrLoading(false);
+    }
+  };
+
   // Auto-switch to manual if camera permission is denied
   useEffect(() => {
     if (permission && !permission.granted && mode === 'camera') {
@@ -214,7 +334,7 @@ export default function ScannerScreen() {
     if (!mountedRef.current) return;
     setLoading(true);
     setErrorMsg(null);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
       const response = await fetchWithTimeout(
@@ -505,29 +625,55 @@ export default function ScannerScreen() {
             </View>
           )}
 
-          {/* ─── Top Label: "Barcode Scanner" ─── */}
+          {/* ─── Top Segmented Control (Unified Switcher) ─── */}
           <SafeAreaView
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, alignItems: 'center', paddingTop: Platform.OS === 'android' ? 12 : 0 }}
-            pointerEvents="none"
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, paddingTop: Platform.OS === 'android' ? 12 : 0 }}
           >
-            <View style={{ borderRadius: 99, overflow: 'hidden', marginTop: 12 }}>
-              <BlurView
-                intensity={60}
-                tint="dark"
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  paddingVertical: 10,
-                  paddingHorizontal: 20,
-                  borderWidth: 1.5,
-                  borderColor: colors.primary + '40',
-                  borderRadius: 99,
-                }}
-              >
-                <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2 }}>
-                  Barcode Scanner
-                </Text>
-              </BlurView>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, paddingTop: 12 }}>
+              <View style={{
+                flexDirection: 'row',
+                backgroundColor: 'rgba(0,0,0,0.65)',
+                borderRadius: 99,
+                padding: 4,
+                borderWidth: 1.5,
+                borderColor: 'rgba(255,255,255,0.2)',
+              }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setMode('camera');
+                  }}
+                  style={{
+                    paddingVertical: 8,
+                    paddingHorizontal: 20,
+                    borderRadius: 99,
+                    backgroundColor: colors.primary,
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                    Barcode
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setMode('ocr-label');
+                  }}
+                  style={{
+                    paddingVertical: 8,
+                    paddingHorizontal: 20,
+                    borderRadius: 99,
+                    backgroundColor: 'transparent',
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8, opacity: 0.65 }}>
+                    Scan Label
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </SafeAreaView>
 
@@ -895,7 +1041,10 @@ export default function ScannerScreen() {
           <SafeAreaView style={{ position: 'absolute', top: 0, left: 0, right: 0, paddingTop: Platform.OS === 'android' ? 12 : 0 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 12 }}>
               <TouchableOpacity
-                onPress={() => setMode('not-found')}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  resetScanner();
+                }}
                 style={{ borderRadius: 99, overflow: 'hidden' }}
                 activeOpacity={0.85}
               >
@@ -904,12 +1053,50 @@ export default function ScannerScreen() {
                 </BlurView>
               </TouchableOpacity>
 
-              <View style={{ borderRadius: 99, overflow: 'hidden' }}>
-                <BlurView intensity={60} tint="dark" style={{ paddingVertical: 10, paddingHorizontal: 20, borderWidth: 1.5, borderColor: colors.primary + '50', borderRadius: 99 }}>
-                  <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2 }}>
-                    Label Scanner
+              {/* Center Segmented Control switcher */}
+              <View style={{
+                flexDirection: 'row',
+                backgroundColor: 'rgba(0,0,0,0.65)',
+                borderRadius: 99,
+                padding: 4,
+                borderWidth: 1.5,
+                borderColor: 'rgba(255,255,255,0.2)',
+              }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setMode('camera');
+                  }}
+                  style={{
+                    paddingVertical: 8,
+                    paddingHorizontal: 20,
+                    borderRadius: 99,
+                    backgroundColor: 'transparent',
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8, opacity: 0.65 }}>
+                    Barcode
                   </Text>
-                </BlurView>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setMode('ocr-label');
+                  }}
+                  style={{
+                    paddingVertical: 8,
+                    paddingHorizontal: 20,
+                    borderRadius: 99,
+                    backgroundColor: colors.primary,
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                    Scan Label
+                  </Text>
+                </TouchableOpacity>
               </View>
 
               {/* Torch toggle */}
@@ -1003,27 +1190,60 @@ export default function ScannerScreen() {
               </View>
             )}
 
-            {/* iOS Live Text instruction card */}
+            {/* Direct Auto-Scan OCR Button */}
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                performOcrOnImage(capturedPhotoUri!);
+              }}
+              disabled={isOcrLoading}
+              style={{
+                backgroundColor: colors.primary,
+                borderRadius: 16,
+                paddingVertical: 16,
+                paddingHorizontal: 20,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+                marginBottom: 16,
+                shadowColor: colors.primary,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.2,
+                shadowRadius: 6,
+                elevation: 3,
+              }}
+              activeOpacity={0.85}
+            >
+              {isOcrLoading ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <ScanText size={20} color="#ffffff" />
+              )}
+              <Text style={{ color: '#ffffff', fontWeight: '900', fontSize: 15 }}>
+                {isOcrLoading ? 'Scanning Text...' : 'Scan Text from Image'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Instruction Card */}
             <View style={{
-              backgroundColor: colors.primary + '12',
+              backgroundColor: colors.surfaceRaised,
               borderWidth: 1,
-              borderColor: colors.primary + '25',
+              borderColor: colors.border,
               padding: 16,
               borderRadius: 16,
-              marginBottom: 16,
+              marginBottom: 20,
               flexDirection: 'row',
               gap: 14,
               alignItems: 'flex-start',
             }}>
-              <ScanText size={22} color={colors.primary} style={{ marginTop: 2 }} />
+              <AlertCircle size={20} color={colors.textSecondary} style={{ marginTop: 2 }} />
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800', marginBottom: 4 }}>
-                  {Platform.OS === 'ios' ? 'Use iOS Live Text' : 'Type or Paste Label Text'}
+                  How it works
                 </Text>
                 <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 18 }}>
-                  {Platform.OS === 'ios'
-                    ? 'Tap the text box → look for the Scan Text icon (📷) above the keyboard → point your phone at the label to auto-fill.'
-                    : 'Manually type or paste the nutrition facts text (especially the Sugars line).'}
+                  Tapping "Scan Text from Image" will automatically read the nutrition label and extract the sugar value. Alternatively, you can type or paste text manually into the box below.
                 </Text>
               </View>
             </View>
@@ -1040,11 +1260,7 @@ export default function ScannerScreen() {
                 onBlur={() => setOcrFocus(false)}
                 multiline
                 keyboardType="default"
-                placeholder={
-                  Platform.OS === 'ios'
-                    ? "Tap here → use the scan text 📷 icon above the keyboard to scan text from the label above..."
-                    : "Type or paste the nutrition label text here (e.g. 'Total Sugars 12g')"
-                }
+                placeholder="Or type/paste the nutrition label text manually here (e.g. 'Total Sugars 12g')..."
                 placeholderTextColor={colors.textMuted}
                 style={{
                   backgroundColor: colors.surface,
