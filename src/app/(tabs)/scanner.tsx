@@ -11,6 +11,7 @@ import {
   Platform,
   Dimensions,
   KeyboardAvoidingView,
+  Modal,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
@@ -28,7 +29,7 @@ import AnimatedReanimated, {
 } from 'react-native-reanimated';
 import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
-import { SugarPile } from '../../components/features/SugarPile';
+
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
 import {
@@ -41,6 +42,11 @@ import {
   ZapOff,
   CheckCircle,
   RotateCcw,
+  Shuffle,
+  X,
+  Leaf,
+  ShieldAlert,
+  FlaskConical,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { BlurView } from 'expo-blur';
@@ -223,13 +229,28 @@ export default function ScannerScreen() {
     brand: string;
     sugarGrams: number;
     sugarTeaspoons: number;
+    sugarPer100g?: number;     // Used for accurate normalized comparisons
     imageUrl?: string;
     servingSize?: string;
     calories?: number;
     carbsGrams?: number;
     fatGrams?: number;
     proteinGrams?: number;
+    novaGroup?: number;        // NOVA classification 1-4
+    additivesTags?: string[];  // e.g. ['en:e330', 'en:e621']
+    categoryTag?: string;      // e.g. 'en:breakfast-cereals'
   } | null>(null);
+
+  // Better Choices Modal State
+  const [betterChoicesVisible, setBetterChoicesVisible] = useState(false);
+  const [betterChoicesLoading, setBetterChoicesLoading] = useState(false);
+  const [betterChoices, setBetterChoices] = useState<Array<{
+    name: string;
+    brand: string;
+    sugarGrams: number;
+    sugarTeaspoons: number;
+    imageUrl?: string;
+  }>>([]);
 
   // Auto-switch to manual if camera permission is denied
   useEffect(() => {
@@ -338,6 +359,11 @@ export default function ScannerScreen() {
             // where community contributors often leave sugars=0 for glucose products
             const sugarGrams = extractSugarFromNutriments(p.nutriments ?? {});
             const sugarTeaspoons = parseFloat((sugarGrams / 4.2).toFixed(1));
+            
+            // Extract the strict 100g sugar value for normalized Smart Swaps comparison
+            const sugarPer100g = p.nutriments?.sugars_100g !== undefined 
+                ? parseFloat(p.nutriments.sugars_100g) 
+                : undefined;
 
             const servingSize: string | undefined = p.serving_size || undefined;
             const calories =
@@ -357,10 +383,25 @@ export default function ScannerScreen() {
               : p.nutriments?.proteins_100g !== undefined ? parseFloat(p.nutriments.proteins_100g)
               : undefined;
 
+            // NOVA classification (1-4) and additives for the NOVA LED indicator
+            const novaGroup: number | undefined =
+              typeof p.nova_group === 'number' ? p.nova_group
+              : typeof p.nova_group === 'string' ? parseInt(p.nova_group, 10) || undefined
+              : undefined;
+
+            const additivesTags: string[] = Array.isArray(p.additives_tags) ? p.additives_tags : [];
+
+            // Best category tag for "Better Choices" lookup
+            // Prefer the most specific category (last in the array) from categories_tags
+            const categoryTag: string | undefined =
+              Array.isArray(p.categories_tags) && p.categories_tags.length > 0
+                ? p.categories_tags[p.categories_tags.length - 1]
+                : undefined;
+
             addScan(name, sugarGrams, brand, imageUrl, data, servingSize, calories, carbsGrams, fatGrams, proteinGrams);
 
             if (mountedRef.current) {
-              setScanResult({ name, brand, sugarGrams, sugarTeaspoons, imageUrl, servingSize, calories, carbsGrams, fatGrams, proteinGrams });
+              setScanResult({ name, brand, sugarGrams, sugarTeaspoons, sugarPer100g, imageUrl, servingSize, calories, carbsGrams, fatGrams, proteinGrams, novaGroup, additivesTags, categoryTag });
               productFound = true;
             }
           }
@@ -466,7 +507,140 @@ export default function ScannerScreen() {
     setManualProductSize('');
     setManualImageUri(null);
     setCalculationMode('total');
+    setBetterChoicesVisible(false);
+    setBetterChoices([]);
     setMode('camera');
+  };
+
+  // ─────────────────────────────────────────────────────────
+  // NOVA LED color + label helper
+  // ─────────────────────────────────────────────────────────
+  const getNovaInfo = (group?: number) => {
+    switch (group) {
+      case 1: return {
+        color: '#22C55E',
+        glowColor: 'rgba(34, 197, 94, 0.4)',
+        label: 'Unprocessed',
+        description: 'Unprocessed or minimally processed foods. These are natural foods altered only by removal of inedible parts, drying, crushing, grinding, pasteurization, or fermentation. No added substances.',
+      };
+      case 2: return {
+        color: '#84CC16',
+        glowColor: 'rgba(132, 204, 22, 0.4)',
+        label: 'Processed Ingredient',
+        description: 'Processed culinary ingredients obtained from Group 1 foods by pressing, refining, grinding, or milling. Examples: oils, butter, sugar, salt, flour. Used in food preparation, not eaten alone.',
+      };
+      case 3: return {
+        color: '#F59E0B',
+        glowColor: 'rgba(245, 158, 11, 0.4)',
+        label: 'Processed',
+        description: 'Processed foods made by adding salt, oil, sugar, or other Group 2 substances to Group 1 foods. Includes canned vegetables, cheeses, freshly made bread. Usually 2-3 ingredients.',
+      };
+      case 4: return {
+        color: '#EF4444',
+        glowColor: 'rgba(239, 68, 68, 0.5)',
+        label: 'Ultra-Processed',
+        description: 'Ultra-processed food products made mostly from substances derived from foods and additives. Studies in The BMJ (2019) and JAMA (2022) link high intake to increased risk of obesity, type 2 diabetes, cardiovascular disease, and all-cause mortality.',
+      };
+      default: return {
+        color: '#9CA3AF',
+        glowColor: 'rgba(156, 163, 175, 0.3)',
+        label: 'Unknown',
+        description: 'Processing level data not available for this product.',
+      };
+    }
+  };
+
+  // Format additive tag like 'en:e330' → 'E330'
+  const formatAdditive = (tag: string) => {
+    const parts = tag.split(':');
+    const code = parts[parts.length - 1];
+    return code.toUpperCase().replace('-', ' ');
+  };
+
+  // ─────────────────────────────────────────────────────────
+  // Fetch "Better Choices" (3 lower-sugar alternatives)
+  // ─────────────────────────────────────────────────────────
+  const fetchBetterChoices = async () => {
+    if (!scanResult?.categoryTag) return;
+
+    setBetterChoicesLoading(true);
+    setBetterChoicesVisible(true);
+    setBetterChoices([]);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    try {
+      const url = `https://world.openfoodfacts.org/cgi/search.pl?action=process&tagtype_0=categories&tag_contains_0=contains&tag_0=${encodeURIComponent(scanResult.categoryTag)}&sort_by=sugars_100g&page_size=15&json=1`;
+      
+      const response = await fetchWithTimeout(url, API_TIMEOUT_MS);
+      if (response.ok) {
+        const data = await response.json();
+        const products = data.products || [];
+        
+        // Filter: must have a name, must have sugar data, must not be the same product
+        const alternatives: Array<{
+          name: string;
+          brand: string;
+          sugarGrams: number;
+          sugarTeaspoons: number;
+          imageUrl?: string;
+        }> = [];
+
+        // Calculate scaling factor from the scanned product (total sugar / sugar per 100g)
+        // If it's a 500ml coke, 53g total / 10.6g per 100g = 5 (meaning 500g serving size)
+        let scalingFactor: number | null = null;
+        if (scanResult.sugarPer100g && scanResult.sugarPer100g > 0) {
+           scalingFactor = scanResult.sugarGrams / scanResult.sugarPer100g;
+        }
+
+        for (const p of products) {
+          if (alternatives.length >= 3) break;
+          
+          const pName = (p.product_name || p.product_name_en || '').trim();
+          if (!pName) continue;
+          
+          // Skip if it's the same product name (case insensitive)
+          // or if one name is a very close substring of the other (e.g. "Coca-Cola" vs "Coca Cola Original taste")
+          const normalizedScanned = scanResult.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+          const normalizedPName = pName.toLowerCase().replace(/[^a-z0-9]/g, '');
+          if (normalizedPName.includes(normalizedScanned) || normalizedScanned.includes(normalizedPName)) {
+            continue;
+          }
+          
+          let altSugar100g = p.nutriments?.sugars_100g !== undefined ? parseFloat(p.nutriments.sugars_100g) : null;
+          
+          // Only compare if we have 100g values for both, or use the raw values as fallback
+          let comparativeSugar: number;
+          let scannedComparative: number;
+
+          if (scalingFactor !== null && altSugar100g !== null) {
+              // Scale the alternative's sugar to match the scanned product's serving size
+              comparativeSugar = altSugar100g * scalingFactor;
+              scannedComparative = scanResult.sugarGrams;
+          } else {
+              // Fallback to absolute sugar from whatever the API gave us
+              comparativeSugar = extractSugarFromNutriments(p.nutriments ?? {});
+              scannedComparative = scanResult.sugarGrams;
+          }
+          
+          // Only suggest if it has strictly LESS sugar (at least 0.5g difference to avoid rounding issues)
+          if (comparativeSugar >= scannedComparative - 0.5) continue;
+          
+          alternatives.push({
+            name: pName,
+            brand: (p.brands || 'Generic Brand').trim(),
+            sugarGrams: parseFloat(comparativeSugar.toFixed(1)),
+            sugarTeaspoons: parseFloat((comparativeSugar / 4.2).toFixed(1)),
+            imageUrl: p.image_front_small_url || p.image_front_url || undefined,
+          });
+        }
+        
+        setBetterChoices(alternatives);
+      }
+    } catch (err) {
+      console.warn('Better Choices fetch error:', err);
+    } finally {
+      setBetterChoicesLoading(false);
+    }
   };
 
   // ─── Loading state before permission resolves ───────────
@@ -1045,7 +1219,7 @@ export default function ScannerScreen() {
             contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }}
             showsVerticalScrollIndicator={false}
           >
-            {/* Product Card */}
+            {/* 1. Hero Section: Product Card & Sugar Impact */}
             <View style={{ backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, padding: 24, borderRadius: 28, alignItems: 'center', marginBottom: 24 }}>
               {scanResult.imageUrl && (
                 <Image
@@ -1065,22 +1239,183 @@ export default function ScannerScreen() {
               </View>
 
               {/* Reactive Mascot */}
-              <View style={{ marginVertical: 16 }}>
+              <View style={{ marginTop: 24, marginBottom: 16 }}>
                 <Mascot
                   state={
                     scanResult.sugarTeaspoons > 6 ? 'shocked'
                       : scanResult.sugarTeaspoons > 3 ? 'dizzy'
                         : 'happy'
                   }
-                  size={110}
+                  size={120}
                 />
               </View>
 
-              {/* Sugar Pile Visualizer */}
-              <SugarPile teaspoons={scanResult.sugarTeaspoons} />
+              {/* Massive Impact Typography for Sugar */}
+              <View style={{ alignItems: 'center', marginTop: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+                  <Text style={{
+                    color: scanResult.sugarTeaspoons > 6 ? colors.error : scanResult.sugarTeaspoons > 3 ? colors.warning : colors.success,
+                    fontSize: 72,
+                    fontWeight: '900',
+                    letterSpacing: -2,
+                    lineHeight: 72
+                  }}>
+                    {scanResult.sugarTeaspoons}
+                  </Text>
+                  <Text style={{
+                    color: scanResult.sugarTeaspoons > 6 ? colors.error : scanResult.sugarTeaspoons > 3 ? colors.warning : colors.success,
+                    fontSize: 24,
+                    fontWeight: '800',
+                    marginLeft: 6
+                  }}>
+                    tsp
+                  </Text>
+                </View>
+                <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
+                  Total Sugar
+                </Text>
+              </View>
             </View>
 
-            {/* Nutrition Facts */}
+            {/* 2. Unified Health Insights Card (NOVA + Additives + Better Choices) */}
+            {(() => {
+              const nova = getNovaInfo(scanResult.novaGroup);
+              // Only show this card if we have NOVA data or additives or if it's an OFF product
+              if (!scanResult.novaGroup && (!scanResult.additivesTags || scanResult.additivesTags.length === 0)) return null;
+
+              return (
+                <View style={{
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  borderRadius: 28,
+                  padding: 24,
+                  marginBottom: 24,
+                }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                    <ShieldAlert size={18} color={colors.text} />
+                    <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900' }}>Health Insights</Text>
+                  </View>
+
+                  {/* NOVA Pill & Studies Pill Row */}
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+                    {scanResult.novaGroup && (
+                      <View style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: nova.color + '15',
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
+                        borderRadius: 99,
+                        borderWidth: 1,
+                        borderColor: nova.color + '30',
+                        gap: 6
+                      }}>
+                        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: nova.color }} />
+                        <Text style={{ color: nova.color, fontSize: 12, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                          NOVA {scanResult.novaGroup} — {nova.label}
+                        </Text>
+                      </View>
+                    )}
+                    
+                    {scanResult.novaGroup === 4 && (
+                      <View style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
+                        borderRadius: 99,
+                        gap: 4
+                      }}>
+                        <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700' }}>
+                          📚 Backed by BMJ & JAMA Studies
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Additives Mini Card */}
+                  {scanResult.additivesTags && scanResult.additivesTags.length > 0 && (
+                    <View style={{
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                      padding: 16,
+                      borderRadius: 16,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      marginBottom: scanResult.categoryTag ? 20 : 0
+                    }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                        <FlaskConical size={14} color={colors.textSecondary} />
+                        <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>
+                          {scanResult.additivesTags.length} Additive{scanResult.additivesTags.length > 1 ? 's' : ''} Detected
+                        </Text>
+                      </View>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                        {scanResult.additivesTags.slice(0, 12).map((tag, i) => (
+                          <View key={i} style={{
+                            backgroundColor: colors.surfaceRaised,
+                            paddingHorizontal: 8,
+                            paddingVertical: 4,
+                            borderRadius: 8,
+                            borderWidth: 1,
+                            borderColor: colors.border
+                          }}>
+                            <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '800' }}>
+                              {formatAdditive(tag)}
+                            </Text>
+                          </View>
+                        ))}
+                        {scanResult.additivesTags.length > 12 && (
+                          <View style={{
+                            backgroundColor: colors.surfaceRaised,
+                            paddingHorizontal: 8,
+                            paddingVertical: 4,
+                            borderRadius: 8,
+                            borderWidth: 1,
+                            borderColor: colors.border
+                          }}>
+                            <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '800' }}>
+                              +{scanResult.additivesTags.length - 12} more
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Better Choices Button (Inside the Card) */}
+                  {scanResult.categoryTag && (
+                    <TouchableOpacity
+                      onPress={fetchBetterChoices}
+                      activeOpacity={0.85}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        backgroundColor: colors.success,
+                        paddingVertical: 14,
+                        borderRadius: 16,
+                        marginTop: (scanResult.additivesTags && scanResult.additivesTags.length > 0) ? 0 : 8,
+                        shadowColor: colors.success,
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 8,
+                        elevation: 4,
+                      }}
+                    >
+                      <Shuffle size={18} color="#ffffff" />
+                      <Text style={{ color: '#ffffff', fontWeight: '900', fontSize: 15 }}>
+                        Find Better Choices
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            })()}
+
+            {/* 3. Nutrition Facts */}
             <NutritionFacts
               colors={colors}
               sugarGrams={scanResult.sugarGrams}
@@ -1121,6 +1456,177 @@ export default function ScannerScreen() {
               <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 14 }}>Scan Another Item</Text>
             </TouchableOpacity>
           </ScrollView>
+
+          {/* ═══════════════════════════════════════════════
+              Better Choices Modal
+              ═══════════════════════════════════════════════ */}
+          <Modal
+            visible={betterChoicesVisible}
+            animationType="slide"
+            presentationStyle="pageSheet"
+            onRequestClose={() => setBetterChoicesVisible(false)}
+          >
+            <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+              {/* Modal Header */}
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingHorizontal: 20,
+                paddingVertical: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: colors.border,
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={{ backgroundColor: colors.success + '18', padding: 8, borderRadius: 12 }}>
+                    <Shuffle size={18} color={colors.success} />
+                  </View>
+                  <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>Better Choices</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => setBetterChoicesVisible(false)}
+                  style={{ backgroundColor: colors.surfaceRaised, padding: 8, borderRadius: 99 }}
+                >
+                  <X size={18} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Modal Body */}
+              <ScrollView
+                contentContainerStyle={{ padding: 20, paddingBottom: 60 }}
+                showsVerticalScrollIndicator={false}
+              >
+                {/* Context Banner */}
+                <View style={{
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
+                  borderRadius: 16,
+                  padding: 16,
+                  marginBottom: 20,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                }}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 18 }}>
+                    You scanned <Text style={{ fontWeight: '900', color: colors.text }}>{scanResult.name}</Text> with{' '}
+                    <Text style={{ fontWeight: '900', color: colors.error }}>{scanResult.sugarGrams}g sugar</Text>.
+                    Here are alternatives in the same category with less sugar:
+                  </Text>
+                </View>
+
+                {/* Loading State */}
+                {betterChoicesLoading && (
+                  <View style={{ alignItems: 'center', paddingVertical: 48 }}>
+                    <ActivityIndicator size="large" color={colors.success} />
+                    <Text style={{ color: colors.textSecondary, fontWeight: '700', fontSize: 13, marginTop: 16 }}>
+                      Finding healthier alternatives...
+                    </Text>
+                  </View>
+                )}
+
+                {/* No Results */}
+                {!betterChoicesLoading && betterChoices.length === 0 && (
+                  <View style={{ alignItems: 'center', paddingVertical: 48 }}>
+                    <Mascot state="dizzy" size={100} />
+                    <Text style={{ color: colors.text, fontWeight: '900', fontSize: 18, marginTop: 16 }}>
+                      No Alternatives Found
+                    </Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 13, textAlign: 'center', marginTop: 8, lineHeight: 20, paddingHorizontal: 16 }}>
+                      We couldn't find products in this category with less sugar. This product might already be a good choice!
+                    </Text>
+                  </View>
+                )}
+
+                {/* Alternative Product Cards */}
+                {betterChoices.map((alt, index) => {
+                  const sugarSaved = scanResult.sugarGrams - alt.sugarGrams;
+                  const pctLess = scanResult.sugarGrams > 0
+                    ? Math.round((sugarSaved / scanResult.sugarGrams) * 100)
+                    : 0;
+
+                  return (
+                    <View
+                      key={index}
+                      style={{
+                        backgroundColor: colors.surface,
+                        borderColor: colors.border,
+                        borderWidth: 1,
+                        borderRadius: 20,
+                        padding: 16,
+                        marginBottom: 14,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 14,
+                      }}
+                    >
+                      {/* Rank Badge */}
+                      <View style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 16,
+                        backgroundColor: index === 0 ? colors.success + '20' : colors.surfaceRaised,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                        <Text style={{
+                          color: index === 0 ? colors.success : colors.textSecondary,
+                          fontWeight: '900',
+                          fontSize: 14,
+                        }}>
+                          {index + 1}
+                        </Text>
+                      </View>
+
+                      {/* Product Image */}
+                      {alt.imageUrl && (
+                        <Image
+                          source={{ uri: alt.imageUrl }}
+                          style={{ width: 48, height: 48, borderRadius: 10 }}
+                          contentFit="contain"
+                          transition={200}
+                        />
+                      )}
+
+                      {/* Product Info */}
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: colors.text, fontWeight: '800', fontSize: 14, lineHeight: 18 }} numberOfLines={2}>
+                          {alt.name}
+                        </Text>
+                        <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}>
+                          {alt.brand}
+                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                          <View style={{
+                            backgroundColor: colors.success + '15',
+                            paddingHorizontal: 8,
+                            paddingVertical: 2,
+                            borderRadius: 99,
+                          }}>
+                            <Text style={{ color: colors.success, fontSize: 11, fontWeight: '900' }}>
+                              {alt.sugarGrams}g sugar
+                            </Text>
+                          </View>
+                          {pctLess > 0 && (
+                            <Text style={{ color: colors.success, fontSize: 11, fontWeight: '800' }}>
+                              ↓ {pctLess}% less
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+
+                      {/* Teaspoons */}
+                      <View style={{ alignItems: 'center' }}>
+                        <Text style={{ color: colors.text, fontWeight: '900', fontSize: 18 }}>
+                          {alt.sugarTeaspoons}
+                        </Text>
+                        <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700' }}>
+                          tsp
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </ScrollView>
+            </SafeAreaView>
+          </Modal>
         </SafeAreaView>
       )}
 

@@ -8,7 +8,6 @@ import AnimatedReanimated, { FadeInDown, useSharedValue, useAnimatedStyle, withR
 import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
-import { SugarPile } from '../../components/features/SugarPile';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
 import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle, Menu } from 'lucide-react-native';
 import { formatBloodSugarValue, getStatusColor, getStatusLabel } from '../../utils/bloodSugar';
@@ -597,8 +596,31 @@ export default function HomeScreen() {
                   />
                 </View>
 
-                {/* Sugar Teaspoon Pile representation */}
-                <SugarPile teaspoons={selectedScan.sugarTeaspoons} />
+                {/* Massive Impact Typography for Sugar */}
+                <View style={{ alignItems: 'center', marginTop: 8, marginBottom: 20 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+                    <Text style={{
+                      color: getSugarColor(selectedScan.sugarTeaspoons, colors),
+                      fontSize: 64,
+                      fontWeight: '900',
+                      letterSpacing: -2,
+                      lineHeight: 64
+                    }}>
+                      {selectedScan.sugarTeaspoons}
+                    </Text>
+                    <Text style={{
+                      color: getSugarColor(selectedScan.sugarTeaspoons, colors),
+                      fontSize: 20,
+                      fontWeight: '800',
+                      marginLeft: 6
+                    }}>
+                      tsp
+                    </Text>
+                  </View>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
+                    Total Sugar
+                  </Text>
+                </View>
 
                 {/* Nutrition Facts Label */}
                 <NutritionFacts
