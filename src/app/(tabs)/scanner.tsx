@@ -398,7 +398,7 @@ export default function ScannerScreen() {
                 ? p.categories_tags[p.categories_tags.length - 1]
                 : undefined;
 
-            addScan(name, sugarGrams, brand, imageUrl, data, servingSize, calories, carbsGrams, fatGrams, proteinGrams);
+            addScan(name, sugarGrams, brand, imageUrl, data, servingSize, calories, carbsGrams, fatGrams, proteinGrams, sugarPer100g, novaGroup, additivesTags, categoryTag);
 
             if (mountedRef.current) {
               setScanResult({ name, brand, sugarGrams, sugarTeaspoons, sugarPer100g, imageUrl, servingSize, calories, carbsGrams, fatGrams, proteinGrams, novaGroup, additivesTags, categoryTag });

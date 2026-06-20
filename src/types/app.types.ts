@@ -22,4 +22,8 @@ export interface ScanHistoryItem {
   proteinGrams?: number;
   timestamp: number;
   imageUrl?: string;
+  sugarPer100g?: number;
+  novaGroup?: number;
+  additivesTags?: string[];
+  categoryTag?: string;
 }

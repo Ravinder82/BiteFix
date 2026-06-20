@@ -41,7 +41,11 @@ interface AppState {
     calories?: number,
     carbsGrams?: number,
     fatGrams?: number,
-    proteinGrams?: number
+    proteinGrams?: number,
+    sugarPer100g?: number,
+    novaGroup?: number,
+    additivesTags?: string[],
+    categoryTag?: string
   ) => void;
   deleteScan: (id: string) => void;
   clearScans: () => void;
@@ -106,7 +110,11 @@ export const useAppStore = create<AppState>()(
         calories,
         carbsGrams,
         fatGrams,
-        proteinGrams
+        proteinGrams,
+        sugarPer100g,
+        novaGroup,
+        additivesTags,
+        categoryTag
       ) => set((state) => {
         const timestamp = Date.now();
         const sugarTeaspoons = sugarGrams / SUGAR_CONVERSION_GRAMS_PER_TEASPOON;
@@ -124,6 +132,10 @@ export const useAppStore = create<AppState>()(
           carbsGrams,
           fatGrams,
           proteinGrams,
+          sugarPer100g,
+          novaGroup,
+          additivesTags,
+          categoryTag,
         };
         const scans = [newScan, ...state.scans];
         return { scans };

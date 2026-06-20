@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, Alert, Modal, PanResponder, Animated, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, Alert, Modal, PanResponder, Animated, StyleSheet, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,11 +9,54 @@ import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
-import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle, Menu } from 'lucide-react-native';
+import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle, Menu, ShieldAlert, FlaskConical } from 'lucide-react-native';
 import { formatBloodSugarValue, getStatusColor, getStatusLabel } from '../../utils/bloodSugar';
 import SettingsScreen from './settings';
 import * as Haptics from 'expo-haptics';
 import { ScanHistoryItem } from '../../types/app.types';
+
+
+
+const getNovaInfo = (group?: number) => {
+  switch (group) {
+    case 1: return {
+      color: '#22C55E',
+      glowColor: 'rgba(34, 197, 94, 0.4)',
+      label: 'Unprocessed',
+      description: 'Unprocessed or minimally processed foods. These are natural foods altered only by removal of inedible parts, drying, crushing, grinding, pasteurization, or fermentation. No added substances.',
+    };
+    case 2: return {
+      color: '#84CC16',
+      glowColor: 'rgba(132, 204, 22, 0.4)',
+      label: 'Processed Ingredient',
+      description: 'Processed culinary ingredients obtained from Group 1 foods by pressing, refining, grinding, or milling. Oils, butter, sugar, salt, flour.',
+    };
+    case 3: return {
+      color: '#F59E0B',
+      glowColor: 'rgba(245, 158, 11, 0.4)',
+      label: 'Processed',
+      description: 'Processed foods made by adding salt, oil, sugar, or other substances to Group 1 foods. Canned vegetables, cheeses, freshly made bread.',
+    };
+    case 4: return {
+      color: '#EF4444',
+      glowColor: 'rgba(239, 68, 68, 0.5)',
+      label: 'Ultra-Processed',
+      description: 'Ultra-processed food products made mostly from substances derived from foods and additives. Studies in The BMJ (2019) and JAMA (2022) link high intake to increased risk of obesity, type 2 diabetes, cardiovascular disease, and all-cause mortality.',
+    };
+    default: return {
+      color: '#9CA3AF',
+      glowColor: 'rgba(156, 163, 175, 0.3)',
+      label: 'Unknown',
+      description: 'Processing level data not available for this product.',
+    };
+  }
+};
+
+const formatAdditive = (tag: string) => {
+  const parts = tag.split(':');
+  const code = parts[parts.length - 1];
+  return code.toUpperCase().replace('-', ' ');
+};
 
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
@@ -73,6 +116,8 @@ export default function HomeScreen() {
       },
     })
   ).current;
+
+
 
   const latestLog = logs[0];
   const latestScan = scans[0];
@@ -548,15 +593,12 @@ export default function HomeScreen() {
 
             {selectedScan && (
               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-                {/* Product Summary Card */}
-                <View 
-                  style={{ backgroundColor: colors.background, borderColor: colors.border }} 
-                  className="border p-5 rounded-[24px] items-center mb-5"
-                >
+                {/* 1. Hero Section: Product Card & Sugar Impact */}
+                <View style={{ backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1, padding: 24, borderRadius: 28, alignItems: 'center', marginBottom: 24 }}>
                   {selectedScan.imageUrl ? (
                     <Image
                       source={{ uri: selectedScan.imageUrl }}
-                      className="w-24 h-24 rounded-2xl mb-4"
+                      style={{ width: 112, height: 112, borderRadius: 16, marginBottom: 16 }}
                       contentFit="contain"
                       transition={200}
                     />
@@ -569,85 +611,158 @@ export default function HomeScreen() {
                     </View>
                   )}
                   
-                  <Text style={{ color: colors.text }} className="text-lg font-black text-center leading-tight">
+                  <Text style={{ color: colors.text, fontSize: 21, fontWeight: '900', textAlign: 'center', lineHeight: 26 }}>
                     {selectedScan.name}
                   </Text>
-                  <Text style={{ color: colors.textSecondary }} className="text-[10px] font-bold uppercase tracking-wider mt-1 px-3 py-1 bg-white dark:bg-stone-900 rounded-full border border-stone-100 dark:border-stone-800">
-                    {selectedScan.brand || 'Generic Brand'}
-                  </Text>
+                  <View style={{ backgroundColor: colors.surfaceRaised, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 99, marginTop: 6 }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 }}>
+                      {selectedScan.brand || 'Generic Brand'}
+                    </Text>
+                  </View>
                   {selectedScan.barcode && (
                     <Text style={{ color: colors.textMuted }} className="text-[9px] font-mono mt-1.5">
                       Barcode: {selectedScan.barcode}
                     </Text>
                   )}
-                </View>
 
-                {/* Mascot Reacts */}
-                <View className="items-center mb-4">
-                  <Mascot 
-                    state={
-                      selectedScan.sugarTeaspoons > 6 
-                        ? 'shocked' 
-                        : selectedScan.sugarTeaspoons > 3 
-                          ? 'dizzy' 
-                          : 'happy'
-                    }
-                    size={100}
-                  />
-                </View>
-
-                {/* Massive Impact Typography for Sugar */}
-                <View style={{ alignItems: 'center', marginTop: 8, marginBottom: 20 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-                    <Text style={{
-                      color: getSugarColor(selectedScan.sugarTeaspoons, colors),
-                      fontSize: 64,
-                      fontWeight: '900',
-                      letterSpacing: -2,
-                      lineHeight: 64
-                    }}>
-                      {selectedScan.sugarTeaspoons}
-                    </Text>
-                    <Text style={{
-                      color: getSugarColor(selectedScan.sugarTeaspoons, colors),
-                      fontSize: 20,
-                      fontWeight: '800',
-                      marginLeft: 6
-                    }}>
-                      tsp
-                    </Text>
+                  {/* Reactive Mascot */}
+                  <View style={{ marginTop: 24, marginBottom: 16 }}>
+                    <Mascot 
+                      state={
+                        selectedScan.sugarTeaspoons > 6 
+                          ? 'shocked' 
+                          : selectedScan.sugarTeaspoons > 3 
+                            ? 'dizzy' 
+                            : 'happy'
+                      }
+                      size={120}
+                    />
                   </View>
-                  <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
-                    Total Sugar
-                  </Text>
-                </View>
 
-                {/* Nutrition Facts Label */}
-                <NutritionFacts
-                  colors={colors}
-                  sugarGrams={selectedScan.sugarGrams}
-                  calories={selectedScan.calories}
-                  carbsGrams={selectedScan.carbsGrams}
-                  fatGrams={selectedScan.fatGrams}
-                  proteinGrams={selectedScan.proteinGrams}
-                  servingSize={selectedScan.servingSize}
-                />
-
-                {/* Info and WHO guidance */}
-                <View 
-                  style={{ backgroundColor: colors.surfaceRaised, borderColor: colors.border }} 
-                  className="p-4 rounded-[20px] border flex-row gap-3 items-start mb-6"
-                >
-                  <AlertTriangle size={18} color={selectedScan.sugarTeaspoons > 6 ? colors.error : colors.warning} className="mt-0.5" />
-                  <View className="flex-1">
-                    <Text style={{ color: colors.text }} className="text-xs font-bold">Sugar Limit Analysis</Text>
-                    <Text style={{ color: colors.textSecondary }} className="text-[11px] mt-1 leading-relaxed">
-                      WHO recommends limiting free sugars to under 6 teaspoons per day. This product contains {selectedScan.sugarTeaspoons} tsp ({selectedScan.sugarGrams}g), which takes up <Text className="font-bold">{( (selectedScan.sugarTeaspoons / 6) * 100 ).toFixed(0)}%</Text> of your entire daily sugar budget!
+                  {/* Massive Impact Typography for Sugar */}
+                  <View style={{ alignItems: 'center', marginTop: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+                      <Text style={{
+                        color: getSugarColor(selectedScan.sugarTeaspoons, colors),
+                        fontSize: 72,
+                        fontWeight: '900',
+                        letterSpacing: -2,
+                        lineHeight: 72
+                      }}>
+                        {selectedScan.sugarTeaspoons}
+                      </Text>
+                      <Text style={{
+                        color: getSugarColor(selectedScan.sugarTeaspoons, colors),
+                        fontSize: 24,
+                        fontWeight: '800',
+                        marginLeft: 6
+                      }}>
+                        tsp
+                      </Text>
+                    </View>
+                    <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
+                      Total Sugar
                     </Text>
                   </View>
                 </View>
 
-                {/* Delete scan option from details */}
+                {/* 2. Unified Health Insights Card (NOVA + Additives + Better Choices) */}
+                {(() => {
+                  const nova = getNovaInfo(selectedScan.novaGroup);
+                  if (!selectedScan.novaGroup && (!selectedScan.additivesTags || selectedScan.additivesTags.length === 0)) return null;
+
+                  return (
+                    <View style={{
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
+                      borderWidth: 1,
+                      borderRadius: 28,
+                      padding: 24,
+                      marginBottom: 24,
+                    }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                        <ShieldAlert size={18} color={colors.text} />
+                        <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900' }}>Health Insights</Text>
+                      </View>
+
+                      {/* NOVA Pill & Studies Pill Row */}
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+                        {selectedScan.novaGroup && (
+                          <View style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            backgroundColor: nova.color + '15',
+                            paddingHorizontal: 12,
+                            paddingVertical: 6,
+                            borderRadius: 99,
+                            borderWidth: 1,
+                            borderColor: nova.color + '30',
+                            gap: 6
+                          }}>
+                            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: nova.color }} />
+                            <Text style={{ color: nova.color, fontSize: 12, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                              NOVA {selectedScan.novaGroup} — {nova.label}
+                            </Text>
+                          </View>
+                        )}
+
+                      </View>
+
+                      {/* Additives Mini Card */}
+                      {selectedScan.additivesTags && selectedScan.additivesTags.length > 0 && (
+                        <View style={{
+                          backgroundColor: colors.surfaceRaised,
+                          padding: 16,
+                          borderRadius: 16,
+                          borderWidth: 1,
+                          borderColor: colors.border,
+                          marginBottom: selectedScan.categoryTag ? 20 : 0
+                        }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                            <FlaskConical size={14} color={colors.textSecondary} />
+                            <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>
+                              {selectedScan.additivesTags.length} Additive{selectedScan.additivesTags.length > 1 ? 's' : ''} Detected
+                            </Text>
+                          </View>
+                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                            {selectedScan.additivesTags.slice(0, 12).map((tag, i) => (
+                              <View key={i} style={{
+                                backgroundColor: colors.background,
+                                paddingHorizontal: 8,
+                                paddingVertical: 4,
+                                borderRadius: 8,
+                                borderWidth: 1,
+                                borderColor: colors.border
+                              }}>
+                                <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '800' }}>
+                                  {formatAdditive(tag)}
+                                </Text>
+                              </View>
+                            ))}
+                            {selectedScan.additivesTags.length > 12 && (
+                              <View style={{
+                                backgroundColor: colors.background,
+                                paddingHorizontal: 8,
+                                paddingVertical: 4,
+                                borderRadius: 8,
+                                borderWidth: 1,
+                                borderColor: colors.border
+                              }}>
+                                <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '800' }}>
+                                  +{selectedScan.additivesTags.length - 12} more
+                                </Text>
+                              </View>
+                            )}
+                          </View>
+                        </View>
+                      )}
+
+                      {/* Better Choices Button (Inside the Card) */}
+                    </View>
+                  );
+                })()}
+
+                {/* Delete and Close scan option from details */}
                 <View className="flex-row gap-3">
                   <TouchableOpacity
                     onPress={() => {
@@ -688,6 +803,8 @@ export default function HomeScreen() {
           </Animated.View>
         </View>
       </Modal>
+
+
 
       {/* App Settings Modal */}
       <Modal
