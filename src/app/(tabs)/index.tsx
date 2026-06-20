@@ -340,7 +340,7 @@ export default function HomeScreen() {
           <View className="flex-1">
             <Text style={{ color: colors.text }} className="font-bold text-sm">Why Teaspoons instead of Grams?</Text>
             <Text style={{ color: colors.textSecondary }} className="text-xs mt-2 leading-relaxed">
-              Grams are abstract, but teaspoons are tangible. We convert sugar content using the standard conversion of <Text className="font-bold">1 teaspoon = 3.2 grams</Text>. Seeing sugar content in teaspoons helps you make quick, intuitive healthy choices.
+              Grams are abstract, but teaspoons are tangible. We convert sugar content using the standard conversion of <Text className="font-bold">1 teaspoon = 4.2 grams</Text>. Seeing sugar content in teaspoons helps you make quick, intuitive healthy choices.
             </Text>
           </View>
         </View>

@@ -10,10 +10,13 @@ import {
   SafeAreaView,
   Platform,
   Dimensions,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
 import * as FileSystem from 'expo-file-system';
+import * as ImagePicker from 'expo-image-picker';
 import AnimatedReanimated, {
   useSharedValue,
   useAnimatedStyle,
@@ -36,21 +39,16 @@ import {
   AlertCircle,
   Zap,
   ZapOff,
-  ScanText,
   CheckCircle,
   RotateCcw,
-  Image as ImageIcon,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { BlurView } from 'expo-blur';
-import { parseNutritionLabel } from '../../utils/ocrParser';
 
 // ─────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────
-// 'ocr-label' = camera open in label-scan mode
-// 'ocr-review' = photo captured, show image + text input for OCR review
-type ScanMode = 'camera' | 'manual' | 'result' | 'not-found' | 'ocr-label' | 'ocr-review';
+type ScanMode = 'camera' | 'manual' | 'result' | 'not-found';
 
 // Timeout for the Open Food Facts API call — 10 seconds
 const API_TIMEOUT_MS = 10_000;
@@ -82,6 +80,62 @@ async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Respons
 }
 
 // ─────────────────────────────────────────────────────────
+// Robust sugar extraction from OpenFoodFacts nutriments
+// ─────────────────────────────────────────────────────────
+// OpenFoodFacts is a community database and MANY products have
+// `sugars_100g = 0` even when the product is mostly sugar (e.g. glucose/
+// dextrose-based products like Glucon D). This function uses a smart
+// priority waterfall to extract the most accurate sugar value possible.
+//
+// Priority order:
+//  1. sugars_serving        → most accurate (per-serving value)
+//  2. sugars_100g (> 0)     → per-100g value, ONLY if non-zero
+//  3. added-sugars_100g     → partial fallback (when sugars field is 0)
+//  4. carbohydrates_100g    → last-resort: carbs = sugars for pure-sugar
+//                             products (glucose, dextrose, honey, etc.)
+//                             but only when sugars field is explicitly 0
+//                             and carbs represent a plausibly "sugar-like"
+//                             fraction of the product.
+//
+// The function NEVER silently returns 0 when meaningful data is present.
+function extractSugarFromNutriments(n: Record<string, any>): number {
+  if (!n) return 0;
+
+  const toNum = (v: any): number | null => {
+    if (v === undefined || v === null || v === '') return null;
+    const num = parseFloat(String(v));
+    return isNaN(num) ? null : num;
+  };
+
+  // Priority 1: per-serving sugar (most accurate for typical consumption)
+  const sugarServing = toNum(n.sugars_serving);
+  if (sugarServing !== null && sugarServing > 0) return sugarServing;
+
+  // Priority 2: per-100g sugar field, but ONLY if it's non-zero
+  // (zero is often an unfilled field, not a real value)
+  const sugar100g = toNum(n.sugars_100g ?? n.sugars);
+  if (sugar100g !== null && sugar100g > 0) return sugar100g;
+
+  // Priority 3: added-sugars_100g (partial data, but better than nothing)
+  const addedSugar100g = toNum(n['added-sugars_100g'] ?? n['added-sugars_serving']);
+  if (addedSugar100g !== null && addedSugar100g > 0) return addedSugar100g;
+
+  // Priority 4: carbohydrates as a last resort
+  // Only use when the sugars field is explicitly 0 (not undefined/null)
+  // AND carbohydrates are present. This handles pure-sugar products like
+  // glucose (Glucon D), dextrose, honey, maple syrup, etc. where the
+  // contributor filled carbs but forgot to fill in sugars separately.
+  const carbs100g = toNum(n.carbohydrates_100g ?? n.carbohydrates);
+  const sugarFieldExistsAsZero = sugar100g === 0;
+  if (sugarFieldExistsAsZero && carbs100g !== null && carbs100g > 0) {
+    return carbs100g;
+  }
+
+  // Absolute fallback: return whatever sugars_100g actually was (could be 0)
+  return sugar100g ?? 0;
+}
+
+// ─────────────────────────────────────────────────────────
 // Main Scanner Screen
 // ─────────────────────────────────────────────────────────
 export default function ScannerScreen() {
@@ -93,16 +147,9 @@ export default function ScannerScreen() {
 
   const [mode, setMode] = useState<ScanMode>('camera');
   const [loading, setLoading] = useState(false);
+  const [loadingText, setLoadingText] = useState('Analyzing...');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [torchOn, setTorchOn] = useState(false);
-
-  // Captured photo URI for OCR review screen
-  const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
-
-  // Reference to the camera view for takePictureAsync
-  const cameraRef = useRef<CameraView>(null);
-  const [isCapturing, setIsCapturing] = useState(false);
-  const [isOcrLoading, setIsOcrLoading] = useState(false);
 
   // Synchronous ref-lock prevents duplicate scan callbacks from camera frames
   const isScanningRef = useRef(false);
@@ -131,29 +178,8 @@ export default function ScannerScreen() {
     }
   }, [mode, permission?.granted]);
 
-  // OCR label laser sweeps wider/taller rectangle
-  const ocrLaserY = useSharedValue(0);
-  useEffect(() => {
-    if (mode === 'ocr-label' && permission?.granted) {
-      ocrLaserY.value = withRepeat(
-        withSequence(
-          withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.quad) }),
-          withTiming(0, { duration: 2000, easing: Easing.inOut(Easing.quad) })
-        ),
-        -1,
-        true
-      );
-    } else {
-      ocrLaserY.value = withTiming(0, { duration: 300 });
-    }
-  }, [mode, permission?.granted]);
-
   const laserStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: laserY.value * 230 }],
-  }));
-
-  const ocrLaserStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: ocrLaserY.value * 340 }],
   }));
 
   // Torch button pulse
@@ -175,13 +201,21 @@ export default function ScannerScreen() {
 
   // Manual Input State
   const [manualName, setManualName] = useState('');
-  const [manualSugarGrams, setManualSugarGrams] = useState('');
   const [focusName, setFocusName] = useState(false);
-  const [focusSugar, setFocusSugar] = useState(false);
 
-  // OCR Input State (for review screen)
-  const [ocrText, setOcrText] = useState('');
-  const [ocrFocus, setOcrFocus] = useState(false);
+  const [manualImageUri, setManualImageUri] = useState<string | null>(null);
+  const [calculationMode, setCalculationMode] = useState<'total' | 'per100'>('total');
+  
+  const [manualSugarGrams, setManualSugarGrams] = useState('');
+  const [focusSugar, setFocusSugar] = useState(false);
+  
+  const [manualSugarPer100, setManualSugarPer100] = useState('');
+  const [manualProductSize, setManualProductSize] = useState('');
+  const [focusPer100, setFocusPer100] = useState(false);
+  const [focusSize, setFocusSize] = useState(false);
+
+  const lastSavedRef = useRef<{name: string, sugarVal: number} | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'typing' | 'saving' | 'saved'>('typing');
 
   // Scan Result State
   const [scanResult, setScanResult] = useState<{
@@ -197,112 +231,6 @@ export default function ScannerScreen() {
     proteinGrams?: number;
   } | null>(null);
 
-  // Auto-OCR scan execution function
-  const performOcrOnImage = async (imageUri: string) => {
-    if (isOcrLoading || !imageUri) return;
-    setIsOcrLoading(true);
-    setErrorMsg(null);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-    try {
-      const base64 = await FileSystem.readAsStringAsync(imageUri, {
-        encoding: 'base64',
-      });
-
-      const formData = new FormData();
-      formData.append('apikey', 'K87595304388957');
-      formData.append('base64Image', `data:image/jpeg;base64,${base64}`);
-      formData.append('language', 'eng');
-      formData.append('isOverlayRequired', 'false');
-      formData.append('detectOrientation', 'true');
-      formData.append('scale', 'true');
-
-      const response = await fetch('https://api.ocr.space/parse/image', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-
-      const result = await response.json();
-      if (result?.ParsedResults && result.ParsedResults.length > 0) {
-        const text = result.ParsedResults[0].ParsedText;
-        if (text && text.trim()) {
-          setOcrText(text);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-          // Auto-parse sugar value
-          const parsed = parseNutritionLabel(text);
-          if (parsed) {
-            setManualSugarGrams(parsed.amount.toString());
-            setManualName('');
-            setErrorMsg(
-              `Auto-Scan Successful! Found ${parsed.amount}g of sugar. Now enter the product name to save.`
-            );
-            setTimeout(() => {
-              setMode('manual');
-              setOcrText('');
-              setCapturedPhotoUri(null);
-            }, 1000);
-          } else {
-            setErrorMsg('Text scanned successfully, but we could not find the sugar value automatically. Please type it below.');
-          }
-        } else {
-          throw new Error('No text found in the image.');
-        }
-      } else {
-        const errorDetails = result?.ErrorMessage ? result.ErrorMessage.join(', ') : 'Unknown OCR error';
-        throw new Error(errorDetails);
-      }
-    } catch (err: any) {
-      console.error('OCR Error:', err);
-      // Fallback to helloworld key
-      try {
-        const base64 = await FileSystem.readAsStringAsync(imageUri, {
-          encoding: 'base64',
-        });
-        const formData = new FormData();
-        formData.append('apikey', 'helloworld');
-        formData.append('base64Image', `data:image/jpeg;base64,${base64}`);
-        formData.append('language', 'eng');
-        const fallbackResponse = await fetch('https://api.ocr.space/parse/image', {
-          method: 'POST',
-          body: formData,
-        });
-        const fallbackResult = await fallbackResponse.json();
-        if (fallbackResult?.ParsedResults && fallbackResult.ParsedResults.length > 0) {
-          const text = fallbackResult.ParsedResults[0].ParsedText;
-          if (text && text.trim()) {
-            setOcrText(text);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            const parsed = parseNutritionLabel(text);
-            if (parsed) {
-              setManualSugarGrams(parsed.amount.toString());
-              setManualName('');
-              setErrorMsg(`Auto-Scan Successful! Found ${parsed.amount}g of sugar. Now enter the product name to save.`);
-              setTimeout(() => {
-                setMode('manual');
-                setOcrText('');
-                setCapturedPhotoUri(null);
-              }, 1000);
-            } else {
-              setErrorMsg('Text scanned successfully, but we could not find the sugar value automatically. Please type it below.');
-            }
-            return;
-          }
-        }
-      } catch (fbErr) {
-        console.error('Fallback OCR Error:', fbErr);
-      }
-      setErrorMsg(`Auto-Scan failed: ${err.message || err}. You can still use iOS keyboard OCR or type it manually below.`);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    } finally {
-      setIsOcrLoading(false);
-    }
-  };
-
   // Auto-switch to manual if camera permission is denied
   useEffect(() => {
     if (permission && !permission.granted && mode === 'camera') {
@@ -310,18 +238,75 @@ export default function ScannerScreen() {
     }
   }, [permission]);
 
-  // Turn torch off when leaving camera modes
+  // Turn torch off when leaving camera mode
   useEffect(() => {
-    if (mode !== 'camera' && mode !== 'ocr-label') {
+    if (mode !== 'camera') {
       setTorchOn(false);
     }
   }, [mode]);
 
-  // ─── Core barcode scan handler ───────────────────────────
+  // Unlock scanner lock when mode changes to camera
+  useEffect(() => {
+    if (mode === 'camera') {
+      isScanningRef.current = false;
+      setLoading(false);
+      setErrorMsg(null);
+    }
+  }, [mode]);
+
+  // Auto-Save Manual Entry
+  useEffect(() => {
+    if (mode !== 'manual') return;
+
+    let sugarVal = 0;
+    if (calculationMode === 'total') {
+      sugarVal = parseFloat(manualSugarGrams);
+    } else {
+      const per100 = parseFloat(manualSugarPer100);
+      const size = parseFloat(manualProductSize);
+      if (!isNaN(per100) && !isNaN(size) && per100 >= 0 && size > 0) {
+        sugarVal = parseFloat(((per100 * size) / 100).toFixed(1));
+      }
+    }
+
+    if (sugarVal > 0 && manualName.trim().length > 0) {
+      if (lastSavedRef.current?.name === manualName.trim() && lastSavedRef.current?.sugarVal === sugarVal) {
+        setSaveStatus('saved');
+        return;
+      }
+
+      setSaveStatus('saving');
+      const timer = setTimeout(() => {
+        addScan(manualName.trim(), sugarVal, 'Custom Entry', manualImageUri || undefined);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        lastSavedRef.current = { name: manualName.trim(), sugarVal };
+        setSaveStatus('saved');
+      }, 1500);
+
+      return () => {
+        clearTimeout(timer);
+        setSaveStatus('typing');
+      };
+    } else {
+      setSaveStatus('typing');
+    }
+  }, [
+    mode, 
+    manualName, 
+    manualSugarGrams, 
+    manualSugarPer100, 
+    manualProductSize, 
+    calculationMode, 
+    manualImageUri, 
+    addScan
+  ]);
+
+  // ─── Core barcode scan handler (Waterfall Lookup) ───────────────────────────
   const handleBarcodeScanned = useCallback(async ({ data }: BarcodeScanningResult) => {
     // Double-scan guard
     if (isScanningRef.current || loading) return;
-    if (!data || !data.trim()) return;
+    const barcode = data?.trim();
+    if (!barcode) return;
 
     isScanningRef.current = true;
 
@@ -330,182 +315,144 @@ export default function ScannerScreen() {
     setErrorMsg(null);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
+    let productFound = false;
+
+    // --- PHASE 1: OpenFoodFacts ---
     try {
       const response = await fetchWithTimeout(
-        `https://world.openfoodfacts.org/api/v3/product/${encodeURIComponent(data.trim())}.json`,
+        `https://world.openfoodfacts.org/api/v3/product/${encodeURIComponent(barcode)}.json`,
         API_TIMEOUT_MS
       );
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
+      if (response.ok) {
+        const resData = await response.json();
+        if (resData?.product) {
+          const p = resData.product;
+          const name = (p.product_name || p.product_name_en || 'Unknown Product').trim();
+          
+          if (name !== 'Unknown Product') {
+            const brand = (p.brands || 'Generic Brand').trim();
+            const imageUrl: string | undefined = p.image_front_url || p.image_url || undefined;
 
-      const resData = await response.json();
+            // Use the robust sugar extractor — handles data quality issues in OFFs
+            // where community contributors often leave sugars=0 for glucose products
+            const sugarGrams = extractSugarFromNutriments(p.nutriments ?? {});
+            const sugarTeaspoons = parseFloat((sugarGrams / 4.2).toFixed(1));
 
-      if (resData?.product) {
-        const p = resData.product;
-        const name = (p.product_name || p.product_name_en || 'Unknown Product').trim();
-        const brand = (p.brands || 'Generic Brand').trim();
-        const imageUrl: string | undefined = p.image_front_url || p.image_url || undefined;
-
-        // Prioritize per-serving sugar, fallback to per-100g, fallback to 0
-        const sugarGrams =
-          p.nutriments?.sugars_serving !== undefined
-            ? parseFloat(p.nutriments.sugars_serving)
-            : p.nutriments?.sugars_100g !== undefined
-              ? parseFloat(p.nutriments.sugars_100g)
-              : 0;
-
-        const sugarTeaspoons = parseFloat((sugarGrams / 3.2).toFixed(1));
-
-        const servingSize: string | undefined = p.serving_size || undefined;
-        const calories =
-          p.nutriments?.['energy-kcal_serving'] !== undefined
-            ? parseFloat(p.nutriments['energy-kcal_serving'])
-            : p.nutriments?.['energy-kcal_100g'] !== undefined
-              ? parseFloat(p.nutriments['energy-kcal_100g'])
+            const servingSize: string | undefined = p.serving_size || undefined;
+            const calories =
+              p.nutriments?.['energy-kcal_serving'] !== undefined ? parseFloat(p.nutriments['energy-kcal_serving'])
+              : p.nutriments?.['energy-kcal_100g'] !== undefined ? parseFloat(p.nutriments['energy-kcal_100g'])
               : undefined;
-        const carbsGrams =
-          p.nutriments?.carbohydrates_serving !== undefined
-            ? parseFloat(p.nutriments.carbohydrates_serving)
-            : p.nutriments?.carbohydrates_100g !== undefined
-              ? parseFloat(p.nutriments.carbohydrates_100g)
+            const carbsGrams =
+              p.nutriments?.carbohydrates_serving !== undefined ? parseFloat(p.nutriments.carbohydrates_serving)
+              : p.nutriments?.carbohydrates_100g !== undefined ? parseFloat(p.nutriments.carbohydrates_100g)
               : undefined;
-        const fatGrams =
-          p.nutriments?.fat_serving !== undefined
-            ? parseFloat(p.nutriments.fat_serving)
-            : p.nutriments?.fat_100g !== undefined
-              ? parseFloat(p.nutriments.fat_100g)
+            const fatGrams =
+              p.nutriments?.fat_serving !== undefined ? parseFloat(p.nutriments.fat_serving)
+              : p.nutriments?.fat_100g !== undefined ? parseFloat(p.nutriments.fat_100g)
               : undefined;
-        const proteinGrams =
-          p.nutriments?.proteins_serving !== undefined
-            ? parseFloat(p.nutriments.proteins_serving)
-            : p.nutriments?.proteins_100g !== undefined
-              ? parseFloat(p.nutriments.proteins_100g)
+            const proteinGrams =
+              p.nutriments?.proteins_serving !== undefined ? parseFloat(p.nutriments.proteins_serving)
+              : p.nutriments?.proteins_100g !== undefined ? parseFloat(p.nutriments.proteins_100g)
               : undefined;
 
-        addScan(name, sugarGrams, brand, imageUrl, data, servingSize, calories, carbsGrams, fatGrams, proteinGrams);
+            addScan(name, sugarGrams, brand, imageUrl, data, servingSize, calories, carbsGrams, fatGrams, proteinGrams);
 
-        if (!mountedRef.current) return;
-        setScanResult({ name, brand, sugarGrams, sugarTeaspoons, imageUrl, servingSize, calories, carbsGrams, fatGrams, proteinGrams });
-        setMode('result');
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } else {
-        throw new Error('Product not found in Open Food Facts database.');
+            if (mountedRef.current) {
+              setScanResult({ name, brand, sugarGrams, sugarTeaspoons, imageUrl, servingSize, calories, carbsGrams, fatGrams, proteinGrams });
+              productFound = true;
+            }
+          }
+        }
       }
     } catch (err: any) {
-      if (!mountedRef.current) return;
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      const isTimeout = err?.name === 'AbortError';
-      if (isTimeout) {
-        setErrorMsg('Request timed out. Check your internet connection and try again.');
-        setMode('manual');
-      } else {
-        setErrorMsg('Product not found in database.');
-        setMode('not-found');
-      }
-    } finally {
-      if (!mountedRef.current) return;
-      setLoading(false);
-      // Release scan lock after cooldown so user can try again
-      setTimeout(() => {
-        isScanningRef.current = false;
-      }, SCAN_COOLDOWN_MS);
+      console.warn('OpenFoodFacts fetch error:', err);
     }
+
+    // --- PHASE 2: USDA FoodData Central ---
+    if (!productFound && process.env.EXPO_PUBLIC_USDA_API_KEY && mountedRef.current) {
+      try {
+        const response = await fetchWithTimeout(
+          `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(barcode)}&api_key=${process.env.EXPO_PUBLIC_USDA_API_KEY}&pageSize=1`,
+          API_TIMEOUT_MS
+        );
+        if (response.ok) {
+          const resData = await response.json();
+          if (resData.foods && resData.foods.length > 0) {
+            const food = resData.foods[0];
+            const name = food.description || 'Unknown Product';
+            const brand = food.brandOwner || food.brandName || 'Generic Brand';
+            
+            // Look for sugar in the nutrients array
+            const sugarsNutrient = food.foodNutrients?.find((n: any) => 
+              n.nutrientName?.toLowerCase().includes('sugars, total') || 
+              n.nutrientName?.toLowerCase() === 'sugars'
+            );
+            
+            let sugarGrams = 0;
+            if (sugarsNutrient && sugarsNutrient.value !== undefined) {
+               sugarGrams = parseFloat(sugarsNutrient.value);
+            }
+
+            const sugarTeaspoons = parseFloat((sugarGrams / 4.2).toFixed(1));
+            const servingSize = food.servingSize ? `${food.servingSize} ${food.servingSizeUnit || ''}`.trim() : undefined;
+
+            addScan(name, sugarGrams, brand, undefined, data, servingSize, undefined, undefined, undefined, undefined);
+
+            if (mountedRef.current) {
+              setScanResult({ name, brand, sugarGrams, sugarTeaspoons, servingSize });
+              productFound = true;
+            }
+          }
+        }
+      } catch (err: any) {
+        console.warn('USDA API fetch error:', err);
+      }
+    }
+
+
+
+    // --- FINAL OUTCOME ---
+    if (!mountedRef.current) return;
+    
+    setLoading(false);
+    
+    if (productFound) {
+      setMode('result');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setErrorMsg('Product not found. Entering manual mode.');
+      setMode('manual');
+    }
+
+    // Release scan lock after cooldown so user can try again
+    setTimeout(() => {
+      isScanningRef.current = false;
+    }, SCAN_COOLDOWN_MS);
+
   }, [loading, addScan]);
 
-  // ─── Capture photo from camera for OCR label mode ──────
-  const handleCaptureLabelPhoto = async () => {
-    if (!cameraRef.current || isCapturing) return;
-    setIsCapturing(true);
-    captureScale.value = withSequence(
-      withSpring(0.88, { damping: 8 }),
-      withSpring(1, { damping: 8 })
-    );
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-
+  const handlePickImage = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.75,
-        base64: false,
-        exif: false,
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
       });
 
-      if (photo?.uri) {
-        setCapturedPhotoUri(photo.uri);
-        setOcrText('');
-        setErrorMsg(null);
-        setMode('ocr-review');
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (!result.canceled && result.assets[0]) {
+        setManualImageUri(result.assets[0].uri);
       }
-    } catch (e) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setErrorMsg('Failed to capture photo. Please try again.');
-    } finally {
-      setIsCapturing(false);
+    } catch (err) {
+      console.log('Image picker error', err);
     }
   };
 
-  // ─── Process OCR text extracted from label ──────────────
-  const handleOcrSubmit = () => {
-    if (!ocrText.trim()) return;
-    setLoading(true);
 
-    setTimeout(() => {
-      const parsed = parseNutritionLabel(ocrText);
-      setLoading(false);
-
-      if (parsed) {
-        // Pre-fill the sugar value in manual entry
-        setManualSugarGrams(parsed.amount.toString());
-        setManualName(''); // User must type product name
-        setErrorMsg(
-          `Found: ${parsed.amount}g of ${parsed.type === 'added' ? 'added' : 'total'} sugars. Now enter the product name and save.`
-        );
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        setMode('manual');
-      } else {
-        // Could not parse — let user fill sugar manually
-        setManualSugarGrams('');
-        setManualName('');
-        setErrorMsg('Could not extract sugar automatically. Please enter the sugar amount from the label.');
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        setMode('manual');
-      }
-      setOcrText('');
-      setCapturedPhotoUri(null);
-    }, 400);
-  };
-
-  const handleManualSubmit = () => {
-    const sugarVal = parseFloat(manualSugarGrams);
-    if (!manualName.trim()) {
-      setErrorMsg('Please enter a product name');
-      return;
-    }
-    if (isNaN(sugarVal) || sugarVal < 0) {
-      setErrorMsg('Please enter a valid sugar amount (0 or more)');
-      return;
-    }
-
-    setLoading(true);
-    setErrorMsg(null);
-
-    const teaspoons = parseFloat((sugarVal / 3.2).toFixed(1));
-    addScan(manualName.trim(), sugarVal, 'Custom Entry');
-
-    setScanResult({
-      name: manualName.trim(),
-      brand: 'Custom Entry',
-      sugarGrams: sugarVal,
-      sugarTeaspoons: teaspoons,
-    });
-
-    setLoading(false);
-    setMode('result');
-    setManualName('');
-    setManualSugarGrams('');
-  };
 
   const resetScanner = () => {
     setScanResult(null);
@@ -513,10 +460,12 @@ export default function ScannerScreen() {
     isScanningRef.current = false;
     setLoading(false);
     setTorchOn(false);
-    setCapturedPhotoUri(null);
-    setOcrText('');
     setManualName('');
     setManualSugarGrams('');
+    setManualSugarPer100('');
+    setManualProductSize('');
+    setManualImageUri(null);
+    setCalculationMode('total');
     setMode('camera');
   };
 
@@ -546,7 +495,7 @@ export default function ScannerScreen() {
               facing="back"
               enableTorch={torchOn}
               barcodeScannerSettings={{
-                barcodeTypes: ['qr', 'upc_a', 'upc_e', 'ean13', 'ean8', 'code128', 'code39'],
+                barcodeTypes: ['qr', 'upc_a', 'upc_e', 'ean13', 'ean8', 'code128', 'code39', 'aztec', 'pdf417', 'datamatrix', 'code93', 'itf14', 'codabar'],
               }}
               onBarcodeScanned={handleBarcodeScanned}
             >
@@ -623,90 +572,38 @@ export default function ScannerScreen() {
           <SafeAreaView
             style={{ position: 'absolute', top: 0, left: 0, right: 0, paddingTop: Platform.OS === 'android' ? 12 : 0 }}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, paddingTop: 12 }}>
-              <View style={{
-                flexDirection: 'row',
-                backgroundColor: 'rgba(0,0,0,0.65)',
-                borderRadius: 99,
-                padding: 4,
-                borderWidth: 1.5,
-                borderColor: 'rgba(255,255,255,0.2)',
-              }}>
-                <TouchableOpacity
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setMode('camera');
-                  }}
-                  style={{
-                    paddingVertical: 8,
-                    paddingHorizontal: 20,
-                    borderRadius: 99,
-                    backgroundColor: colors.primary,
-                  }}
-                  activeOpacity={0.85}
-                >
-                  <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 }}>
-                    Barcode
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setMode('ocr-label');
-                  }}
-                  style={{
-                    paddingVertical: 8,
-                    paddingHorizontal: 20,
-                    borderRadius: 99,
-                    backgroundColor: 'transparent',
-                  }}
-                  activeOpacity={0.85}
-                >
-                  <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8, opacity: 0.65 }}>
-                    Scan Label
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </SafeAreaView>
-
-          {/* ─── Bottom Controls Row: Torch + Manual Entry ─── */}
-          <View
-            style={{ position: 'absolute', bottom: 130, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 }}
-            pointerEvents="box-none"
-          >
-            {/* Torch Toggle Button */}
-            <AnimatedReanimated.View style={torchStyle}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 12 }}>
               <TouchableOpacity
-                onPress={toggleTorch}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.replace('/');
+                }}
                 style={{ borderRadius: 99, overflow: 'hidden' }}
                 activeOpacity={0.85}
               >
-                <BlurView
-                  intensity={60}
-                  tint="dark"
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 6,
-                    paddingVertical: 10,
-                    paddingHorizontal: 18,
-                    borderWidth: 1.5,
-                    borderColor: torchOn ? '#FFD700' + '80' : 'rgba(255,255,255,0.25)',
-                    borderRadius: 99,
-                  }}
-                >
-                  {torchOn
-                    ? <Zap size={14} color="#FFD700" />
-                    : <ZapOff size={14} color="rgba(255,255,255,0.6)" />}
-                  <Text style={{ color: torchOn ? '#FFD700' : 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 }}>
-                    {torchOn ? 'Flash On' : 'Flash'}
-                  </Text>
+                <BlurView intensity={60} tint="dark" style={{ padding: 10, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.25)', borderRadius: 99 }}>
+                  <ArrowLeft size={20} color="#fff" />
                 </BlurView>
               </TouchableOpacity>
-            </AnimatedReanimated.View>
 
+
+
+              {/* Torch toggle */}
+              <AnimatedReanimated.View style={torchStyle}>
+                <TouchableOpacity onPress={toggleTorch} style={{ borderRadius: 99, overflow: 'hidden' }} activeOpacity={0.85}>
+                  <BlurView intensity={60} tint="dark" style={{ padding: 10, borderWidth: 1.5, borderColor: torchOn ? '#FFD700' + '80' : 'rgba(255,255,255,0.25)', borderRadius: 99 }}>
+                    {torchOn ? <Zap size={20} color="#FFD700" /> : <ZapOff size={20} color="rgba(255,255,255,0.7)" />}
+                  </BlurView>
+                </TouchableOpacity>
+              </AnimatedReanimated.View>
+            </View>
+          </SafeAreaView>
+
+          {/* ─── Bottom Controls Row: Manual Entry ─── */}
+          <View
+            style={{ position: 'absolute', bottom: 130, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
+            pointerEvents="box-none"
+          >
             {/* Manual Entry Button */}
             <TouchableOpacity
               onPress={() => {
@@ -789,11 +686,17 @@ export default function ScannerScreen() {
             </TouchableOpacity>
           </View>
 
-          <ScrollView
-            contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
+          <KeyboardAvoidingView 
+            style={{ flex: 1 }} 
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           >
+            <ScrollView
+              contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+
+
             {/* Error/Success Banner */}
             {errorMsg && (
               <View style={{
@@ -818,6 +721,44 @@ export default function ScannerScreen() {
                 }}>{errorMsg}</Text>
               </View>
             )}
+
+            {/* Image Picker Container */}
+            <View style={{ marginBottom: 20 }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8, paddingHorizontal: 4 }}>
+                Product Image (Optional)
+              </Text>
+              <TouchableOpacity
+                onPress={handlePickImage}
+                style={{
+                  backgroundColor: colors.surface,
+                  borderColor: manualImageUri ? colors.border : colors.primary + '40',
+                  borderWidth: 1.5,
+                  borderRadius: 20,
+                  height: 120,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderStyle: manualImageUri ? 'solid' : 'dashed',
+                  overflow: 'hidden'
+                }}
+                activeOpacity={0.8}
+              >
+                {manualImageUri ? (
+                  <View style={{ width: '100%', height: '100%' }}>
+                    <Image source={{ uri: manualImageUri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+                    <View style={{ position: 'absolute', bottom: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.6)', padding: 6, borderRadius: 12 }}>
+                      <RotateCcw size={14} color="#fff" />
+                    </View>
+                  </View>
+                ) : (
+                  <View style={{ alignItems: 'center', gap: 8 }}>
+                    <View style={{ backgroundColor: colors.primary + '15', padding: 12, borderRadius: 99 }}>
+                      <CameraIcon size={24} color={colors.primary} />
+                    </View>
+                    <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '700' }}>Tap to take photo</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
 
             {/* Product Name */}
             <View style={{ marginBottom: 20 }}>
@@ -848,54 +789,183 @@ export default function ScannerScreen() {
               />
             </View>
 
-            {/* Sugar Amount */}
-            <View style={{ marginBottom: 24 }}>
-              <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8, paddingHorizontal: 4 }}>
-                Total Sugar in Grams (g)
-              </Text>
-              <TextInput
-                value={manualSugarGrams}
-                onChangeText={(val) => { setManualSugarGrams(val); setErrorMsg(null); }}
-                onFocus={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setFocusSugar(true); }}
-                onBlur={() => setFocusSugar(false)}
-                keyboardType="decimal-pad"
-                placeholder="e.g. 12.8"
-                placeholderTextColor={colors.textMuted}
-                style={{
-                  backgroundColor: colors.surface,
-                  borderColor: focusSugar ? colors.primary : colors.border,
-                  borderWidth: 1.5,
-                  shadowColor: colors.primary,
-                  shadowOffset: { width: 0, height: 0 },
-                  shadowOpacity: focusSugar ? 0.12 : 0,
-                  shadowRadius: 8,
-                  color: colors.text,
-                  padding: 16,
-                  borderRadius: 16,
-                  fontSize: 16,
-                  fontWeight: '900',
-                }}
-              />
+            {/* Calculation Mode Switcher */}
+            <View style={{ marginBottom: 16 }}>
+              <View style={{ flexDirection: 'row', backgroundColor: colors.surfaceRaised, padding: 4, borderRadius: 12, borderWidth: 1, borderColor: colors.border }}>
+                <TouchableOpacity
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setCalculationMode('total'); setErrorMsg(null); }}
+                  style={{ flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 8, backgroundColor: calculationMode === 'total' ? colors.primary : 'transparent' }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={{ color: calculationMode === 'total' ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>Enter Total</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setCalculationMode('per100'); setErrorMsg(null); }}
+                  style={{ flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 8, backgroundColor: calculationMode === 'per100' ? colors.primary : 'transparent' }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={{ color: calculationMode === 'per100' ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>Calculate (Per 100g/ml)</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
-            {/* Live Preview */}
-            {parseFloat(manualSugarGrams) > 0 && (
-              <View style={{ backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: 24, padding: 24, marginBottom: 24, alignItems: 'center' }}>
-                <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
-                  Live Conversion Preview
+            {calculationMode === 'total' ? (
+              <View style={{ marginBottom: 24 }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8, paddingHorizontal: 4 }}>
+                  Total Sugar in Grams (g)
                 </Text>
-                <SugarPile teaspoons={parseFloat(manualSugarGrams) / 3.2} />
+                <TextInput
+                  value={manualSugarGrams}
+                  onChangeText={(val) => { setManualSugarGrams(val); setErrorMsg(null); }}
+                  onFocus={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setFocusSugar(true); }}
+                  onBlur={() => setFocusSugar(false)}
+                  keyboardType="decimal-pad"
+                  placeholder="e.g. 12.8"
+                  placeholderTextColor={colors.textMuted}
+                  style={{
+                    backgroundColor: colors.surface,
+                    borderColor: focusSugar ? colors.primary : colors.border,
+                    borderWidth: 1.5,
+                    shadowColor: colors.primary,
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: focusSugar ? 0.12 : 0,
+                    shadowRadius: 8,
+                    color: colors.text,
+                    padding: 16,
+                    borderRadius: 16,
+                    fontSize: 16,
+                    fontWeight: '900',
+                  }}
+                />
+              </View>
+            ) : (
+              <View style={{ marginBottom: 24, flexDirection: 'row', gap: 12 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8, paddingHorizontal: 4 }}>
+                    Sugar per 100g/ml
+                  </Text>
+                  <TextInput
+                    value={manualSugarPer100}
+                    onChangeText={(val) => { setManualSugarPer100(val); setErrorMsg(null); }}
+                    onFocus={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setFocusPer100(true); }}
+                    onBlur={() => setFocusPer100(false)}
+                    keyboardType="decimal-pad"
+                    placeholder="e.g. 10.5"
+                    placeholderTextColor={colors.textMuted}
+                    style={{
+                      backgroundColor: colors.surface,
+                      borderColor: focusPer100 ? colors.primary : colors.border,
+                      borderWidth: 1.5,
+                      shadowColor: colors.primary,
+                      shadowOffset: { width: 0, height: 0 },
+                      shadowOpacity: focusPer100 ? 0.12 : 0,
+                      shadowRadius: 8,
+                      color: colors.text,
+                      padding: 16,
+                      borderRadius: 16,
+                      fontSize: 16,
+                      fontWeight: '900',
+                    }}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8, paddingHorizontal: 4 }}>
+                    Total Size (g/ml)
+                  </Text>
+                  <TextInput
+                    value={manualProductSize}
+                    onChangeText={(val) => { setManualProductSize(val); setErrorMsg(null); }}
+                    onFocus={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setFocusSize(true); }}
+                    onBlur={() => setFocusSize(false)}
+                    keyboardType="decimal-pad"
+                    placeholder="e.g. 250"
+                    placeholderTextColor={colors.textMuted}
+                    style={{
+                      backgroundColor: colors.surface,
+                      borderColor: focusSize ? colors.primary : colors.border,
+                      borderWidth: 1.5,
+                      shadowColor: colors.primary,
+                      shadowOffset: { width: 0, height: 0 },
+                      shadowOpacity: focusSize ? 0.12 : 0,
+                      shadowRadius: 8,
+                      color: colors.text,
+                      padding: 16,
+                      borderRadius: 16,
+                      fontSize: 16,
+                      fontWeight: '900',
+                    }}
+                  />
+                </View>
               </View>
             )}
 
-            <TouchableOpacity
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); handleManualSubmit(); }}
-              style={{ backgroundColor: colors.primary, width: '100%', paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}
-              activeOpacity={0.9}
-            >
-              <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 14 }}>Convert to Teaspoons</Text>
-            </TouchableOpacity>
-          </ScrollView>
+            {/* Live Preview */}
+            {(() => {
+              let liveSugarVal = 0;
+              if (calculationMode === 'total') {
+                liveSugarVal = parseFloat(manualSugarGrams);
+              } else {
+                const per100 = parseFloat(manualSugarPer100);
+                const size = parseFloat(manualProductSize);
+                if (!isNaN(per100) && !isNaN(size) && per100 >= 0 && size > 0) {
+                  liveSugarVal = parseFloat(((per100 * size) / 100).toFixed(1));
+                }
+              }
+              
+              if (liveSugarVal > 0) {
+                return (
+                  <View style={{ backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: 24, padding: 24, marginBottom: 24, alignItems: 'center' }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+                      Live Conversion Preview
+                    </Text>
+                    {calculationMode === 'per100' && (
+                      <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800', marginBottom: 4 }}>
+                        Calculated Total: {liveSugarVal}g
+                      </Text>
+                    )}
+                    <Text style={{ color: colors.primary, fontSize: 36, fontWeight: '900', marginTop: 8 }}>
+                      {(liveSugarVal / 4.2).toFixed(1)} <Text style={{ fontSize: 16, color: colors.textSecondary }}>Teaspoons</Text>
+                    </Text>
+                  </View>
+                );
+              }
+              return null;
+            })()}
+
+            {manualName.trim().length > 0 && (() => {
+              let liveSugarVal = 0;
+              if (calculationMode === 'total') {
+                liveSugarVal = parseFloat(manualSugarGrams);
+              } else {
+                const per100 = parseFloat(manualSugarPer100);
+                const size = parseFloat(manualProductSize);
+                if (!isNaN(per100) && !isNaN(size) && per100 >= 0 && size > 0) {
+                  liveSugarVal = parseFloat(((per100 * size) / 100).toFixed(1));
+                }
+              }
+              if (liveSugarVal > 0) {
+                return (
+                  <View style={{ alignItems: 'center', paddingVertical: 8 }}>
+                    {saveStatus === 'saving' && (
+                      <>
+                        <ActivityIndicator size="small" color={colors.textSecondary} />
+                        <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700', marginTop: 8 }}>
+                          Auto-saving...
+                        </Text>
+                      </>
+                    )}
+                    {saveStatus === 'saved' && (
+                      <Text style={{ color: '#4CAF50', fontSize: 14, fontWeight: '800', marginTop: 8 }}>
+                        ✓ Saved to History!
+                      </Text>
+                    )}
+                  </View>
+                );
+              }
+              return null;
+            })()}
+            </ScrollView>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       )}
 
@@ -910,18 +980,9 @@ export default function ScannerScreen() {
               Product Not Found!
             </Text>
             <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginTop: 12, lineHeight: 22, paddingHorizontal: 16 }}>
-              We couldn't find this barcode in our database. Scan the ingredients label instead — our app will extract the sugar value automatically.
+              We couldn't find this barcode in our database. Enter the sugar value manually.
             </Text>
           </View>
-
-          <TouchableOpacity
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setMode('ocr-label'); }}
-            style={{ backgroundColor: colors.primary, width: '100%', paddingVertical: 18, borderRadius: 20, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: 16 }}
-            activeOpacity={0.9}
-          >
-            <ScanText color="#fff" size={20} />
-            <Text style={{ color: '#ffffff', fontWeight: '900', fontSize: 15, letterSpacing: 0.5 }}>Scan Ingredients Label</Text>
-          </TouchableOpacity>
 
           <TouchableOpacity
             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setMode('manual'); }}
@@ -941,392 +1002,9 @@ export default function ScannerScreen() {
         </SafeAreaView>
       )}
 
-      {/* ════════════════════════════════════════════════════
-          5. OCR LABEL CAMERA MODE
-          Full-screen camera for capturing nutrition label
-          ════════════════════════════════════════════════════ */}
-      {mode === 'ocr-label' && (
-        <View style={{ flex: 1 }}>
-          {permission.granted ? (
-            <CameraView
-              ref={cameraRef}
-              style={StyleSheet.absoluteFill}
-              facing="back"
-              enableTorch={torchOn}
-              // No barcode scanning in this mode
-            >
-              {/* Overlay */}
-              <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.50)' }}>
 
-                {/* Wide label scanning frame — centered */}
-                <View style={{
-                  flex: 1,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                  {/* Label frame — wide rectangle */}
-                  <View style={{
-                    width: SCREEN_WIDTH - 40,
-                    height: 360,
-                    position: 'relative',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                    {/* Transparent cut-out effect via borders */}
-                    {/* Corner: Top Left */}
-                    <View style={{ borderColor: colors.primary, position: 'absolute', top: 0, left: 0, width: 40, height: 40, borderTopWidth: 5, borderLeftWidth: 5, borderTopLeftRadius: 12 }} />
-                    {/* Corner: Top Right */}
-                    <View style={{ borderColor: colors.primary, position: 'absolute', top: 0, right: 0, width: 40, height: 40, borderTopWidth: 5, borderRightWidth: 5, borderTopRightRadius: 12 }} />
-                    {/* Corner: Bottom Left */}
-                    <View style={{ borderColor: colors.primary, position: 'absolute', bottom: 0, left: 0, width: 40, height: 40, borderBottomWidth: 5, borderLeftWidth: 5, borderBottomLeftRadius: 12 }} />
-                    {/* Corner: Bottom Right */}
-                    <View style={{ borderColor: colors.primary, position: 'absolute', bottom: 0, right: 0, width: 40, height: 40, borderBottomWidth: 5, borderRightWidth: 5, borderBottomRightRadius: 12 }} />
 
-                    {/* Horizontal dividers to look like a nutrition label */}
-                    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
-                    <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
 
-                    {/* Animated scan laser (horizontal, sweeping down) */}
-                    <AnimatedReanimated.View
-                      style={[
-                        {
-                          position: 'absolute',
-                          top: 4,
-                          left: 12,
-                          right: 12,
-                          height: 2.5,
-                          backgroundColor: colors.primary,
-                          shadowColor: colors.primary,
-                          shadowOffset: { width: 0, height: 0 },
-                          shadowOpacity: 1,
-                          shadowRadius: 12,
-                          borderRadius: 2,
-                          opacity: 0.9,
-                        },
-                        ocrLaserStyle,
-                      ]}
-                    />
-
-                    {/* Instructional text above frame */}
-                    <Text style={{
-                      color: 'rgba(255,255,255,0.7)',
-                      fontSize: 12,
-                      fontWeight: '700',
-                      textAlign: 'center',
-                      position: 'absolute',
-                      top: -36,
-                      left: 0,
-                      right: 0,
-                    }}>
-                      Position the Nutrition Facts label inside
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </CameraView>
-          ) : (
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, backgroundColor: '#1a1a1a' }}>
-              <AlertCircle size={48} color={colors.error} />
-              <Text style={{ color: '#ffffff', fontSize: 18, fontWeight: '900', textAlign: 'center', marginTop: 16 }}>Camera Permission Required</Text>
-            </View>
-          )}
-
-          {/* ─── Top bar ─── */}
-          <SafeAreaView style={{ position: 'absolute', top: 0, left: 0, right: 0, paddingTop: Platform.OS === 'android' ? 12 : 0 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 12 }}>
-              <TouchableOpacity
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  resetScanner();
-                }}
-                style={{ borderRadius: 99, overflow: 'hidden' }}
-                activeOpacity={0.85}
-              >
-                <BlurView intensity={60} tint="dark" style={{ padding: 10, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.25)', borderRadius: 99 }}>
-                  <ArrowLeft size={20} color="#fff" />
-                </BlurView>
-              </TouchableOpacity>
-
-              {/* Center Segmented Control switcher */}
-              <View style={{
-                flexDirection: 'row',
-                backgroundColor: 'rgba(0,0,0,0.65)',
-                borderRadius: 99,
-                padding: 4,
-                borderWidth: 1.5,
-                borderColor: 'rgba(255,255,255,0.2)',
-              }}>
-                <TouchableOpacity
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setMode('camera');
-                  }}
-                  style={{
-                    paddingVertical: 8,
-                    paddingHorizontal: 20,
-                    borderRadius: 99,
-                    backgroundColor: 'transparent',
-                  }}
-                  activeOpacity={0.85}
-                >
-                  <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8, opacity: 0.65 }}>
-                    Barcode
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setMode('ocr-label');
-                  }}
-                  style={{
-                    paddingVertical: 8,
-                    paddingHorizontal: 20,
-                    borderRadius: 99,
-                    backgroundColor: colors.primary,
-                  }}
-                  activeOpacity={0.85}
-                >
-                  <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 }}>
-                    Scan Label
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Torch toggle */}
-              <AnimatedReanimated.View style={torchStyle}>
-                <TouchableOpacity onPress={toggleTorch} style={{ borderRadius: 99, overflow: 'hidden' }} activeOpacity={0.85}>
-                  <BlurView intensity={60} tint="dark" style={{ padding: 10, borderWidth: 1.5, borderColor: torchOn ? '#FFD700' + '80' : 'rgba(255,255,255,0.25)', borderRadius: 99 }}>
-                    {torchOn ? <Zap size={20} color="#FFD700" /> : <ZapOff size={20} color="rgba(255,255,255,0.7)" />}
-                  </BlurView>
-                </TouchableOpacity>
-              </AnimatedReanimated.View>
-            </View>
-          </SafeAreaView>
-
-          {/* ─── Bottom: Capture Button ─── */}
-          <View style={{ position: 'absolute', bottom: 110, left: 0, right: 0, alignItems: 'center' }}>
-            <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: '600', marginBottom: 20, textAlign: 'center' }}>
-              Tap the button to capture the label
-            </Text>
-
-            {/* Big shutter button */}
-            <AnimatedReanimated.View style={captureStyle}>
-              <TouchableOpacity
-                onPress={handleCaptureLabelPhoto}
-                disabled={isCapturing || !permission.granted}
-                style={{ alignItems: 'center', justifyContent: 'center' }}
-                activeOpacity={0.85}
-              >
-                {/* Outer ring */}
-                <View style={{ width: 84, height: 84, borderRadius: 42, borderWidth: 4, borderColor: 'rgba(255,255,255,0.8)', alignItems: 'center', justifyContent: 'center' }}>
-                  {/* Inner white circle */}
-                  <View style={{
-                    width: 68,
-                    height: 68,
-                    borderRadius: 34,
-                    backgroundColor: isCapturing ? colors.primary : '#ffffff',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                    {isCapturing
-                      ? <ActivityIndicator size="small" color="#fff" />
-                      : <ImageIcon size={28} color={colors.primary} />
-                    }
-                  </View>
-                </View>
-              </TouchableOpacity>
-            </AnimatedReanimated.View>
-          </View>
-        </View>
-      )}
-
-      {/* ════════════════════════════════════════════════════
-          6. OCR REVIEW MODE
-          Show captured photo + text field for OCR extraction
-          ════════════════════════════════════════════════════ */}
-      {mode === 'ocr-review' && (
-        <SafeAreaView style={{ flex: 1 }}>
-          {/* Header */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-            <TouchableOpacity
-              onPress={() => setMode('ocr-label')}
-              style={{ padding: 8, backgroundColor: colors.surfaceRaised, borderRadius: 99, marginRight: 14 }}
-            >
-              <RotateCcw size={18} color={colors.text} />
-            </TouchableOpacity>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900' }}>Read the Label</Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 1 }}>
-                Tap the text box below — iOS will let you scan text from the image
-              </Text>
-            </View>
-          </View>
-
-          <ScrollView
-            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 120 }}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Captured photo preview */}
-            {capturedPhotoUri && (
-              <View style={{ marginBottom: 20, borderRadius: 20, overflow: 'hidden', borderWidth: 1.5, borderColor: colors.border }}>
-                <Image
-                  source={{ uri: capturedPhotoUri }}
-                  style={{ width: '100%', height: 220 }}
-                  contentFit="cover"
-                  transition={200}
-                />
-                {/* Overlay badge */}
-                <View style={{ position: 'absolute', top: 12, right: 12, backgroundColor: 'rgba(0,0,0,0.65)', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 99 }}>
-                  <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: '800' }}>Captured Label</Text>
-                </View>
-              </View>
-            )}
-
-            {/* Direct Auto-Scan OCR Button */}
-            <TouchableOpacity
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                performOcrOnImage(capturedPhotoUri!);
-              }}
-              disabled={isOcrLoading}
-              style={{
-                backgroundColor: colors.primary,
-                borderRadius: 16,
-                paddingVertical: 16,
-                paddingHorizontal: 20,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 10,
-                marginBottom: 16,
-                shadowColor: colors.primary,
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.2,
-                shadowRadius: 6,
-                elevation: 3,
-              }}
-              activeOpacity={0.85}
-            >
-              {isOcrLoading ? (
-                <ActivityIndicator size="small" color="#ffffff" />
-              ) : (
-                <ScanText size={20} color="#ffffff" />
-              )}
-              <Text style={{ color: '#ffffff', fontWeight: '900', fontSize: 15 }}>
-                {isOcrLoading ? 'Scanning Text...' : 'Scan Text from Image'}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Instruction Card */}
-            <View style={{
-              backgroundColor: colors.surfaceRaised,
-              borderWidth: 1,
-              borderColor: colors.border,
-              padding: 16,
-              borderRadius: 16,
-              marginBottom: 20,
-              flexDirection: 'row',
-              gap: 14,
-              alignItems: 'flex-start',
-            }}>
-              <AlertCircle size={20} color={colors.textSecondary} style={{ marginTop: 2 }} />
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800', marginBottom: 4 }}>
-                  How it works
-                </Text>
-                <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 18 }}>
-                  Tapping "Scan Text from Image" will automatically read the nutrition label and extract the sugar value. Alternatively, you can type or paste text manually into the box below.
-                </Text>
-              </View>
-            </View>
-
-            {/* OCR Text Input */}
-            <View style={{ marginBottom: 20 }}>
-              <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10, paddingHorizontal: 4 }}>
-                Nutrition Label Text
-              </Text>
-              <TextInput
-                value={ocrText}
-                onChangeText={setOcrText}
-                onFocus={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setOcrFocus(true); }}
-                onBlur={() => setOcrFocus(false)}
-                multiline
-                keyboardType="default"
-                placeholder="Or type/paste the nutrition label text manually here (e.g. 'Total Sugars 12g')..."
-                placeholderTextColor={colors.textMuted}
-                style={{
-                  backgroundColor: colors.surface,
-                  borderColor: ocrFocus ? colors.primary : colors.border,
-                  borderWidth: 1.5,
-                  shadowColor: colors.primary,
-                  shadowOffset: { width: 0, height: 0 },
-                  shadowOpacity: ocrFocus ? 0.12 : 0,
-                  shadowRadius: 8,
-                  color: colors.text,
-                  padding: 20,
-                  paddingTop: 20,
-                  borderRadius: 20,
-                  fontSize: 14,
-                  minHeight: 160,
-                  textAlignVertical: 'top',
-                }}
-              />
-            </View>
-
-            {/* Divider with "or" */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20, gap: 12 }}>
-              <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-              <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700' }}>or skip to manual</Text>
-              <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-            </View>
-
-            {/* Action Buttons */}
-            <TouchableOpacity
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); handleOcrSubmit(); }}
-              disabled={!ocrText.trim()}
-              style={{
-                backgroundColor: ocrText.trim() ? colors.primary : colors.surfaceRaised,
-                width: '100%',
-                paddingVertical: 18,
-                borderRadius: 16,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: 12,
-              }}
-              activeOpacity={0.9}
-            >
-              <Text style={{ color: ocrText.trim() ? '#ffffff' : colors.textMuted, fontWeight: '900', fontSize: 15 }}>
-                Extract Sugar Value
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setErrorMsg(null);
-                setCapturedPhotoUri(null);
-                setOcrText('');
-                setMode('manual');
-              }}
-              style={{
-                backgroundColor: colors.surface,
-                borderWidth: 1.5,
-                borderColor: colors.border,
-                width: '100%',
-                paddingVertical: 16,
-                borderRadius: 16,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              activeOpacity={0.8}
-            >
-              <Text style={{ color: colors.text, fontWeight: '700', fontSize: 14 }}>Enter Sugar Manually Instead</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </SafeAreaView>
-      )}
 
       {/* ════════════════════════════════════════════════════
           3. SCAN RESULT DISPLAY MODE
@@ -1448,10 +1126,10 @@ export default function ScannerScreen() {
 
       {/* ─── Global Loading Overlay ─── */}
       {loading && (
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.62)', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.72)', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
           <ActivityIndicator size="large" color="#ffffff" />
-          <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 14, marginTop: 16 }}>
-            Analyzing nutritional values...
+          <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 14, marginTop: 16, textAlign: 'center', paddingHorizontal: 24 }}>
+            {loadingText}
           </Text>
         </View>
       )}

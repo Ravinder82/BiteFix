@@ -14,7 +14,7 @@ export interface ScanHistoryItem {
   name: string;
   brand?: string;
   sugarGrams: number; // sugar per serving or total
-  sugarTeaspoons: number; // sugarGrams / 3.2
+  sugarTeaspoons: number; // sugarGrams / 4.2
   servingSize?: string;
   calories?: number;
   carbsGrams?: number;

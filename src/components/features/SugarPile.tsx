@@ -50,7 +50,7 @@ export function SugarPile({ teaspoons }: SugarPileProps) {
           {roundedTeaspoons === 1 ? 'Teaspoon' : 'Teaspoons'} of Sugar
         </Text>
         <Text className="text-stone-400 dark:text-stone-500 text-xs mt-1">
-          (Equals {(roundedTeaspoons * 3.2).toFixed(1)}g total at 3.2g/tsp)
+          (Equals {(roundedTeaspoons * 4.2).toFixed(1)}g total at 4.2g/tsp)
         </Text>
       </View>
 

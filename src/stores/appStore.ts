@@ -50,7 +50,7 @@ interface AppState {
   clearAllData: () => void;
 }
 
-const SUGAR_CONVERSION_GRAMS_PER_TEASPOON = 3.2; // 1 teaspoon = 3.2 grams of sugar
+const SUGAR_CONVERSION_GRAMS_PER_TEASPOON = 4.2; // 1 teaspoon = 4.2 grams of sugar
 
 export const useAppStore = create<AppState>()(
   persist(
