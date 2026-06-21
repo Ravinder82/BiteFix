@@ -115,7 +115,7 @@ export default function HomeScreen() {
               style={{ color: colors.textSecondary }}
               className="text-[9px] font-bold uppercase tracking-wider"
             >
-              Teaspoon Scanner
+              Sugar Scanner
             </Text>
           </View>
         </View>
@@ -144,7 +144,7 @@ export default function HomeScreen() {
             style={StyleSheet.absoluteFill}
           />
           {/* Abstract blobs for "liquid" look behind glass */}
-          <View style={{ position: 'absolute', top: -40, right: -40, width: 150, height: 150, borderRadius: 75, backgroundColor: isDark ? 'rgba(252, 195, 114, 1)' : 'rgba(255, 217, 163, 0.9)', transform: [{ scale: 1.5 }] }} />
+          <View style={{ position: 'absolute', top: -40, right: -40, width: 150, height: 150, borderRadius: 75, backgroundColor: isDark ? 'rgba(255, 149, 0, 1)' : 'rgba(255, 255, 255, 0)', transform: [{ scale: 1.5 }] }} />
           <View style={{ position: 'absolute', bottom: -50, left: -20, width: 120, height: 120, borderRadius: 60, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)', transform: [{ scale: 1.5 }] }} />
 
           <BlurView
@@ -156,7 +156,7 @@ export default function HomeScreen() {
               alignItems: 'center',
               justifyContent: 'center',
               borderWidth: 1.5,
-              borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.6)',
+              borderColor: isDark ? 'rgba(239, 239, 239, 0.5)' : 'rgba(239, 239, 239, 1)',
             }}
           >
             <AnimatedReanimated.View
@@ -193,7 +193,7 @@ export default function HomeScreen() {
               </View>
               <View>
                 <Text className="text-white text-base font-black leading-tight">Scan Packaged Food</Text>
-                <Text className="text-white/70 text-xs mt-1">Converts grams of sugar to teaspoons</Text>
+                <Text className="text-white/70 text-xs mt-1">Get Sugar amount in teaspoons</Text>
               </View>
             </View>
             <View className="p-2 bg-white/10 rounded-full">
@@ -331,7 +331,7 @@ export default function HomeScreen() {
           <View className="flex-1">
             <Text style={{ color: colors.text }} className="font-bold text-sm">Why Teaspoons instead of Grams?</Text>
             <Text style={{ color: colors.textSecondary }} className="text-xs mt-2 leading-relaxed">
-              We convert sugar grams into teaspoons using the standard <Text className="font-bold"> WHO RECOMMENDATIONS:1 teaspoon = 4.2 grams </Text>. Seeing sugar content in teaspoons helps you make healthy choices.
+              Seeing sugar content in teaspoons helps you make healthy choices <Text className="font-bold"> WHO RECOMMENDATIONS:1 teaspoon = 4.2 grams </Text>
             </Text>
           </View>
         </View>
@@ -459,7 +459,7 @@ export default function HomeScreen() {
                       <Text
                         style={{ color: getSugarColor(item.sugarTeaspoons, colors), fontSize: 15, fontWeight: '900', lineHeight: 15 }}
                       >
-                        {item.sugarTeaspoons} <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>tsp</Text>
+                        {item.sugarTeaspoons} <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>tablespoons</Text>
                       </Text>
                       <Text style={{ color: colors.textMuted, fontSize: 9, marginTop: 2 }}>
                         ({item.sugarGrams}g)
@@ -604,7 +604,7 @@ export default function HomeScreen() {
                         fontWeight: '800',
                         marginLeft: 6
                       }}>
-                        tsp
+                        teaspoons
                       </Text>
                     </View>
                     <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
@@ -621,12 +621,12 @@ export default function HomeScreen() {
                     <View style={{ flexDirection: 'row', gap: 12 }}>
                       <View style={{ flex: 1, backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1, padding: 16, borderRadius: 20 }}>
                         <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Product Size</Text>
-                        <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900', marginTop: 4 }}>{selectedScan.servingSize || '--'}</Text>
+                        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900', marginTop: 4 }}>{selectedScan.servingSize || '--'}</Text>
                       </View>
 
                       <View style={{ flex: 1, backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1, padding: 16, borderRadius: 20 }}>
                         <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Total Calories</Text>
-                        <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900', marginTop: 4 }}>{selectedScan.calories ? `${selectedScan.calories}` : '--'} <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted }}>Kcal</Text></Text>
+                        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900', marginTop: 4 }}>{selectedScan.calories ? `${selectedScan.calories}` : '--'} <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted }}>Kcal</Text></Text>
                       </View>
                     </View>
 
@@ -661,7 +661,7 @@ export default function HomeScreen() {
 
                   <View style={{ gap: 12 }}>
                     <View style={{ backgroundColor: colors.surface, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
-                      <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Healthiest Amount of Sugar</Text>
+                      <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Recommended Daily Sugar Amount</Text>
                       <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 6 tsp (25g) for best health benefits.</Text>
                       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
@@ -670,7 +670,7 @@ export default function HomeScreen() {
                     </View>
 
                     <View style={{ backgroundColor: colors.surface, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
-                      <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Average Amount of Sugar</Text>
+                      <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Maximum Suggested Daily Sugar Amount</Text>
                       <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 12 tsp (50g) to reduce health risks.</Text>
                       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                         <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
