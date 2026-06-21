@@ -608,7 +608,7 @@ export default function HomeScreen() {
                       </Text>
                     </View>
                     <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
-                      Added Sugar
+                      Total Sugar
                     </Text>
                   </View>
                 </View>

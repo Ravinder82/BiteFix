@@ -111,28 +111,31 @@ function extractSugarFromNutriments(n: Record<string, any>): number {
     return isNaN(num) ? null : num;
   };
 
-  // Priority 1: added-sugars_serving (explicit per-serving added sugar)
-  const addedSugarServing = toNum(n['added-sugars_serving']);
-  if (addedSugarServing !== null) return addedSugarServing;
-
-  // Priority 2: added-sugars_100g (explicit per-100g added sugar)
-  const addedSugar100g = toNum(n['added-sugars_100g'] ?? n['added-sugars']);
-  if (addedSugar100g !== null) return addedSugar100g;
-
-  // Fallback to total sugars / other fields if added sugars data is completely missing
-  // (to prevent showing 0 sugar for foods where added sugar is not explicitly filled in the community database)
+  // Priority 1: per-serving sugar (most accurate for typical consumption)
   const sugarServing = toNum(n.sugars_serving);
   if (sugarServing !== null && sugarServing > 0) return sugarServing;
 
+  // Priority 2: per-100g sugar field, but ONLY if it's non-zero
+  // (zero is often an unfilled field, not a real value)
   const sugar100g = toNum(n.sugars_100g ?? n.sugars);
   if (sugar100g !== null && sugar100g > 0) return sugar100g;
 
+  // Priority 3: added-sugars_100g (partial data, but better than nothing)
+  const addedSugar100g = toNum(n['added-sugars_100g'] ?? n['added-sugars_serving']);
+  if (addedSugar100g !== null && addedSugar100g > 0) return addedSugar100g;
+
+  // Priority 4: carbohydrates as a last resort
+  // Only use when the sugars field is explicitly 0 (not undefined/null)
+  // AND carbohydrates are present. This handles pure-sugar products like
+  // glucose (Glucon D), dextrose, honey, maple syrup, etc. where the
+  // contributor filled carbs but forgot to fill in sugars separately.
   const carbs100g = toNum(n.carbohydrates_100g ?? n.carbohydrates);
   const sugarFieldExistsAsZero = sugar100g === 0;
   if (sugarFieldExistsAsZero && carbs100g !== null && carbs100g > 0) {
     return carbs100g;
   }
 
+  // Absolute fallback: return whatever sugars_100g actually was (could be 0)
   return sugar100g ?? 0;
 }
 
@@ -353,13 +356,10 @@ export default function ScannerScreen() {
             const sugarGrams = extractSugarFromNutriments(p.nutriments ?? {});
             const sugarTeaspoons = parseFloat((sugarGrams / 4.2).toFixed(1));
             
-            // Extract the strict 100g sugar value for normalized Smart Swaps comparison (prioritizing added sugars)
-            const addedSugar100g = p.nutriments?.['added-sugars_100g'] !== undefined 
-                ? parseFloat(p.nutriments['added-sugars_100g']) 
+            // Extract the strict 100g sugar value for normalized Smart Swaps comparison
+            const sugarPer100g = p.nutriments?.sugars_100g !== undefined 
+                ? parseFloat(p.nutriments.sugars_100g) 
                 : undefined;
-            const sugarPer100g = addedSugar100g !== undefined 
-                ? addedSugar100g 
-                : (p.nutriments?.sugars_100g !== undefined ? parseFloat(p.nutriments.sugars_100g) : undefined);
 
             const servingSize: string | undefined = p.serving_size || undefined;
             const calories =
@@ -413,25 +413,15 @@ export default function ScannerScreen() {
             const name = food.description || 'Unknown Product';
             const brand = food.brandOwner || food.brandName || 'Generic Brand';
             
-            // Look for added sugar in the nutrients array first
-            const addedSugarsNutrient = food.foodNutrients?.find((n: any) => 
-              n.nutrientName?.toLowerCase().includes('sugars, added') || 
-              n.nutrientName?.toLowerCase() === 'added sugar' ||
-              n.nutrientName?.toLowerCase() === 'added sugars'
+            // Look for sugar in the nutrients array
+            const sugarsNutrient = food.foodNutrients?.find((n: any) => 
+              n.nutrientName?.toLowerCase().includes('sugars, total') || 
+              n.nutrientName?.toLowerCase() === 'sugars'
             );
             
             let sugarGrams = 0;
-            if (addedSugarsNutrient && addedSugarsNutrient.value !== undefined) {
-               sugarGrams = parseFloat(addedSugarsNutrient.value);
-            } else {
-              // Fallback to total sugars if added sugars data is missing
-              const sugarsNutrient = food.foodNutrients?.find((n: any) => 
-                n.nutrientName?.toLowerCase().includes('sugars, total') || 
-                n.nutrientName?.toLowerCase() === 'sugars'
-              );
-              if (sugarsNutrient && sugarsNutrient.value !== undefined) {
-                 sugarGrams = parseFloat(sugarsNutrient.value);
-              }
+            if (sugarsNutrient && sugarsNutrient.value !== undefined) {
+               sugarGrams = parseFloat(sugarsNutrient.value);
             }
 
             const sugarTeaspoons = parseFloat((sugarGrams / 4.2).toFixed(1));
@@ -561,10 +551,7 @@ export default function ScannerScreen() {
             continue;
           }
           
-          let altAddedSugar100g = p.nutriments?.['added-sugars_100g'] !== undefined ? parseFloat(p.nutriments['added-sugars_100g']) : null;
-          let altSugar100g = altAddedSugar100g !== null 
-            ? altAddedSugar100g 
-            : (p.nutriments?.sugars_100g !== undefined ? parseFloat(p.nutriments.sugars_100g) : null);
+          let altSugar100g = p.nutriments?.sugars_100g !== undefined ? parseFloat(p.nutriments.sugars_100g) : null;
           
           // Only compare if we have 100g values for both, or use the raw values as fallback
           let comparativeSugar: number;
@@ -944,7 +931,7 @@ export default function ScannerScreen() {
             {calculationMode === 'total' ? (
               <View style={{ marginBottom: 24 }}>
                 <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8, paddingHorizontal: 4 }}>
-                  Added Sugar in Grams (g)
+                  Total Sugar in Grams (g)
                 </Text>
                 <TextInput
                   value={manualSugarGrams}
@@ -974,7 +961,7 @@ export default function ScannerScreen() {
               <View style={{ marginBottom: 24, flexDirection: 'row', gap: 12 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8, paddingHorizontal: 4 }}>
-                    Added Sugar per 100g/ml
+                    Sugar per 100g/ml
                   </Text>
                   <TextInput
                     value={manualSugarPer100}
@@ -1230,7 +1217,7 @@ export default function ScannerScreen() {
                   </Text>
                 </View>
                 <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
-                  Added Sugar
+                  Total Sugar
                 </Text>
               </View>
             </View>
@@ -1284,7 +1271,7 @@ export default function ScannerScreen() {
               </View>
 
               <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20 }}>
-                This product contains <Text style={{ fontWeight: '900', color: colors.text }}>{scanResult.sugarTeaspoons} tsp</Text> of added sugar. Here is how it compares to the World Health Organization's daily limits for adults:
+                This product contains <Text style={{ fontWeight: '900', color: colors.text }}>{scanResult.sugarTeaspoons} tsp</Text> of sugar. Here is how it compares to the World Health Organization's daily limits for adults:
               </Text>
 
               <View style={{ gap: 12 }}>
