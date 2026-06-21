@@ -43,8 +43,6 @@ interface AppState {
     fatGrams?: number,
     proteinGrams?: number,
     sugarPer100g?: number,
-    novaGroup?: number,
-    additivesTags?: string[],
     categoryTag?: string
   ) => void;
   deleteScan: (id: string) => void;
@@ -112,8 +110,6 @@ export const useAppStore = create<AppState>()(
         fatGrams,
         proteinGrams,
         sugarPer100g,
-        novaGroup,
-        additivesTags,
         categoryTag
       ) => set((state) => {
         const timestamp = Date.now();
@@ -133,8 +129,6 @@ export const useAppStore = create<AppState>()(
           fatGrams,
           proteinGrams,
           sugarPer100g,
-          novaGroup,
-          additivesTags,
           categoryTag,
         };
         const scans = [newScan, ...state.scans];

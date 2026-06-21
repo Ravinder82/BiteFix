@@ -45,8 +45,6 @@ import {
   Shuffle,
   X,
   Leaf,
-  ShieldAlert,
-  FlaskConical,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { BlurView } from 'expo-blur';
@@ -236,8 +234,6 @@ export default function ScannerScreen() {
     carbsGrams?: number;
     fatGrams?: number;
     proteinGrams?: number;
-    novaGroup?: number;        // NOVA classification 1-4
-    additivesTags?: string[];  // e.g. ['en:e330', 'en:e621']
     categoryTag?: string;      // e.g. 'en:breakfast-cereals'
   } | null>(null);
 
@@ -383,14 +379,6 @@ export default function ScannerScreen() {
               : p.nutriments?.proteins_100g !== undefined ? parseFloat(p.nutriments.proteins_100g)
               : undefined;
 
-            // NOVA classification (1-4) and additives for the NOVA LED indicator
-            const novaGroup: number | undefined =
-              typeof p.nova_group === 'number' ? p.nova_group
-              : typeof p.nova_group === 'string' ? parseInt(p.nova_group, 10) || undefined
-              : undefined;
-
-            const additivesTags: string[] = Array.isArray(p.additives_tags) ? p.additives_tags : [];
-
             // Best category tag for "Better Choices" lookup
             // Prefer the most specific category (last in the array) from categories_tags
             const categoryTag: string | undefined =
@@ -398,10 +386,10 @@ export default function ScannerScreen() {
                 ? p.categories_tags[p.categories_tags.length - 1]
                 : undefined;
 
-            addScan(name, sugarGrams, brand, imageUrl, data, servingSize, calories, carbsGrams, fatGrams, proteinGrams, sugarPer100g, novaGroup, additivesTags, categoryTag);
+            addScan(name, sugarGrams, brand, imageUrl, data, servingSize, calories, carbsGrams, fatGrams, proteinGrams, sugarPer100g, categoryTag);
 
             if (mountedRef.current) {
-              setScanResult({ name, brand, sugarGrams, sugarTeaspoons, sugarPer100g, imageUrl, servingSize, calories, carbsGrams, fatGrams, proteinGrams, novaGroup, additivesTags, categoryTag });
+              setScanResult({ name, brand, sugarGrams, sugarTeaspoons, sugarPer100g, imageUrl, servingSize, calories, carbsGrams, fatGrams, proteinGrams, categoryTag });
               productFound = true;
             }
           }
@@ -512,50 +500,7 @@ export default function ScannerScreen() {
     setMode('camera');
   };
 
-  // ─────────────────────────────────────────────────────────
-  // NOVA LED color + label helper
-  // ─────────────────────────────────────────────────────────
-  const getNovaInfo = (group?: number) => {
-    switch (group) {
-      case 1: return {
-        color: '#22C55E',
-        glowColor: 'rgba(34, 197, 94, 0.4)',
-        label: 'Unprocessed',
-        description: 'Unprocessed or minimally processed foods. These are natural foods altered only by removal of inedible parts, drying, crushing, grinding, pasteurization, or fermentation. No added substances.',
-      };
-      case 2: return {
-        color: '#84CC16',
-        glowColor: 'rgba(132, 204, 22, 0.4)',
-        label: 'Processed Ingredient',
-        description: 'Processed culinary ingredients obtained from Group 1 foods by pressing, refining, grinding, or milling. Examples: oils, butter, sugar, salt, flour. Used in food preparation, not eaten alone.',
-      };
-      case 3: return {
-        color: '#F59E0B',
-        glowColor: 'rgba(245, 158, 11, 0.4)',
-        label: 'Processed',
-        description: 'Processed foods made by adding salt, oil, sugar, or other Group 2 substances to Group 1 foods. Includes canned vegetables, cheeses, freshly made bread. Usually 2-3 ingredients.',
-      };
-      case 4: return {
-        color: '#EF4444',
-        glowColor: 'rgba(239, 68, 68, 0.5)',
-        label: 'Ultra-Processed',
-        description: 'Ultra-processed food products made mostly from substances derived from foods and additives. Studies in The BMJ (2019) and JAMA (2022) link high intake to increased risk of obesity, type 2 diabetes, cardiovascular disease, and all-cause mortality.',
-      };
-      default: return {
-        color: '#9CA3AF',
-        glowColor: 'rgba(156, 163, 175, 0.3)',
-        label: 'Unknown',
-        description: 'Processing level data not available for this product.',
-      };
-    }
-  };
 
-  // Format additive tag like 'en:e330' → 'E330'
-  const formatAdditive = (tag: string) => {
-    const parts = tag.split(':');
-    const code = parts[parts.length - 1];
-    return code.toUpperCase().replace('-', ' ');
-  };
 
   // ─────────────────────────────────────────────────────────
   // Fetch "Better Choices" (3 lower-sugar alternatives)
@@ -1277,143 +1222,33 @@ export default function ScannerScreen() {
               </View>
             </View>
 
-            {/* 2. Unified Health Insights Card (NOVA + Additives + Better Choices) */}
-            {(() => {
-              const nova = getNovaInfo(scanResult.novaGroup);
-              // Only show this card if we have NOVA data or additives or if it's an OFF product
-              if (!scanResult.novaGroup && (!scanResult.additivesTags || scanResult.additivesTags.length === 0)) return null;
-
-              return (
-                <View style={{
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  borderWidth: 1,
-                  borderRadius: 28,
-                  padding: 24,
+            {/* 2. Better Choices */}
+            {scanResult.categoryTag && (
+              <TouchableOpacity
+                onPress={fetchBetterChoices}
+                activeOpacity={0.85}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  backgroundColor: colors.success,
+                  paddingVertical: 14,
+                  borderRadius: 16,
                   marginBottom: 24,
-                }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                    <ShieldAlert size={18} color={colors.text} />
-                    <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900' }}>Health Insights</Text>
-                  </View>
-
-                  {/* NOVA Pill & Studies Pill Row */}
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-                    {scanResult.novaGroup && (
-                      <View style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        backgroundColor: nova.color + '15',
-                        paddingHorizontal: 12,
-                        paddingVertical: 6,
-                        borderRadius: 99,
-                        borderWidth: 1,
-                        borderColor: nova.color + '30',
-                        gap: 6
-                      }}>
-                        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: nova.color }} />
-                        <Text style={{ color: nova.color, fontSize: 12, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                          NOVA {scanResult.novaGroup} — {nova.label}
-                        </Text>
-                      </View>
-                    )}
-                    
-                    {scanResult.novaGroup === 4 && (
-                      <View style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                        paddingHorizontal: 12,
-                        paddingVertical: 6,
-                        borderRadius: 99,
-                        gap: 4
-                      }}>
-                        <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700' }}>
-                          📚 Backed by BMJ & JAMA Studies
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-
-                  {/* Additives Mini Card */}
-                  {scanResult.additivesTags && scanResult.additivesTags.length > 0 && (
-                    <View style={{
-                      backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-                      padding: 16,
-                      borderRadius: 16,
-                      borderWidth: 1,
-                      borderColor: colors.border,
-                      marginBottom: scanResult.categoryTag ? 20 : 0
-                    }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-                        <FlaskConical size={14} color={colors.textSecondary} />
-                        <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>
-                          {scanResult.additivesTags.length} Additive{scanResult.additivesTags.length > 1 ? 's' : ''} Detected
-                        </Text>
-                      </View>
-                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                        {scanResult.additivesTags.slice(0, 12).map((tag, i) => (
-                          <View key={i} style={{
-                            backgroundColor: colors.surfaceRaised,
-                            paddingHorizontal: 8,
-                            paddingVertical: 4,
-                            borderRadius: 8,
-                            borderWidth: 1,
-                            borderColor: colors.border
-                          }}>
-                            <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '800' }}>
-                              {formatAdditive(tag)}
-                            </Text>
-                          </View>
-                        ))}
-                        {scanResult.additivesTags.length > 12 && (
-                          <View style={{
-                            backgroundColor: colors.surfaceRaised,
-                            paddingHorizontal: 8,
-                            paddingVertical: 4,
-                            borderRadius: 8,
-                            borderWidth: 1,
-                            borderColor: colors.border
-                          }}>
-                            <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '800' }}>
-                              +{scanResult.additivesTags.length - 12} more
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-                  )}
-
-                  {/* Better Choices Button (Inside the Card) */}
-                  {scanResult.categoryTag && (
-                    <TouchableOpacity
-                      onPress={fetchBetterChoices}
-                      activeOpacity={0.85}
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8,
-                        backgroundColor: colors.success,
-                        paddingVertical: 14,
-                        borderRadius: 16,
-                        marginTop: (scanResult.additivesTags && scanResult.additivesTags.length > 0) ? 0 : 8,
-                        shadowColor: colors.success,
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.3,
-                        shadowRadius: 8,
-                        elevation: 4,
-                      }}
-                    >
-                      <Shuffle size={18} color="#ffffff" />
-                      <Text style={{ color: '#ffffff', fontWeight: '900', fontSize: 15 }}>
-                        Find Better Choices
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              );
-            })()}
+                  shadowColor: colors.success,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 8,
+                  elevation: 4,
+                }}
+              >
+                <Shuffle size={18} color="#ffffff" />
+                <Text style={{ color: '#ffffff', fontWeight: '900', fontSize: 15 }}>
+                  Find Better Choices
+                </Text>
+              </TouchableOpacity>
+            )}
 
             {/* 3. Nutrition Facts */}
             <NutritionFacts
@@ -1427,23 +1262,36 @@ export default function ScannerScreen() {
             />
 
             {/* WHO Reference Card */}
-            <View style={{ backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, padding: 20, borderRadius: 24, marginBottom: 32, flexDirection: 'row', alignItems: 'flex-start', gap: 16 }}>
-              <View style={{ backgroundColor: colors.primary + '12', padding: 8, borderRadius: 12 }}>
-                <HelpCircle size={18} color={colors.primary} />
+            <View style={{ backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, padding: 20, borderRadius: 24, marginBottom: 32, gap: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={{ backgroundColor: colors.primary + '12', padding: 8, borderRadius: 12 }}>
+                  <HelpCircle size={18} color={colors.primary} />
+                </View>
+                <Text style={{ color: colors.text, fontWeight: '900', fontSize: 15 }}>WHO Guidelines</Text>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.text, fontWeight: '800', fontSize: 14 }}>Sugar Reference Guide</Text>
-                <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 8, lineHeight: 18 }}>
-                  WHO recommends limiting free sugars to under{' '}
-                  <Text style={{ fontWeight: '900', color: colors.text }}>6 teaspoons</Text> per day for adults.
-                  This product contains{' '}
-                  <Text style={{ fontWeight: '900', color: colors.text }}>{scanResult.sugarTeaspoons} teaspoons</Text>,
-                  which is{' '}
-                  <Text style={{ fontWeight: '900', color: colors.text }}>
-                    {((scanResult.sugarTeaspoons / 6) * 100).toFixed(0)}%
-                  </Text>{' '}
-                  of that limit.
-                </Text>
+
+              <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20 }}>
+                This product contains <Text style={{ fontWeight: '900', color: colors.text }}>{scanResult.sugarTeaspoons} tsp</Text> of sugar. Here is how it compares to the World Health Organization's daily limits for adults:
+              </Text>
+
+              <View style={{ gap: 12 }}>
+                <View style={{ backgroundColor: colors.background, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
+                  <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Conditional Recommendation</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 6 tsp (25g) for additional health benefits.</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
+                    <Text style={{ color: scanResult.sugarTeaspoons > 6 ? colors.error : colors.text, fontWeight: '900', fontSize: 16 }}>{((scanResult.sugarTeaspoons / 6) * 100).toFixed(0)}%</Text>
+                  </View>
+                </View>
+
+                <View style={{ backgroundColor: colors.background, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
+                  <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Strong Recommendation</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 12 tsp (50g) to reduce health risks.</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
+                    <Text style={{ color: scanResult.sugarTeaspoons > 12 ? colors.error : colors.text, fontWeight: '900', fontSize: 16 }}>{((scanResult.sugarTeaspoons / 12) * 100).toFixed(0)}%</Text>
+                  </View>
+                </View>
               </View>
             </View>
 

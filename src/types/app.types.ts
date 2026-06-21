@@ -23,7 +23,5 @@ export interface ScanHistoryItem {
   timestamp: number;
   imageUrl?: string;
   sugarPer100g?: number;
-  novaGroup?: number;
-  additivesTags?: string[];
   categoryTag?: string;
 }

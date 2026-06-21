@@ -9,54 +9,13 @@ import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
-import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle, Menu, ShieldAlert, FlaskConical } from 'lucide-react-native';
+import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle, Menu, HelpCircle } from 'lucide-react-native';
 import { formatBloodSugarValue, getStatusColor, getStatusLabel } from '../../utils/bloodSugar';
 import SettingsScreen from './settings';
 import * as Haptics from 'expo-haptics';
 import { ScanHistoryItem } from '../../types/app.types';
 
 
-
-const getNovaInfo = (group?: number) => {
-  switch (group) {
-    case 1: return {
-      color: '#22C55E',
-      glowColor: 'rgba(34, 197, 94, 0.4)',
-      label: 'Unprocessed',
-      description: 'Unprocessed or minimally processed foods. These are natural foods altered only by removal of inedible parts, drying, crushing, grinding, pasteurization, or fermentation. No added substances.',
-    };
-    case 2: return {
-      color: '#84CC16',
-      glowColor: 'rgba(132, 204, 22, 0.4)',
-      label: 'Processed Ingredient',
-      description: 'Processed culinary ingredients obtained from Group 1 foods by pressing, refining, grinding, or milling. Oils, butter, sugar, salt, flour.',
-    };
-    case 3: return {
-      color: '#F59E0B',
-      glowColor: 'rgba(245, 158, 11, 0.4)',
-      label: 'Processed',
-      description: 'Processed foods made by adding salt, oil, sugar, or other substances to Group 1 foods. Canned vegetables, cheeses, freshly made bread.',
-    };
-    case 4: return {
-      color: '#EF4444',
-      glowColor: 'rgba(239, 68, 68, 0.5)',
-      label: 'Ultra-Processed',
-      description: 'Ultra-processed food products made mostly from substances derived from foods and additives. Studies in The BMJ (2019) and JAMA (2022) link high intake to increased risk of obesity, type 2 diabetes, cardiovascular disease, and all-cause mortality.',
-    };
-    default: return {
-      color: '#9CA3AF',
-      glowColor: 'rgba(156, 163, 175, 0.3)',
-      label: 'Unknown',
-      description: 'Processing level data not available for this product.',
-    };
-  }
-};
-
-const formatAdditive = (tag: string) => {
-  const parts = tag.split(':');
-  const code = parts[parts.length - 1];
-  return code.toUpperCase().replace('-', ' ');
-};
 
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
@@ -125,9 +84,9 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Premium Custom Header (Floating Pill) */}
-      <View 
-        style={{ 
-          borderColor: colors.border, 
+      <View
+        style={{
+          borderColor: colors.border,
           borderWidth: 1.5,
           backgroundColor: colors.surface,
           borderRadius: 24,
@@ -139,28 +98,28 @@ export default function HomeScreen() {
           shadowOpacity: isDark ? 0.35 : 0.04,
           shadowRadius: 12,
           elevation: 4,
-        }} 
+        }}
         className="flex-row items-center justify-between px-5 py-3.5"
       >
         <View className="flex-row items-center gap-3">
           {/* Cute Miniature Mascot Logo */}
           <Mascot state="idle" size={36} />
           <View>
-            <Text 
-              style={{ color: colors.text }} 
+            <Text
+              style={{ color: colors.text }}
               className="text-lg font-black tracking-tight"
             >
               GoodBye Sugar
             </Text>
-            <Text 
-              style={{ color: colors.textSecondary }} 
+            <Text
+              style={{ color: colors.textSecondary }}
               className="text-[9px] font-bold uppercase tracking-wider"
             >
               Teaspoon Scanner
             </Text>
           </View>
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             setSettingsVisible(true);
@@ -172,22 +131,22 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
-        className="flex-1" 
-        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }} 
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Welcome Card (Premium Liquid Glass) */}
         <View style={{ borderRadius: 28, overflow: 'hidden', marginBottom: 24 }}>
           {/* Base Background for depth */}
           <LinearGradient
-            colors={isDark ? ['#1A1A1A', '#0D0D0D'] : ['#F9FAFB', '#F3F4F6']}
+            colors={isDark ? ['#000000ff', '#000000ff'] : ['#ffffffff', '#ffffffff']}
             style={StyleSheet.absoluteFill}
           />
           {/* Abstract blobs for "liquid" look behind glass */}
-          <View style={{ position: 'absolute', top: -40, right: -40, width: 150, height: 150, borderRadius: 75, backgroundColor: isDark ? 'rgba(255, 149, 0, 0.2)' : 'rgba(255, 149, 0, 0.15)', transform: [{ scale: 1.5 }] }} />
+          <View style={{ position: 'absolute', top: -40, right: -40, width: 150, height: 150, borderRadius: 75, backgroundColor: isDark ? 'rgba(252, 195, 114, 1)' : 'rgba(255, 217, 163, 0.9)', transform: [{ scale: 1.5 }] }} />
           <View style={{ position: 'absolute', bottom: -50, left: -20, width: 120, height: 120, borderRadius: 60, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)', transform: [{ scale: 1.5 }] }} />
-          
+
           <BlurView
             intensity={isDark ? 30 : 60}
             tint={isDark ? "dark" : "light"}
@@ -200,30 +159,18 @@ export default function HomeScreen() {
               borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.6)',
             }}
           >
-            <AnimatedReanimated.View 
+            <AnimatedReanimated.View
               entering={FadeInDown.duration(600).springify()}
               style={{ alignItems: 'center', zIndex: 10, marginBottom: 20 }}
             >
               <Mascot state={latestScan && latestScan.sugarTeaspoons > 6 ? 'shocked' : 'happy'} size={120} />
             </AnimatedReanimated.View>
             <View className="items-center" style={{ zIndex: 10 }}>
-              <Text 
-                style={{ color: colors.primary }} 
+              <Text
+                style={{ color: colors.primary }}
                 className="text-[10px] font-black uppercase tracking-widest text-center"
               >
                 {userName ? `Welcome, ${userName}` : 'Welcome Back'}
-              </Text>
-              <Text 
-                style={{ color: colors.text }} 
-                className="text-3xl font-black mt-2 leading-tight text-center"
-              >
-                {userName ? `Ready to see the sugar, ${userName}?` : 'Ready to see the sugar?'}
-              </Text>
-              <Text 
-                style={{ color: colors.textSecondary }} 
-                className="text-sm mt-3 leading-relaxed font-medium text-center px-4"
-              >
-                Let's scan barcodes to reveal hidden sugars and track your glucose log.
               </Text>
             </View>
           </BlurView>
@@ -295,7 +242,7 @@ export default function HomeScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
                 <View style={{ flex: 1, paddingRight: 6 }}>
                   <Text style={{ color: colors.text }} className="text-2xl font-black leading-none">
-                    {latestScan.sugarTeaspoons} <Text style={{ color: colors.textSecondary }} className="text-xs font-bold">tsp</Text>
+                    {latestScan.sugarTeaspoons} <Text style={{ color: colors.textSecondary }} className="text-xs font-bold">tablespoons</Text>
                   </Text>
                   <Text numberOfLines={1} style={{ color: colors.text }} className="text-[11px] font-bold mt-2">
                     {latestScan.name}
@@ -312,14 +259,14 @@ export default function HomeScreen() {
                     transition={200}
                   />
                 ) : (
-                  <View 
-                    style={{ 
-                      width: 44, 
-                      height: 44, 
-                      borderRadius: 10, 
-                      backgroundColor: colors.primary + '12', 
-                      alignItems: 'center', 
-                      justifyContent: 'center' 
+                  <View
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 10,
+                      backgroundColor: colors.primary + '12',
+                      alignItems: 'center',
+                      justifyContent: 'center'
                     }}
                   >
                     <ScanBarcode size={18} color={colors.primary} />
@@ -350,11 +297,11 @@ export default function HomeScreen() {
                   <Text style={{ color: colors.textSecondary }} className="text-[10px] font-bold">{latestLog.unit}</Text>
                 </Text>
                 {/* Health Range Pill */}
-                <View 
+                <View
                   style={{ backgroundColor: getStatusColor(latestLog.status, colors) + '15' }}
                   className="px-2.5 py-0.5 rounded-full self-start mt-2"
                 >
-                  <Text 
+                  <Text
                     style={{ color: getStatusColor(latestLog.status, colors) }}
                     className="text-[8px] font-black uppercase tracking-wider"
                   >
@@ -371,12 +318,12 @@ export default function HomeScreen() {
         </View>
 
         {/* Premium Educational Banner */}
-        <View 
-          style={{ backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.secondary, borderLeftWidth: 4 }} 
+        <View
+          style={{ backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.secondary, borderLeftWidth: 4 }}
           className="p-5 rounded-r-[24px] rounded-l-[8px] border shadow-sm mb-6 flex-row gap-4"
         >
-          <View 
-            style={{ backgroundColor: colors.secondary + '12' }} 
+          <View
+            style={{ backgroundColor: colors.secondary + '12' }}
             className="p-2.5 rounded-xl self-start"
           >
             <Info size={18} color={colors.secondary} />
@@ -384,7 +331,7 @@ export default function HomeScreen() {
           <View className="flex-1">
             <Text style={{ color: colors.text }} className="font-bold text-sm">Why Teaspoons instead of Grams?</Text>
             <Text style={{ color: colors.textSecondary }} className="text-xs mt-2 leading-relaxed">
-              Grams are abstract, but teaspoons are tangible. We convert sugar content using the standard conversion of <Text className="font-bold">1 teaspoon = 4.2 grams</Text>. Seeing sugar content in teaspoons helps you make quick, intuitive healthy choices.
+              We convert sugar grams into teaspoons using the standard <Text className="font-bold"> WHO RECOMMENDATIONS:1 teaspoon = 4.2 grams </Text>. Seeing sugar content in teaspoons helps you make healthy choices.
             </Text>
           </View>
         </View>
@@ -417,8 +364,8 @@ export default function HomeScreen() {
           </View>
 
           {scans.length === 0 ? (
-            <View 
-              style={{ backgroundColor: colors.surface, borderColor: colors.border }} 
+            <View
+              style={{ backgroundColor: colors.surface, borderColor: colors.border }}
               className="border p-6 rounded-[24px] items-center justify-center shadow-sm"
             >
               <ScanBarcode size={24} color={colors.textMuted} />
@@ -441,8 +388,8 @@ export default function HomeScreen() {
                     panY.setValue(0);
                     setSelectedScan(item);
                   }}
-                  style={{ 
-                    backgroundColor: colors.surface, 
+                  style={{
+                    backgroundColor: colors.surface,
                     borderColor: colors.border,
                     borderWidth: 1,
                     borderRadius: 20,
@@ -469,14 +416,14 @@ export default function HomeScreen() {
                         transition={200}
                       />
                     ) : (
-                      <View 
-                        style={{ 
-                          width: 52, 
-                          height: 52, 
-                          borderRadius: 12, 
-                          backgroundColor: colors.primary + '12', 
-                          alignItems: 'center', 
-                          justifyContent: 'center' 
+                      <View
+                        style={{
+                          width: 52,
+                          height: 52,
+                          borderRadius: 12,
+                          backgroundColor: colors.primary + '12',
+                          alignItems: 'center',
+                          justifyContent: 'center'
                         }}
                       >
                         <ScanBarcode size={22} color={colors.primary} />
@@ -485,14 +432,14 @@ export default function HomeScreen() {
 
                     {/* Product Metadata */}
                     <View style={{ flex: 1, paddingRight: 6 }}>
-                      <Text 
-                        numberOfLines={1} 
+                      <Text
+                        numberOfLines={1}
                         style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}
                       >
                         {item.name}
                       </Text>
-                      <Text 
-                        numberOfLines={1} 
+                      <Text
+                        numberOfLines={1}
                         style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}
                       >
                         {item.brand || 'Generic Brand'}
@@ -509,7 +456,7 @@ export default function HomeScreen() {
                   {/* Right Side: Sugar Teaspoons & Delete Action */}
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <View style={{ alignItems: 'flex-end', marginRight: 2 }}>
-                      <Text 
+                      <Text
                         style={{ color: getSugarColor(item.sugarTeaspoons, colors), fontSize: 15, fontWeight: '900', lineHeight: 15 }}
                       >
                         {item.sugarTeaspoons} <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>tsp</Text>
@@ -524,7 +471,7 @@ export default function HomeScreen() {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                         deleteScan(item.id);
                       }}
-                      style={{ 
+                      style={{
                         backgroundColor: colors.background,
                         padding: 8,
                         borderRadius: 10
@@ -549,14 +496,14 @@ export default function HomeScreen() {
         onRequestClose={() => setSelectedScan(null)}
       >
         <View className="flex-1 justify-end bg-black/60">
-          <TouchableOpacity 
-            className="flex-1" 
-            activeOpacity={1} 
-            onPress={() => setSelectedScan(null)} 
+          <TouchableOpacity
+            className="flex-1"
+            activeOpacity={1}
+            onPress={() => setSelectedScan(null)}
           />
-          <Animated.View 
-            style={{ 
-              backgroundColor: colors.surface, 
+          <Animated.View
+            style={{
+              backgroundColor: colors.surface,
               transform: [{ translateY: panY }],
               borderTopLeftRadius: 32,
               borderTopRightRadius: 32,
@@ -570,19 +517,19 @@ export default function HomeScreen() {
             }}
           >
             {/* Drag Handle Area */}
-            <View 
-              {...panResponder.panHandlers} 
+            <View
+              {...panResponder.panHandlers}
               style={{ width: '100%', alignItems: 'center', paddingBottom: 12 }}
             >
               {/* Modal Pull Bar */}
               <View style={{ width: 48, height: 5, backgroundColor: isDark ? '#444' : '#ccc', borderRadius: 3, marginBottom: 8 }} />
-              
+
               {/* Modal Header */}
               <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
                 <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
                   Product Details
                 </Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => setSelectedScan(null)}
                   style={{ backgroundColor: colors.background, padding: 8, borderRadius: 20 }}
                 >
@@ -603,14 +550,14 @@ export default function HomeScreen() {
                       transition={200}
                     />
                   ) : (
-                    <View 
-                      style={{ backgroundColor: colors.primary + '12' }} 
+                    <View
+                      style={{ backgroundColor: colors.primary + '12' }}
                       className="w-24 h-24 rounded-2xl items-center justify-center mb-4"
                     >
                       <ScanBarcode size={36} color={colors.primary} />
                     </View>
                   )}
-                  
+
                   <Text style={{ color: colors.text, fontSize: 21, fontWeight: '900', textAlign: 'center', lineHeight: 26 }}>
                     {selectedScan.name}
                   </Text>
@@ -620,19 +567,19 @@ export default function HomeScreen() {
                     </Text>
                   </View>
                   {selectedScan.barcode && (
-                    <Text style={{ color: colors.textMuted }} className="text-[9px] font-mono mt-1.5">
+                    <Text style={{ color: colors.textMuted }} className="text-[12px] font-mono mt-1.5">
                       Barcode: {selectedScan.barcode}
                     </Text>
                   )}
 
                   {/* Reactive Mascot */}
                   <View style={{ marginTop: 24, marginBottom: 16 }}>
-                    <Mascot 
+                    <Mascot
                       state={
-                        selectedScan.sugarTeaspoons > 6 
-                          ? 'shocked' 
-                          : selectedScan.sugarTeaspoons > 3 
-                            ? 'dizzy' 
+                        selectedScan.sugarTeaspoons > 6
+                          ? 'shocked'
+                          : selectedScan.sugarTeaspoons > 3
+                            ? 'dizzy'
                             : 'happy'
                       }
                       size={120}
@@ -644,7 +591,7 @@ export default function HomeScreen() {
                     <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
                       <Text style={{
                         color: getSugarColor(selectedScan.sugarTeaspoons, colors),
-                        fontSize: 72,
+                        fontSize: 54,
                         fontWeight: '900',
                         letterSpacing: -2,
                         lineHeight: 72
@@ -666,101 +613,72 @@ export default function HomeScreen() {
                   </View>
                 </View>
 
-                {/* 2. Unified Health Insights Card (NOVA + Additives + Better Choices) */}
-                {(() => {
-                  const nova = getNovaInfo(selectedScan.novaGroup);
-                  if (!selectedScan.novaGroup && (!selectedScan.additivesTags || selectedScan.additivesTags.length === 0)) return null;
+                {/* 2. Extra Nutritional Data */}
+                {(selectedScan.servingSize || selectedScan.calories) ? (
+                  <View style={{ marginBottom: 24, gap: 12 }}>
 
-                  return (
-                    <View style={{
-                      backgroundColor: colors.background,
-                      borderColor: colors.border,
-                      borderWidth: 1,
-                      borderRadius: 28,
-                      padding: 24,
-                      marginBottom: 24,
-                    }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                        <ShieldAlert size={18} color={colors.text} />
-                        <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900' }}>Health Insights</Text>
+                    {/* Stat Row */}
+                    <View style={{ flexDirection: 'row', gap: 12 }}>
+                      <View style={{ flex: 1, backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1, padding: 16, borderRadius: 20 }}>
+                        <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Product Size</Text>
+                        <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900', marginTop: 4 }}>{selectedScan.servingSize || '--'}</Text>
                       </View>
 
-                      {/* NOVA Pill & Studies Pill Row */}
-                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-                        {selectedScan.novaGroup && (
-                          <View style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: nova.color + '15',
-                            paddingHorizontal: 12,
-                            paddingVertical: 6,
-                            borderRadius: 99,
-                            borderWidth: 1,
-                            borderColor: nova.color + '30',
-                            gap: 6
-                          }}>
-                            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: nova.color }} />
-                            <Text style={{ color: nova.color, fontSize: 12, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                              NOVA {selectedScan.novaGroup} — {nova.label}
-                            </Text>
-                          </View>
-                        )}
-
+                      <View style={{ flex: 1, backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1, padding: 16, borderRadius: 20 }}>
+                        <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Total Calories</Text>
+                        <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900', marginTop: 4 }}>{selectedScan.calories ? `${selectedScan.calories}` : '--'} <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted }}>Kcal</Text></Text>
                       </View>
-
-                      {/* Additives Mini Card */}
-                      {selectedScan.additivesTags && selectedScan.additivesTags.length > 0 && (
-                        <View style={{
-                          backgroundColor: colors.surfaceRaised,
-                          padding: 16,
-                          borderRadius: 16,
-                          borderWidth: 1,
-                          borderColor: colors.border,
-                          marginBottom: selectedScan.categoryTag ? 20 : 0
-                        }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-                            <FlaskConical size={14} color={colors.textSecondary} />
-                            <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>
-                              {selectedScan.additivesTags.length} Additive{selectedScan.additivesTags.length > 1 ? 's' : ''} Detected
-                            </Text>
-                          </View>
-                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                            {selectedScan.additivesTags.slice(0, 12).map((tag, i) => (
-                              <View key={i} style={{
-                                backgroundColor: colors.background,
-                                paddingHorizontal: 8,
-                                paddingVertical: 4,
-                                borderRadius: 8,
-                                borderWidth: 1,
-                                borderColor: colors.border
-                              }}>
-                                <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '800' }}>
-                                  {formatAdditive(tag)}
-                                </Text>
-                              </View>
-                            ))}
-                            {selectedScan.additivesTags.length > 12 && (
-                              <View style={{
-                                backgroundColor: colors.background,
-                                paddingHorizontal: 8,
-                                paddingVertical: 4,
-                                borderRadius: 8,
-                                borderWidth: 1,
-                                borderColor: colors.border
-                              }}>
-                                <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '800' }}>
-                                  +{selectedScan.additivesTags.length - 12} more
-                                </Text>
-                              </View>
-                            )}
-                          </View>
-                        </View>
-                      )}
-
-                      {/* Better Choices Button (Inside the Card) */}
                     </View>
-                  );
-                })()}
+
+                    {/* Burn Down Tagline */}
+                    {selectedScan.calories ? (
+                      <View style={{ backgroundColor: '#F9731615', borderColor: '#F9731630', borderWidth: 1, padding: 20, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                        <View style={{ backgroundColor: '#F9731625', padding: 12, borderRadius: 16 }}>
+                          <Activity size={24} color="#F97316" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ color: '#F97316', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+                            The Burn Down
+                          </Text>
+                          <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', lineHeight: 18 }}>
+                            You would need to run for <Text style={{ fontWeight: '900', color: '#F97316', fontSize: 15 }}>{Math.round(selectedScan.calories / 10)} mins</Text> straight to burn off this product.
+                          </Text>
+                        </View>
+                      </View>
+                    ) : null}
+
+                  </View>
+                ) : null}
+
+                {/* 3. WHO Reference Card */}
+                <View style={{ backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1, padding: 20, borderRadius: 24, marginBottom: 32, gap: 16 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <View style={{ backgroundColor: colors.primary + '12', padding: 8, borderRadius: 12 }}>
+                      <HelpCircle size={18} color={colors.primary} />
+                    </View>
+                    <Text style={{ color: colors.text, fontWeight: '900', fontSize: 15 }}>WHO daily limits for adults:</Text>
+                  </View>
+
+                  <View style={{ gap: 12 }}>
+                    <View style={{ backgroundColor: colors.surface, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
+                      <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Healthiest Amount of Sugar</Text>
+                      <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 6 tsp (25g) for best health benefits.</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
+                        <Text style={{ color: selectedScan.sugarTeaspoons > 6 ? colors.error : colors.text, fontWeight: '900', fontSize: 16 }}>{((selectedScan.sugarTeaspoons / 6) * 100).toFixed(0)}%</Text>
+                      </View>
+                    </View>
+
+                    <View style={{ backgroundColor: colors.surface, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
+                      <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Average Amount of Sugar</Text>
+                      <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 12 tsp (50g) to reduce health risks.</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
+                        <Text style={{ color: selectedScan.sugarTeaspoons > 12 ? colors.error : colors.text, fontWeight: '900', fontSize: 16 }}>{((selectedScan.sugarTeaspoons / 12) * 100).toFixed(0)}%</Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
 
                 {/* Delete and Close scan option from details */}
                 <View className="flex-row gap-3">
@@ -772,9 +690,9 @@ export default function HomeScreen() {
                         'Remove this item from your scan history?',
                         [
                           { text: 'Cancel', style: 'cancel' },
-                          { 
-                            text: 'Delete', 
-                            style: 'destructive', 
+                          {
+                            text: 'Delete',
+                            style: 'destructive',
                             onPress: () => {
                               deleteScan(selectedScan.id);
                               setSelectedScan(null);
@@ -822,10 +740,10 @@ export default function HomeScreen() {
 // Helpers
 function getSugarColor(teaspoons: number, colors: any) {
   if (teaspoons > 6) {
-    return colors.error || '#ef4444';
+    return colors.error || '#ff7d7dff';
   }
   if (teaspoons > 3) {
-    return colors.warning || '#eab308';
+    return colors.warning || '#ffe072ff';
   }
-  return colors.success || '#10b981';
+  return colors.success || '#3dffbeff';
 }

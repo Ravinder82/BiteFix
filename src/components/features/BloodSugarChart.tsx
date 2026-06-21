@@ -1,13 +1,12 @@
-import React, { useEffect } from 'react';
-import { View, Text, useWindowDimensions } from 'react-native';
-import Svg, { Path, Circle, Line, Text as SvgText, Defs, LinearGradient, Stop, G, ClipPath, Rect } from 'react-native-svg';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, useWindowDimensions, ScrollView } from 'react-native';
+import Svg, { Rect, Text as SvgText, Line, G, Defs, LinearGradient, Stop } from 'react-native-svg';
 import Animated, {
   useSharedValue,
   useAnimatedProps,
-  withTiming,
   withSpring,
   withDelay,
-  Easing,
+  SharedValue,
 } from 'react-native-reanimated';
 import { BloodSugarLog } from '../../types/app.types';
 import { useTheme } from '../../hooks/useTheme';
@@ -18,53 +17,99 @@ interface BloodSugarChartProps {
 }
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-const AnimatedPath = Animated.createAnimatedComponent(Path);
-const AnimatedG = Animated.createAnimatedComponent(G);
+const AnimatedSvgText = Animated.createAnimatedComponent(SvgText);
+
+// Child component to handle per-bar hooks without violating Rules of Hooks
+function AnimatedBarItem({
+  x,
+  y,
+  barWidth,
+  height,
+  value,
+  color,
+  bottomY,
+  heightProgress,
+  isFasting
+}: {
+  x: number;
+  y: number;
+  barWidth: number;
+  height: number;
+  value: number;
+  color: string;
+  bottomY: number;
+  heightProgress: SharedValue<number>;
+  isFasting: boolean;
+}) {
+  const { colors } = useTheme();
+  
+  const animatedRectProps = useAnimatedProps(() => ({
+    height: heightProgress.value * height,
+    y: bottomY - (heightProgress.value * height),
+  }));
+
+  const animatedTextProps = useAnimatedProps(() => ({
+    opacity: heightProgress.value > 0.8 ? (heightProgress.value - 0.8) * 5 : 0,
+    y: bottomY - (heightProgress.value * height) - 6,
+  }));
+
+  return (
+    <G>
+      <AnimatedRect
+        x={x}
+        width={barWidth}
+        fill={isFasting ? 'url(#fastingGrad)' : 'url(#postMealGrad)'}
+        rx={barWidth / 2}
+        animatedProps={animatedRectProps}
+      />
+      <AnimatedSvgText
+        x={x + (barWidth / 2)}
+        fontSize="10"
+        fontWeight="900"
+        fill={colors.text}
+        textAnchor="middle"
+        animatedProps={animatedTextProps}
+      >
+        {Math.round(value)}
+      </AnimatedSvgText>
+    </G>
+  );
+}
 
 export function BloodSugarChart({ logs }: BloodSugarChartProps) {
   const { colors } = useTheme();
   const { width: windowWidth } = useWindowDimensions();
+  const scrollViewRef = useRef<ScrollView>(null);
 
-  // Screen width minus padding
-  const chartWidth = windowWidth - 48;
-  const chartHeight = 220;
-  const paddingLeft = 32;
-  const paddingRight = 15;
-  const paddingTop = 24;
+  const containerWidth = windowWidth - 48; // Screen width minus horizontal padding
+  const chartHeight = 240; 
+  
+  // Settings for dynamic scaling and rendering consecutive days
+  const DAY_WIDTH = 65; // Minimum pixels per data point group
+  const paddingLeft = 48; // Left padding for Y-Axis labels to prevent overlap
+  const paddingRight = 24; 
+  const internalPadding = 24; // Padding inside the graph to prevent first/last bar from touching edges
+  const paddingTop = 36; // Extra space for value digits
   const paddingBottom = 28;
-
-  const graphWidth = chartWidth - paddingLeft - paddingRight;
   const graphHeight = chartHeight - paddingTop - paddingBottom;
+  const bottomY = paddingTop + graphHeight;
 
-  // Animation shared values
-  const drawProgress = useSharedValue(0);
-  const dotScale = useSharedValue(0);
+  const heightProgress = useSharedValue(0);
 
   useEffect(() => {
-    drawProgress.value = 0;
-    dotScale.value = 0;
+    heightProgress.value = 0;
 
-    // Draw the trendlines
-    drawProgress.value = withTiming(1, {
-      duration: 1200,
-      easing: Easing.out(Easing.cubic),
-    });
-
-    // Pop the dots into view
-    dotScale.value = withDelay(
-      800,
-      withSpring(1, { damping: 12, stiffness: 100 })
+    heightProgress.value = withDelay(
+      100,
+      withSpring(1, { damping: 14, stiffness: 90 })
     );
+    
+    if (scrollViewRef.current) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 150);
+    }
   }, [logs]);
-
-  const clipRectProps = useAnimatedProps(() => ({
-    width: paddingLeft + drawProgress.value * (chartWidth - paddingLeft),
-  }));
-
-  const dotProps = useAnimatedProps(() => ({
-    r: dotScale.value * 4.5,
-  }));
 
   if (logs.length === 0) {
     return (
@@ -84,7 +129,12 @@ export function BloodSugarChart({ logs }: BloodSugarChartProps) {
     const d = new Date(log.timestamp);
     const dayStr = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
     if (!acc[dayStr]) {
-      acc[dayStr] = { date: d, timestamp: log.timestamp, fasting: null, postMeal: null };
+      acc[dayStr] = { 
+        date: new Date(d.getFullYear(), d.getMonth(), d.getDate()), // Normalized to midnight
+        timestamp: log.timestamp, 
+        fasting: null, 
+        postMeal: null 
+      };
     }
     if (log.type === 'fasting' && (!acc[dayStr].fasting || log.timestamp > acc[dayStr].fasting.timestamp)) {
       acc[dayStr].fasting = log;
@@ -95,81 +145,92 @@ export function BloodSugarChart({ logs }: BloodSugarChartProps) {
     return acc;
   }, {} as Record<string, { date: Date; timestamp: number; fasting: BloodSugarLog | null; postMeal: BloodSugarLog | null; }>);
 
-  // Take the last 7 distinct days
+  // Allow up to 30 history points to avoid huge memory, sorted chronologically
   const chartDays = Object.values(groupedByDay)
-    .sort((a, b) => a.timestamp - b.timestamp)
-    .slice(-7);
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
+    .slice(-30);
 
-  // Find min and max values to scale Y axis
+  // Space items sequentially and dynamically
+  const drawableWidth = containerWidth - paddingLeft - paddingRight - (internalPadding * 2);
+  const totalDaysDiff = Math.max(0, chartDays.length - 1);
+  
+  // Dynamically calculate day width so it stretches to fill the screen if there are few days
+  const activeDayWidth = totalDaysDiff > 0 
+    ? Math.max(DAY_WIDTH, drawableWidth / totalDaysDiff) 
+    : DAY_WIDTH;
+  
+  // Total width required to draw all items sequentially
+  const requiredWidth = paddingLeft + paddingRight + (internalPadding * 2) + (totalDaysDiff * activeDayWidth);
+  const svgWidth = Math.max(containerWidth, requiredWidth);
+
+  // Find min and max values to scale Y axis.
   const unit = logs[0].unit;
   let allValues: number[] = [];
   chartDays.forEach(day => {
     if (day.fasting) allValues.push(day.fasting.value);
     if (day.postMeal) allValues.push(day.postMeal.value);
   });
-  
   if (allValues.length === 0) allValues = [0];
 
-  const defaultMin = unit === 'mg/dL' ? 60 : 3.0;
   const defaultMax = unit === 'mg/dL' ? 220 : 12.0;
 
-  const yMin = Math.max(0, Math.min(defaultMin, ...allValues) - (unit === 'mg/dL' ? 10 : 0.5));
+  const yMin = 0; 
   const yMax = Math.max(defaultMax, ...allValues) + (unit === 'mg/dL' ? 20 : 1.0);
   const yRange = yMax - yMin;
 
-  // Build points for fasting and postMeal
-  const fastingPoints: {x: number, y: number, value: number, log: BloodSugarLog}[] = [];
-  const postMealPoints: {x: number, y: number, value: number, log: BloodSugarLog}[] = [];
+  const barWidth = 14;
+  const barGap = 4;
+  
+  const bars: {x: number, y: number, height: number, value: number, log: BloodSugarLog, color: string, type: 'fasting' | 'post-meal'}[] = [];
   const xLabels: {x: number, label: string}[] = [];
 
+  const colorFasting = '#0A84FF'; // iOS Blue
+  const colorPostMeal = colors.primary; // App Primary
+
   chartDays.forEach((day, index) => {
-    const x = paddingLeft + (chartDays.length > 1 ? (index / (chartDays.length - 1)) * graphWidth : graphWidth / 2);
+    // Space items sequentially and dynamically
+    let centerX = paddingLeft + internalPadding + (index * activeDayWidth);
+    if (chartDays.length === 1) {
+      centerX = svgWidth / 2;
+    }
     
     xLabels.push({
-      x,
+      x: centerX,
       label: day.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
     });
 
+    const hasBoth = day.fasting && day.postMeal;
+    
     if (day.fasting) {
-      const y = paddingTop + graphHeight - ((day.fasting.value - yMin) / yRange) * graphHeight;
-      fastingPoints.push({ x, y, value: day.fasting.value, log: day.fasting });
+      const rawHeight = (day.fasting.value / yMax) * graphHeight;
+      const height = Math.max(barWidth, rawHeight);
+      const x = hasBoth ? centerX - barWidth - (barGap/2) : centerX - (barWidth/2);
+      bars.push({
+        x,
+        y: bottomY - height,
+        height,
+        value: day.fasting.value,
+        log: day.fasting,
+        color: colorFasting,
+        type: 'fasting'
+      });
     }
+
     if (day.postMeal) {
-      const y = paddingTop + graphHeight - ((day.postMeal.value - yMin) / yRange) * graphHeight;
-      postMealPoints.push({ x, y, value: day.postMeal.value, log: day.postMeal });
+      const rawHeight = (day.postMeal.value / yMax) * graphHeight;
+      const height = Math.max(barWidth, rawHeight);
+      const x = hasBoth ? centerX + (barGap/2) : centerX - (barWidth/2);
+      bars.push({
+        x,
+        y: bottomY - height,
+        height,
+        value: day.postMeal.value,
+        log: day.postMeal,
+        color: colorPostMeal,
+        type: 'post-meal'
+      });
     }
   });
-
-  // Calculate smooth Bezier path
-  const createSmoothPath = (pts: {x: number, y: number}[]) => {
-    if (pts.length === 0) return '';
-    if (pts.length === 1) return `M ${pts[0].x} ${pts[0].y} L ${pts[0].x + 0.1} ${pts[0].y}`;
-    
-    let d = `M ${pts[0].x} ${pts[0].y}`;
-    for (let i = 0; i < pts.length - 1; i++) {
-      const curr = pts[i];
-      const next = pts[i + 1];
-      const cp1x = curr.x + (next.x - curr.x) / 3;
-      const cp1y = curr.y;
-      const cp2x = curr.x + (2 * (next.x - curr.x)) / 3;
-      const cp2y = next.y;
-      d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${next.x} ${next.y}`;
-    }
-    return d;
-  };
-
-  const fastingPath = createSmoothPath(fastingPoints);
-  const postMealPath = createSmoothPath(postMealPoints);
-
-  const getPointColor = (status: BloodSugarLog['status']) => {
-    switch (status) {
-      case 'low': return '#f97316';
-      case 'normal': return '#22C55E';
-      case 'pre-diabetes': return '#F5A623';
-      case 'diabetes': return '#DC2626';
-      default: return colors.primary;
-    }
-  };
 
   const gridLines = [];
   const stepCount = 4;
@@ -179,133 +240,102 @@ export function BloodSugarChart({ logs }: BloodSugarChartProps) {
     gridLines.push({ y, val });
   }
 
-  // iOS Apple Health styled colors
-  const colorFasting = '#0A84FF'; // iOS Blue
-  const colorPostMeal = colors.primary; // App Primary
-
   return (
     <View 
-      style={[{ backgroundColor: colors.surface, borderColor: colors.border }, { borderWidth: 1, padding: 20, borderRadius: 28, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2, marginBottom: 16 }]} 
+      style={[{ backgroundColor: colors.surface, borderColor: colors.border }, { borderWidth: 1, paddingVertical: 20, borderRadius: 28, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2, marginBottom: 16 }]} 
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Text style={[{ color: colors.text }, { fontWeight: '900', fontSize: 14 }]}>Clinical Trends</Text>
-        <Text style={[{ color: colors.textMuted }, { fontWeight: 'bold', fontSize: 10, textTransform: 'uppercase' }]}>Last {chartDays.length} Days</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, paddingHorizontal: 20 }}>
+        <Text style={[{ color: colors.text }, { fontWeight: '900', fontSize: 14 }]}>Blood Sugar Trends</Text>
+        <Text style={[{ color: colors.textMuted }, { fontWeight: 'bold', fontSize: 10, textTransform: 'uppercase' }]}>
+          {chartDays.length > 0 ? `${chartDays[0].date.toLocaleDateString(undefined, { month: 'short', day: 'numeric'})} - ${chartDays[chartDays.length - 1].date.toLocaleDateString(undefined, { month: 'short', day: 'numeric'})}` : 'No Data'}
+        </Text>
       </View>
       
-      <Svg width={chartWidth} height={chartHeight}>
-        <Defs>
-          <ClipPath id="chartDrawClip">
-            <AnimatedRect x={0} y={0} height={chartHeight} animatedProps={clipRectProps} />
-          </ClipPath>
-        </Defs>
+      <ScrollView 
+        ref={scrollViewRef}
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        bounces={true}
+        contentContainerStyle={{ paddingRight: 0 }}
+      >
+        <Svg width={svgWidth} height={chartHeight}>
+          <Defs>
+            <LinearGradient id="fastingGrad" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={colorFasting} stopOpacity="1" />
+              <Stop offset="1" stopColor={colorFasting} stopOpacity="0.75" />
+            </LinearGradient>
+            <LinearGradient id="postMealGrad" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={colorPostMeal} stopOpacity="1" />
+              <Stop offset="1" stopColor={colorPostMeal} stopOpacity="0.75" />
+            </LinearGradient>
+          </Defs>
 
-        {/* Grid lines & Y Axis */}
-        {gridLines.map((line, idx) => (
-          <G key={`grid-${idx}`}>
-            <Line
-              x1={paddingLeft}
-              y1={line.y}
-              x2={chartWidth - paddingRight}
-              y2={line.y}
-              stroke={colors.border}
-              strokeWidth="1"
-              strokeDasharray="3 4"
-            />
+          {/* Grid lines & Y Axis */}
+          {gridLines.map((line, idx) => (
+            <G key={`grid-${idx}`}>
+              <Line
+                x1={paddingLeft}
+                y1={line.y}
+                x2={svgWidth}
+                y2={line.y}
+                stroke={colors.border}
+                strokeWidth="1"
+                strokeDasharray="3 4"
+                opacity={line.y === bottomY ? 1 : 0.5} // Make bottom line solid
+              />
+              <SvgText
+                x={paddingLeft - 8}
+                y={line.y + 3}
+                fontSize="9"
+                fill={colors.textMuted}
+                textAnchor="end"
+                fontWeight="800"
+              >
+                {Math.round(line.val)}
+              </SvgText>
+            </G>
+          ))}
+
+          {/* X Axis Labels */}
+          {xLabels.map((lbl, idx) => (
             <SvgText
-              x={paddingLeft - 8}
-              y={line.y + 3}
-              fontSize="9"
-              fill={colors.textMuted}
-              textAnchor="end"
+              key={`xlbl-${idx}`}
+              x={lbl.x}
+              y={chartHeight - 4}
+              fontSize="10"
+              fill={colors.textSecondary}
+              textAnchor="middle"
               fontWeight="800"
             >
-              {formatBloodSugarValue(line.val, unit)}
+              {lbl.label}
             </SvgText>
-          </G>
-        ))}
+          ))}
 
-        {/* X Axis Labels */}
-        {xLabels.map((lbl, idx) => (
-          <SvgText
-            key={`xlbl-${idx}`}
-            x={lbl.x}
-            y={chartHeight - 4}
-            fontSize="8.5"
-            fill={colors.textMuted}
-            textAnchor="middle"
-            fontWeight="700"
-          >
-            {lbl.label}
-          </SvgText>
-        ))}
-
-        {/* Clipped Group for animated draw in */}
-        <G clipPath="url(#chartDrawClip)">
-          {/* Post-Meal Line */}
-          {postMealPath && (
-            <Path
-              d={postMealPath}
-              fill="none"
-              stroke={colorPostMeal}
-              strokeWidth="3.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              opacity={0.8}
+          {/* Animated Bars and Digits */}
+          {bars.map((bar, idx) => (
+            <AnimatedBarItem
+              key={`bar-group-${idx}`}
+              x={bar.x}
+              y={bar.y}
+              barWidth={barWidth}
+              height={bar.height}
+              value={bar.value}
+              color={bar.color}
+              bottomY={bottomY}
+              heightProgress={heightProgress}
+              isFasting={bar.type === 'fasting'}
             />
-          )}
-
-          {/* Fasting Line */}
-          {fastingPath && (
-            <Path
-              d={fastingPath}
-              fill="none"
-              stroke={colorFasting}
-              strokeWidth="3.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              opacity={0.8}
-            />
-          )}
-        </G>
-
-        {/* Data points */}
-        {[...fastingPoints, ...postMealPoints].map((pt, idx) => (
-          <G key={`point-${idx}`}>
-            <AnimatedCircle
-              cx={pt.x}
-              cy={pt.y}
-              fill={getPointColor(pt.log.status)}
-              stroke={colors.surface}
-              strokeWidth="2.5"
-              animatedProps={dotProps}
-            />
-            <SvgText
-              x={pt.x}
-              y={pt.y - 12}
-              fontSize="9"
-              fontWeight="900"
-              fill={colors.text}
-              textAnchor="middle"
-              opacity={idx < (fastingPoints.length + postMealPoints.length) ? 1 : 0}
-            >
-              {formatBloodSugarValue(pt.value, unit)}
-            </SvgText>
-          </G>
-        ))}
-      </Svg>
+          ))}
+        </Svg>
+      </ScrollView>
 
       {/* Chart Legend */}
       <View 
-        style={[{ borderColor: colors.border }, { marginTop: 20, paddingTop: 16, borderTopWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8 }]}
+        style={[{ borderColor: colors.border }, { marginTop: 20, paddingTop: 16, borderTopWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 }]}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24 }}>
           <LegendLineItem color={colorFasting} label="Fasting" colors={colors} />
           <LegendLineItem color={colorPostMeal} label="Post-Meal" colors={colors} />
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <LegendDotItem color={colors.warning} label="Pre" colors={colors} />
-          <LegendDotItem color={colors.error} label="High" colors={colors} />
-          <LegendDotItem color={colors.success} label="Normal" colors={colors} />
         </View>
       </View>
     </View>
@@ -315,17 +345,8 @@ export function BloodSugarChart({ logs }: BloodSugarChartProps) {
 function LegendLineItem({ color, label, colors }: { color: string; label: string; colors: any }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <View style={{ backgroundColor: color, width: 12, height: 3, borderRadius: 1.5, marginRight: 8 }} />
-      <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</Text>
-    </View>
-  );
-}
-
-function LegendDotItem({ color, label, colors }: { color: string; label: string; colors: any }) {
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <View style={{ backgroundColor: color, width: 6, height: 6, borderRadius: 3, marginRight: 4 }} />
-      <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700' }}>{label}</Text>
+      <View style={{ backgroundColor: color, width: 12, height: 12, borderRadius: 4, marginRight: 8 }} />
+      <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</Text>
     </View>
   );
 }
