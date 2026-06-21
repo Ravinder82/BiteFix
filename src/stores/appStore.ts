@@ -43,7 +43,13 @@ interface AppState {
     fatGrams?: number,
     proteinGrams?: number,
     sugarPer100g?: number,
-    categoryTag?: string
+    categoryTag?: string,
+    totalSugarGrams?: number,
+    packageSize?: string,
+    totalCalories?: number,
+    totalCarbsGrams?: number,
+    totalFatGrams?: number,
+    totalProteinGrams?: number
   ) => void;
   deleteScan: (id: string) => void;
   clearScans: () => void;
@@ -110,10 +116,20 @@ export const useAppStore = create<AppState>()(
         fatGrams,
         proteinGrams,
         sugarPer100g,
-        categoryTag
+        categoryTag,
+        totalSugarGrams,
+        packageSize,
+        totalCalories,
+        totalCarbsGrams,
+        totalFatGrams,
+        totalProteinGrams
       ) => set((state) => {
         const timestamp = Date.now();
         const sugarTeaspoons = sugarGrams / SUGAR_CONVERSION_GRAMS_PER_TEASPOON;
+        const totalSugarTeaspoons = totalSugarGrams !== undefined 
+          ? totalSugarGrams / SUGAR_CONVERSION_GRAMS_PER_TEASPOON
+          : undefined;
+
         const newScan: ScanHistoryItem = {
           id: `${timestamp}-${Math.random().toString(36).substr(2, 9)}`,
           name: name || 'Unknown Product',
@@ -130,6 +146,13 @@ export const useAppStore = create<AppState>()(
           proteinGrams,
           sugarPer100g,
           categoryTag,
+          totalSugarGrams,
+          totalSugarTeaspoons: totalSugarTeaspoons !== undefined ? parseFloat(totalSugarTeaspoons.toFixed(1)) : undefined,
+          packageSize,
+          totalCalories,
+          totalCarbsGrams,
+          totalFatGrams,
+          totalProteinGrams,
         };
         const scans = [newScan, ...state.scans];
         return { scans };

@@ -3,21 +3,17 @@ import { View, Text } from 'react-native';
 
 interface NutritionFactsProps {
   colors: any;
+  productName?: string;
   calories?: number;
   sugarGrams: number;
-  carbsGrams?: number;
-  fatGrams?: number;
-  proteinGrams?: number;
   servingSize?: string;
 }
 
 export function NutritionFacts({
   colors,
+  productName,
   calories,
   sugarGrams,
-  carbsGrams,
-  fatGrams,
-  proteinGrams,
   servingSize,
 }: NutritionFactsProps) {
   // Use a softer border for dark mode so it feels premium and integrated
@@ -46,6 +42,13 @@ export function NutritionFacts({
       <Text style={{ color: labelColor, fontSize: 24, fontWeight: '900', letterSpacing: -0.6, paddingBottom: 4 }}>
         Nutrition Facts
       </Text>
+      
+      {/* Product Name */}
+      {productName && (
+        <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700', paddingBottom: 8, lineHeight: 18 }}>
+          {productName}
+        </Text>
+      )}
 
       {/* Serving Size */}
       <View
@@ -100,24 +103,14 @@ export function NutritionFacts({
         Amount / Serving
       </Text>
 
-      {/* Carbs */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 7.5, borderBottomWidth: 1, borderBottomColor: rowDividerColor }}>
-        <Text style={{ color: labelColor, fontSize: 13, fontWeight: '700' }}>
-          Total Carbohydrate
-        </Text>
-        <Text style={{ color: labelColor, fontSize: 13, fontWeight: '700' }}>
-          {carbsGrams !== undefined ? `${carbsGrams.toFixed(1)}g` : '—'}
-        </Text>
-      </View>
-
       {/* Sugar (Highlighted brand-color row, indented) */}
       <View
         style={{
           flexDirection: 'row',
           justifyContent: 'space-between',
           paddingVertical: 7.5,
-          borderBottomWidth: 1,
-          borderBottomColor: rowDividerColor,
+          borderBottomWidth: 2,
+          borderBottomColor: labelBorderColor,
           paddingLeft: 16,
           backgroundColor: colors.primary + '08',
           marginHorizontal: -6,
@@ -130,26 +123,6 @@ export function NutritionFacts({
         </Text>
         <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '900' }}>
           {sugarGrams.toFixed(1)}g
-        </Text>
-      </View>
-
-      {/* Fats */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 7.5, borderBottomWidth: 1, borderBottomColor: rowDividerColor }}>
-        <Text style={{ color: labelColor, fontSize: 13, fontWeight: '700' }}>
-          Total Fat
-        </Text>
-        <Text style={{ color: labelColor, fontSize: 13, fontWeight: '700' }}>
-          {fatGrams !== undefined ? `${fatGrams.toFixed(1)}g` : '—'}
-        </Text>
-      </View>
-
-      {/* Proteins */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 2, borderBottomColor: labelBorderColor }}>
-        <Text style={{ color: labelColor, fontSize: 13, fontWeight: '700' }}>
-          Protein
-        </Text>
-        <Text style={{ color: labelColor, fontSize: 13, fontWeight: '700' }}>
-          {proteinGrams !== undefined ? `${proteinGrams.toFixed(1)}g` : '—'}
         </Text>
       </View>
     </View>

@@ -13,13 +13,25 @@ export interface ScanHistoryItem {
   barcode?: string;
   name: string;
   brand?: string;
-  sugarGrams: number; // sugar per serving or total
-  sugarTeaspoons: number; // sugarGrams / 4.2
+  
+  // Serving-based values
+  sugarGrams: number; 
+  sugarTeaspoons: number; 
   servingSize?: string;
   calories?: number;
   carbsGrams?: number;
   fatGrams?: number;
   proteinGrams?: number;
+
+  // Package/Total-based values
+  totalSugarGrams?: number;
+  totalSugarTeaspoons?: number;
+  packageSize?: string;
+  totalCalories?: number;
+  totalCarbsGrams?: number;
+  totalFatGrams?: number;
+  totalProteinGrams?: number;
+
   timestamp: number;
   imageUrl?: string;
   sugarPer100g?: number;

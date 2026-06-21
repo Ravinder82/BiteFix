@@ -136,6 +136,19 @@ function extractSugarFromNutriments(n: Record<string, any>): number {
   return sugar100g ?? 0;
 }
 
+function parseQuantityString(str: any): number | null {
+  if (!str) return null;
+  const cleaned = String(str).toLowerCase().replace(/,/g, '.');
+  const match = cleaned.match(/([\d\.]+)\s*(g|ml|kg|l|cl)/);
+  if (!match) return null;
+  const val = parseFloat(match[1]);
+  const unit = match[2];
+  if (isNaN(val)) return null;
+  if (unit === 'kg' || unit === 'l') return val * 1000;
+  if (unit === 'cl') return val * 10;
+  return val;
+}
+
 // ─────────────────────────────────────────────────────────
 // Main Scanner Screen
 // ─────────────────────────────────────────────────────────
@@ -222,15 +235,27 @@ export default function ScannerScreen() {
   const [scanResult, setScanResult] = useState<{
     name: string;
     brand: string;
-    sugarGrams: number;
-    sugarTeaspoons: number;
-    sugarPer100g?: number;     // Used for accurate normalized comparisons
-    imageUrl?: string;
+    
+    // Serving-based
+    sugarGrams?: number;
+    sugarTeaspoons?: number;
     servingSize?: string;
     calories?: number;
     carbsGrams?: number;
     fatGrams?: number;
     proteinGrams?: number;
+
+    // Total/Package-based
+    totalSugarGrams?: number;
+    totalSugarTeaspoons?: number;
+    packageSize?: string;
+    totalCalories?: number;
+    totalCarbsGrams?: number;
+    totalFatGrams?: number;
+    totalProteinGrams?: number;
+
+    imageUrl?: string;
+    sugarPer100g?: number;     // Used for accurate normalized comparisons
     categoryTag?: string;      // e.g. 'en:breakfast-cereals'
   } | null>(null);
 
@@ -291,7 +316,33 @@ export default function ScannerScreen() {
 
       setSaveStatus('saving');
       const timer = setTimeout(() => {
-        addScan(manualName.trim(), sugarVal, 'Custom Entry', manualImageUri || undefined);
+        if (calculationMode === 'total') {
+          addScan(
+            manualName.trim(),
+            sugarVal,
+            'Custom Entry',
+            manualImageUri || undefined,
+            undefined,
+            '1 serving'
+          );
+        } else {
+          addScan(
+            manualName.trim(),
+            parseFloat(manualSugarPer100),
+            'Custom Entry',
+            manualImageUri || undefined,
+            undefined,
+            '100 g',
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            parseFloat(manualSugarPer100),
+            undefined,
+            sugarVal,
+            `${manualProductSize} g`
+          );
+        }
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         lastSavedRef.current = { name: manualName.trim(), sugarVal };
         setSaveStatus('saved');
@@ -348,36 +399,83 @@ export default function ScannerScreen() {
             const brand = (p.brands || 'Generic Brand').trim();
             const imageUrl: string | undefined = p.image_front_url || p.image_url || undefined;
 
-            // Use the robust sugar extractor — handles data quality issues in OFFs
-            // where community contributors often leave sugars=0 for glucose products
-            const sugarGrams = extractSugarFromNutriments(p.nutriments ?? {});
-            const sugarTeaspoons = parseFloat((sugarGrams / 4.2).toFixed(1));
-            
-            // Extract the strict 100g sugar value for normalized Smart Swaps comparison (prioritizing added sugars)
-            const addedSugar100g = p.nutriments?.['added-sugars_100g'] !== undefined 
-                ? parseFloat(p.nutriments['added-sugars_100g']) 
-                : undefined;
-            const sugarPer100g = addedSugar100g !== undefined 
-                ? addedSugar100g 
-                : (p.nutriments?.sugars_100g !== undefined ? parseFloat(p.nutriments.sugars_100g) : undefined);
+            const toNum = (v: any): number | null => {
+              if (v === undefined || v === null || v === '') return null;
+              const num = parseFloat(String(v));
+              return isNaN(num) ? null : num;
+            };
 
-            const servingSize: string | undefined = p.serving_size || undefined;
-            const calories =
-              p.nutriments?.['energy-kcal_serving'] !== undefined ? parseFloat(p.nutriments['energy-kcal_serving'])
-              : p.nutriments?.['energy-kcal_100g'] !== undefined ? parseFloat(p.nutriments['energy-kcal_100g'])
-              : undefined;
-            const carbsGrams =
-              p.nutriments?.carbohydrates_serving !== undefined ? parseFloat(p.nutriments.carbohydrates_serving)
-              : p.nutriments?.carbohydrates_100g !== undefined ? parseFloat(p.nutriments.carbohydrates_100g)
-              : undefined;
-            const fatGrams =
-              p.nutriments?.fat_serving !== undefined ? parseFloat(p.nutriments.fat_serving)
-              : p.nutriments?.fat_100g !== undefined ? parseFloat(p.nutriments.fat_100g)
-              : undefined;
-            const proteinGrams =
-              p.nutriments?.proteins_serving !== undefined ? parseFloat(p.nutriments.proteins_serving)
-              : p.nutriments?.proteins_100g !== undefined ? parseFloat(p.nutriments.proteins_100g)
-              : undefined;
+            const n = p.nutriments ?? {};
+
+            // A. Get 100g base values (raw source values)
+            const addedSugar100g = toNum(n['added-sugars_100g'] ?? n['added-sugars']);
+            const totalSugar100g = toNum(n.sugars_100g ?? n.sugars);
+            const rawCarbs100g = toNum(n.carbohydrates_100g ?? n.carbohydrates);
+            
+            let sugarPer100g = 0;
+            if (addedSugar100g !== null) {
+              sugarPer100g = addedSugar100g;
+            } else if (totalSugar100g !== null && totalSugar100g > 0) {
+              sugarPer100g = totalSugar100g;
+            } else if (totalSugar100g === 0 && rawCarbs100g !== null && rawCarbs100g > 0) {
+              sugarPer100g = rawCarbs100g;
+            }
+
+            const kcal100g = toNum(n['energy-kcal_100g']);
+            const carbs100g = toNum(n.carbohydrates_100g);
+            const fat100g = toNum(n.fat_100g);
+            const protein100g = toNum(n.proteins_100g);
+
+            // B. Resolve Serving Size and Serving Sugar/Nutrients
+            const addedSugarServing = toNum(n['added-sugars_serving']);
+            const totalSugarServing = toNum(n.sugars_serving);
+            
+            let servingSugarGrams: number | undefined = undefined;
+            let servingSize: string | undefined = undefined;
+            
+            // Do we have explicit serving-based sugar?
+            const explicitSugarServing = addedSugarServing !== null ? addedSugarServing : (totalSugarServing !== null && totalSugarServing > 0 ? totalSugarServing : null);
+
+            if (explicitSugarServing !== null) {
+              servingSugarGrams = explicitSugarServing;
+              servingSize = p.serving_size ? String(p.serving_size).trim() : '1 serving';
+            }
+
+            const getServingMacro = (servingField: string): number | undefined => {
+              const sVal = toNum(n[servingField]);
+              if (sVal !== null) return sVal;
+              return undefined;
+            };
+
+            const calories = getServingMacro('energy-kcal_serving');
+            const carbsGrams = getServingMacro('carbohydrates_serving');
+            const fatGrams = getServingMacro('fat_serving');
+            const proteinGrams = getServingMacro('proteins_serving');
+
+            const sugarTeaspoons = servingSugarGrams !== undefined ? parseFloat((servingSugarGrams / 4.2).toFixed(1)) : undefined;
+
+            // C. Resolve Package Size and Package Sugar/Nutrients
+            const packageWeight = toNum(p.product_quantity) ?? parseQuantityString(p.quantity);
+            
+            let totalSugarGrams: number | undefined = undefined;
+            let totalSugarTeaspoons: number | undefined = undefined;
+            let packageSize: string | undefined = undefined;
+            let totalCalories: number | undefined = undefined;
+            let totalCarbsGrams: number | undefined = undefined;
+            let totalFatGrams: number | undefined = undefined;
+            let totalProteinGrams: number | undefined = undefined;
+
+            if (packageWeight !== null && packageWeight > 0) {
+              const packageScale = packageWeight / 100;
+              totalSugarGrams = parseFloat((sugarPer100g * packageScale).toFixed(1));
+              totalSugarTeaspoons = parseFloat((totalSugarGrams / 4.2).toFixed(1));
+              packageSize = p.quantity ? String(p.quantity).trim() : `${packageWeight} g`;
+              
+              if (kcal100g !== null) totalCalories = parseFloat((kcal100g * packageScale).toFixed(1));
+              if (carbs100g !== null) totalCarbsGrams = parseFloat((carbs100g * packageScale).toFixed(1));
+              if (fat100g !== null) totalFatGrams = parseFloat((fat100g * packageScale).toFixed(1));
+              if (protein100g !== null) totalProteinGrams = parseFloat((protein100g * packageScale).toFixed(1));
+            }
 
             // Best category tag for "Better Choices" lookup
             // Prefer the most specific category (last in the array) from categories_tags
@@ -386,10 +484,49 @@ export default function ScannerScreen() {
                 ? p.categories_tags[p.categories_tags.length - 1]
                 : undefined;
 
-            addScan(name, sugarGrams, brand, imageUrl, data, servingSize, calories, carbsGrams, fatGrams, proteinGrams, sugarPer100g, categoryTag);
+            addScan(
+              name,
+              servingSugarGrams ?? sugarPer100g,
+              brand,
+              imageUrl,
+              data,
+              servingSize,
+              calories,
+              carbsGrams,
+              fatGrams,
+              proteinGrams,
+              sugarPer100g,
+              categoryTag,
+              totalSugarGrams,
+              packageSize,
+              totalCalories,
+              totalCarbsGrams,
+              totalFatGrams,
+              totalProteinGrams
+            );
 
             if (mountedRef.current) {
-              setScanResult({ name, brand, sugarGrams, sugarTeaspoons, sugarPer100g, imageUrl, servingSize, calories, carbsGrams, fatGrams, proteinGrams, categoryTag });
+              setScanResult({
+                name,
+                brand,
+                sugarGrams: servingSugarGrams,
+                sugarTeaspoons,
+                sugarPer100g,
+                imageUrl,
+                servingSize,
+                calories,
+                carbsGrams,
+                fatGrams,
+                proteinGrams,
+                categoryTag,
+                totalSugarGrams,
+                totalSugarTeaspoons,
+                packageSize,
+                totalCalories,
+                totalCarbsGrams,
+                totalFatGrams,
+                totalProteinGrams,
+              });
               productFound = true;
             }
           }
@@ -540,11 +677,13 @@ export default function ScannerScreen() {
           imageUrl?: string;
         }> = [];
 
-        // Calculate scaling factor from the scanned product (total sugar / sugar per 100g)
-        // If it's a 500ml coke, 53g total / 10.6g per 100g = 5 (meaning 500g serving size)
-        let scalingFactor: number | null = null;
-        if (scanResult.sugarPer100g && scanResult.sugarPer100g > 0) {
-           scalingFactor = scanResult.sugarGrams / scanResult.sugarPer100g;
+        // Calculate portion scaling factor (serving portion in 100g units, e.g. 50g = 0.5)
+        let scalingFactor = 1; 
+        if (scanResult.servingSize) {
+           const parsedSize = parseQuantityString(scanResult.servingSize);
+           if (parsedSize !== null && parsedSize > 0) {
+              scalingFactor = parsedSize / 100;
+           }
         }
 
         for (const p of products) {
@@ -566,19 +705,13 @@ export default function ScannerScreen() {
             ? altAddedSugar100g 
             : (p.nutriments?.sugars_100g !== undefined ? parseFloat(p.nutriments.sugars_100g) : null);
           
-          // Only compare if we have 100g values for both, or use the raw values as fallback
-          let comparativeSugar: number;
-          let scannedComparative: number;
-
-          if (scalingFactor !== null && altSugar100g !== null) {
-              // Scale the alternative's sugar to match the scanned product's serving size
-              comparativeSugar = altSugar100g * scalingFactor;
-              scannedComparative = scanResult.sugarGrams;
-          } else {
-              // Fallback to absolute sugar from whatever the API gave us
-              comparativeSugar = extractSugarFromNutriments(p.nutriments ?? {});
-              scannedComparative = scanResult.sugarGrams;
+          if (altSugar100g === null) {
+            altSugar100g = extractSugarFromNutriments(p.nutriments ?? {});
           }
+
+          // Scale the alternative's sugar to match the scanned product's serving size portion
+          const comparativeSugar = altSugar100g * scalingFactor;
+          const scannedComparative = scanResult.sugarGrams ?? scanResult.sugarPer100g ?? 0;
           
           // Only suggest if it has strictly LESS sugar (at least 0.5g difference to avoid rounding issues)
           if (comparativeSugar >= scannedComparative - 0.5) continue;
@@ -1196,42 +1329,120 @@ export default function ScannerScreen() {
                 </Text>
               </View>
 
-              {/* Reactive Mascot */}
-              <View style={{ marginTop: 24, marginBottom: 16 }}>
-                <Mascot
-                  state={
-                    scanResult.sugarTeaspoons > 6 ? 'shocked'
-                      : scanResult.sugarTeaspoons > 3 ? 'dizzy'
-                        : 'happy'
-                  }
-                  size={120}
-                />
-              </View>
+              {/* Reactive Mascot based on full package sugar */}
+              {(() => {
+                const currentTsp = scanResult.totalSugarTeaspoons !== undefined ? scanResult.totalSugarTeaspoons : (scanResult.sugarTeaspoons ?? 0);
+                return (
+                  <View style={{ marginTop: 24, marginBottom: 16 }}>
+                    <Mascot
+                      state={
+                        currentTsp > 6 ? 'shocked'
+                          : currentTsp > 3 ? 'dizzy'
+                            : 'happy'
+                      }
+                      size={120}
+                    />
+                  </View>
+                );
+              })()}
 
-              {/* Massive Impact Typography for Sugar */}
-              <View style={{ alignItems: 'center', marginTop: 8 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-                  <Text style={{
-                    color: scanResult.sugarTeaspoons > 6 ? colors.error : scanResult.sugarTeaspoons > 3 ? colors.warning : colors.success,
-                    fontSize: 72,
-                    fontWeight: '900',
-                    letterSpacing: -2,
-                    lineHeight: 72
-                  }}>
-                    {scanResult.sugarTeaspoons}
-                  </Text>
-                  <Text style={{
-                    color: scanResult.sugarTeaspoons > 6 ? colors.error : scanResult.sugarTeaspoons > 3 ? colors.warning : colors.success,
-                    fontSize: 24,
-                    fontWeight: '800',
-                    marginLeft: 6
-                  }}>
-                    tsp
-                  </Text>
+              {/* Massive Impact Typography for Total Package Sugar */}
+              {(() => {
+                const isUnknown = scanResult.totalSugarTeaspoons === undefined;
+                const currentTsp = isUnknown ? '--' : scanResult.totalSugarTeaspoons;
+                const currentColor = isUnknown ? colors.textMuted : (scanResult.totalSugarTeaspoons! > 6 ? colors.error : scanResult.totalSugarTeaspoons! > 3 ? colors.warning : colors.success);
+                
+                return (
+                  <View style={{ alignItems: 'center', marginTop: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+                      <Text style={{
+                        color: currentColor,
+                        fontSize: 72,
+                        fontWeight: '900',
+                        letterSpacing: -2,
+                        lineHeight: 72
+                      }}>
+                        {currentTsp}
+                      </Text>
+                      {!isUnknown && (
+                        <Text style={{
+                          color: currentColor,
+                          fontSize: 24,
+                          fontWeight: '800',
+                          marginLeft: 6
+                        }}>
+                          tsp
+                        </Text>
+                      )}
+                    </View>
+                    <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
+                      Total Sugars in Full Package
+                    </Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 2 }}>
+                      {scanResult.packageSize ? `(${scanResult.packageSize})` : '(Package Size Unknown)'}
+                    </Text>
+                  </View>
+                );
+              })()}
+
+              {/* Side-by-side summary cards */}
+              <View style={{ flexDirection: 'row', gap: 12, width: '100%', marginTop: 28 }}>
+                {/* Per Serving Card */}
+                <View
+                  style={{
+                    flex: 1,
+                    backgroundColor: colors.surfaceRaised,
+                    padding: 16,
+                    borderRadius: 20,
+                    alignItems: 'center',
+                    borderWidth: 1,
+                    borderColor: colors.border
+                  }}
+                >
+                  <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>Per Serving</Text>
+                  {scanResult.servingSize && scanResult.sugarTeaspoons !== undefined ? (
+                    <>
+                      <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800', marginTop: 2 }}>{scanResult.servingSize}</Text>
+                      <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', marginTop: 10 }}>
+                        {scanResult.sugarTeaspoons} <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textSecondary }}>tsp</Text>
+                      </Text>
+                      <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 4 }}>({scanResult.sugarGrams}g sugar)</Text>
+                    </>
+                  ) : (
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 12 }}>
+                      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', textAlign: 'center' }}>No Serving Size found</Text>
+                    </View>
+                  )}
                 </View>
-                <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
-                  Total Sugar
-                </Text>
+
+                {/* Per 100g Card */}
+                <View
+                  style={{
+                    flex: 1,
+                    backgroundColor: colors.surfaceRaised,
+                    padding: 16,
+                    borderRadius: 20,
+                    alignItems: 'center',
+                    borderWidth: 1,
+                    borderColor: colors.border
+                  }}
+                >
+                  <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>Per 100g / 100ml</Text>
+                  <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800', marginTop: 2 }}>Standard</Text>
+                  
+                  {scanResult.sugarPer100g !== undefined && scanResult.sugarPer100g > 0 ? (
+                    <>
+                      <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', marginTop: 10 }}>
+                        {parseFloat((scanResult.sugarPer100g / 4.2).toFixed(1))} <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textSecondary }}>tsp</Text>
+                      </Text>
+                      <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 4 }}>({scanResult.sugarPer100g}g sugar)</Text>
+                    </>
+                  ) : (
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 12 }}>
+                      <Text style={{ color: colors.textMuted, fontSize: 26, fontWeight: '900', textAlign: 'center' }}>--</Text>
+                    </View>
+                  )}
+                </View>
               </View>
             </View>
 
@@ -1263,15 +1474,13 @@ export default function ScannerScreen() {
               </TouchableOpacity>
             )}
 
-            {/* 3. Nutrition Facts */}
+            {/* 3. Nutrition Facts - Shows 100g fallback or serving size if available */}
             <NutritionFacts
               colors={colors}
-              sugarGrams={scanResult.sugarGrams}
+              productName={scanResult.name}
+              sugarGrams={scanResult.sugarGrams ?? scanResult.sugarPer100g ?? 0}
               calories={scanResult.calories}
-              carbsGrams={scanResult.carbsGrams}
-              fatGrams={scanResult.fatGrams}
-              proteinGrams={scanResult.proteinGrams}
-              servingSize={scanResult.servingSize}
+              servingSize={scanResult.servingSize ?? '100 g'}
             />
 
             {/* WHO Reference Card */}
@@ -1283,29 +1492,43 @@ export default function ScannerScreen() {
                 <Text style={{ color: colors.text, fontWeight: '900', fontSize: 15 }}>WHO Guidelines</Text>
               </View>
 
-              <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20 }}>
-                This product contains <Text style={{ fontWeight: '900', color: colors.text }}>{scanResult.sugarTeaspoons} tsp</Text> of sugar. Here is how it compares to the World Health Organization's daily limits for adults:
-              </Text>
+              {(() => {
+                const currentTsp = scanResult.sugarTeaspoons;
+                if (currentTsp === undefined) {
+                   return (
+                    <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20 }}>
+                      Serving size is unknown, so we can't calculate your total daily limit usage for this serving.
+                    </Text>
+                   )
+                }
+                return (
+                  <>
+                    <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20 }}>
+                      This serving contains <Text style={{ fontWeight: '900', color: colors.text }}>{currentTsp} tsp</Text> of sugar. Here is how it compares to the World Health Organization's daily limits for adults:
+                    </Text>
 
-              <View style={{ gap: 12 }}>
-                <View style={{ backgroundColor: colors.background, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
-                  <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Conditional Recommendation</Text>
-                  <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 6 tsp (25g) for additional health benefits.</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
-                    <Text style={{ color: scanResult.sugarTeaspoons > 6 ? colors.error : colors.text, fontWeight: '900', fontSize: 16 }}>{((scanResult.sugarTeaspoons / 6) * 100).toFixed(0)}%</Text>
-                  </View>
-                </View>
+                    <View style={{ gap: 12 }}>
+                      <View style={{ backgroundColor: colors.background, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
+                        <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Conditional Recommendation</Text>
+                        <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 6 tsp (25g) for additional health benefits.</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
+                          <Text style={{ color: currentTsp > 6 ? colors.error : colors.text, fontWeight: '900', fontSize: 16 }}>{((currentTsp / 6) * 100).toFixed(0)}%</Text>
+                        </View>
+                      </View>
 
-                <View style={{ backgroundColor: colors.background, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
-                  <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Strong Recommendation</Text>
-                  <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 12 tsp (50g) to reduce health risks.</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
-                    <Text style={{ color: scanResult.sugarTeaspoons > 12 ? colors.error : colors.text, fontWeight: '900', fontSize: 16 }}>{((scanResult.sugarTeaspoons / 12) * 100).toFixed(0)}%</Text>
-                  </View>
-                </View>
-              </View>
+                      <View style={{ backgroundColor: colors.background, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
+                        <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Strong Recommendation</Text>
+                        <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 12 tsp (50g) to reduce health risks.</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
+                          <Text style={{ color: currentTsp > 12 ? colors.error : colors.text, fontWeight: '900', fontSize: 16 }}>{((currentTsp / 12) * 100).toFixed(0)}%</Text>
+                        </View>
+                      </View>
+                    </View>
+                  </>
+                );
+              })()}
             </View>
 
             {/* Scan Again Button */}
@@ -1368,7 +1591,7 @@ export default function ScannerScreen() {
                 }}>
                   <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 18 }}>
                     You scanned <Text style={{ fontWeight: '900', color: colors.text }}>{scanResult.name}</Text> with{' '}
-                    <Text style={{ fontWeight: '900', color: colors.error }}>{scanResult.sugarGrams}g sugar</Text>.
+                    <Text style={{ fontWeight: '900', color: colors.error }}>{scanResult.sugarGrams ?? scanResult.sugarPer100g}g sugar</Text>.
                     Here are alternatives in the same category with less sugar:
                   </Text>
                 </View>
@@ -1398,9 +1621,10 @@ export default function ScannerScreen() {
 
                 {/* Alternative Product Cards */}
                 {betterChoices.map((alt, index) => {
-                  const sugarSaved = scanResult.sugarGrams - alt.sugarGrams;
-                  const pctLess = scanResult.sugarGrams > 0
-                    ? Math.round((sugarSaved / scanResult.sugarGrams) * 100)
+                  const baseSugar = scanResult.sugarGrams ?? scanResult.sugarPer100g ?? 0;
+                  const sugarSaved = baseSugar - alt.sugarGrams;
+                  const pctLess = baseSugar > 0
+                    ? Math.round((sugarSaved / baseSugar) * 100)
                     : 0;
 
                   return (

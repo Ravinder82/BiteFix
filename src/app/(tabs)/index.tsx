@@ -163,7 +163,7 @@ export default function HomeScreen() {
               entering={FadeInDown.duration(600).springify()}
               style={{ alignItems: 'center', zIndex: 10, marginBottom: 20 }}
             >
-              <Mascot state={latestScan && latestScan.sugarTeaspoons > 6 ? 'shocked' : 'happy'} size={120} />
+              <Mascot state={latestScan && (latestScan.totalSugarTeaspoons ?? latestScan.sugarTeaspoons) > 6 ? 'shocked' : 'happy'} size={120} />
             </AnimatedReanimated.View>
             <View className="items-center" style={{ zIndex: 10 }}>
               <Text
@@ -242,13 +242,13 @@ export default function HomeScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
                 <View style={{ flex: 1, paddingRight: 6 }}>
                   <Text style={{ color: colors.text }} className="text-2xl font-black leading-none">
-                    {latestScan.sugarTeaspoons} <Text style={{ color: colors.textSecondary }} className="text-xs font-bold">tablespoons</Text>
+                    {latestScan.totalSugarTeaspoons ?? latestScan.sugarTeaspoons} <Text style={{ color: colors.textSecondary }} className="text-xs font-bold">tsp</Text>
                   </Text>
                   <Text numberOfLines={1} style={{ color: colors.text }} className="text-[11px] font-bold mt-2">
                     {latestScan.name}
                   </Text>
                   <Text style={{ color: colors.textSecondary }} className="text-[9px] mt-0.5">
-                    ({latestScan.sugarGrams}g sugar)
+                    {latestScan.totalSugarGrams !== undefined ? `(${latestScan.totalSugarGrams}g total)` : `(${latestScan.sugarGrams}g)`}
                   </Text>
                 </View>
                 {latestScan.imageUrl ? (
@@ -457,12 +457,12 @@ export default function HomeScreen() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <View style={{ alignItems: 'flex-end', marginRight: 2 }}>
                       <Text
-                        style={{ color: getSugarColor(item.sugarTeaspoons, colors), fontSize: 15, fontWeight: '900', lineHeight: 15 }}
+                        style={{ color: getSugarColor(item.totalSugarTeaspoons ?? item.sugarTeaspoons, colors), fontSize: 15, fontWeight: '900', lineHeight: 15 }}
                       >
-                        {item.sugarTeaspoons} <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>tablespoons</Text>
+                        {item.totalSugarTeaspoons ?? item.sugarTeaspoons} <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>tsp</Text>
                       </Text>
                       <Text style={{ color: colors.textMuted, fontSize: 9, marginTop: 2 }}>
-                        ({item.sugarGrams}g)
+                        {item.totalSugarGrams !== undefined ? `(${item.totalSugarGrams}g total)` : `(${item.sugarGrams}g)`}
                       </Text>
                     </View>
 
@@ -572,85 +572,161 @@ export default function HomeScreen() {
                     </Text>
                   )}
 
-                  {/* Reactive Mascot */}
-                  <View style={{ marginTop: 24, marginBottom: 16 }}>
-                    <Mascot
-                      state={
-                        selectedScan.sugarTeaspoons > 6
-                          ? 'shocked'
-                          : selectedScan.sugarTeaspoons > 3
-                            ? 'dizzy'
-                            : 'happy'
-                      }
-                      size={120}
-                    />
-                  </View>
+                  {/* Reactive Mascot based on full package sugar */}
+                  {(() => {
+                    const currentTsp = selectedScan.totalSugarTeaspoons !== undefined ? selectedScan.totalSugarTeaspoons : (selectedScan.sugarTeaspoons ?? 0);
+                    return (
+                      <View style={{ marginTop: 24, marginBottom: 16 }}>
+                        <Mascot
+                          state={
+                            currentTsp > 6
+                              ? 'shocked'
+                              : currentTsp > 3
+                                ? 'dizzy'
+                                : 'happy'
+                          }
+                          size={120}
+                        />
+                      </View>
+                    );
+                  })()}
 
-                  {/* Massive Impact Typography for Sugar */}
-                  <View style={{ alignItems: 'center', marginTop: 8 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-                      <Text style={{
-                        color: getSugarColor(selectedScan.sugarTeaspoons, colors),
-                        fontSize: 54,
-                        fontWeight: '900',
-                        letterSpacing: -2,
-                        lineHeight: 72
-                      }}>
-                        {selectedScan.sugarTeaspoons}
-                      </Text>
-                      <Text style={{
-                        color: getSugarColor(selectedScan.sugarTeaspoons, colors),
-                        fontSize: 24,
-                        fontWeight: '800',
-                        marginLeft: 6
-                      }}>
-                        teaspoons
-                      </Text>
+                  {/* Massive Impact Typography for Total Package Sugar */}
+                  {(() => {
+                    const isUnknown = selectedScan.totalSugarTeaspoons === undefined;
+                    const currentTsp = isUnknown ? '--' : selectedScan.totalSugarTeaspoons;
+                    const currentColor = isUnknown ? colors.textMuted : getSugarColor(selectedScan.totalSugarTeaspoons!, colors);
+                    
+                    return (
+                      <View style={{ alignItems: 'center', marginTop: 8 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+                          <Text style={{
+                            color: currentColor,
+                            fontSize: 54,
+                            fontWeight: '900',
+                            letterSpacing: -2,
+                            lineHeight: 72
+                          }}>
+                            {currentTsp}
+                          </Text>
+                          {!isUnknown && (
+                            <Text style={{
+                              color: currentColor,
+                              fontSize: 24,
+                              fontWeight: '800',
+                              marginLeft: 6
+                            }}>
+                              tsp
+                            </Text>
+                          )}
+                        </View>
+                        <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
+                          Total Sugars in Full Package
+                        </Text>
+                        <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 2 }}>
+                          {selectedScan.packageSize ? `(${selectedScan.packageSize})` : '(Package Size Unknown)'}
+                        </Text>
+                      </View>
+                    );
+                  })()}
+
+                  {/* Side-by-side summary cards */}
+                  <View style={{ flexDirection: 'row', gap: 12, width: '100%', marginTop: 28 }}>
+                    {/* Per Serving Card */}
+                    <View
+                      style={{
+                        flex: 1,
+                        backgroundColor: colors.surfaceRaised,
+                        padding: 16,
+                        borderRadius: 20,
+                        alignItems: 'center',
+                        borderWidth: 1,
+                        borderColor: colors.border
+                      }}
+                    >
+                      <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>Per Serving</Text>
+                      {selectedScan.servingSize && selectedScan.sugarTeaspoons !== undefined ? (
+                        <>
+                          <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800', marginTop: 2 }}>{selectedScan.servingSize}</Text>
+                          <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', marginTop: 10 }}>
+                            {selectedScan.sugarTeaspoons} <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary }}>tsp</Text>
+                          </Text>
+                          <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 4 }}>({selectedScan.sugarGrams}g sugar)</Text>
+                        </>
+                      ) : (
+                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 12 }}>
+                          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', textAlign: 'center' }}>No Serving Size found</Text>
+                        </View>
+                      )}
                     </View>
-                    <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
-                      Total Sugar
-                    </Text>
+
+                    {/* Per 100g Card */}
+                    <View
+                      style={{
+                        flex: 1,
+                        backgroundColor: colors.surfaceRaised,
+                        padding: 16,
+                        borderRadius: 20,
+                        alignItems: 'center',
+                        borderWidth: 1,
+                        borderColor: colors.border
+                      }}
+                    >
+                      <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>Per 100g / 100ml</Text>
+                      <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800', marginTop: 2 }}>Standard</Text>
+                      
+                      {selectedScan.sugarPer100g !== undefined && selectedScan.sugarPer100g > 0 ? (
+                        <>
+                          <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', marginTop: 10 }}>
+                            {parseFloat((selectedScan.sugarPer100g / 4.2).toFixed(1))} <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary }}>tsp</Text>
+                          </Text>
+                          <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 4 }}>({selectedScan.sugarPer100g}g sugar)</Text>
+                        </>
+                      ) : (
+                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 12 }}>
+                          <Text style={{ color: colors.textMuted, fontSize: 26, fontWeight: '900', textAlign: 'center' }}>--</Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
                 </View>
 
-                {/* 2. Extra Nutritional Data */}
-                {(selectedScan.servingSize || selectedScan.calories) ? (
-                  <View style={{ marginBottom: 24, gap: 12 }}>
+                {/* 2. Dynamic Nutrition Facts */}
+                <NutritionFacts
+                  colors={colors}
+                  productName={selectedScan.name}
+                  sugarGrams={selectedScan.sugarGrams ?? selectedScan.sugarPer100g ?? 0}
+                  calories={selectedScan.calories}
+                  servingSize={selectedScan.servingSize ?? '100 g'}
+                />
 
-                    {/* Stat Row */}
-                    <View style={{ flexDirection: 'row', gap: 12 }}>
-                      <View style={{ flex: 1, backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1, padding: 16, borderRadius: 20 }}>
-                        <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Product Size</Text>
-                        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900', marginTop: 4 }}>{selectedScan.servingSize || '--'}</Text>
-                      </View>
-
-                      <View style={{ flex: 1, backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1, padding: 16, borderRadius: 20 }}>
-                        <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Total Calories</Text>
-                        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900', marginTop: 4 }}>{selectedScan.calories ? `${selectedScan.calories}` : '--'} <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted }}>Kcal</Text></Text>
-                      </View>
-                    </View>
-
-                    {/* Burn Down Tagline */}
-                    {selectedScan.calories ? (
-                      <View style={{ backgroundColor: '#F9731615', borderColor: '#F9731630', borderWidth: 1, padding: 20, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-                        <View style={{ backgroundColor: '#F9731625', padding: 12, borderRadius: 16 }}>
-                          <Activity size={24} color="#F97316" />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={{ color: '#F97316', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
-                            The Burn Down
-                          </Text>
-                          <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', lineHeight: 18 }}>
-                            You would need to run for <Text style={{ fontWeight: '900', color: '#F97316', fontSize: 15 }}>{Math.round(selectedScan.calories / 10)} mins</Text> straight to burn off this product.
-                          </Text>
+                {/* 3. Extra Nutritional Data */}
+                {(() => {
+                  const currentCalories = selectedScan.calories;
+                  if (currentCalories !== undefined) {
+                    return (
+                      <View style={{ marginBottom: 24, gap: 12 }}>
+                        {/* Burn Down Tagline */}
+                        <View style={{ backgroundColor: '#F9731615', borderColor: '#F9731630', borderWidth: 1, padding: 20, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                          <View style={{ backgroundColor: '#F9731625', padding: 12, borderRadius: 16 }}>
+                            <Activity size={24} color="#F97316" />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ color: '#F97316', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+                              The Burn Down
+                            </Text>
+                            <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', lineHeight: 18 }}>
+                              You would need to run for <Text style={{ fontWeight: '900', color: '#F97316', fontSize: 15 }}>{Math.round(currentCalories / 10)} mins</Text> straight to burn off this serving.
+                            </Text>
+                          </View>
                         </View>
                       </View>
-                    ) : null}
+                    );
+                  }
+                  return null;
+                })()}
 
-                  </View>
-                ) : null}
-
-                {/* 3. WHO Reference Card */}
+                {/* 4. WHO Reference Card */}
                 <View style={{ backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1, padding: 20, borderRadius: 24, marginBottom: 32, gap: 16 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                     <View style={{ backgroundColor: colors.primary + '12', padding: 8, borderRadius: 12 }}>
@@ -659,25 +735,40 @@ export default function HomeScreen() {
                     <Text style={{ color: colors.text, fontWeight: '900', fontSize: 15 }}>WHO daily limits for adults:</Text>
                   </View>
 
-                  <View style={{ gap: 12 }}>
-                    <View style={{ backgroundColor: colors.surface, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
-                      <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Recommended Daily Sugar Amount</Text>
-                      <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 6 tsp (25g) for best health benefits.</Text>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
-                        <Text style={{ color: selectedScan.sugarTeaspoons > 6 ? colors.error : colors.text, fontWeight: '900', fontSize: 16 }}>{((selectedScan.sugarTeaspoons / 6) * 100).toFixed(0)}%</Text>
-                      </View>
-                    </View>
+                  {(() => {
+                    const currentTsp = selectedScan.sugarTeaspoons;
+                    if (currentTsp === undefined) {
+                      return (
+                        <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20 }}>
+                          Serving size is unknown, so we can't calculate your total daily limit usage for this serving.
+                        </Text>
+                      );
+                    }
+                    return (
+                      <View style={{ gap: 12 }}>
+                        <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20, marginBottom: 4 }}>
+                          This serving contains <Text style={{ fontWeight: '900', color: colors.text }}>{currentTsp} tsp</Text> of sugar.
+                        </Text>
+                        <View style={{ backgroundColor: colors.surface, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
+                          <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Recommended Daily Sugar Amount</Text>
+                          <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 6 tsp (25g) for best health benefits.</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
+                            <Text style={{ color: currentTsp > 6 ? colors.error : colors.text, fontWeight: '900', fontSize: 16 }}>{((currentTsp / 6) * 100).toFixed(0)}%</Text>
+                          </View>
+                        </View>
 
-                    <View style={{ backgroundColor: colors.surface, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
-                      <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Maximum Suggested Daily Sugar Amount</Text>
-                      <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 12 tsp (50g) to reduce health risks.</Text>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
-                        <Text style={{ color: selectedScan.sugarTeaspoons > 12 ? colors.error : colors.text, fontWeight: '900', fontSize: 16 }}>{((selectedScan.sugarTeaspoons / 12) * 100).toFixed(0)}%</Text>
+                        <View style={{ backgroundColor: colors.surface, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
+                          <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Maximum Suggested Daily Sugar Amount</Text>
+                          <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 12 tsp (50g) to reduce health risks.</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
+                            <Text style={{ color: currentTsp > 12 ? colors.error : colors.text, fontWeight: '900', fontSize: 16 }}>{((currentTsp / 12) * 100).toFixed(0)}%</Text>
+                          </View>
+                        </View>
                       </View>
-                    </View>
-                  </View>
+                    );
+                  })()}
                 </View>
 
                 {/* Delete and Close scan option from details */}
