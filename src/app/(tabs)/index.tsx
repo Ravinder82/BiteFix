@@ -14,7 +14,20 @@ import { formatBloodSugarValue, getStatusColor, getStatusLabel } from '../../uti
 import SettingsScreen from './settings';
 import * as Haptics from 'expo-haptics';
 import { ScanHistoryItem } from '../../types/app.types';
-
+const formatGroupDate = (timestamp: number) => {
+  const date = new Date(timestamp);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  
+  if (date.toDateString() === today.toDateString()) {
+    return 'Today';
+  } else if (date.toDateString() === yesterday.toDateString()) {
+    return 'Yesterday';
+  } else {
+    return date.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
+  }
+};
 
 
 export default function HomeScreen() {
@@ -377,35 +390,69 @@ export default function HomeScreen() {
               </Text>
             </View>
           ) : (
-            scans.map((item, index) => (
-              <AnimatedReanimated.View
-                key={item.id}
-                entering={FadeInDown.delay(Math.min(index * 65, 400)).duration(300)}
-              >
-                <TouchableOpacity
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    panY.setValue(0);
-                    setSelectedScan(item);
-                  }}
+            (() => {
+              const groupedScans = scans.reduce((acc, scan) => {
+                const dateStr = formatGroupDate(scan.timestamp);
+                const group = acc.find(g => g.title === dateStr);
+                if (group) {
+                  group.items.push(scan);
+                } else {
+                  acc.push({ title: dateStr, items: [scan] });
+                }
+                return acc;
+              }, [] as { title: string, items: typeof scans }[]);
+
+              return groupedScans.map((group, groupIndex) => (
+                <AnimatedReanimated.View
+                  key={`group-${group.title}`}
+                  entering={FadeInDown.delay(Math.min(groupIndex * 100, 400)).duration(300)}
                   style={{
                     backgroundColor: colors.surface,
                     borderColor: colors.border,
                     borderWidth: 1,
-                    borderRadius: 20,
-                    padding: 14,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 12,
+                    borderRadius: 24,
+                    padding: 16,
+                    marginBottom: 16,
                     shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 1 },
+                    shadowOffset: { width: 0, height: 2 },
                     shadowOpacity: 0.04,
-                    shadowRadius: 6,
-                    elevation: 1
+                    shadowRadius: 8,
+                    elevation: 2
                   }}
-                  activeOpacity={0.95}
                 >
+                  <Text style={{ 
+                    color: colors.textSecondary, 
+                    fontSize: 13, 
+                    fontWeight: '800', 
+                    marginBottom: 12, 
+                    marginLeft: 4, 
+                    textTransform: 'uppercase', 
+                    letterSpacing: 0.5 
+                  }}>
+                    {group.title}
+                  </Text>
+                  
+                  {group.items.map((item, index) => (
+                    <TouchableOpacity
+                      key={item.id}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        panY.setValue(0);
+                        setSelectedScan(item);
+                      }}
+                      style={{
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : colors.background,
+                        borderColor: colors.border,
+                        borderWidth: 1,
+                        borderRadius: 16,
+                        padding: 12,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: index === group.items.length - 1 ? 0 : 8,
+                      }}
+                      activeOpacity={0.8}
+                    >
                   <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                     {/* Product Image */}
                     {item.imageUrl ? (
@@ -482,8 +529,10 @@ export default function HomeScreen() {
                     </TouchableOpacity>
                   </View>
                 </TouchableOpacity>
-              </AnimatedReanimated.View>
-            ))
+                  ))}
+                </AnimatedReanimated.View>
+              ));
+            })()
           )}
         </View>
       </ScrollView>
