@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, SafeAreaView, Alert } from 'react-native';
+import { View,  ScrollView, TouchableOpacity, TextInput, SafeAreaView, Alert } from 'react-native';
+import { Text } from '@/components/Text';
 import AnimatedReanimated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { useAppStore } from '../../stores/appStore';
 import { BloodSugarLog } from '../../types/app.types';

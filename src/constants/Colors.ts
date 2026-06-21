@@ -15,8 +15,8 @@ export const Colors = {
 
     // Text
     text:           '#1A1008',   // Near-black warm
-    textSecondary:  '#7A6E60',   // Warm grey
-    textMuted:      '#B0A898',   // Muted warm grey
+    textSecondary:  '#5A4E42',   // Crisp warm charcoal for contrast
+    textMuted:      '#8A7E6E',   // Readable muted warm grey
     textInverse:    '#FFFFFF',
 
     // Borders

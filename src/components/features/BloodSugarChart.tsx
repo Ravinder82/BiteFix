@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, useWindowDimensions, ScrollView } from 'react-native';
+import { View,  useWindowDimensions, ScrollView } from 'react-native';
+import { Text } from '@/components/Text';
 import Svg, { Rect, Text as SvgText, Line, G, Defs, LinearGradient, Stop } from 'react-native-svg';
 import Animated, {
   useSharedValue,

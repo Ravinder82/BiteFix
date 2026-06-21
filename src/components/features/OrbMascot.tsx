@@ -33,9 +33,9 @@ export function OrbMascot({ state = 'idle', size = 120 }: OrbMascotProps) {
   // Potion and wave animation shared values
   const waveTranslation = useSharedValue(0);
   const backWaveTranslation = useSharedValue(0);
-  const bubble1Y = useSharedValue(90);
-  const bubble2Y = useSharedValue(85);
-  const bubble3Y = useSharedValue(95);
+  const bubble1Y = useSharedValue(65);
+  const bubble2Y = useSharedValue(60);
+  const bubble3Y = useSharedValue(70);
 
   useEffect(() => {
     // Cancel previous loops/values
@@ -143,19 +143,19 @@ export function OrbMascot({ state = 'idle', size = 120 }: OrbMascotProps) {
       false
     );
 
-    // Floating Bubble loops
+    // Floating Bubble loops - increased height matching raised liquid
     bubble1Y.value = withRepeat(
-      withTiming(62, { duration: 2500, easing: Easing.inOut(Easing.sin) }),
+      withTiming(37, { duration: 2500, easing: Easing.inOut(Easing.sin) }),
       -1,
       true
     );
     bubble2Y.value = withRepeat(
-      withTiming(60, { duration: 3100, easing: Easing.inOut(Easing.sin) }),
+      withTiming(35, { duration: 3100, easing: Easing.inOut(Easing.sin) }),
       -1,
       true
     );
     bubble3Y.value = withRepeat(
-      withTiming(65, { duration: 2700, easing: Easing.inOut(Easing.sin) }),
+      withTiming(40, { duration: 2700, easing: Easing.inOut(Easing.sin) }),
       -1,
       true
     );
@@ -234,21 +234,20 @@ export function OrbMascot({ state = 'idle', size = 120 }: OrbMascotProps) {
 
             {/* Deep background nectar highlight */}
             <RadialGradient id="potionBaseGrad" cx="50%" cy="80%" rx="60%" ry="60%">
-              <Stop offset="0%" stopColor="#FFF2D4" stopOpacity="0.35" />
-              <Stop offset="100%" stopColor="#7A3B00" stopOpacity="0" />
+              <Stop offset="0%" stopColor="#E8820C" stopOpacity="0.25" />
+              <Stop offset="100%" stopColor="#E8820C" stopOpacity="0" />
             </RadialGradient>
 
-            {/* Front wave: magical glowing honey amber */}
+            {/* Front wave: light brown main system color */}
             <LinearGradient id="potionLiquidGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <Stop offset="0%" stopColor="#FFB338" />
-              <Stop offset="40%" stopColor="#FF8C00" />
-              <Stop offset="100%" stopColor="#9C4B00" />
+              <Stop offset="0%" stopColor="#E8820C" />
+              <Stop offset="100%" stopColor="#E8820C" />
             </LinearGradient>
 
-            {/* Back wave: darker shaded nectar */}
+            {/* Back wave: same system color but with opacity controlled on path */}
             <LinearGradient id="potionLiquidBackGrad" x1="0%" y1="0%" x2="0%" y2="100%">
               <Stop offset="0%" stopColor="#E8820C" />
-              <Stop offset="100%" stopColor="#5E2B00" />
+              <Stop offset="100%" stopColor="#E8820C" />
             </LinearGradient>
 
             {/* Glass shell rim highlight refraction */}
@@ -291,16 +290,16 @@ export function OrbMascot({ state = 'idle', size = 120 }: OrbMascotProps) {
             {/* Back Wave (Oscillating) */}
             <AnimatedG animatedProps={backWaveAnimatedProps}>
               <Path
-                d="M -120 63 C -90 70, -90 56, -60 63 C -30 70, -30 56, 0 63 C 30 70, 30 56, 60 63 C 90 70, 90 56, 120 63 L 120 110 L -120 110 Z"
+                d="M -240 38 C -220 43, -200 43, -180 38 C -160 33, -140 33, -120 38 C -100 43, -80 43, -60 38 C -40 33, -20 33, 0 38 C 20 43, 40 43, 60 38 C 80 33, 100 33, 120 38 C 140 43, 160 43, 180 38 C 200 33, 220 33, 240 38 L 240 110 L -240 110 Z"
                 fill="url(#potionLiquidBackGrad)"
-                opacity={0.65}
+                opacity={0.45}
               />
             </AnimatedG>
 
             {/* Front Wave (Oscillating in opposite phase) */}
             <AnimatedG animatedProps={waveAnimatedProps}>
               <Path
-                d="M -120 60 C -90 53, -90 67, -60 60 C -30 53, -30 67, 0 60 C 30 53, 30 67, 60 60 C 90 53, 90 67, 120 60 L 120 110 L -120 110 Z"
+                d="M -240 35 C -220 30, -200 30, -180 35 C -160 40, -140 40, -120 35 C -100 30, -80 30, -60 35 C -40 40, -20 40, 0 35 C 20 30, 40 30, 60 35 C 80 40, 100 40, 120 35 C 140 30, 160 30, 180 35 C 200 40, 220 40, 240 35 L 240 110 L -240 110 Z"
                 fill="url(#potionLiquidGrad)"
               />
             </AnimatedG>

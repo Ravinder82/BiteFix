@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, Alert, Modal, PanResponder, Animated, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, ScrollView, TouchableOpacity, SafeAreaView, Alert, Modal, PanResponder, Animated, StyleSheet, ActivityIndicator } from 'react-native';
+import { Text } from '@/components/Text';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,7 +20,7 @@ const formatGroupDate = (timestamp: number) => {
   const today = new Date();
   const yesterday = new Date();
   yesterday.setDate(today.getDate() - 1);
-  
+
   if (date.toDateString() === today.toDateString()) {
     return 'Today';
   } else if (date.toDateString() === yesterday.toDateString()) {
@@ -97,13 +98,13 @@ export default function HomeScreen() {
   // --- Bento Grid Logic ---
   const getLatestActiveScans = () => {
     if (scans.length === 0) return { dateStr: 'Today', items: [], isEmpty: true };
-    
+
     const latestTimestamp = scans[0].timestamp;
     const latestDate = new Date(latestTimestamp).toDateString();
     const todayStr = new Date().toDateString();
-    
+
     const activeScans = scans.filter(scan => new Date(scan.timestamp).toDateString() === latestDate);
-    
+
     let label = '';
     if (latestDate === todayStr) {
       label = 'Today';
@@ -115,12 +116,25 @@ export default function HomeScreen() {
   };
 
   const activeDayInfo = getLatestActiveScans();
-  
+
   const totalSugar = activeDayInfo.items.reduce((sum, item) => sum + (item.totalSugarGrams ?? item.sugarGrams), 0);
   const totalCalories = activeDayInfo.items.reduce((sum, item) => sum + (item.totalCalories ?? item.calories ?? 0), 0);
   const runTimeMinutes = Math.round(totalCalories / 11);
   const runHours = Math.floor(runTimeMinutes / 60);
   const runMins = runTimeMinutes % 60;
+
+  const walkTimeMinutes = Math.round(totalCalories / 4.5);
+  const walkHours = Math.floor(walkTimeMinutes / 60);
+  const walkMins = walkTimeMinutes % 60;
+
+  // New Blood Sugar Logic
+  const fastingLogs = logs.filter(l => l.type === 'fasting');
+  const postMealLogs = logs.filter(l => l.type === 'post-meal');
+
+  const avgFasting = fastingLogs.length > 0 ? Math.round(fastingLogs.reduce((sum, l) => sum + l.value, 0) / fastingLogs.length) : null;
+  const avgPostMeal = postMealLogs.length > 0 ? Math.round(postMealLogs.reduce((sum, l) => sum + l.value, 0) / postMealLogs.length) : null;
+
+  const daysSinceLastTest = logs.length > 0 ? Math.floor((Date.now() - logs[0].timestamp) / (1000 * 60 * 60 * 24)) : null;
 
   const sortedBySugar = [...activeDayInfo.items].sort((a, b) => {
     const aVal = a.sugarPer100g ?? a.sugarGrams;
@@ -130,14 +144,6 @@ export default function HomeScreen() {
   const cleanChoice = sortedBySugar[0];
   const sugarSpiker = sortedBySugar[sortedBySugar.length - 1];
 
-  let morning = 0, afternoon = 0, night = 0;
-  activeDayInfo.items.forEach(item => {
-    const hour = new Date(item.timestamp).getHours();
-    if (hour >= 5 && hour < 12) morning++;
-    else if (hour >= 12 && hour < 17) afternoon++;
-    else night++;
-  });
-  
   const totalScansForActiveDay = activeDayInfo.items.length;
   // --- End Bento Grid Logic ---
 
@@ -166,16 +172,14 @@ export default function HomeScreen() {
           <Mascot state="idle" size={36} />
           <View>
             <Text
-              style={{ color: colors.text }}
-              className="text-lg font-black tracking-tight"
+              style={{ color: colors.text, fontSize: 20, fontWeight: '900', letterSpacing: -0.6 }}
             >
               GoodBye Sugar
             </Text>
             <Text
-              style={{ color: colors.textSecondary }}
-              className="text-[9px] font-bold uppercase tracking-wider"
+              style={{ color: colors.primary, fontSize: 9.5, fontWeight: '800', letterSpacing: 1.6 }}
             >
-              Sugar Scanner
+              SUGAR SCANNER
             </Text>
           </View>
         </View>
@@ -197,15 +201,20 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Welcome Card (Premium Liquid Glass) */}
-        <View style={{ borderRadius: 28, overflow: 'hidden', marginBottom: 24 }}>
+        <View
+          style={{
+            borderRadius: 28,
+            overflow: 'hidden',
+            marginBottom: 24,
+            borderWidth: 1.5,
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.06)',
+          }}
+        >
           {/* Base Background for depth */}
           <LinearGradient
             colors={isDark ? ['#000000ff', '#000000ff'] : ['#ffffffff', '#ffffffff']}
             style={StyleSheet.absoluteFill}
           />
-          {/* Abstract blobs for "liquid" look behind glass */}
-          <View style={{ position: 'absolute', top: -40, right: -40, width: 150, height: 150, borderRadius: 75, backgroundColor: isDark ? 'rgba(255, 149, 0, 1)' : 'rgba(255, 255, 255, 0)', transform: [{ scale: 1.5 }] }} />
-          <View style={{ position: 'absolute', bottom: -50, left: -20, width: 120, height: 120, borderRadius: 60, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)', transform: [{ scale: 1.5 }] }} />
 
           <BlurView
             intensity={isDark ? 30 : 60}
@@ -215,8 +224,6 @@ export default function HomeScreen() {
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              borderWidth: 1.5,
-              borderColor: isDark ? 'rgba(239, 239, 239, 0.5)' : 'rgba(239, 239, 239, 1)',
             }}
           >
             {/* Top: Mascot and Welcome */}
@@ -229,10 +236,10 @@ export default function HomeScreen() {
               </AnimatedReanimated.View>
               <View className="items-center" style={{ zIndex: 10 }}>
                 <Text
-                  style={{ color: colors.primary }}
-                  className="text-[10px] font-black uppercase tracking-widest text-center"
+                  style={{ color: colors.primary, fontSize: 11, fontWeight: '800', letterSpacing: 1.5 }}
+                  className="text-center"
                 >
-                  {userName ? `Welcome, ${userName}` : 'Welcome Back'}
+                  {userName ? `WELCOME, ${userName.toUpperCase()}` : 'WELCOME BACK'}
                 </Text>
               </View>
             </View>
@@ -242,20 +249,20 @@ export default function HomeScreen() {
               {/* Latest Scan Card */}
               <TouchableOpacity
                 onPress={() => router.push('/scanner')}
-                style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', flex: 1 }}
+                style={{ backgroundColor: isDark ? 'rgba(255, 236, 210, 0.35)' : 'rgba(255, 236, 210, 0.35)', flex: 1 }}
                 className="p-4 rounded-[20px] shadow-sm justify-between"
               >
                 <View className="flex-row items-center justify-between mb-3">
-                  <Text style={{ color: colors.textSecondary }} className="text-[9px] font-bold uppercase tracking-wider">Latest Scan</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', letterSpacing: 1.2 }}>LATEST SCAN</Text>
                   <ScanBarcode size={14} color={colors.primary} />
                 </View>
                 {latestScan ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
                     <View style={{ flex: 1, paddingRight: 6 }}>
-                      <Text style={{ color: colors.text }} className="text-xl font-black leading-none">
-                        {latestScan.totalSugarTeaspoons ?? latestScan.sugarTeaspoons} <Text style={{ color: colors.textSecondary }} className="text-[10px] font-bold">tsp</Text>
+                      <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.6 }}>
+                        {latestScan.totalSugarTeaspoons ?? latestScan.sugarTeaspoons} <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700' }}>tsp</Text>
                       </Text>
-                      <Text numberOfLines={1} style={{ color: colors.text }} className="text-[10px] font-bold mt-2">
+                      <Text numberOfLines={1} style={{ color: colors.text, fontSize: 11, fontWeight: '600' }} className="mt-2">
                         {latestScan.name}
                       </Text>
                     </View>
@@ -283,7 +290,7 @@ export default function HomeScreen() {
                   </View>
                 ) : (
                   <View className="py-1">
-                    <Text style={{ color: colors.textMuted }} className="text-[10px] italic">No items scanned</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 12 }} className="italic">No items scanned</Text>
                   </View>
                 )}
               </TouchableOpacity>
@@ -291,18 +298,18 @@ export default function HomeScreen() {
               {/* Latest Blood Sugar Card */}
               <TouchableOpacity
                 onPress={() => router.push('/tracker')}
-                style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', flex: 1 }}
+                style={{ backgroundColor: isDark ? 'rgba(255, 236, 210, 0.35)' : 'rgba(255, 236, 210, 0.35)', flex: 1 }}
                 className="p-4 rounded-[20px] shadow-sm justify-between"
               >
                 <View className="flex-row items-center justify-between mb-3">
-                  <Text style={{ color: colors.textSecondary }} className="text-[9px] font-bold uppercase tracking-wider">Latest Log</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', letterSpacing: 1.2 }}>LATEST LOG</Text>
                   <Activity size={14} color={colors.secondary} />
                 </View>
                 {latestLog ? (
                   <View>
-                    <Text style={{ color: colors.text }} className="text-xl font-black leading-none">
+                    <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.6 }}>
                       {formatBloodSugarValue(latestLog.value, latestLog.unit)}{' '}
-                      <Text style={{ color: colors.textSecondary }} className="text-[9px] font-bold">{latestLog.unit}</Text>
+                      <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700' }}>{latestLog.unit}</Text>
                     </Text>
                     {/* Health Range Pill */}
                     <View
@@ -310,8 +317,7 @@ export default function HomeScreen() {
                       className="px-2 py-0.5 rounded-full self-start mt-2"
                     >
                       <Text
-                        style={{ color: getStatusColor(latestLog.status, colors) }}
-                        className="text-[8px] font-black uppercase tracking-wider"
+                        style={{ color: getStatusColor(latestLog.status, colors), fontSize: 9, fontWeight: '800', letterSpacing: 1.0 }}
                       >
                         {getStatusLabel(latestLog.status)}
                       </Text>
@@ -319,7 +325,7 @@ export default function HomeScreen() {
                   </View>
                 ) : (
                   <View className="py-1">
-                    <Text style={{ color: colors.textMuted }} className="text-[10px] italic">No logs recorded</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 12 }} className="italic">No logs recorded</Text>
                   </View>
                 )}
               </TouchableOpacity>
@@ -379,151 +385,184 @@ export default function HomeScreen() {
 
         {/* Dashboard Bento Grid */}
         <View className="flex-col gap-4 mb-6">
-          
+
           {/* Section Title */}
           <View className="flex-row items-center justify-between mt-2 px-1">
-            <Text style={{ color: colors.textSecondary }} className="font-black text-[10px] uppercase tracking-wider">
-              {activeDayInfo.isEmpty ? "Today's Insights" : `${activeDayInfo.dateStr} Insights`}
+            <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '800', letterSpacing: 1.2 }}>
+              {activeDayInfo.isEmpty ? "TODAY'S INSIGHTS" : `${activeDayInfo.dateStr.toUpperCase()} INSIGHTS`}
             </Text>
           </View>
 
-          {/* Row 2: Daily Sugar Load & Time-of-Day */}
-          <View className="flex-row gap-4">
-            
-            {/* Daily Sugar Load (Liquid Glass Ring) */}
-            <View 
-              style={{ backgroundColor: colors.surface, borderColor: colors.border, flex: 3 }}
-              className="border rounded-[24px] shadow-sm overflow-hidden min-h-[160px]"
+          {/* Row 2: Daily Sugar Load (Full Width) */}
+          <View
+            style={{ backgroundColor: colors.surface, borderColor: colors.border }}
+            className="border rounded-[24px] shadow-sm overflow-hidden min-h-[160px] w-full"
+          >
+            <LinearGradient
+              colors={isDark ? ['#000000ff', '#1a1a1aff'] : ['#ffffffff', '#f5f5f5ff']}
+              style={StyleSheet.absoluteFill}
+            />
+            {/* Dynamic Frosted Glass Liquid Effect based on Sugar */}
+            <View
+              style={{
+                position: 'absolute', top: -40, left: '10%', width: 200, height: 200, borderRadius: 100,
+                backgroundColor: activeDayInfo.isEmpty ? (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)') : (totalSugar > 25 ? 'rgba(255, 59, 48, 0.4)' : (totalSugar > 15 ? 'rgba(220, 150, 53, 0.3)' : 'rgba(52, 199, 89, 0.4)')),
+                transform: [{ scale: 1.5 }],
+                opacity: 0.6
+              }}
+            />
+            <BlurView
+              intensity={isDark ? 30 : 60}
+              tint={isDark ? "dark" : "light"}
+              style={{ flex: 1, padding: 18, alignItems: 'center', justifyContent: 'center' }}
             >
-              <LinearGradient
-                colors={isDark ? ['#000000ff', '#1a1a1aff'] : ['#ffffffff', '#f5f5f5ff']}
-                style={StyleSheet.absoluteFill}
-              />
-              {/* Dynamic Frosted Glass Liquid Effect based on Sugar */}
-              <View 
-                style={{ 
-                  position: 'absolute', top: -30, left: -30, width: 120, height: 120, borderRadius: 60, 
-                  backgroundColor: activeDayInfo.isEmpty ? (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)') : (totalSugar > 25 ? 'rgba(255, 59, 48, 0.5)' : (totalSugar > 15 ? 'rgba(255, 149, 0, 0.5)' : 'rgba(52, 199, 89, 0.5)')), 
-                  transform: [{ scale: 1.5 }],
-                  opacity: 0.6
-                }} 
-              />
-              <BlurView
-                intensity={isDark ? 30 : 60}
-                tint={isDark ? "dark" : "light"}
-                style={{ flex: 1, padding: 16, alignItems: 'center', justifyContent: 'center' }}
-              >
-                <Text style={{ color: colors.textSecondary }} className="text-[9px] font-bold uppercase tracking-wider self-start mb-2">Sugar Load</Text>
-                
-                {/* Circular Progress (CSS approximation) */}
-                <View className="items-center justify-center relative mt-2" style={{ width: 80, height: 80 }}>
-                  <View style={{ width: 80, height: 80, borderRadius: 40, borderWidth: 6, borderColor: colors.border, position: 'absolute' }} />
-                  {/* We would use a true SVG ring here, but simulating with border segments for now */}
-                  <View style={{ width: 80, height: 80, borderRadius: 40, borderWidth: 6, borderColor: activeDayInfo.isEmpty ? colors.border : (totalSugar > 25 ? '#FF3B30' : (totalSugar > 15 ? '#FF9500' : '#34C759')), position: 'absolute', borderLeftColor: 'transparent', borderBottomColor: 'transparent', transform: [{ rotate: '45deg' }] }} />
-                  
-                  <Text style={{ color: colors.text }} className="text-xl font-black">{totalSugar.toFixed(0)}<Text className="text-[10px]">g</Text></Text>
-                </View>
-                
-                <Text style={{ color: colors.textSecondary }} className="text-[9px] mt-3 font-bold text-center">
-                  {activeDayInfo.isEmpty ? 'No scans yet' : `${Math.round((totalSugar / 25) * 100)}% of WHO Limit`}
+              <View className="w-full flex-row items-center justify-between mb-4">
+                <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '800', letterSpacing: 1.2 }}>SUGAR CONSUMED</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '600' }}>
+                  {activeDayInfo.isEmpty ? 'No scans yet' : `${Math.round((totalSugar / 25) * 100)}% of Daily WHO Limit`}
                 </Text>
-              </BlurView>
-            </View>
+              </View>
 
-            {/* Time-of-Day Insights */}
-            <View 
-              style={{ backgroundColor: colors.surface, borderColor: colors.border, flex: 2 }}
-              className="p-4 border rounded-[24px] shadow-sm justify-between"
-            >
-              <Text style={{ color: colors.textSecondary }} className="text-[9px] font-bold uppercase tracking-wider mb-2">Habits</Text>
-              
-              <View className="flex-1 justify-center gap-2">
-                <View className="flex-row items-center justify-between">
-                  <Text style={{ color: colors.text }} className="text-[10px] font-bold">Morning</Text>
-                  <Text style={{ color: colors.textSecondary }} className="text-[10px] font-black">{morning}</Text>
-                </View>
-                <View style={{ height: 4, backgroundColor: colors.border, borderRadius: 2, overflow: 'hidden' }}>
-                  <View style={{ height: '100%', width: activeDayInfo.isEmpty ? '0%' : `${(morning / totalScansForActiveDay) * 100}%`, backgroundColor: colors.primary }} />
+              <View className="flex-row items-center justify-center w-full gap-8">
+                {/* Grams Progress */}
+                <View className="items-center">
+                  <View className="items-center justify-center relative" style={{ width: 80, height: 80 }}>
+                    <View style={{ width: 80, height: 80, borderRadius: 40, borderWidth: 8, borderColor: colors.border, position: 'absolute' }} />
+                    <View style={{ width: 80, height: 80, borderRadius: 50, borderWidth: 8, borderColor: activeDayInfo.isEmpty ? colors.border : (totalSugar > 25 ? '#FF3B30' : (totalSugar > 15 ? '#FF9500' : '#34C759')), position: 'absolute', borderLeftColor: 'transparent', borderBottomColor: 'transparent', transform: [{ rotate: '45deg' }] }} />
+                    <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', letterSpacing: -0.6 }}>{totalSugar.toFixed(0)}</Text>
+                  </View>
+                  <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', marginTop: 8 }}>GRAMS</Text>
                 </View>
 
-                <View className="flex-row items-center justify-between mt-1">
-                  <Text style={{ color: colors.text }} className="text-[10px] font-bold">Afternoon</Text>
-                  <Text style={{ color: colors.textSecondary }} className="text-[10px] font-black">{afternoon}</Text>
-                </View>
-                <View style={{ height: 4, backgroundColor: colors.border, borderRadius: 2, overflow: 'hidden' }}>
-                  <View style={{ height: '100%', width: activeDayInfo.isEmpty ? '0%' : `${(afternoon / totalScansForActiveDay) * 100}%`, backgroundColor: colors.secondary }} />
-                </View>
-
-                <View className="flex-row items-center justify-between mt-1">
-                  <Text style={{ color: colors.text }} className="text-[10px] font-bold">Night</Text>
-                  <Text style={{ color: colors.textSecondary }} className="text-[10px] font-black">{night}</Text>
-                </View>
-                <View style={{ height: 4, backgroundColor: colors.border, borderRadius: 2, overflow: 'hidden' }}>
-                  <View style={{ height: '100%', width: activeDayInfo.isEmpty ? '0%' : `${(night / totalScansForActiveDay) * 100}%`, backgroundColor: '#8E8E93' }} />
+                {/* Teaspoons Progress */}
+                <View className="items-center">
+                  <View className="items-center justify-center relative" style={{ width: 80, height: 80 }}>
+                    <View style={{ width: 80, height: 80, borderRadius: 40, borderWidth: 8, borderColor: colors.border, position: 'absolute' }} />
+                    <View style={{ width: 80, height: 80, borderRadius: 50, borderWidth: 8, borderColor: activeDayInfo.isEmpty ? colors.border : (totalSugar > 25 ? '#FF3B30' : (totalSugar > 15 ? '#FF9500' : '#34C759')), position: 'absolute', borderLeftColor: 'transparent', borderBottomColor: 'transparent', transform: [{ rotate: '-45deg' }] }} />
+                    <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', letterSpacing: -0.6 }}>{(totalSugar / 4.2).toFixed(1)}</Text>
+                  </View>
+                  <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', marginTop: 8 }}>TEASPOONS</Text>
                 </View>
               </View>
-            </View>
-            
+            </BlurView>
+          </View>
+
+          {/* Row 2.5: Blood Sugar Stats (Full Width) */}
+          <View
+            style={{ backgroundColor: colors.surface, borderColor: colors.border }}
+            className="border rounded-[24px] shadow-sm overflow-hidden w-full"
+          >
+            <LinearGradient
+              colors={isDark ? ['#000000ff', '#1a1a1aff'] : ['#ffffffff', '#f5f5f5ff']}
+              style={StyleSheet.absoluteFill}
+            />
+            <View
+              style={{
+                position: 'absolute', top: -40, right: -40, width: 150, height: 150, borderRadius: 75,
+                backgroundColor: isDark ? 'rgba(90, 200, 250, 0.15)' : 'rgba(90, 200, 250, 0.25)',
+                transform: [{ scale: 1.5 }],
+                opacity: 0.5
+              }}
+            />
+            <BlurView
+              intensity={isDark ? 30 : 60}
+              tint={isDark ? "dark" : "light"}
+              style={{ flex: 1, padding: 18 }}
+            >
+              <View className="flex-row items-center justify-between mb-4">
+                <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '800', letterSpacing: 1.2 }}>BLOOD SUGAR STATS</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '600' }}>
+                  {daysSinceLastTest !== null ? (daysSinceLastTest === 0 ? 'Tested Today' : `${daysSinceLastTest} days ago`) : 'No logs'}
+                </Text>
+              </View>
+
+              <View className="flex-row items-center justify-between">
+                <View className="flex-1 items-center">
+                  <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginBottom: 4 }}>Avg Fasting</Text>
+                  <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.6 }}>
+                    {avgFasting !== null ? avgFasting : '--'} <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700' }}>{logs[0]?.unit || 'mg/dL'}</Text>
+                  </Text>
+                </View>
+                <View style={{ width: 1, height: 40, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
+                <View className="flex-1 items-center">
+                  <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginBottom: 4 }}>Avg Post-meal</Text>
+                  <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.6 }}>
+                    {avgPostMeal !== null ? avgPostMeal : '--'} <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700' }}>{logs[0]?.unit || 'mg/dL'}</Text>
+                  </Text>
+                </View>
+              </View>
+            </BlurView>
           </View>
 
           {/* Row 3: Sugar Spiker & Clean Choice (No Icons) */}
           <View className="flex-row gap-4">
-            
+
             {/* Sugar Spiker */}
-            <View 
+            <View
               style={{ backgroundColor: activeDayInfo.isEmpty ? colors.surface : (isDark ? '#FF3B3015' : '#FF3B3010'), borderColor: activeDayInfo.isEmpty ? colors.border : '#FF3B3030', flex: 1 }}
               className="p-4 border rounded-[24px] shadow-sm"
             >
-              <Text style={{ color: activeDayInfo.isEmpty ? colors.textSecondary : '#FF3B30' }} className="text-[9px] font-black uppercase tracking-wider mb-2">Highest Sugar</Text>
+              <Text style={{ color: activeDayInfo.isEmpty ? colors.textSecondary : '#FF3B30', fontSize: 10, fontWeight: '800', letterSpacing: 1.2 }} className="mb-2">HIGHEST SUGAR</Text>
               {activeDayInfo.isEmpty ? (
-                <Text style={{ color: colors.textMuted }} className="text-[10px] italic">No data yet</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12 }} className="italic">No data yet</Text>
               ) : (
                 <View>
-                  <Text numberOfLines={1} style={{ color: colors.text }} className="font-bold text-[11px] mb-1">{sugarSpiker?.name}</Text>
-                  <Text style={{ color: '#FF3B30' }} className="font-black text-lg">{sugarSpiker?.totalSugarTeaspoons ?? sugarSpiker?.sugarTeaspoons} <Text className="text-[9px]">tsp</Text></Text>
+                  <Text numberOfLines={1} style={{ color: colors.text, fontSize: 14, fontWeight: '800', letterSpacing: -0.2 }} className="mb-1">{sugarSpiker?.name}</Text>
+                  <Text style={{ color: '#FF3B30', fontSize: 22, fontWeight: '900', letterSpacing: -0.4 }}>{sugarSpiker?.totalSugarTeaspoons ?? sugarSpiker?.sugarTeaspoons} <Text style={{ fontSize: 11, fontWeight: '700' }}>tsp</Text></Text>
                 </View>
               )}
             </View>
 
             {/* Clean Choice */}
-            <View 
+            <View
               style={{ backgroundColor: activeDayInfo.isEmpty ? colors.surface : (isDark ? '#34C75915' : '#34C75910'), borderColor: activeDayInfo.isEmpty ? colors.border : '#34C75930', flex: 1 }}
               className="p-4 border rounded-[24px] shadow-sm"
             >
-              <Text style={{ color: activeDayInfo.isEmpty ? colors.textSecondary : '#34C759' }} className="text-[9px] font-black uppercase tracking-wider mb-2">Best Choice</Text>
+              <Text style={{ color: activeDayInfo.isEmpty ? colors.textSecondary : '#34C759', fontSize: 10, fontWeight: '800', letterSpacing: 1.2 }} className="mb-2">BEST CHOICE</Text>
               {activeDayInfo.isEmpty ? (
-                <Text style={{ color: colors.textMuted }} className="text-[10px] italic">No data yet</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12 }} className="italic">No data yet</Text>
               ) : (
                 <View>
-                  <Text numberOfLines={1} style={{ color: colors.text }} className="font-bold text-[11px] mb-1">{cleanChoice?.name}</Text>
-                  <Text style={{ color: '#34C759' }} className="font-black text-lg">{cleanChoice?.totalSugarTeaspoons ?? cleanChoice?.sugarTeaspoons} <Text className="text-[9px]">tsp</Text></Text>
+                  <Text numberOfLines={1} style={{ color: colors.text, fontSize: 14, fontWeight: '800', letterSpacing: -0.2 }} className="mb-1">{cleanChoice?.name}</Text>
+                  <Text style={{ color: '#34C759', fontSize: 22, fontWeight: '900', letterSpacing: -0.4 }}>{cleanChoice?.totalSugarTeaspoons ?? cleanChoice?.sugarTeaspoons} <Text style={{ fontSize: 11, fontWeight: '700' }}>tsp</Text></Text>
                 </View>
               )}
             </View>
 
           </View>
 
-          {/* Row 4: Total Burn Down (Neon Fire Pill) */}
-          <View 
+          {/* Row 4: Total Burn Down Dashboard */}
+          <View
             style={{ backgroundColor: isDark ? '#1C1C1E' : '#2C2C2E', borderColor: isDark ? '#333' : '#444' }}
-            className="p-5 border rounded-full shadow-lg overflow-hidden flex-row items-center justify-between"
+            className="p-5 border rounded-[28px] shadow-lg overflow-hidden"
           >
             {/* Neon Fire Liquid Glass Effect */}
-            <View style={{ position: 'absolute', top: -10, left: '30%', width: '100%', height: 100, borderRadius: 50, backgroundColor: activeDayInfo.isEmpty ? 'rgba(255,255,255,0.05)' : 'rgba(255, 69, 0, 0.4)', opacity: 0.6 }} />
-            
-            <View>
-              <Text style={{ color: '#FF8C00' }} className="text-[10px] font-black uppercase tracking-wider mb-1">Total Burn Down</Text>
-              <Text style={{ color: 'white' }} className="font-bold text-xs">
-                {activeDayInfo.isEmpty ? 'Scan items to see calorie burn.' : "Time to burn off today's scans"}
+            <View style={{ position: 'absolute', top: -30, right: -10, width: 120, height: 120, borderRadius: 60, backgroundColor: activeDayInfo.isEmpty ? 'rgba(255,255,255,0.05)' : 'rgba(255, 69, 0, 0.4)', opacity: 0.6 }} />
+
+            <View className="flex-row items-center justify-between mb-4">
+              <Text style={{ color: '#FF8C00', fontSize: 10, fontWeight: '900', letterSpacing: 1.0 }}>Time required to burn Calories </Text>
+              <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 10, fontWeight: '800', letterSpacing: 1.2 }}>
+                {activeDayInfo.isEmpty ? '0 CALS' : `${totalCalories} CALS LOGGED`}
               </Text>
             </View>
-            <View className="items-end">
-              <Text style={{ color: 'white' }} className="font-black text-xl">
-                {activeDayInfo.isEmpty ? '--' : (runHours > 0 ? `${runHours}h ${runMins}m` : `${runMins}m`)}
-              </Text>
-              <Text style={{ color: 'rgba(255,255,255,0.5)' }} className="font-bold text-[9px] uppercase tracking-wider">
-                {activeDayInfo.isEmpty ? '0 Cals' : `${totalCalories} Cals`}
-              </Text>
+
+            {/* Dashboard Stats Layout */}
+            <View className="flex-row justify-between w-full mt-2">
+              <View className="flex-1">
+                <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10, fontWeight: '800', letterSpacing: 1.2, marginBottom: 4 }}>JOGGING</Text>
+                <Text style={{ color: 'white', fontSize: 24, fontWeight: '900', letterSpacing: -0.6 }}>
+                  {activeDayInfo.isEmpty ? '--' : (runHours > 0 ? `${runHours}h ${runMins}m` : `${runMins}m`)}
+                </Text>
+              </View>
+
+              <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.1)', marginHorizontal: 16 }} />
+
+              <View className="flex-1">
+                <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10, fontWeight: '800', letterSpacing: 1.2, marginBottom: 4 }}>BRISK WALKING</Text>
+                <Text style={{ color: 'white', fontSize: 24, fontWeight: '900', letterSpacing: -0.6 }}>
+                  {activeDayInfo.isEmpty ? '--' : (walkHours > 0 ? `${walkHours}h ${walkMins}m` : `${walkMins}m`)}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
@@ -535,15 +574,20 @@ export default function HomeScreen() {
         >
           <View
             style={{ backgroundColor: colors.secondary + '12' }}
-            className="p-2.5 rounded-xl self-start"
+            className="p-3 rounded-2xl self-start mt-1"
           >
-            <Info size={18} color={colors.secondary} />
+            <Info size={22} color={colors.secondary} />
           </View>
           <View className="flex-1">
-            <Text style={{ color: colors.text }} className="font-bold text-sm">Why Teaspoons instead of Grams?</Text>
-            <Text style={{ color: colors.textSecondary }} className="text-xs mt-2 leading-relaxed">
-              Seeing sugar content in teaspoons helps you make healthy choices <Text className="font-bold"> WHO RECOMMENDATIONS:1 teaspoon = 4.2 grams </Text>
+            <Text style={{ color: colors.text, fontSize: 15, fontWeight: '900', letterSpacing: -0.4 }}>Why Teaspoons?</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20, marginTop: 4 }}>
+              Seeing sugar content in teaspoons helps you quickly visualize the amount and make healthier choices.
             </Text>
+
+            <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }} className="mt-4 p-3 rounded-xl flex-row items-center justify-between">
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '800', letterSpacing: 0.8 }}>WHO STANDARD</Text>
+              <Text style={{ color: colors.text, fontSize: 12, fontWeight: '900', letterSpacing: -0.2 }}>1 tablespoon = 4.2 g</Text>
+            </View>
           </View>
         </View>
 
@@ -618,18 +662,18 @@ export default function HomeScreen() {
                     elevation: 2
                   }}
                 >
-                  <Text style={{ 
-                    color: colors.textSecondary, 
-                    fontSize: 13, 
-                    fontWeight: '800', 
-                    marginBottom: 12, 
-                    marginLeft: 4, 
-                    textTransform: 'uppercase', 
-                    letterSpacing: 0.5 
+                  <Text style={{
+                    color: colors.textSecondary,
+                    fontSize: 13,
+                    fontWeight: '800',
+                    marginBottom: 12,
+                    marginLeft: 4,
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5
                   }}>
                     {group.title}
                   </Text>
-                  
+
                   {group.items.map((item, index) => (
                     <TouchableOpacity
                       key={item.id}
@@ -651,82 +695,82 @@ export default function HomeScreen() {
                       }}
                       activeOpacity={0.8}
                     >
-                  <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                    {/* Product Image */}
-                    {item.imageUrl ? (
-                      <Image
-                        source={{ uri: item.imageUrl }}
-                        style={{ width: 52, height: 52, borderRadius: 12, backgroundColor: '#ffffff' }}
-                        contentFit="contain"
-                        transition={200}
-                      />
-                    ) : (
-                      <View
-                        style={{
-                          width: 52,
-                          height: 52,
-                          borderRadius: 12,
-                          backgroundColor: colors.primary + '12',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        <ScanBarcode size={22} color={colors.primary} />
+                      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                        {/* Product Image */}
+                        {item.imageUrl ? (
+                          <Image
+                            source={{ uri: item.imageUrl }}
+                            style={{ width: 52, height: 52, borderRadius: 12, backgroundColor: '#ffffff' }}
+                            contentFit="contain"
+                            transition={200}
+                          />
+                        ) : (
+                          <View
+                            style={{
+                              width: 52,
+                              height: 52,
+                              borderRadius: 12,
+                              backgroundColor: colors.primary + '12',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            <ScanBarcode size={22} color={colors.primary} />
+                          </View>
+                        )}
+
+                        {/* Product Metadata */}
+                        <View style={{ flex: 1, paddingRight: 6 }}>
+                          <Text
+                            numberOfLines={1}
+                            style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}
+                          >
+                            {item.name}
+                          </Text>
+                          <Text
+                            numberOfLines={1}
+                            style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}
+                          >
+                            {item.brand || 'Generic Brand'}
+                          </Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 }}>
+                            <Clock size={10} color={colors.textMuted} />
+                            <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600' }}>
+                              {new Date(item.timestamp).toLocaleDateString()} · {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </Text>
+                          </View>
+                        </View>
                       </View>
-                    )}
 
-                    {/* Product Metadata */}
-                    <View style={{ flex: 1, paddingRight: 6 }}>
-                      <Text
-                        numberOfLines={1}
-                        style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}
-                      >
-                        {item.name}
-                      </Text>
-                      <Text
-                        numberOfLines={1}
-                        style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 }}
-                      >
-                        {item.brand || 'Generic Brand'}
-                      </Text>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 }}>
-                        <Clock size={10} color={colors.textMuted} />
-                        <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600' }}>
-                          {new Date(item.timestamp).toLocaleDateString()} · {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </Text>
+                      {/* Right Side: Sugar Teaspoons & Delete Action */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <View style={{ alignItems: 'flex-end', marginRight: 2 }}>
+                          <Text
+                            style={{ color: getSugarColor(item.totalSugarTeaspoons ?? item.sugarTeaspoons, colors), fontSize: 15, fontWeight: '900', lineHeight: 15 }}
+                          >
+                            {item.totalSugarTeaspoons ?? item.sugarTeaspoons} <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>tsp</Text>
+                          </Text>
+                          <Text style={{ color: colors.textMuted, fontSize: 9, marginTop: 2 }}>
+                            {item.totalSugarGrams !== undefined ? `(${item.totalSugarGrams}g total)` : `(${item.sugarGrams}g)`}
+                          </Text>
+                        </View>
+
+                        <TouchableOpacity
+                          onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            deleteScan(item.id);
+                          }}
+                          style={{
+                            backgroundColor: colors.background,
+                            padding: 8,
+                            borderRadius: 10
+                          }}
+                          activeOpacity={0.85}
+                        >
+                          <Trash2 size={13} color={colors.error} />
+                        </TouchableOpacity>
                       </View>
-                    </View>
-                  </View>
-
-                  {/* Right Side: Sugar Teaspoons & Delete Action */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <View style={{ alignItems: 'flex-end', marginRight: 2 }}>
-                      <Text
-                        style={{ color: getSugarColor(item.totalSugarTeaspoons ?? item.sugarTeaspoons, colors), fontSize: 15, fontWeight: '900', lineHeight: 15 }}
-                      >
-                        {item.totalSugarTeaspoons ?? item.sugarTeaspoons} <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>tsp</Text>
-                      </Text>
-                      <Text style={{ color: colors.textMuted, fontSize: 9, marginTop: 2 }}>
-                        {item.totalSugarGrams !== undefined ? `(${item.totalSugarGrams}g total)` : `(${item.sugarGrams}g)`}
-                      </Text>
-                    </View>
-
-                    <TouchableOpacity
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        deleteScan(item.id);
-                      }}
-                      style={{
-                        backgroundColor: colors.background,
-                        padding: 8,
-                        borderRadius: 10
-                      }}
-                      activeOpacity={0.85}
-                    >
-                      <Trash2 size={13} color={colors.error} />
                     </TouchableOpacity>
-                  </View>
-                </TouchableOpacity>
                   ))}
                 </AnimatedReanimated.View>
               ));
@@ -843,7 +887,7 @@ export default function HomeScreen() {
                     const isUnknown = selectedScan.totalSugarTeaspoons === undefined;
                     const currentTsp = isUnknown ? '--' : selectedScan.totalSugarTeaspoons;
                     const currentColor = isUnknown ? colors.textMuted : getSugarColor(selectedScan.totalSugarTeaspoons!, colors);
-                    
+
                     return (
                       <View style={{ alignItems: 'center', marginTop: 8 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
@@ -921,7 +965,7 @@ export default function HomeScreen() {
                     >
                       <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>Per 100g / 100ml</Text>
                       <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800', marginTop: 2 }}>Standard</Text>
-                      
+
                       {selectedScan.sugarPer100g !== undefined && selectedScan.sugarPer100g > 0 ? (
                         <>
                           <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', marginTop: 10 }}>

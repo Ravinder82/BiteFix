@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, SafeAreaView, Alert } from 'react-native';
+import { View,  TouchableOpacity, TextInput, SafeAreaView, Alert } from 'react-native';
+import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useAppStore } from '../stores/appStore';
 import { useTheme } from '../hooks/useTheme';
