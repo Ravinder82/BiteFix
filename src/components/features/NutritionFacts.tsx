@@ -126,7 +126,7 @@ export function NutritionFacts({
         }}
       >
         <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '900' }}>
-          Total Sugars
+          Added Sugars
         </Text>
         <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '900' }}>
           {sugarGrams.toFixed(1)}g
