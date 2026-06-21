@@ -10,7 +10,7 @@ import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
-import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle, Menu, HelpCircle } from 'lucide-react-native';
+import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle, Menu, HelpCircle, Flame, Zap } from 'lucide-react-native';
 import { formatBloodSugarValue, getStatusColor, getStatusLabel } from '../../utils/bloodSugar';
 import SettingsScreen from './settings';
 import * as Haptics from 'expo-haptics';
@@ -97,35 +97,40 @@ export default function HomeScreen() {
 
   // --- Bento Grid Logic ---
   const getLatestActiveScans = () => {
-    if (scans.length === 0) return { dateStr: 'Today', items: [], isEmpty: true };
-
-    const latestTimestamp = scans[0].timestamp;
-    const latestDate = new Date(latestTimestamp).toDateString();
     const todayStr = new Date().toDateString();
 
-    const activeScans = scans.filter(scan => new Date(scan.timestamp).toDateString() === latestDate);
-
-    let label = '';
-    if (latestDate === todayStr) {
-      label = 'Today';
-    } else {
-      label = new Date(latestTimestamp).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+    if (scans.length === 0) {
+      return { dateStr: 'Today', items: [], isEmpty: true };
     }
 
-    return { dateStr: label, items: activeScans, isEmpty: false };
+    // Filter scans to ONLY include today's items. 
+    // This prevents the dashboard from falling back to yesterday's data 
+    // if the user deletes all of today's history items.
+    const activeScans = scans.filter(scan => new Date(scan.timestamp).toDateString() === todayStr);
+
+    if (activeScans.length === 0) {
+      return { dateStr: 'Today', items: [], isEmpty: true };
+    }
+
+    return { dateStr: 'Today', items: activeScans, isEmpty: false };
   };
 
   const activeDayInfo = getLatestActiveScans();
 
-  const totalSugar = activeDayInfo.items.reduce((sum, item) => sum + (item.totalSugarGrams ?? item.sugarGrams), 0);
-  const totalCalories = activeDayInfo.items.reduce((sum, item) => sum + (item.totalCalories ?? item.calories ?? 0), 0);
-  const runTimeMinutes = Math.round(totalCalories / 11);
-  const runHours = Math.floor(runTimeMinutes / 60);
-  const runMins = runTimeMinutes % 60;
+  const totalSugar = activeDayInfo.items.reduce((sum, item) => sum + item.sugarGrams, 0);
+  
+  // 1. Total Daily Intake (Serving Size)
+  const sumTotalPackagesCalories = activeDayInfo.items.reduce((sum, item) => sum + (item.calories ?? 0), 0);
+  const tpRunTimeMinutes = Math.round(sumTotalPackagesCalories / 11);
+  const tpRunHours = Math.floor(tpRunTimeMinutes / 60);
+  const tpRunMins = tpRunTimeMinutes % 60;
 
-  const walkTimeMinutes = Math.round(totalCalories / 4.5);
-  const walkHours = Math.floor(walkTimeMinutes / 60);
-  const walkMins = walkTimeMinutes % 60;
+  // 2. Latest Scanned Item (Per Serving)
+  const latestScanItem = activeDayInfo.items.length > 0 ? activeDayInfo.items[0] : null;
+  const lsCalories = latestScanItem ? (latestScanItem.calories ?? latestScanItem.totalCalories ?? 0) : 0;
+  const lsRunTimeMinutes = Math.round(lsCalories / 11);
+  const lsRunHours = Math.floor(lsRunTimeMinutes / 60);
+  const lsRunMins = lsRunTimeMinutes % 60;
 
   // New Blood Sugar Logic
   const fastingLogs = logs.filter(l => l.type === 'fasting');
@@ -494,75 +499,88 @@ export default function HomeScreen() {
             </BlurView>
           </View>
 
-          {/* Row 3: Sugar Spiker & Clean Choice (No Icons) */}
-          <View className="flex-row gap-4">
 
-            {/* Sugar Spiker */}
-            <View
-              style={{ backgroundColor: activeDayInfo.isEmpty ? colors.surface : (isDark ? '#FF3B3015' : '#FF3B3010'), borderColor: activeDayInfo.isEmpty ? colors.border : '#FF3B3030', flex: 1 }}
-              className="p-4 border rounded-[24px] shadow-sm"
-            >
-              <Text style={{ color: activeDayInfo.isEmpty ? colors.textSecondary : '#FF3B30', fontSize: 10, fontWeight: '800', letterSpacing: 1.2 }} className="mb-2">HIGHEST SUGAR</Text>
-              {activeDayInfo.isEmpty ? (
-                <Text style={{ color: colors.textMuted, fontSize: 12 }} className="italic">No data yet</Text>
-              ) : (
-                <View>
-                  <Text numberOfLines={1} style={{ color: colors.text, fontSize: 14, fontWeight: '800', letterSpacing: -0.2 }} className="mb-1">{sugarSpiker?.name}</Text>
-                  <Text style={{ color: '#FF3B30', fontSize: 22, fontWeight: '900', letterSpacing: -0.4 }}>{sugarSpiker?.totalSugarTeaspoons ?? sugarSpiker?.sugarTeaspoons} <Text style={{ fontSize: 11, fontWeight: '700' }}>tsp</Text></Text>
-                </View>
-              )}
-            </View>
 
-            {/* Clean Choice */}
-            <View
-              style={{ backgroundColor: activeDayInfo.isEmpty ? colors.surface : (isDark ? '#34C75915' : '#34C75910'), borderColor: activeDayInfo.isEmpty ? colors.border : '#34C75930', flex: 1 }}
-              className="p-4 border rounded-[24px] shadow-sm"
-            >
-              <Text style={{ color: activeDayInfo.isEmpty ? colors.textSecondary : '#34C759', fontSize: 10, fontWeight: '800', letterSpacing: 1.2 }} className="mb-2">BEST CHOICE</Text>
-              {activeDayInfo.isEmpty ? (
-                <Text style={{ color: colors.textMuted, fontSize: 12 }} className="italic">No data yet</Text>
-              ) : (
-                <View>
-                  <Text numberOfLines={1} style={{ color: colors.text, fontSize: 14, fontWeight: '800', letterSpacing: -0.2 }} className="mb-1">{cleanChoice?.name}</Text>
-                  <Text style={{ color: '#34C759', fontSize: 22, fontWeight: '900', letterSpacing: -0.4 }}>{cleanChoice?.totalSugarTeaspoons ?? cleanChoice?.sugarTeaspoons} <Text style={{ fontSize: 11, fontWeight: '700' }}>tsp</Text></Text>
-                </View>
-              )}
-            </View>
-
-          </View>
-
-          {/* Row 4: Total Burn Down Dashboard */}
+          {/* Row 4: Interactive Burn Down Dashboard */}
           <View
-            style={{ backgroundColor: isDark ? '#1C1C1E' : '#2C2C2E', borderColor: isDark ? '#333' : '#444' }}
-            className="p-5 border rounded-[28px] shadow-lg overflow-hidden"
+            style={{ backgroundColor: colors.surface, borderColor: colors.border }}
+            className="p-5 border rounded-[28px] shadow-sm overflow-hidden"
           >
-            {/* Neon Fire Liquid Glass Effect */}
-            <View style={{ position: 'absolute', top: -30, right: -10, width: 120, height: 120, borderRadius: 60, backgroundColor: activeDayInfo.isEmpty ? 'rgba(255,255,255,0.05)' : 'rgba(255, 69, 0, 0.4)', opacity: 0.6 }} />
+            {/* Dynamic Ambient Background */}
+            <View style={{ position: 'absolute', top: -40, right: -20, width: 140, height: 140, borderRadius: 70, backgroundColor: activeDayInfo.isEmpty ? 'rgba(0,0,0,0.02)' : 'rgba(255, 140, 0, 0.06)', opacity: 0.8 }} />
+            <View style={{ position: 'absolute', bottom: -30, left: -20, width: 100, height: 100, borderRadius: 50, backgroundColor: activeDayInfo.isEmpty ? 'rgba(0,0,0,0.02)' : 'rgba(52, 199, 89, 0.05)', opacity: 0.8 }} />
 
-            <View className="flex-row items-center justify-between mb-4">
-              <Text style={{ color: '#FF8C00', fontSize: 10, fontWeight: '900', letterSpacing: 1.0 }}>Time required to burn Calories </Text>
-              <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 10, fontWeight: '800', letterSpacing: 1.2 }}>
-                {activeDayInfo.isEmpty ? '0 CALS' : `${totalCalories} CALS LOGGED`}
+            {/* Info Pill Title */}
+            <View style={{ 
+              backgroundColor: isDark ? 'rgba(255, 140, 0, 0.15)' : 'rgba(255, 140, 0, 0.1)', 
+              alignSelf: 'flex-start', 
+              paddingHorizontal: 12, 
+              paddingVertical: 6, 
+              borderRadius: 16, 
+              marginBottom: 16, 
+              flexDirection: 'row', 
+              alignItems: 'center', 
+              gap: 6 
+            }}>
+              <Flame size={14} color="#FF8C00" />
+              <Text style={{ color: '#FF8C00', fontSize: 10, fontWeight: '800', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                Burn Down: Jogging time required
               </Text>
             </View>
 
-            {/* Dashboard Stats Layout */}
-            <View className="flex-row justify-between w-full mt-2">
-              <View className="flex-1">
-                <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10, fontWeight: '800', letterSpacing: 1.2, marginBottom: 4 }}>JOGGING</Text>
-                <Text style={{ color: 'white', fontSize: 24, fontWeight: '900', letterSpacing: -0.6 }}>
-                  {activeDayInfo.isEmpty ? '--' : (runHours > 0 ? `${runHours}h ${runMins}m` : `${runMins}m`)}
+            {/* Split Dashboard Layout */}
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              
+              {/* 1st Sub-card: Total Full Packages */}
+              <View style={{ 
+                flex: 1, 
+                backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', 
+                padding: 14, 
+                borderRadius: 20, 
+                borderWidth: 1, 
+                borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' 
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 }}>
+                  <Zap size={10} color={colors.textSecondary} />
+                  <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    Total Daily Intake
+                  </Text>
+                </View>
+                <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900', marginBottom: 8 }}>
+                  {activeDayInfo.isEmpty ? '0' : sumTotalPackagesCalories} <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textSecondary }}>kcal</Text>
                 </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+                  <Text style={{ color: '#FF8C00', fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>
+                    {activeDayInfo.isEmpty ? '--' : (tpRunHours > 0 ? `${tpRunHours}h ${tpRunMins}m` : `${tpRunMins}m`)}
+                  </Text>
+                </View>
               </View>
 
-              <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.1)', marginHorizontal: 16 }} />
-
-              <View className="flex-1">
-                <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10, fontWeight: '800', letterSpacing: 1.2, marginBottom: 4 }}>BRISK WALKING</Text>
-                <Text style={{ color: 'white', fontSize: 24, fontWeight: '900', letterSpacing: -0.6 }}>
-                  {activeDayInfo.isEmpty ? '--' : (walkHours > 0 ? `${walkHours}h ${walkMins}m` : `${walkMins}m`)}
+              {/* 2nd Sub-card: Latest Scanned Serving */}
+              <View style={{ 
+                flex: 1, 
+                backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', 
+                padding: 14, 
+                borderRadius: 20, 
+                borderWidth: 1, 
+                borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' 
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 }}>
+                  <Activity size={10} color={colors.textSecondary} />
+                  <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    Latest Serving
+                  </Text>
+                </View>
+                <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900', marginBottom: 8 }}>
+                  {activeDayInfo.isEmpty ? '0' : lsCalories} <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textSecondary }}>kcal</Text>
                 </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+                  <Text style={{ color: '#34C759', fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>
+                    {activeDayInfo.isEmpty ? '--' : (lsRunHours > 0 ? `${lsRunHours}h ${lsRunMins}m` : `${lsRunMins}m`)}
+                  </Text>
+                </View>
               </View>
+
             </View>
           </View>
         </View>
@@ -746,12 +764,12 @@ export default function HomeScreen() {
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                         <View style={{ alignItems: 'flex-end', marginRight: 2 }}>
                           <Text
-                            style={{ color: getSugarColor(item.totalSugarTeaspoons ?? item.sugarTeaspoons, colors), fontSize: 15, fontWeight: '900', lineHeight: 15 }}
+                            style={{ color: getSugarColor(item.sugarTeaspoons, colors), fontSize: 15, fontWeight: '900', lineHeight: 15 }}
                           >
-                            {item.totalSugarTeaspoons ?? item.sugarTeaspoons} <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>tsp</Text>
+                            {item.sugarTeaspoons} <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>tsp</Text>
                           </Text>
                           <Text style={{ color: colors.textMuted, fontSize: 9, marginTop: 2 }}>
-                            {item.totalSugarGrams !== undefined ? `(${item.totalSugarGrams}g total)` : `(${item.sugarGrams}g)`}
+                            ({item.sugarGrams}g)
                           </Text>
                         </View>
 

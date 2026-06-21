@@ -79,7 +79,7 @@ export function NutritionFacts({
         Amount Per Serving
       </Text>
 
-      {/* Calories */}
+      {/* Energy (kcal) */}
       <View
         style={{
           flexDirection: 'row',
@@ -92,7 +92,7 @@ export function NutritionFacts({
         }}
       >
         <Text style={{ color: labelColor, fontSize: 19, fontWeight: '900', letterSpacing: -0.2 }}>
-          Calories
+          Energy (kcal)
         </Text>
         <Text style={{ color: labelColor, fontSize: 26, fontWeight: '900', lineHeight: 28 }}>
           {calories !== undefined ? Math.round(calories) : '—'}
