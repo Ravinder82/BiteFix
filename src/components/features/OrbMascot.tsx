@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View } from 'react-native';
-import Svg, { Circle, Path, Defs, RadialGradient, Stop, Ellipse, G } from 'react-native-svg';
+import Svg, { Circle, Path, Defs, RadialGradient, LinearGradient, Stop, Ellipse, G, Rect, Polygon } from 'react-native-svg';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -150,8 +150,8 @@ export function OrbMascot({ state = 'idle', size = 120 }: OrbMascotProps) {
   }));
 
   // ViewBox coordinates
-  const cx = 55;
-  const cy = 55;
+  const cx = 49;
+  const cy = 63;
   const r = 46;
 
   return (
@@ -159,53 +159,101 @@ export function OrbMascot({ state = 'idle', size = 120 }: OrbMascotProps) {
       <Animated.View style={[{ width: size, height: size * 0.95 }, animStyle]}>
         <Svg width="100%" height="100%" viewBox="0 0 110 110">
           <Defs>
-            {/* Richer 3D sphere gradient — warm glowing gold/amber */}
-            <RadialGradient id="sphereGrad" cx="35%" cy="28%" rx="60%" ry="60%">
-              <Stop offset="0%" stopColor="#FFF2D4" />
-              <Stop offset="18%" stopColor="#FFC766" />
-              <Stop offset="45%" stopColor="#FF9500" />
-              <Stop offset="75%" stopColor="#E8820C" />
-              <Stop offset="92%" stopColor="#9C4B00" />
-              <Stop offset="100%" stopColor="#572A00" />
-            </RadialGradient>
+            {/* Front Face: Warm medium-light raw sugar gradient */}
+            <LinearGradient id="frontGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor="#FFF3E3" />
+              <Stop offset="45%" stopColor="#E8C59C" />
+              <Stop offset="100%" stopColor="#C69D70" />
+            </LinearGradient>
+
+            {/* Top Face: Very light glowing cream/sugar crystal gradient */}
+            <LinearGradient id="topGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+              <Stop offset="0%" stopColor="#E8C59C" />
+              <Stop offset="60%" stopColor="#FFF9F2" />
+              <Stop offset="100%" stopColor="#FFFFFF" />
+            </LinearGradient>
+
+            {/* Right Face: Shaded golden/caramel brown gradient */}
+            <LinearGradient id="rightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor="#C69D70" />
+              <Stop offset="70%" stopColor="#A4774E" />
+              <Stop offset="100%" stopColor="#7D5330" />
+            </LinearGradient>
 
             {/* Glowing outer halo ring */}
             <RadialGradient id="glowRing" cx="50%" cy="50%" rx="50%" ry="50%">
-              <Stop offset="0%" stopColor="#FF9500" stopOpacity="0.25" />
-              <Stop offset="60%" stopColor="#E8820C" stopOpacity="0.08" />
-              <Stop offset="100%" stopColor="#E8820C" stopOpacity="0" />
+              <Stop offset="0%" stopColor="#E8C59C" stopOpacity="0.35" />
+              <Stop offset="60%" stopColor="#C69D70" stopOpacity="0.1" />
+              <Stop offset="100%" stopColor="#C69D70" stopOpacity="0" />
             </RadialGradient>
 
-            {/* Ambient specular hot spot */}
-            <RadialGradient id="specularG" cx="40%" cy="40%" rx="50%" ry="50%">
-              <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.8" />
+            {/* Specular highlight details on front face */}
+            <RadialGradient id="specularG" cx="30%" cy="30%" rx="50%" ry="50%">
+              <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.5" />
               <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
             </RadialGradient>
 
             {/* Dynamic Shadow Grad */}
             <RadialGradient id="shadowGrad" cx="50%" cy="50%" rx="50%" ry="50%">
-              <Stop offset="0%" stopColor="#9C4B00" stopOpacity="0.28" />
-              <Stop offset="100%" stopColor="#9C4B00" stopOpacity="0" />
+              <Stop offset="0%" stopColor="#5C3415" stopOpacity="0.32" />
+              <Stop offset="100%" stopColor="#5C3415" stopOpacity="0" />
             </RadialGradient>
           </Defs>
 
-          {/* Glow ring */}
-          <Circle cx={cx} cy={cy} r={53} fill="url(#glowRing)" />
+          {/* Glow ring - centered around the full 3D cube */}
+          <Circle cx={55} cy={57} r={50} fill="url(#glowRing)" />
 
-          {/* Main sphere body */}
-          <Circle cx={cx} cy={cy} r={r} fill="url(#sphereGrad)" />
+          {/* 3D Sugar Cube Faces */}
+
+          {/* 1. Top Face with rounded stroke joints */}
+          <Polygon
+            points="20,32 30,20 90,20 80,32"
+            fill="url(#topGrad)"
+            stroke="url(#topGrad)"
+            strokeWidth={5}
+            strokeLinejoin="round"
+          />
+
+          {/* 2. Right Face with rounded stroke joints */}
+          <Polygon
+            points="80,32 90,20 90,80 80,92"
+            fill="url(#rightGrad)"
+            stroke="url(#rightGrad)"
+            strokeWidth={5}
+            strokeLinejoin="round"
+          />
+
+          {/* 3. Front Face */}
+          <Rect
+            x={18}
+            y={32}
+            width={62}
+            height={62}
+            rx={12}
+            fill="url(#frontGrad)"
+          />
+
+          {/* Glistening Sugar Crystals */}
+          <Path d="M 38 23 L 40 25 L 38 27 L 36 25 Z" fill="white" opacity={0.6} />
+          <Path d="M 62 21 L 64 23 L 62 25 L 60 23 Z" fill="white" opacity={0.5} />
+          <Path d="M 80 23 L 82 25 L 80 27 L 78 25 Z" fill="white" opacity={0.7} />
+          <Path d="M 26 38 L 28 40 L 26 42 L 24 40 Z" fill="white" opacity={0.55} />
+          <Path d="M 72 44 L 74 46 L 72 48 L 70 46 Z" fill="white" opacity={0.6} />
+          <Path d="M 32 80 L 34 82 L 32 84 L 30 82 Z" fill="white" opacity={0.5} />
+          <Path d="M 86 50 L 88 52 L 86 54 L 84 52 Z" fill="white" opacity={0.5} />
+          <Path d="M 85 72 L 87 74 L 85 76 L 83 74 Z" fill="white" opacity={0.4} />
 
           {/* Specular highlight details */}
-          <Circle cx={cx - 13} cy={cy - 16} r={15} fill="url(#specularG)" />
-          <Circle cx={cx - 16} cy={cy - 18} r={5.5} fill="white" opacity={0.6} />
+          <Circle cx={cx - 13} cy={cy - 13} r={16} fill="url(#specularG)" />
+          <Circle cx={cx - 15} cy={cy - 15} r={5} fill="white" opacity={0.5} />
 
-          {/* Bottom rim light effect */}
+          {/* Front Face Top-Left Bevel Highlight */}
           <Path
-            d={`M${cx - r * 0.75} ${cy + r * 0.55} Q${cx} ${cy + r * 1.05} ${cx + r * 0.75} ${cy + r * 0.55}`}
+            d="M 22 44 C 22 36, 26 34, 34 34 L 70 34"
             fill="none"
-            stroke="#FFE4B3"
-            strokeWidth="3"
-            opacity={0.35}
+            stroke="#FFFFFF"
+            strokeWidth={2.2}
+            opacity={0.32}
             strokeLinecap="round"
           />
 

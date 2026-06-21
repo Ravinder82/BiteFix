@@ -94,6 +94,53 @@ export default function HomeScreen() {
   const latestLog = logs[0];
   const latestScan = scans[0];
 
+  // --- Bento Grid Logic ---
+  const getLatestActiveScans = () => {
+    if (scans.length === 0) return { dateStr: 'Today', items: [], isEmpty: true };
+    
+    const latestTimestamp = scans[0].timestamp;
+    const latestDate = new Date(latestTimestamp).toDateString();
+    const todayStr = new Date().toDateString();
+    
+    const activeScans = scans.filter(scan => new Date(scan.timestamp).toDateString() === latestDate);
+    
+    let label = '';
+    if (latestDate === todayStr) {
+      label = 'Today';
+    } else {
+      label = new Date(latestTimestamp).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+    }
+
+    return { dateStr: label, items: activeScans, isEmpty: false };
+  };
+
+  const activeDayInfo = getLatestActiveScans();
+  
+  const totalSugar = activeDayInfo.items.reduce((sum, item) => sum + (item.totalSugarGrams ?? item.sugarGrams), 0);
+  const totalCalories = activeDayInfo.items.reduce((sum, item) => sum + (item.totalCalories ?? item.calories ?? 0), 0);
+  const runTimeMinutes = Math.round(totalCalories / 11);
+  const runHours = Math.floor(runTimeMinutes / 60);
+  const runMins = runTimeMinutes % 60;
+
+  const sortedBySugar = [...activeDayInfo.items].sort((a, b) => {
+    const aVal = a.sugarPer100g ?? a.sugarGrams;
+    const bVal = b.sugarPer100g ?? b.sugarGrams;
+    return aVal - bVal;
+  });
+  const cleanChoice = sortedBySugar[0];
+  const sugarSpiker = sortedBySugar[sortedBySugar.length - 1];
+
+  let morning = 0, afternoon = 0, night = 0;
+  activeDayInfo.items.forEach(item => {
+    const hour = new Date(item.timestamp).getHours();
+    if (hour >= 5 && hour < 12) morning++;
+    else if (hour >= 12 && hour < 17) afternoon++;
+    else night++;
+  });
+  
+  const totalScansForActiveDay = activeDayInfo.items.length;
+  // --- End Bento Grid Logic ---
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Premium Custom Header (Floating Pill) */}
@@ -172,19 +219,110 @@ export default function HomeScreen() {
               borderColor: isDark ? 'rgba(239, 239, 239, 0.5)' : 'rgba(239, 239, 239, 1)',
             }}
           >
-            <AnimatedReanimated.View
-              entering={FadeInDown.duration(600).springify()}
-              style={{ alignItems: 'center', zIndex: 10, marginBottom: 20 }}
-            >
-              <Mascot state={latestScan && (latestScan.totalSugarTeaspoons ?? latestScan.sugarTeaspoons) > 6 ? 'shocked' : 'happy'} size={120} />
-            </AnimatedReanimated.View>
-            <View className="items-center" style={{ zIndex: 10 }}>
-              <Text
-                style={{ color: colors.primary }}
-                className="text-[10px] font-black uppercase tracking-widest text-center"
+            {/* Top: Mascot and Welcome */}
+            <View className="items-center w-full">
+              <AnimatedReanimated.View
+                entering={FadeInDown.duration(600).springify()}
+                style={{ alignItems: 'center', zIndex: 10, marginBottom: 20 }}
               >
-                {userName ? `Welcome, ${userName}` : 'Welcome Back'}
-              </Text>
+                <Mascot state={latestScan && (latestScan.totalSugarTeaspoons ?? latestScan.sugarTeaspoons) > 6 ? 'shocked' : 'happy'} size={120} />
+              </AnimatedReanimated.View>
+              <View className="items-center" style={{ zIndex: 10 }}>
+                <Text
+                  style={{ color: colors.primary }}
+                  className="text-[10px] font-black uppercase tracking-widest text-center"
+                >
+                  {userName ? `Welcome, ${userName}` : 'Welcome Back'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Bottom: Latest Scan & Latest Blood Sugar Side-by-Side */}
+            <View className="flex-row w-full gap-3 mt-6">
+              {/* Latest Scan Card */}
+              <TouchableOpacity
+                onPress={() => router.push('/scanner')}
+                style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', flex: 1 }}
+                className="p-4 rounded-[20px] shadow-sm justify-between"
+              >
+                <View className="flex-row items-center justify-between mb-3">
+                  <Text style={{ color: colors.textSecondary }} className="text-[9px] font-bold uppercase tracking-wider">Latest Scan</Text>
+                  <ScanBarcode size={14} color={colors.primary} />
+                </View>
+                {latestScan ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
+                    <View style={{ flex: 1, paddingRight: 6 }}>
+                      <Text style={{ color: colors.text }} className="text-xl font-black leading-none">
+                        {latestScan.totalSugarTeaspoons ?? latestScan.sugarTeaspoons} <Text style={{ color: colors.textSecondary }} className="text-[10px] font-bold">tsp</Text>
+                      </Text>
+                      <Text numberOfLines={1} style={{ color: colors.text }} className="text-[10px] font-bold mt-2">
+                        {latestScan.name}
+                      </Text>
+                    </View>
+                    {latestScan.imageUrl ? (
+                      <Image
+                        source={{ uri: latestScan.imageUrl }}
+                        style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.2)' }}
+                        contentFit="contain"
+                        transition={200}
+                      />
+                    ) : (
+                      <View
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 8,
+                          backgroundColor: 'rgba(255,255,255,0.1)',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <ScanBarcode size={14} color={colors.primary} />
+                      </View>
+                    )}
+                  </View>
+                ) : (
+                  <View className="py-1">
+                    <Text style={{ color: colors.textMuted }} className="text-[10px] italic">No items scanned</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              {/* Latest Blood Sugar Card */}
+              <TouchableOpacity
+                onPress={() => router.push('/tracker')}
+                style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', flex: 1 }}
+                className="p-4 rounded-[20px] shadow-sm justify-between"
+              >
+                <View className="flex-row items-center justify-between mb-3">
+                  <Text style={{ color: colors.textSecondary }} className="text-[9px] font-bold uppercase tracking-wider">Latest Log</Text>
+                  <Activity size={14} color={colors.secondary} />
+                </View>
+                {latestLog ? (
+                  <View>
+                    <Text style={{ color: colors.text }} className="text-xl font-black leading-none">
+                      {formatBloodSugarValue(latestLog.value, latestLog.unit)}{' '}
+                      <Text style={{ color: colors.textSecondary }} className="text-[9px] font-bold">{latestLog.unit}</Text>
+                    </Text>
+                    {/* Health Range Pill */}
+                    <View
+                      style={{ backgroundColor: getStatusColor(latestLog.status, colors) + '15' }}
+                      className="px-2 py-0.5 rounded-full self-start mt-2"
+                    >
+                      <Text
+                        style={{ color: getStatusColor(latestLog.status, colors) }}
+                        className="text-[8px] font-black uppercase tracking-wider"
+                      >
+                        {getStatusLabel(latestLog.status)}
+                      </Text>
+                    </View>
+                  </View>
+                ) : (
+                  <View className="py-1">
+                    <Text style={{ color: colors.textMuted }} className="text-[10px] italic">No logs recorded</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
             </View>
           </BlurView>
         </View>
@@ -239,95 +377,155 @@ export default function HomeScreen() {
           </AnimatedReanimated.View>
         </View>
 
-        {/* Dashboard Grid */}
-        <View className="flex-row gap-4 mb-6">
-          {/* Latest Scan Card */}
-          <TouchableOpacity
-            onPress={() => router.push('/scanner')}
-            style={{ backgroundColor: colors.surface, borderColor: colors.border }}
-            className="flex-1 p-5 border rounded-[24px] shadow-sm justify-between min-h-[135px]"
-          >
-            <View className="flex-row items-center justify-between mb-3">
-              <Text style={{ color: colors.textSecondary }} className="text-[9px] font-bold uppercase tracking-wider">Latest Scan</Text>
-              <ScanBarcode size={14} color={colors.primary} />
-            </View>
-            {latestScan ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
-                <View style={{ flex: 1, paddingRight: 6 }}>
-                  <Text style={{ color: colors.text }} className="text-2xl font-black leading-none">
-                    {latestScan.totalSugarTeaspoons ?? latestScan.sugarTeaspoons} <Text style={{ color: colors.textSecondary }} className="text-xs font-bold">tsp</Text>
-                  </Text>
-                  <Text numberOfLines={1} style={{ color: colors.text }} className="text-[11px] font-bold mt-2">
-                    {latestScan.name}
-                  </Text>
-                  <Text style={{ color: colors.textSecondary }} className="text-[9px] mt-0.5">
-                    {latestScan.totalSugarGrams !== undefined ? `(${latestScan.totalSugarGrams}g total)` : `(${latestScan.sugarGrams}g)`}
-                  </Text>
-                </View>
-                {latestScan.imageUrl ? (
-                  <Image
-                    source={{ uri: latestScan.imageUrl }}
-                    style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: '#ffffff', borderWidth: 1, borderColor: colors.border }}
-                    contentFit="contain"
-                    transition={200}
-                  />
-                ) : (
-                  <View
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 10,
-                      backgroundColor: colors.primary + '12',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <ScanBarcode size={18} color={colors.primary} />
-                  </View>
-                )}
-              </View>
-            ) : (
-              <View className="py-1">
-                <Text style={{ color: colors.textMuted }} className="text-xs italic">No items scanned</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+        {/* Dashboard Bento Grid */}
+        <View className="flex-col gap-4 mb-6">
+          
+          {/* Section Title */}
+          <View className="flex-row items-center justify-between mt-2 px-1">
+            <Text style={{ color: colors.textSecondary }} className="font-black text-[10px] uppercase tracking-wider">
+              {activeDayInfo.isEmpty ? "Today's Insights" : `${activeDayInfo.dateStr} Insights`}
+            </Text>
+          </View>
 
-          {/* Latest Blood Sugar Card */}
-          <TouchableOpacity
-            onPress={() => router.push('/tracker')}
-            style={{ backgroundColor: colors.surface, borderColor: colors.border }}
-            className="flex-1 p-5 border rounded-[24px] shadow-sm justify-between min-h-[125px]"
-          >
-            <View className="flex-row items-center justify-between mb-3">
-              <Text style={{ color: colors.textSecondary }} className="text-[9px] font-bold uppercase tracking-wider">Latest Log</Text>
-              <Activity size={14} color={colors.secondary} />
-            </View>
-            {latestLog ? (
-              <View>
-                <Text style={{ color: colors.text }} className="text-2xl font-black leading-none">
-                  {formatBloodSugarValue(latestLog.value, latestLog.unit)}{' '}
-                  <Text style={{ color: colors.textSecondary }} className="text-[10px] font-bold">{latestLog.unit}</Text>
+          {/* Row 2: Daily Sugar Load & Time-of-Day */}
+          <View className="flex-row gap-4">
+            
+            {/* Daily Sugar Load (Liquid Glass Ring) */}
+            <View 
+              style={{ backgroundColor: colors.surface, borderColor: colors.border, flex: 3 }}
+              className="border rounded-[24px] shadow-sm overflow-hidden min-h-[160px]"
+            >
+              <LinearGradient
+                colors={isDark ? ['#000000ff', '#1a1a1aff'] : ['#ffffffff', '#f5f5f5ff']}
+                style={StyleSheet.absoluteFill}
+              />
+              {/* Dynamic Frosted Glass Liquid Effect based on Sugar */}
+              <View 
+                style={{ 
+                  position: 'absolute', top: -30, left: -30, width: 120, height: 120, borderRadius: 60, 
+                  backgroundColor: activeDayInfo.isEmpty ? (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)') : (totalSugar > 25 ? 'rgba(255, 59, 48, 0.5)' : (totalSugar > 15 ? 'rgba(255, 149, 0, 0.5)' : 'rgba(52, 199, 89, 0.5)')), 
+                  transform: [{ scale: 1.5 }],
+                  opacity: 0.6
+                }} 
+              />
+              <BlurView
+                intensity={isDark ? 30 : 60}
+                tint={isDark ? "dark" : "light"}
+                style={{ flex: 1, padding: 16, alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Text style={{ color: colors.textSecondary }} className="text-[9px] font-bold uppercase tracking-wider self-start mb-2">Sugar Load</Text>
+                
+                {/* Circular Progress (CSS approximation) */}
+                <View className="items-center justify-center relative mt-2" style={{ width: 80, height: 80 }}>
+                  <View style={{ width: 80, height: 80, borderRadius: 40, borderWidth: 6, borderColor: colors.border, position: 'absolute' }} />
+                  {/* We would use a true SVG ring here, but simulating with border segments for now */}
+                  <View style={{ width: 80, height: 80, borderRadius: 40, borderWidth: 6, borderColor: activeDayInfo.isEmpty ? colors.border : (totalSugar > 25 ? '#FF3B30' : (totalSugar > 15 ? '#FF9500' : '#34C759')), position: 'absolute', borderLeftColor: 'transparent', borderBottomColor: 'transparent', transform: [{ rotate: '45deg' }] }} />
+                  
+                  <Text style={{ color: colors.text }} className="text-xl font-black">{totalSugar.toFixed(0)}<Text className="text-[10px]">g</Text></Text>
+                </View>
+                
+                <Text style={{ color: colors.textSecondary }} className="text-[9px] mt-3 font-bold text-center">
+                  {activeDayInfo.isEmpty ? 'No scans yet' : `${Math.round((totalSugar / 25) * 100)}% of WHO Limit`}
                 </Text>
-                {/* Health Range Pill */}
-                <View
-                  style={{ backgroundColor: getStatusColor(latestLog.status, colors) + '15' }}
-                  className="px-2.5 py-0.5 rounded-full self-start mt-2"
-                >
-                  <Text
-                    style={{ color: getStatusColor(latestLog.status, colors) }}
-                    className="text-[8px] font-black uppercase tracking-wider"
-                  >
-                    {getStatusLabel(latestLog.status)}
-                  </Text>
+              </BlurView>
+            </View>
+
+            {/* Time-of-Day Insights */}
+            <View 
+              style={{ backgroundColor: colors.surface, borderColor: colors.border, flex: 2 }}
+              className="p-4 border rounded-[24px] shadow-sm justify-between"
+            >
+              <Text style={{ color: colors.textSecondary }} className="text-[9px] font-bold uppercase tracking-wider mb-2">Habits</Text>
+              
+              <View className="flex-1 justify-center gap-2">
+                <View className="flex-row items-center justify-between">
+                  <Text style={{ color: colors.text }} className="text-[10px] font-bold">Morning</Text>
+                  <Text style={{ color: colors.textSecondary }} className="text-[10px] font-black">{morning}</Text>
+                </View>
+                <View style={{ height: 4, backgroundColor: colors.border, borderRadius: 2, overflow: 'hidden' }}>
+                  <View style={{ height: '100%', width: activeDayInfo.isEmpty ? '0%' : `${(morning / totalScansForActiveDay) * 100}%`, backgroundColor: colors.primary }} />
+                </View>
+
+                <View className="flex-row items-center justify-between mt-1">
+                  <Text style={{ color: colors.text }} className="text-[10px] font-bold">Afternoon</Text>
+                  <Text style={{ color: colors.textSecondary }} className="text-[10px] font-black">{afternoon}</Text>
+                </View>
+                <View style={{ height: 4, backgroundColor: colors.border, borderRadius: 2, overflow: 'hidden' }}>
+                  <View style={{ height: '100%', width: activeDayInfo.isEmpty ? '0%' : `${(afternoon / totalScansForActiveDay) * 100}%`, backgroundColor: colors.secondary }} />
+                </View>
+
+                <View className="flex-row items-center justify-between mt-1">
+                  <Text style={{ color: colors.text }} className="text-[10px] font-bold">Night</Text>
+                  <Text style={{ color: colors.textSecondary }} className="text-[10px] font-black">{night}</Text>
+                </View>
+                <View style={{ height: 4, backgroundColor: colors.border, borderRadius: 2, overflow: 'hidden' }}>
+                  <View style={{ height: '100%', width: activeDayInfo.isEmpty ? '0%' : `${(night / totalScansForActiveDay) * 100}%`, backgroundColor: '#8E8E93' }} />
                 </View>
               </View>
-            ) : (
-              <View className="py-1">
-                <Text style={{ color: colors.textMuted }} className="text-xs italic">No logs recorded</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+            </View>
+            
+          </View>
+
+          {/* Row 3: Sugar Spiker & Clean Choice (No Icons) */}
+          <View className="flex-row gap-4">
+            
+            {/* Sugar Spiker */}
+            <View 
+              style={{ backgroundColor: activeDayInfo.isEmpty ? colors.surface : (isDark ? '#FF3B3015' : '#FF3B3010'), borderColor: activeDayInfo.isEmpty ? colors.border : '#FF3B3030', flex: 1 }}
+              className="p-4 border rounded-[24px] shadow-sm"
+            >
+              <Text style={{ color: activeDayInfo.isEmpty ? colors.textSecondary : '#FF3B30' }} className="text-[9px] font-black uppercase tracking-wider mb-2">Highest Sugar</Text>
+              {activeDayInfo.isEmpty ? (
+                <Text style={{ color: colors.textMuted }} className="text-[10px] italic">No data yet</Text>
+              ) : (
+                <View>
+                  <Text numberOfLines={1} style={{ color: colors.text }} className="font-bold text-[11px] mb-1">{sugarSpiker?.name}</Text>
+                  <Text style={{ color: '#FF3B30' }} className="font-black text-lg">{sugarSpiker?.totalSugarTeaspoons ?? sugarSpiker?.sugarTeaspoons} <Text className="text-[9px]">tsp</Text></Text>
+                </View>
+              )}
+            </View>
+
+            {/* Clean Choice */}
+            <View 
+              style={{ backgroundColor: activeDayInfo.isEmpty ? colors.surface : (isDark ? '#34C75915' : '#34C75910'), borderColor: activeDayInfo.isEmpty ? colors.border : '#34C75930', flex: 1 }}
+              className="p-4 border rounded-[24px] shadow-sm"
+            >
+              <Text style={{ color: activeDayInfo.isEmpty ? colors.textSecondary : '#34C759' }} className="text-[9px] font-black uppercase tracking-wider mb-2">Best Choice</Text>
+              {activeDayInfo.isEmpty ? (
+                <Text style={{ color: colors.textMuted }} className="text-[10px] italic">No data yet</Text>
+              ) : (
+                <View>
+                  <Text numberOfLines={1} style={{ color: colors.text }} className="font-bold text-[11px] mb-1">{cleanChoice?.name}</Text>
+                  <Text style={{ color: '#34C759' }} className="font-black text-lg">{cleanChoice?.totalSugarTeaspoons ?? cleanChoice?.sugarTeaspoons} <Text className="text-[9px]">tsp</Text></Text>
+                </View>
+              )}
+            </View>
+
+          </View>
+
+          {/* Row 4: Total Burn Down (Neon Fire Pill) */}
+          <View 
+            style={{ backgroundColor: isDark ? '#1C1C1E' : '#2C2C2E', borderColor: isDark ? '#333' : '#444' }}
+            className="p-5 border rounded-full shadow-lg overflow-hidden flex-row items-center justify-between"
+          >
+            {/* Neon Fire Liquid Glass Effect */}
+            <View style={{ position: 'absolute', top: -10, left: '30%', width: '100%', height: 100, borderRadius: 50, backgroundColor: activeDayInfo.isEmpty ? 'rgba(255,255,255,0.05)' : 'rgba(255, 69, 0, 0.4)', opacity: 0.6 }} />
+            
+            <View>
+              <Text style={{ color: '#FF8C00' }} className="text-[10px] font-black uppercase tracking-wider mb-1">Total Burn Down</Text>
+              <Text style={{ color: 'white' }} className="font-bold text-xs">
+                {activeDayInfo.isEmpty ? 'Scan items to see calorie burn.' : "Time to burn off today's scans"}
+              </Text>
+            </View>
+            <View className="items-end">
+              <Text style={{ color: 'white' }} className="font-black text-xl">
+                {activeDayInfo.isEmpty ? '--' : (runHours > 0 ? `${runHours}h ${runMins}m` : `${runMins}m`)}
+              </Text>
+              <Text style={{ color: 'rgba(255,255,255,0.5)' }} className="font-bold text-[9px] uppercase tracking-wider">
+                {activeDayInfo.isEmpty ? '0 Cals' : `${totalCalories} Cals`}
+              </Text>
+            </View>
+          </View>
         </View>
 
         {/* Premium Educational Banner */}
