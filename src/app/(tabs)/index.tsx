@@ -201,11 +201,11 @@ export default function HomeScreen() {
         {/* Welcome Card (Premium Liquid Glass) */}
         <View
           style={{
-            borderRadius: 28,
+            borderRadius: 40,
             overflow: 'hidden',
             marginBottom: 24,
-            borderWidth: 1.5,
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.06)',
+            borderWidth: 2,
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(253, 252, 252, 0.06)',
           }}
         >
           {/* Base Background for depth */}
@@ -249,74 +249,163 @@ export default function HomeScreen() {
             </View>
 
             {/* Bottom: Sugar Consumed & Latest Blood Sugar Side-by-Side */}
-            <View className="flex-row w-full gap-3">
-              {/* Sugar Consumed Sub Card (Single Ring UI) */}
-              <View
-                style={{ backgroundColor: isDark ? 'rgba(255, 236, 210, 0.35)' : 'rgba(255, 236, 210, 0.35)', flex: 1 }}
-                className="p-4 rounded-[20px] shadow-sm items-center justify-between"
-              >
-                <View className="items-center justify-center relative" style={{ width: 100, height: 100 }}>
-                  <View style={{ width: 100, height: 100, borderRadius: 50, borderWidth: 8, borderColor: colors.border, position: 'absolute' }} />
-                  <View style={{ width: 100, height: 100, borderRadius: 50, borderWidth: 8, borderColor: activeDayInfo.isEmpty ? colors.border : (totalSugar > 25 ? '#FF3B30' : (totalSugar > 15 ? '#FF9500' : '#34C759')), position: 'absolute', borderLeftColor: 'transparent', borderBottomColor: 'transparent', transform: [{ rotate: '45deg' }] }} />
+            {/* Unified Floating Dashboard Layout */}
+            <View style={{ width: '100%', marginTop: 8 }}>
+              
+              {/* Daily Sugar Tracker Section (Floating) */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
+                {/* Left Side: Circular Ring (Enlarged) */}
+                <View className="items-center justify-center relative" style={{ width: 104, height: 104 }}>
+                  <View style={{ width: 104, height: 104, borderRadius: 52, borderWidth: 10, borderColor: colors.border, position: 'absolute' }} />
+                  <View style={{
+                    width: 104,
+                    height: 104,
+                    borderRadius: 52,
+                    borderWidth: 11,
+                    borderColor: activeDayInfo.isEmpty ? colors.border : (totalSugar > 25 ? '#FF3B30' : (totalSugar > 15 ? '#FF9500' : '#34C759')),
+                    position: 'absolute',
+                    borderLeftColor: 'transparent',
+                    borderBottomColor: 'transparent',
+                    transform: [{ rotate: '45deg' }]
+                  }} />
 
                   <View className="items-center justify-center">
                     <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>
-                      {activeDayInfo.isEmpty ? '0' : (totalSugar / 4.2).toFixed(1)}<Text style={{ fontSize: 10, fontWeight: '700', color: colors.textSecondary }}>tsp</Text>
+                      {activeDayInfo.isEmpty ? '0' : (totalSugar / 4.2).toFixed(1)}<Text style={{ fontSize: 11, fontWeight: '700', color: colors.textSecondary }}>tsp</Text>
                     </Text>
-                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', marginTop: 2 }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700', marginTop: 1 }}>
                       {activeDayInfo.isEmpty ? '0' : totalSugar.toFixed(0)}g total
                     </Text>
                   </View>
                 </View>
 
-                {/* WHO Limit Pill */}
-                <View style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.4)', alignSelf: 'center', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <ArrowUpRight size={12} color={totalSugar > 25 ? '#FF3B30' : (totalSugar > 15 ? '#FF9500' : '#34C759')} />
-                  <Text style={{ color: totalSugar > 25 ? '#FF3B30' : (totalSugar > 15 ? '#FF9500' : '#34C759'), fontSize: 10, fontWeight: '800' }}>
-                    WHO Limit: {activeDayInfo.isEmpty ? '0' : Math.round((totalSugar / 25) * 100)}%
+                {/* Right Side: Details */}
+                <View style={{ flex: 1, paddingLeft: 24, justifyContent: 'center' }}>
+                  {/* Title Badge */}
+                  <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+                    <View style={{
+                      backgroundColor: 'rgba(52, 199, 89, 0.12)',
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                      borderRadius: 8,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 5
+                    }}>
+                      <TrendingUp size={12} color="#34C759" />
+                      <Text style={{ color: '#34C759', fontSize: 9, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                        Daily Sugar Tracker
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800', marginBottom: 8 }}>
+                    Sugar Consumed
                   </Text>
+
+                  {/* WHO Limit Pill */}
+                  <View style={{
+                    backgroundColor: activeDayInfo.isEmpty ? (isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)') : (totalSugar > 25 ? 'rgba(255, 59, 48, 0.12)' : (totalSugar > 15 ? 'rgba(255, 149, 0, 0.12)' : 'rgba(52, 199, 89, 0.12)')),
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                    borderRadius: 10,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    alignSelf: 'flex-start'
+                  }}>
+                    <ArrowUpRight size={12} color={activeDayInfo.isEmpty ? colors.textSecondary : (totalSugar > 25 ? '#FF3B30' : (totalSugar > 15 ? '#FF9500' : '#34C759'))} />
+                    <Text style={{ color: activeDayInfo.isEmpty ? colors.textSecondary : (totalSugar > 25 ? '#FF3B30' : (totalSugar > 15 ? '#FF9500' : '#34C759')), fontSize: 10, fontWeight: '800' }}>
+                      WHO Limit: {activeDayInfo.isEmpty ? '0' : Math.round((totalSugar / 25) * 100)}%
+                    </Text>
+                  </View>
                 </View>
               </View>
 
-              {/* Burn Down Jogging Sub Card */}
-              <View
-                style={{ backgroundColor: isDark ? 'rgba(255, 236, 210, 0.35)' : 'rgba(255, 236, 210, 0.35)', flex: 1 }}
-                className="p-4 rounded-[20px] shadow-sm justify-between"
-              >
-                <View>
-                  {/* Info Pill */}
+              {/* Minimalist Sub-Divider */}
+              <View style={{ height: 1, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)', width: '100%', marginBottom: 20 }} />
+
+              {/* Burn System Section (Floating) */}
+              <View style={{ width: '100%' }}>
+                {/* Header Area */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                   <View style={{
-                    backgroundColor: isDark ? 'rgba(255, 140, 0, 0.15)' : 'rgba(255, 140, 0, 0.1)',
-                    alignSelf: 'flex-start',
-                    paddingHorizontal: 4,
-                    paddingVertical: 1,
+                    backgroundColor: 'rgba(255, 140, 0, 0.12)',
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
                     borderRadius: 8,
-                    marginBottom: 10,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5
+                  }}>
+                    <Flame size={12} color="#FF8C00" />
+                    <Text style={{ color: '#FF8C00', fontSize: 9, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                      Burn System
+                    </Text>
+                  </View>
+
+                  <View style={{
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                    borderRadius: 8,
                     flexDirection: 'row',
                     alignItems: 'center',
                     gap: 4
                   }}>
-                    <Flame size={12} color="#ff6a00ff" />
-                    <Text style={{ color: '#ae7e04ff', fontSize: 8, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' }}>
-                      Burn Down
+                    <Info size={10} color={colors.textSecondary} />
+                    <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800' }}>
+                      Per serving size
                     </Text>
                   </View>
-
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}>
-                    <Zap size={10} color={colors.textSecondary} />
-                    <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                      Total Daily Intake
-                    </Text>
-                  </View>
-                  <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900', marginBottom: 6 }}>
-                    {activeDayInfo.isEmpty ? '0' : sumTotalPackagesCalories} <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textSecondary }}>kcal</Text>
-                  </Text>
                 </View>
 
-                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-                  <Text style={{ color: '#FF8C00', fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>
-                    {activeDayInfo.isEmpty ? '--' : (tpRunHours > 0 ? `${tpRunHours}h ${tpRunMins}m` : `${tpRunMins}m`)}
-                  </Text>
+                {/* 3-Column Floating Stats Row */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  {/* Energy Stat */}
+                  <View style={{ flex: 1, alignItems: 'center' }}>
+                    <View style={{ backgroundColor: 'rgba(255, 59, 48, 0.12)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
+                      <Zap size={18} color="#FF3B30" />
+                    </View>
+                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
+                      Energy
+                    </Text>
+                    <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
+                      {activeDayInfo.isEmpty ? '0' : sumTotalPackagesCalories} <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textSecondary }}>kcal</Text>
+                    </Text>
+                  </View>
+
+                  {/* Vertical Divider */}
+                  <View style={{ width: 1, height: 44, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }} />
+
+                  {/* Scanned Stat */}
+                  <View style={{ flex: 1, alignItems: 'center' }}>
+                    <View style={{ backgroundColor: 'rgba(52, 199, 89, 0.12)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
+                      <ScanBarcode size={18} color="#34C759" />
+                    </View>
+                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
+                      Scanned
+                    </Text>
+                    <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
+                      {activeDayInfo.isEmpty ? '0' : totalScansForActiveDay} <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textSecondary }}>{totalScansForActiveDay === 1 ? 'item' : 'items'}</Text>
+                    </Text>
+                  </View>
+
+                  {/* Vertical Divider */}
+                  <View style={{ width: 1, height: 44, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }} />
+
+                  {/* Jogging Stat */}
+                  <View style={{ flex: 1, alignItems: 'center' }}>
+                    <View style={{ backgroundColor: 'rgba(0, 122, 255, 0.12)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
+                      <Activity size={18} color="#007AFF" />
+                    </View>
+                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
+                      Jogging
+                    </Text>
+                    <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
+                      {activeDayInfo.isEmpty ? '--' : (tpRunHours > 0 ? `${tpRunHours}h ${tpRunMins}m` : `${tpRunMins}m`)}
+                    </Text>
+                  </View>
                 </View>
               </View>
             </View>
