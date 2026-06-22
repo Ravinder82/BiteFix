@@ -41,26 +41,23 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
   const snapInterval = cardWidth + gap;
 
   const firstItemDate = new Date(group.items[0].timestamp);
-  const dateString = firstItemDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  const displayTitle = group.title === 'Today' || group.title === 'Yesterday'
-    ? `${group.title}, ${dateString}`
-    : group.title;
+  const displayTitle = firstItemDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 
   return (
     <AnimatedReanimated.View
       entering={FadeInDown.delay(Math.min(groupIndex * 100, 400)).duration(300)}
       style={{
-        backgroundColor: colors.surface,
-        borderColor: colors.border,
-        borderWidth: 1.5,
+        backgroundColor: isDark ? colors.surface : '#F7F8FA',
+        borderColor: isDark ? colors.border : 'rgba(220, 220, 220, 1)',
+        borderWidth: isDark ? 1.5 : 1,
         borderRadius: 28,
-        padding: 16,
+        padding: 12,
         marginBottom: 20,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: isDark ? 0.15 : 0.04,
-        shadowRadius: 12,
-        elevation: 3
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: isDark ? 0.15 : 0.12,
+        shadowRadius: 28,
+        elevation: 10
       }}
     >
       {/* Top Bar */}
@@ -78,12 +75,12 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
           </Text>
 
           <View style={{
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.04)',
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.06)',
             paddingHorizontal: 12,
             paddingVertical: 6,
             borderRadius: 16,
             borderWidth: 1,
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0,0,0,0.03)',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0,0,0,0.06)',
             flexDirection: 'row',
             alignItems: 'center',
           }}>
@@ -98,13 +95,13 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 8 }}>
             <TouchableOpacity
               onPress={() => scrollRef.current?.scrollTo({ x: Math.max(0, scrollX - snapInterval), animated: true })}
-              style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', padding: 8, borderRadius: 12 }}
+              style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0, 0, 0, 0.06)', padding: 8, borderRadius: 12 }}
             >
               <ChevronLeft size={16} color={colors.textSecondary} />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => scrollRef.current?.scrollTo({ x: scrollX + snapInterval, animated: true })}
-              style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', padding: 8, borderRadius: 12 }}
+              style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', padding: 8, borderRadius: 12 }}
             >
               <ChevronRight size={16} color={colors.textSecondary} />
             </TouchableOpacity>
@@ -163,7 +160,7 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                 alignSelf: 'stretch',
                 borderRadius: 16,
                 overflow: 'hidden',
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.06)',
                 borderWidth: 1,
                 borderColor: colors.border,
               }}>
@@ -192,11 +189,11 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                     width: 50,
                     height: 50,
                     borderRadius: 25,
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.03)',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.06)',
                     alignItems: 'center',
                     justifyContent: 'center',
                     borderWidth: 2,
-                    borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
+                    borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
                   }}>
                     <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
                       <Mascot size={44} state={cardMascotState} />
@@ -208,7 +205,7 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                 <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
                   {/* Calories LED Pill */}
                   <View style={{
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.02)',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.06)',
                     borderColor: colors.border,
                     borderWidth: 1,
                     borderRadius: 10,
@@ -221,15 +218,15 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                     <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: calColor + '33', alignItems: 'center', justifyContent: 'center' }}>
                       <View style={{ width: 4.5, height: 4.5, borderRadius: 2.25, backgroundColor: calColor }} />
                     </View>
-                    <Zap size={11} color={colors.textSecondary} />
+
                     <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>
-                      {item.calories || 0} kcal
+                      Energy: {item.calories || 0} kcal
                     </Text>
                   </View>
 
                   {/* Sugar Grams LED Pill */}
                   <View style={{
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.02)',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.06)',
                     borderColor: colors.border,
                     borderWidth: 1,
                     borderRadius: 10,
@@ -243,22 +240,25 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                       <View style={{ width: 4.5, height: 4.5, borderRadius: 2.25, backgroundColor: sugColor }} />
                     </View>
                     <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>
-                      {item.sugarGrams}g sugar
+                      Sugar: {item.sugarGrams} g
                     </Text>
                   </View>
 
                   {/* Jogging Pill */}
                   <View style={{
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.02)',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.06)',
                     borderColor: colors.border,
                     borderWidth: 1,
-                    borderRadius: 10,
+                    borderRadius: 12,
                     paddingHorizontal: 8,
                     paddingVertical: 5,
                     flexDirection: 'row',
                     alignItems: 'center',
                     gap: 5
                   }}>
+                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: sugColor + '33', alignItems: 'center', justifyContent: 'center' }}>
+                      <View style={{ width: 4.5, height: 4.5, borderRadius: 2.25, backgroundColor: sugColor }} />
+                    </View>
 
                     <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>
                       Jog: {itemRunMinutes} m
@@ -270,9 +270,9 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                 <View style={{ flexDirection: 'row', alignItems: 'stretch', justifyContent: 'space-between', gap: 8, marginTop: 'auto' }}>
                   <View style={{
                     flex: 1,
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0,0,0,0.02)',
+                    backgroundColor: isDark ? 'rgba(0, 0, 0, 0.06)' : 'rgba(0,0,0,0.06)',
                     borderColor: colors.border,
-                    borderWidth: 1,
+                    borderWidth: 2,
                     borderRadius: 12,
                     padding: 8,
                     justifyContent: 'center',
@@ -300,7 +300,7 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                       deleteScan(item.id);
                     }}
                     style={{
-                      backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255, 59, 48, 0.08)',
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255, 205, 202, 0.54)',
                       padding: 12,
                       borderRadius: 12,
                       alignItems: 'center',
@@ -500,7 +500,7 @@ export default function HomeScreen() {
         >
           {/* Base Background for depth */}
           <LinearGradient
-            colors={isDark ? ['#000000ff', '#000000ff'] : ['#ffffffff', '#ffffffff']}
+            colors={isDark ? ['#000000ff', '#000000ff'] : ['rgba(255, 255, 255, 0.06)', 'rgba(255, 255, 255, 0.06)']}
             style={StyleSheet.absoluteFill}
           />
 
@@ -522,7 +522,7 @@ export default function HomeScreen() {
                 >
                   {userName ? `WELCOME, ${userName.toUpperCase()}` : 'WELCOME BACK'}
                 </Text>
-                <View style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 10, alignSelf: 'flex-start' }}>
+                <View style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 10, alignSelf: 'flex-start' }}>
                   <Text style={{ color: colors.text, fontSize: 12, lineHeight: 20, fontWeight: '700' }}>
                     <Text style={{ color: colors.text, fontWeight: '900' }}>WHO Standard:</Text>
                     {'\n'}1 Teaspoon is equal to 4.2 gms of Sugar
@@ -550,9 +550,9 @@ export default function HomeScreen() {
                   <View style={{
                     width: 104,
                     height: 104,
-                    borderRadius: 52,
-                    borderWidth: 11,
-                    borderColor: activeDayInfo.isEmpty ? colors.border : (totalSugar > 25 ? '#FF3B30' : (totalSugar > 15 ? '#FF9500' : '#34C759')),
+                    borderRadius: 56,
+                    borderWidth: 10,
+                    borderColor: activeDayInfo.isEmpty ? colors.border : (totalSugar > 25 ? '#ff0d00bb' : (totalSugar > 15 ? '#ff8c00ff' : '#00ff40ff')),
                     position: 'absolute',
                     borderLeftColor: 'transparent',
                     borderBottomColor: 'transparent',
@@ -561,9 +561,9 @@ export default function HomeScreen() {
 
                   <View className="items-center justify-center">
                     <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>
-                      {activeDayInfo.isEmpty ? '0' : (totalSugar / 4.2).toFixed(1)}<Text style={{ fontSize: 11, fontWeight: '700', color: colors.textSecondary }}>tsp</Text>
+                      {activeDayInfo.isEmpty ? '0' : (totalSugar / 4.2).toFixed(1)}<Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary }}>tsp</Text>
                     </Text>
-                    <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700', marginTop: 1 }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', marginTop: 1 }}>
                       {activeDayInfo.isEmpty ? '0' : totalSugar.toFixed(0)}g total
                     </Text>
                   </View>
@@ -574,7 +574,7 @@ export default function HomeScreen() {
                   {/* Title Badge */}
                   <View style={{ flexDirection: 'row', marginBottom: 8 }}>
                     <View style={{
-                      backgroundColor: 'rgba(52, 199, 89, 0.12)',
+                      backgroundColor: 'rgba(212, 255, 0, 1)',
                       paddingHorizontal: 10,
                       paddingVertical: 5,
                       borderRadius: 8,
@@ -582,8 +582,8 @@ export default function HomeScreen() {
                       alignItems: 'center',
                       gap: 5
                     }}>
-                      <TrendingUp size={12} color="#34C759" />
-                      <Text style={{ color: '#34C759', fontSize: 9, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+
+                      <Text style={{ color: '#27332bff', fontSize: 9, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase' }}>
                         Daily Sugar Tracker
                       </Text>
                     </View>
@@ -613,7 +613,7 @@ export default function HomeScreen() {
               </View>
 
               {/* Minimalist Sub-Divider */}
-              <View style={{ height: 1, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)', width: '100%', marginBottom: 20 }} />
+              <View style={{ height: 1, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(143, 142, 142, 0.18)', width: '100%', marginBottom: 20 }} />
 
               {/* Burn System Section (Floating) */}
               <View style={{ width: '100%' }}>
@@ -654,7 +654,7 @@ export default function HomeScreen() {
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   {/* Energy Stat */}
                   <View style={{ flex: 1, alignItems: 'center' }}>
-                    <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.12)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
+                    <View style={{ backgroundColor: 'rgba(212, 255, 0, 1)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
                       <Zap size={18} color="#FF3B30" />
                     </View>
                     <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
@@ -670,7 +670,7 @@ export default function HomeScreen() {
 
                   {/* Scanned Stat */}
                   <View style={{ flex: 1, alignItems: 'center' }}>
-                    <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.12)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
+                    <View style={{ backgroundColor: 'rgba(251, 255, 0, 1)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
                       <ScanBarcode size={18} color="#34C759" />
                     </View>
                     <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
@@ -686,7 +686,7 @@ export default function HomeScreen() {
 
                   {/* Jogging Stat */}
                   <View style={{ flex: 1, alignItems: 'center' }}>
-                    <View style={{ backgroundColor: 'rgba(0, 191, 255, 0.4)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
+                    <View style={{ backgroundColor: 'rgba(0, 191, 255, 1)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
                       <Activity size={18} color="#000000ff" />
                     </View>
                     <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
@@ -844,12 +844,12 @@ export default function HomeScreen() {
               borderTopLeftRadius: 32,
               borderTopRightRadius: 32,
               maxHeight: '85%',
-              padding: 24,
+              padding: 28,
               shadowColor: '#000',
               shadowOffset: { width: 0, height: -4 },
               shadowOpacity: 0.1,
-              shadowRadius: 16,
-              elevation: 10
+              shadowRadius: 32,
+              elevation: 16
             }}
           >
             {/* Drag Handle Area */}
