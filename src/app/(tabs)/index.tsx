@@ -278,40 +278,47 @@ export default function HomeScreen() {
                 </View>
               </View>
 
-              {/* Latest Blood Sugar Card */}
-              <TouchableOpacity
-                onPress={() => router.push('/tracker')}
+              {/* Burn Down Jogging Sub Card */}
+              <View
                 style={{ backgroundColor: isDark ? 'rgba(255, 236, 210, 0.35)' : 'rgba(255, 236, 210, 0.35)', flex: 1 }}
                 className="p-4 rounded-[20px] shadow-sm justify-between"
               >
-                <View className="flex-row items-center justify-between mb-3">
-                  <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', letterSpacing: 1.2 }}>LATEST LOG</Text>
-                  <Activity size={14} color={colors.secondary} />
-                </View>
-                {latestLog ? (
-                  <View>
-                    <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.6 }}>
-                      {formatBloodSugarValue(latestLog.value, latestLog.unit)}{' '}
-                      <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700' }}>{latestLog.unit}</Text>
+                <View>
+                  {/* Info Pill */}
+                  <View style={{
+                    backgroundColor: isDark ? 'rgba(255, 140, 0, 0.15)' : 'rgba(255, 140, 0, 0.1)',
+                    alignSelf: 'flex-start',
+                    paddingHorizontal: 4,
+                    paddingVertical: 1,
+                    borderRadius: 8,
+                    marginBottom: 10,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4
+                  }}>
+                    <Flame size={12} color="#ff6a00ff" />
+                    <Text style={{ color: '#ae7e04ff', fontSize: 8, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                      Burn Down
                     </Text>
-                    {/* Health Range Pill */}
-                    <View
-                      style={{ backgroundColor: getStatusColor(latestLog.status, colors) + '15' }}
-                      className="px-2 py-0.5 rounded-full self-start mt-2"
-                    >
-                      <Text
-                        style={{ color: getStatusColor(latestLog.status, colors), fontSize: 9, fontWeight: '800', letterSpacing: 1.0 }}
-                      >
-                        {getStatusLabel(latestLog.status)}
-                      </Text>
-                    </View>
                   </View>
-                ) : (
-                  <View className="py-1">
-                    <Text style={{ color: colors.textMuted, fontSize: 12 }} className="italic">No logs recorded</Text>
+
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}>
+                    <Zap size={10} color={colors.textSecondary} />
+                    <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      Total Daily Intake
+                    </Text>
                   </View>
-                )}
-              </TouchableOpacity>
+                  <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900', marginBottom: 6 }}>
+                    {activeDayInfo.isEmpty ? '0' : sumTotalPackagesCalories} <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textSecondary }}>kcal</Text>
+                  </Text>
+                </View>
+
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+                  <Text style={{ color: '#FF8C00', fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>
+                    {activeDayInfo.isEmpty ? '--' : (tpRunHours > 0 ? `${tpRunHours}h ${tpRunMins}m` : `${tpRunMins}m`)}
+                  </Text>
+                </View>
+              </View>
             </View>
           </BlurView>
         </View>
@@ -366,96 +373,7 @@ export default function HomeScreen() {
           </AnimatedReanimated.View>
         </View>
 
-        {/* Dashboard Bento Grid */}
-        <View className="flex-col gap-4 mb-6">
 
-
-
-
-
-          {/* Row 4: Interactive Burn Down Dashboard */}
-          <View
-            style={{ backgroundColor: colors.surface, borderColor: colors.border }}
-            className="p-5 border rounded-[28px] shadow-sm overflow-hidden"
-          >
-            {/* Dynamic Ambient Background */}
-            <View style={{ position: 'absolute', top: -40, right: -20, width: 140, height: 140, borderRadius: 70, backgroundColor: activeDayInfo.isEmpty ? 'rgba(0,0,0,0.02)' : 'rgba(255, 140, 0, 0.06)', opacity: 0.8 }} />
-            <View style={{ position: 'absolute', bottom: -30, left: -20, width: 100, height: 100, borderRadius: 50, backgroundColor: activeDayInfo.isEmpty ? 'rgba(0,0,0,0.02)' : 'rgba(52, 199, 89, 0.05)', opacity: 0.8 }} />
-
-            {/* Info Pill Title */}
-            <View style={{
-              backgroundColor: isDark ? 'rgba(255, 140, 0, 0.15)' : 'rgba(255, 140, 0, 0.1)',
-              alignSelf: 'flex-start',
-              paddingHorizontal: 12,
-              paddingVertical: 6,
-              borderRadius: 16,
-              marginBottom: 16,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6
-            }}>
-              <Flame size={14} color="#FF8C00" />
-              <Text style={{ color: '#FF8C00', fontSize: 10, fontWeight: '800', letterSpacing: 0.5, textTransform: 'uppercase' }}>
-                Burn Down: Jogging time required
-              </Text>
-            </View>
-
-            {/* Split Dashboard Layout */}
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-
-              {/* 1st Sub-card: Total Full Packages */}
-              <View style={{
-                flex: 1,
-                backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-                padding: 14,
-                borderRadius: 20,
-                borderWidth: 1,
-                borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
-              }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 }}>
-                  <Zap size={10} color={colors.textSecondary} />
-                  <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    Total Daily Intake
-                  </Text>
-                </View>
-                <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900', marginBottom: 8 }}>
-                  {activeDayInfo.isEmpty ? '0' : sumTotalPackagesCalories} <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textSecondary }}>kcal</Text>
-                </Text>
-                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-                  <Text style={{ color: '#FF8C00', fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>
-                    {activeDayInfo.isEmpty ? '--' : (tpRunHours > 0 ? `${tpRunHours}h ${tpRunMins}m` : `${tpRunMins}m`)}
-                  </Text>
-                </View>
-              </View>
-
-              {/* 2nd Sub-card: Latest Scanned Serving */}
-              <View style={{
-                flex: 1,
-                backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-                padding: 14,
-                borderRadius: 20,
-                borderWidth: 1,
-                borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
-              }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 }}>
-                  <Activity size={10} color={colors.textSecondary} />
-                  <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    Latest Serving
-                  </Text>
-                </View>
-                <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900', marginBottom: 8 }}>
-                  {activeDayInfo.isEmpty ? '0' : lsCalories} <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textSecondary }}>kcal</Text>
-                </Text>
-                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-                  <Text style={{ color: '#34C759', fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>
-                    {activeDayInfo.isEmpty ? '--' : (lsRunHours > 0 ? `${lsRunHours}h ${lsRunMins}m` : `${lsRunMins}m`)}
-                  </Text>
-                </View>
-              </View>
-
-            </View>
-          </View>
-        </View>
 
         {/* Scan History Section */}
         <View className="mb-12">
