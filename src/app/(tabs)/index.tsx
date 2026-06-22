@@ -15,6 +15,7 @@ import { formatBloodSugarValue, getStatusColor, getStatusLabel } from '../../uti
 import SettingsScreen from './settings';
 import * as Haptics from 'expo-haptics';
 import { ScanHistoryItem } from '../../types/app.types';
+import { getSmartServingText } from '../../utils/format';
 const formatGroupDate = (timestamp: number) => {
   const date = new Date(timestamp);
   const today = new Date();
@@ -41,8 +42,8 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
 
   const firstItemDate = new Date(group.items[0].timestamp);
   const dateString = firstItemDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  const displayTitle = group.title === 'Today' || group.title === 'Yesterday' 
-    ? `${group.title}, ${dateString}` 
+  const displayTitle = group.title === 'Today' || group.title === 'Yesterday'
+    ? `${group.title}, ${dateString}`
     : group.title;
 
   return (
@@ -75,7 +76,7 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
           }} numberOfLines={1}>
             {displayTitle}
           </Text>
-          
+
           <View style={{
             backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.04)',
             paddingHorizontal: 12,
@@ -95,13 +96,13 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
         {/* Swipe Arrows */}
         {group.items.length > 1 && (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 8 }}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => scrollRef.current?.scrollTo({ x: Math.max(0, scrollX - snapInterval), animated: true })}
               style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', padding: 8, borderRadius: 12 }}
             >
               <ChevronLeft size={16} color={colors.textSecondary} />
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => scrollRef.current?.scrollTo({ x: scrollX + snapInterval, animated: true })}
               style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', padding: 8, borderRadius: 12 }}
             >
@@ -177,7 +178,7 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
 
               {/* Right Column */}
               <View style={{ flex: 1, paddingLeft: 16, height: '100%', justifyContent: 'space-between' }}>
-                
+
                 {/* Row 1: Title & Mascot Avatar */}
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
                   <View style={{ flex: 1 }}>
@@ -185,7 +186,7 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                       {item.name}
                     </Text>
                   </View>
-                  
+
                   {/* Fixed circular container for mini mascot to prevent cut off */}
                   <View style={{
                     width: 50,
@@ -203,25 +204,25 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                   </View>
                 </View>
 
-                {/* Row 2: Telemetry LEDs */}
-                <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                {/* Row 2: Metrics Grid (Bento style) */}
+                <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
                   {/* Calories LED Pill */}
                   <View style={{
                     backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.02)',
                     borderColor: colors.border,
                     borderWidth: 1,
-                    borderRadius: 12,
-                    paddingHorizontal: 10,
-                    paddingVertical: 6,
+                    borderRadius: 10,
+                    paddingHorizontal: 8,
+                    paddingVertical: 5,
                     flexDirection: 'row',
                     alignItems: 'center',
-                    gap: 6
+                    gap: 5
                   }}>
                     <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: calColor + '33', alignItems: 'center', justifyContent: 'center' }}>
                       <View style={{ width: 4.5, height: 4.5, borderRadius: 2.25, backgroundColor: calColor }} />
                     </View>
-                    <Zap size={12} color={colors.textSecondary} />
-                    <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>
+                    <Zap size={11} color={colors.textSecondary} />
+                    <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>
                       {item.calories || 0} kcal
                     </Text>
                   </View>
@@ -231,46 +232,65 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                     backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.02)',
                     borderColor: colors.border,
                     borderWidth: 1,
-                    borderRadius: 12,
-                    paddingHorizontal: 10,
-                    paddingVertical: 6,
+                    borderRadius: 10,
+                    paddingHorizontal: 8,
+                    paddingVertical: 5,
                     flexDirection: 'row',
                     alignItems: 'center',
-                    gap: 6
+                    gap: 5
                   }}>
                     <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: sugColor + '33', alignItems: 'center', justifyContent: 'center' }}>
                       <View style={{ width: 4.5, height: 4.5, borderRadius: 2.25, backgroundColor: sugColor }} />
                     </View>
-                    <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>
+                    <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>
                       {item.sugarGrams}g sugar
                     </Text>
                   </View>
-                </View>
 
-                {/* Row 3: Jogging & Size Details */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Activity size={14} color="#007AFF" />
-                    <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '800' }}>
-                      {itemRunMinutes}m jogging
+                  {/* Jogging Pill */}
+                  <View style={{
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.02)',
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                    borderRadius: 10,
+                    paddingHorizontal: 8,
+                    paddingVertical: 5,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5
+                  }}>
+
+                    <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>
+                      Jog: {itemRunMinutes} m
                     </Text>
                   </View>
-
-                  {(item.packageSize || item.servingSize) && (
-                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800' }}>
-                      {item.servingSize ? `Serve: ${item.servingSize}` : `Pack: ${item.packageSize}`}
-                    </Text>
-                  )}
                 </View>
 
-                {/* Row 4: WHO Limit Progress & Delete Trash button */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '800', marginBottom: 6 }}>
-                      WHO Limit: {itemWhoPercent}%
-                    </Text>
-                    <View style={{ height: 6, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', borderRadius: 3, overflow: 'hidden' }}>
-                      <View style={{ height: '100%', width: `${itemWhoPercent}%`, backgroundColor: whoBarColor }} />
+                {/* Row 3: WHO Limit Bento & Delete */}
+                <View style={{ flexDirection: 'row', alignItems: 'stretch', justifyContent: 'space-between', gap: 8, marginTop: 'auto' }}>
+                  <View style={{
+                    flex: 1,
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0,0,0,0.02)',
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                    borderRadius: 12,
+                    padding: 8,
+                    justifyContent: 'center',
+                    gap: 6
+                  }}>
+                    {(item.packageSize || item.servingSize) && (
+                      <Text numberOfLines={1} style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800' }}>
+                        {getSmartServingText(item.servingSize, item.packageSize)}
+                      </Text>
+                    )}
+                    <View>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '800' }}>WHO Limit</Text>
+                        <Text style={{ color: colors.text, fontSize: 10, fontWeight: '900' }}>{itemWhoPercent}%</Text>
+                      </View>
+                      <View style={{ height: 6, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+                        <View style={{ height: '100%', width: `${itemWhoPercent}%`, backgroundColor: whoBarColor }} />
+                      </View>
                     </View>
                   </View>
 
@@ -281,8 +301,10 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                     }}
                     style={{
                       backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255, 59, 48, 0.08)',
-                      padding: 10,
-                      borderRadius: 12
+                      padding: 12,
+                      borderRadius: 12,
+                      alignItems: 'center',
+                      justifyContent: 'center'
                     }}
                     activeOpacity={0.8}
                   >
