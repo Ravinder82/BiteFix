@@ -91,8 +91,8 @@ We will pivot to a video-backed, interactive, high-converting funnel:
 For the video backgrounds in **Phase 1**, you need two highly compressed, high-quality, looping video files.
 
 ### Video 1: "Dashboard and Stats Montage" (Background for Screen 1)
-- **First Frame Still:** A close-up, angled macro shot of a sleek, dark-mode iPhone displaying a glowing green ring representing "4 tsp Sugar Consumed" with soft particles floating in the background.
-- **Last Frame Still:** The camera slowly pans out and rotates 15 degrees to reveal a second orange ring ("8 tsp Sugar Budget") in full view. The video ends exactly in a position that matches the beginning frame to loop seamlessly.
+- **First Frame Still:** A close-up, angled macro shot of a sleek, dark-mode iPhone displaying a glowing green ring representing "You Consumed 4 tsp of Sugar Today" with soft particles floating in the background.
+- **Last Frame Still:** The camera slowly pans out and rotates 15 degrees to reveal a second orange ring ("WHO suggests max 6 to 12 tsp Sugar a day") in full view. The video ends exactly in a position that matches the beginning frame to loop seamlessly.
 - **Video Prompt (AI/Studio Generation):**
   > "High-end cinematic tech advertisement. Ultra-slow pan and roll across a premium iOS mobile dashboard. Sleek glassmorphic card elements with vibrant neon-green and amber circular progress rings showing sugar metrics. The background is a beautifully blurred obsidian kitchen marble counter with warm, ambient soft-focus lights. 8k resolution, ARRI Alexa camera quality, shallow depth of field, fluid 60fps motion, luxury brand aesthetic."
 - **Camera Flow & Style:** 

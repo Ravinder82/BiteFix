@@ -10,6 +10,7 @@ import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
+import { SugarProgressRing } from '../../components/features/SugarProgressRing';
 import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle, Menu, HelpCircle, Flame, Zap, ArrowUpRight, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { formatBloodSugarValue, getStatusColor, getStatusLabel } from '../../utils/bloodSugar';
 import SettingsScreen from './settings';
@@ -514,192 +515,169 @@ export default function HomeScreen() {
               justifyContent: 'center',
             }}
           >
-            {/* Top: Blogpost Style Text & Mascot */}
-            <View className="flex-row items-center w-full mb-6">
+            {/* Top: Welcome Text & Mascot */}
+            <View className="flex-row w-full mb-4">
               <View style={{ flex: 1, paddingRight: 16 }}>
                 <Text
                   style={{ color: colors.primary, fontSize: 11, fontWeight: '800', letterSpacing: 1.5, marginBottom: 12 }}
                 >
                   {userName ? `WELCOME, ${userName.toUpperCase()}` : 'WELCOME BACK'}
                 </Text>
-                <View style={{ backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 10, alignSelf: 'flex-start' }}>
-                  <Text style={{ color: colors.text, fontSize: 12, lineHeight: 20, fontWeight: '700' }}>
-                    <Text style={{ color: colors.text, fontWeight: '900' }}>WHO Standard:</Text>
-                    {'\n'}1 Teaspoon is equal to 4.2 gms of Sugar
+
+                {/* Info Display Card */}
+                <View style={{
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.03)',
+                  padding: 12,
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+                }}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 11, lineHeight: 16 }}>
+                    <Text style={{ fontWeight: '700', color: colors.text }}>Why teaspoons?</Text> Teaspoons provides a clear, visual way to understand Daily Sugar Intake.
                   </Text>
                 </View>
               </View>
-
               <AnimatedReanimated.View
                 entering={FadeInDown.duration(600).springify()}
-                style={{ alignItems: 'center', zIndex: 10 }}
+                style={{ alignItems: 'center', zIndex: 10, paddingTop: 4 }}
               >
-                <Mascot state={totalSugar > 25 ? 'shocked' : 'happy'} size={120} />
+                <Mascot state={totalSugar > 25 ? 'shocked' : 'happy'} size={100} />
               </AnimatedReanimated.View>
             </View>
 
-            {/* Bottom: Sugar Consumed & Latest Blood Sugar Side-by-Side */}
-            {/* Unified Floating Dashboard Layout */}
-            <View style={{ width: '100%', marginTop: 8 }}>
+            {/* Central Visual: Mascot-styled Sugar Ring */}
+            <View style={{ width: '100%', alignItems: 'center', marginVertical: 16 }}>
+              <SugarProgressRing totalSugar={totalSugar} size={260} isDark={isDark} colors={colors} />
+            </View>
 
-              {/* Daily Sugar Tracker Section (Floating) */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
-                {/* Left Side: Circular Ring (Enlarged) */}
-                <View className="items-center justify-center relative" style={{ width: 104, height: 104 }}>
-                  <View style={{ width: 104, height: 104, borderRadius: 52, borderWidth: 10, borderColor: colors.border, position: 'absolute' }} />
-                  <View style={{
-                    width: 104,
-                    height: 104,
-                    borderRadius: 56,
-                    borderWidth: 10,
-                    borderColor: activeDayInfo.isEmpty ? colors.border : (totalSugar > 25 ? '#ff0d00bb' : (totalSugar > 15 ? '#ff8c00ff' : '#00ff40ff')),
-                    position: 'absolute',
-                    borderLeftColor: 'transparent',
-                    borderBottomColor: 'transparent',
-                    transform: [{ rotate: '45deg' }]
-                  }} />
-
-                  <View className="items-center justify-center">
-                    <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>
-                      {activeDayInfo.isEmpty ? '0' : (totalSugar / 4.2).toFixed(1)}<Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary }}>tsp</Text>
-                    </Text>
-                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', marginTop: 1 }}>
-                      {activeDayInfo.isEmpty ? '0' : totalSugar.toFixed(0)}g total
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Right Side: Details */}
-                <View style={{ flex: 1, paddingLeft: 24, justifyContent: 'center' }}>
-                  {/* Title Badge */}
-                  <View style={{ flexDirection: 'row', marginBottom: 8 }}>
-                    <View style={{
-                      backgroundColor: 'rgba(212, 255, 0, 1)',
-                      paddingHorizontal: 10,
-                      paddingVertical: 5,
-                      borderRadius: 8,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 5
-                    }}>
-
-                      <Text style={{ color: '#27332bff', fontSize: 9, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase' }}>
-                        Daily Sugar Tracker
-                      </Text>
-                    </View>
-                  </View>
-
-                  <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800', marginBottom: 8 }}>
-                    Sugar Consumed Today
-                  </Text>
-
-                  {/* WHO Limit Pill */}
-                  <View style={{
-                    backgroundColor: activeDayInfo.isEmpty ? (isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)') : (totalSugar > 25 ? 'rgba(255, 59, 48, 0.12)' : (totalSugar > 15 ? 'rgba(255, 149, 0, 0.12)' : 'rgba(52, 199, 89, 0.12)')),
-                    paddingHorizontal: 10,
-                    paddingVertical: 5,
-                    borderRadius: 10,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 4,
-                    alignSelf: 'flex-start'
-                  }}>
-                    <ArrowUpRight size={12} color={activeDayInfo.isEmpty ? colors.textSecondary : (totalSugar > 25 ? '#FF3B30' : (totalSugar > 15 ? '#FF9500' : '#34C759'))} />
-                    <Text style={{ color: activeDayInfo.isEmpty ? colors.textSecondary : (totalSugar > 25 ? '#FF3B30' : (totalSugar > 15 ? '#FF9500' : '#34C759')), fontSize: 10, fontWeight: '800' }}>
-                      WHO Limit: {activeDayInfo.isEmpty ? '0' : Math.round((totalSugar / 25) * 100)}%
-                    </Text>
-                  </View>
-                </View>
+            {/* Bottom: WHO Info & Limit Pill */}
+            <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+              {/* WHO Standard Text */}
+              <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 10, marginRight: 12 }}>
+                <Text style={{ color: colors.text, fontSize: 11, lineHeight: 16, fontWeight: '700' }}>
+                  <Text style={{ color: colors.text, fontWeight: '900' }}>WHO Standard:</Text>
+                  {'\n'}1 tsp = 4.2g of Sugar
+                </Text>
               </View>
 
-              {/* Minimalist Sub-Divider */}
-              <View style={{ height: 1, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(143, 142, 142, 0.18)', width: '100%', marginBottom: 20 }} />
-
-              {/* Burn System Section (Floating) */}
-              <View style={{ width: '100%' }}>
-                {/* Header Area */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                  <View style={{
-                    backgroundColor: 'rgba(255, 140, 0, 0.12)',
-                    paddingHorizontal: 10,
-                    paddingVertical: 5,
-                    borderRadius: 8,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 5
-                  }}>
-                    <Flame size={12} color="#FF8C00" />
-                    <Text style={{ color: '#FF8C00', fontSize: 9, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase' }}>
-                      Daily Burn System
-                    </Text>
-                  </View>
-
-                  <View style={{
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
-                    paddingHorizontal: 10,
-                    paddingVertical: 5,
-                    borderRadius: 8,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 4
-                  }}>
-                    <Info size={10} color={colors.textSecondary} />
-                    <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800' }}>
-                      Per serving size
-                    </Text>
-                  </View>
+              {/* WHO Limit Pill */}
+              <View style={{
+                backgroundColor: activeDayInfo.isEmpty ? (isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)') : (totalSugar > 25 ? 'rgba(255, 59, 48, 0.12)' : (totalSugar > 15 ? 'rgba(255, 149, 0, 0.12)' : 'rgba(52, 199, 89, 0.12)')),
+                paddingHorizontal: 12,
+                paddingVertical: 10,
+                borderRadius: 16,
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+                  <ArrowUpRight size={14} color={activeDayInfo.isEmpty ? colors.textSecondary : (totalSugar > 25 ? '#FF3B30' : (totalSugar > 15 ? '#FF9500' : '#34C759'))} />
+                  <Text style={{ color: activeDayInfo.isEmpty ? colors.textSecondary : (totalSugar > 25 ? '#FF3B30' : (totalSugar > 15 ? '#FF9500' : '#34C759')), fontSize: 14, fontWeight: '900' }}>
+                    {activeDayInfo.isEmpty ? '0' : Math.round((totalSugar / 25) * 100)}%
+                  </Text>
                 </View>
-
-                {/* 3-Column Floating Stats Row */}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  {/* Energy Stat */}
-                  <View style={{ flex: 1, alignItems: 'center' }}>
-                    <View style={{ backgroundColor: 'rgba(212, 255, 0, 1)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
-                      <Zap size={18} color="#FF3B30" />
-                    </View>
-                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
-                      Energy
-                    </Text>
-                    <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
-                      {activeDayInfo.isEmpty ? '0' : sumTotalPackagesCalories} <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textSecondary }}>kcal</Text>
-                    </Text>
-                  </View>
-
-                  {/* Vertical Divider */}
-                  <View style={{ width: 1, height: 44, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }} />
-
-                  {/* Scanned Stat */}
-                  <View style={{ flex: 1, alignItems: 'center' }}>
-                    <View style={{ backgroundColor: 'rgba(251, 255, 0, 1)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
-                      <ScanBarcode size={18} color="#34C759" />
-                    </View>
-                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
-                      Scanned
-                    </Text>
-                    <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
-                      {activeDayInfo.isEmpty ? '0' : totalScansForActiveDay} <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textSecondary }}>{totalScansForActiveDay === 1 ? 'item' : 'items'}</Text>
-                    </Text>
-                  </View>
-
-                  {/* Vertical Divider */}
-                  <View style={{ width: 1, height: 44, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }} />
-
-                  {/* Jogging Stat */}
-                  <View style={{ flex: 1, alignItems: 'center' }}>
-                    <View style={{ backgroundColor: 'rgba(0, 191, 255, 1)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
-                      <Activity size={18} color="#000000ff" />
-                    </View>
-                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
-                      Jogging
-                    </Text>
-                    <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
-                      {activeDayInfo.isEmpty ? '--' : (tpRunHours > 0 ? `${tpRunHours}h ${tpRunMins}m` : `${tpRunMins}m`)}
-                    </Text>
-                  </View>
-                </View>
+                <Text style={{ color: activeDayInfo.isEmpty ? colors.textSecondary : (totalSugar > 25 ? '#FF3B30' : (totalSugar > 15 ? '#FF9500' : '#34C759')), fontSize: 9, fontWeight: '800', textTransform: 'uppercase' }}>
+                  WHO Limit
+                </Text>
               </View>
             </View>
           </BlurView>
+        </View>
+
+        {/* Burn System Section (Extracted) */}
+        <View style={{
+          backgroundColor: isDark ? colors.surface : '#F7F8FA',
+          borderColor: isDark ? colors.border : 'rgba(220, 220, 220, 1)',
+          borderWidth: isDark ? 1.5 : 1,
+          borderRadius: 28,
+          padding: 20,
+          marginBottom: 24,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: isDark ? 0.15 : 0.08,
+          shadowRadius: 20,
+          elevation: 5
+        }}>
+          {/* Header Area */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <View style={{
+              backgroundColor: 'rgba(255, 140, 0, 0.12)',
+              paddingHorizontal: 10,
+              paddingVertical: 5,
+              borderRadius: 8,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 5
+            }}>
+              <Flame size={12} color="#FF8C00" />
+              <Text style={{ color: '#FF8C00', fontSize: 9, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                Daily Burn System
+              </Text>
+            </View>
+
+            <View style={{
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+              paddingHorizontal: 10,
+              paddingVertical: 5,
+              borderRadius: 8,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4
+            }}>
+              <Info size={10} color={colors.textSecondary} />
+              <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800' }}>
+                Per serving size
+              </Text>
+            </View>
+          </View>
+
+          {/* 3-Column Floating Stats Row */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            {/* Energy Stat */}
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <View style={{ backgroundColor: 'rgba(212, 255, 0, 1)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
+                <Zap size={18} color="#FF3B30" />
+              </View>
+              <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
+                Energy
+              </Text>
+              <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
+                {activeDayInfo.isEmpty ? '0' : sumTotalPackagesCalories} <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textSecondary }}>kcal</Text>
+              </Text>
+            </View>
+
+            {/* Vertical Divider */}
+            <View style={{ width: 1, height: 44, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }} />
+
+            {/* Scanned Stat */}
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <View style={{ backgroundColor: 'rgba(251, 255, 0, 1)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
+                <ScanBarcode size={18} color="#34C759" />
+              </View>
+              <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
+                Scanned
+              </Text>
+              <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
+                {activeDayInfo.isEmpty ? '0' : totalScansForActiveDay} <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textSecondary }}>{totalScansForActiveDay === 1 ? 'item' : 'items'}</Text>
+              </Text>
+            </View>
+
+            {/* Vertical Divider */}
+            <View style={{ width: 1, height: 44, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }} />
+
+            {/* Jogging Stat */}
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <View style={{ backgroundColor: 'rgba(0, 191, 255, 1)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
+                <Activity size={18} color="#000000ff" />
+              </View>
+              <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
+                Jogging
+              </Text>
+              <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
+                {activeDayInfo.isEmpty ? '--' : (tpRunHours > 0 ? `${tpRunHours}h ${tpRunMins}m` : `${tpRunMins}m`)}
+              </Text>
+            </View>
+          </View>
         </View>
 
         {/* Premium Call To Action Button with Loop-Reflection Shine */}
