@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View,  ScrollView, TouchableOpacity, TextInput, SafeAreaView, Alert } from 'react-native';
+import { View,  ScrollView, TouchableOpacity, TextInput, SafeAreaView, Alert, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { Text } from '@/components/Text';
 import AnimatedReanimated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { useAppStore } from '../../stores/appStore';
@@ -13,6 +15,13 @@ import * as Haptics from 'expo-haptics';
 export default function TrackerScreen() {
   const { colors, isDark } = useTheme();
   const { logs, addLog, deleteLog, unit } = useAppStore();
+
+  const fastingLogs = logs.filter(l => l.type === 'fasting');
+  const postMealLogs = logs.filter(l => l.type === 'post-meal');
+  const avgFasting = fastingLogs.length > 0 ? Math.round(fastingLogs.reduce((sum, l) => sum + l.value, 0) / fastingLogs.length) : null;
+  const avgPostMeal = postMealLogs.length > 0 ? Math.round(postMealLogs.reduce((sum, l) => sum + l.value, 0) / postMealLogs.length) : null;
+  const daysSinceLastTest = logs.length > 0 ? Math.floor((Date.now() - logs[0].timestamp) / (1000 * 60 * 60 * 24)) : null;
+
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [valueStr, setValueStr] = useState('');
@@ -197,6 +206,53 @@ export default function TrackerScreen() {
             </TouchableOpacity>
           </View>
         </AnimatedReanimated.View>
+
+        {/* Blood Sugar Stats Card */}
+        <View
+          style={{ backgroundColor: colors.surface, borderColor: colors.border }}
+          className="border rounded-[24px] shadow-sm overflow-hidden w-full mb-6"
+        >
+          <LinearGradient
+            colors={isDark ? ['#000000ff', '#1a1a1aff'] : ['#ffffffff', '#f5f5f5ff']}
+            style={StyleSheet.absoluteFill}
+          />
+          <View
+            style={{
+              position: 'absolute', top: -40, right: -40, width: 150, height: 150, borderRadius: 75,
+              backgroundColor: isDark ? 'rgba(90, 200, 250, 0.15)' : 'rgba(90, 200, 250, 0.25)',
+              transform: [{ scale: 1.5 }],
+              opacity: 0.5
+            }}
+          />
+          <BlurView
+            intensity={isDark ? 30 : 60}
+            tint={isDark ? "dark" : "light"}
+            style={{ flex: 1, padding: 18 }}
+          >
+            <View className="flex-row items-center justify-between mb-4">
+              <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '800', letterSpacing: 1.2 }}>BLOOD SUGAR STATS</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '600' }}>
+                {daysSinceLastTest !== null ? (daysSinceLastTest === 0 ? 'Tested Today' : `${daysSinceLastTest} days ago`) : 'No logs'}
+              </Text>
+            </View>
+
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1 items-center">
+                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginBottom: 4 }}>Avg Fasting</Text>
+                <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.6 }}>
+                  {avgFasting !== null ? avgFasting : '--'} <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700' }}>{logs[0]?.unit || 'mg/dL'}</Text>
+                </Text>
+              </View>
+              <View style={{ width: 1, height: 40, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
+              <View className="flex-1 items-center">
+                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginBottom: 4 }}>Avg Post-meal</Text>
+                <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.6 }}>
+                  {avgPostMeal !== null ? avgPostMeal : '--'} <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700' }}>{logs[0]?.unit || 'mg/dL'}</Text>
+                </Text>
+              </View>
+            </View>
+          </BlurView>
+        </View>
 
         {/* SVG Analytics Chart */}
         <View className="mb-6">
