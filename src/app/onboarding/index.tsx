@@ -61,24 +61,30 @@ function MascotShadow({ size, scaleStyle }: { size: number; scaleStyle: any }) {
 }
 
 // ─────────────────────────────────────────────────────────
-// Slide 4: Nutrition Label Illustration
+// Slide Helper Card: Scanner + Teaspoons Combined
 // ─────────────────────────────────────────────────────────
-function NutritionCard({ cardW, C }: { cardW: number; C: any }) {
+function ScannerTeaspoonCard({ cardW, C }: { cardW: number; C: any }) {
   const scanLineY = useSharedValue(0);
   useEffect(() => {
     scanLineY.value = withRepeat(
       withSequence(
-        withTiming(80, { duration: 1500, easing: Easing.inOut(Easing.sin) }),
+        withTiming(65, { duration: 1500, easing: Easing.inOut(Easing.sin) }),
         withTiming(0, { duration: 1500, easing: Easing.inOut(Easing.sin) })
       ),
       -1,
       true
     );
   }, []);
+
   const lineAnimStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: scanLineY.value }]
   }));
 
+  const radius = 35;
+  const strokeWidth = 8;
+  const circumference = 2 * Math.PI * radius;
+  const progress = circumference * 0.70;
+
   return (
     <View style={{
       width: cardW,
@@ -86,85 +92,95 @@ function NutritionCard({ cardW, C }: { cardW: number; C: any }) {
       borderRadius: 28,
       borderWidth: 1,
       borderColor: C.cardBorder,
-      padding: 32,
-      alignItems: 'center',
-      justifyContent: 'center',
+      padding: 16,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 16 },
       shadowOpacity: 0.08,
       shadowRadius: 24,
       elevation: 8,
-      aspectRatio: 1.2,
-      position: 'relative',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 16,
+      aspectRatio: 1.6,
     }}>
-      {/* Cool Tilted Pills */}
-      <View style={{ position: 'absolute', top: 20, left: 16, transform: [{ rotate: '-12deg' }], zIndex: 10 }}>
-        <View style={{ backgroundColor: '#FFF5CC', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#FFE066' }}>
-          <Text style={{ color: '#B28600', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 }}>Scan Barcode</Text>
-        </View>
-      </View>
-      <View style={{ position: 'absolute', top: 20, right: 16, transform: [{ rotate: '12deg' }], zIndex: 10 }}>
-        <View style={{ backgroundColor: '#FFEDCC', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#FFC266' }}>
-          <Text style={{ color: '#CC7A00', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 }}>Scan Label</Text>
-        </View>
-      </View>
-
+      {/* Left: Barcode scan box */}
       <View style={{
-        width: 140, height: 140, borderRadius: 24, backgroundColor: C.cardInner,
-        borderWidth: 1.5, borderColor: C.cardBorder, alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
+        flex: 1,
+        height: '100%',
+        borderRadius: 20,
+        backgroundColor: C.cardInner,
+        borderWidth: 1.5,
+        borderColor: C.cardBorder,
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+        position: 'relative',
       }}>
-        <View style={{ flexDirection: 'row', gap: 5, height: 70, alignItems: 'center' }}>
-          {[40, 70, 50, 70, 30, 60, 70, 45, 70].map((h, i) => (
-            <View key={i} style={{ width: i % 3 === 0 ? 8 : 4, height: h, backgroundColor: C.text, opacity: 0.15, borderRadius: 2 }} />
+        {/* Tilted Label */}
+        <View style={{ position: 'absolute', top: 8, left: 8, transform: [{ rotate: '-8deg' }], zIndex: 10 }}>
+          <View style={{ backgroundColor: C.amberLight, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, borderWidth: 1, borderColor: C.amber + '40' }}>
+            <Text style={{ color: C.amber, fontSize: 8, fontWeight: '900', letterSpacing: 0.5 }}>SCANNING</Text>
+          </View>
+        </View>
+
+        <View style={{ flexDirection: 'row', gap: 3.5, height: 45, alignItems: 'center' }}>
+          {[20, 38, 28, 38, 18, 32, 38, 25, 38].map((h, i) => (
+            <View key={i} style={{ width: i % 3 === 0 ? 5 : 2.5, height: h, backgroundColor: C.text, opacity: 0.15, borderRadius: 1 }} />
           ))}
         </View>
-        <Animated.View style={[{ position: 'absolute', top: 30, left: 0, right: 0, height: 2.5, backgroundColor: C.green, shadowColor: C.green, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 1, shadowRadius: 8 }, lineAnimStyle]} />
+        <Animated.View style={[
+          {
+            position: 'absolute',
+            top: 20,
+            left: 0,
+            right: 0,
+            height: 2,
+            backgroundColor: C.green,
+            shadowColor: C.green,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.8,
+            shadowRadius: 4
+          },
+          lineAnimStyle
+        ]} />
+      </View>
+
+      {/* Right: Teaspoon gauge conversion */}
+      <View style={{
+        flex: 1,
+        height: '100%',
+        borderRadius: 20,
+        backgroundColor: C.cardInner,
+        borderWidth: 1.5,
+        borderColor: C.cardBorder,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <View style={{ width: 90, height: 90, alignItems: 'center', justifyContent: 'center' }}>
+          <Svg width="90" height="90" viewBox="0 0 90 90" style={{ position: 'absolute' }}>
+            <Circle cx="45" cy="45" r={radius} stroke={C.cardBorder} strokeWidth={strokeWidth} fill="none" />
+            <Circle
+              cx="45"
+              cy="45"
+              r={radius}
+              stroke={C.amber}
+              strokeWidth={strokeWidth}
+              fill="none"
+              strokeDasharray={`${progress} ${circumference}`}
+              strokeLinecap="round"
+              transform="rotate(-90 45 45)"
+            />
+          </Svg>
+          <Text style={{ color: C.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>8.4</Text>
+          <Text style={{ color: C.amber, fontSize: 8, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.0, marginTop: -2 }}>tsp</Text>
+        </View>
       </View>
     </View>
   );
 }
 
 // ─────────────────────────────────────────────────────────
-// Slide 5: Teaspoon Visualization
-// ─────────────────────────────────────────────────────────
-function TeaspoonCard({ cardW, C }: { cardW: number; C: any }) {
-  const radius = 60;
-  const strokeWidth = 14;
-  const circumference = 2 * Math.PI * radius;
-  const progress = circumference * 0.75; 
-
-  return (
-    <View style={{
-      width: cardW,
-      backgroundColor: C.card,
-      borderRadius: 28,
-      borderWidth: 1,
-      borderColor: C.cardBorder,
-      padding: 32,
-      alignItems: 'center',
-      justifyContent: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 16 },
-      shadowOpacity: 0.08,
-      shadowRadius: 24,
-      elevation: 8,
-      aspectRatio: 1.2,
-    }}>
-      <View style={{ width: 160, height: 160, alignItems: 'center', justifyContent: 'center' }}>
-        <Svg width="160" height="160" viewBox="0 0 160 160" style={{ position: 'absolute' }}>
-          <Circle cx="80" cy="80" r={radius} stroke={C.cardInner} strokeWidth={strokeWidth} fill="none" />
-          <Circle cx="80" cy="80" r={radius} stroke={C.amber} strokeWidth={strokeWidth} fill="none"
-            strokeDasharray={`${progress} ${circumference}`} strokeLinecap="round" transform="rotate(-90 80 80)" />
-        </Svg>
-        <Text style={{ color: C.text, fontSize: 42, fontWeight: '900', letterSpacing: -1 }}>8</Text>
-        <Text style={{ color: C.amberMid, fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.5 }}>tsp</Text>
-      </View>
-    </View>
-  );
-}
-
-// ─────────────────────────────────────────────────────────
-// Slide 6: Progress Chart Card
+// Slide 5: Progress Chart Card
 // ─────────────────────────────────────────────────────────
 function ProgressCard({ cardW, C }: { cardW: number; C: any }) {
   const linePath = "M10 90 Q50 40 90 60 T170 50 T250 20";
@@ -269,7 +285,7 @@ function NameCard({
 }
 
 // ─────────────────────────────────────────────────────────
-// Slide 2: Personalized Diabetic Status Card
+// Slide 2: Personalized Goal Card
 // ─────────────────────────────────────────────────────────
 type GoalOption = 'energy' | 'weight' | 'medical' | 'mental' | 'none';
 
@@ -350,106 +366,36 @@ function GoalCard({
 }
 
 // ─────────────────────────────────────────────────────────
-// Slide 3: Sweet Tooth Screen
+// Slide 3: Combined Cravings & Pace Profile Card
 // ─────────────────────────────────────────────────────────
 type SweetToothOption = 'high' | 'moderate' | 'low' | 'none';
-
-function SweetToothCard({
-  cardW,
-  C,
-  selected,
-  onSelect,
-}: {
-  cardW: number;
-  C: any;
-  selected: SweetToothOption;
-  onSelect: (val: SweetToothOption) => void;
-}) {
-  const options: { label: string; value: SweetToothOption }[] = [
-    { label: "High (I crave sweets often)", value: 'high' },
-    { label: "Moderate (Occasional treats)", value: 'moderate' },
-    { label: "Low (I'm already cautious)", value: 'low' },
-  ];
-
-  return (
-    <View style={{
-      width: cardW,
-      backgroundColor: C.card,
-      borderRadius: 20,
-      borderWidth: 1,
-      borderColor: C.cardBorder,
-      padding: 16,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.12,
-      shadowRadius: 16,
-      elevation: 8,
-    }}>
-      <View style={{ gap: 8 }}>
-        {options.map((opt) => {
-          const isSelected = selected === opt.value;
-          return (
-            <TouchableOpacity
-              key={opt.value}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                onSelect(opt.value);
-              }}
-              activeOpacity={0.8}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                backgroundColor: isSelected ? C.amberLight : C.cardInner,
-                borderColor: isSelected ? C.amber : C.cardBorder,
-                borderWidth: 1.5,
-                borderRadius: 12,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-              }}
-            >
-              <Text style={{ color: C.text, fontSize: 13, fontWeight: '700' }}>
-                {opt.label}
-              </Text>
-              <View style={{
-                width: 16,
-                height: 16,
-                borderRadius: 8,
-                borderWidth: 1.5,
-                borderColor: isSelected ? C.amber : C.textMuted,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                {isSelected && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: C.amber }} />}
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
-
-// ─────────────────────────────────────────────────────────
-// Slide 4: Pace / Commitment Screen
-// ─────────────────────────────────────────────────────────
 type PaceOption = 'cold_turkey' | 'gradual' | 'tracking' | 'none';
 
-function PaceCard({
+function ProfileCard({
   cardW,
   C,
-  selected,
-  onSelect,
+  sweetTooth,
+  setSweetTooth,
+  journeyPace,
+  setJourneyPace,
 }: {
   cardW: number;
   C: any;
-  selected: PaceOption;
-  onSelect: (val: PaceOption) => void;
+  sweetTooth: SweetToothOption;
+  setSweetTooth: (val: SweetToothOption) => void;
+  journeyPace: PaceOption;
+  setJourneyPace: (val: PaceOption) => void;
 }) {
-  const options: { label: string; value: PaceOption }[] = [
-    { label: "Cold Turkey (100% sugar-free instantly)", value: 'cold_turkey' },
-    { label: "Gradual Reduction (Step-by-step)", value: 'gradual' },
-    { label: "Just Tracking (Exploring my habits)", value: 'tracking' },
+  const cravings: { label: string; value: SweetToothOption }[] = [
+    { label: "High", value: 'high' },
+    { label: "Moderate", value: 'moderate' },
+    { label: "Low", value: 'low' },
+  ];
+
+  const paces: { label: string; value: PaceOption }[] = [
+    { label: "Cold Turkey", value: 'cold_turkey' },
+    { label: "Gradual", value: 'gradual' },
+    { label: "Just Track", value: 'tracking' },
   ];
 
   return (
@@ -465,134 +411,95 @@ function PaceCard({
       shadowOpacity: 0.12,
       shadowRadius: 16,
       elevation: 8,
+      gap: 14,
     }}>
-      <View style={{ gap: 8 }}>
-        {options.map((opt) => {
-          const isSelected = selected === opt.value;
-          return (
-            <TouchableOpacity
-              key={opt.value}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                onSelect(opt.value);
-              }}
-              activeOpacity={0.8}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                backgroundColor: isSelected ? C.amberLight : C.cardInner,
-                borderColor: isSelected ? C.amber : C.cardBorder,
-                borderWidth: 1.5,
-                borderRadius: 12,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-              }}
-            >
-              <Text style={{ color: C.text, fontSize: 13, fontWeight: '700' }}>
-                {opt.label}
-              </Text>
-              <View style={{
-                width: 16,
-                height: 16,
-                borderRadius: 8,
-                borderWidth: 1.5,
-                borderColor: isSelected ? C.amber : C.textMuted,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                {isSelected && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: C.amber }} />}
-              </View>
-            </TouchableOpacity>
-          );
-        })}
+      {/* Cravings */}
+      <View>
+        <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>
+          Sugar Cravings Level
+        </Text>
+        <View style={{ flexDirection: 'row', gap: 6 }}>
+          {cravings.map((opt) => {
+            const isSel = sweetTooth === opt.value;
+            return (
+              <TouchableOpacity
+                key={opt.value}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSweetTooth(opt.value);
+                }}
+                style={{
+                  flex: 1,
+                  backgroundColor: isSel ? C.amberLight : C.cardInner,
+                  borderColor: isSel ? C.amber : C.cardBorder,
+                  borderWidth: 1.5,
+                  borderRadius: 12,
+                  paddingVertical: 10,
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ color: isSel ? C.amber : C.text, fontSize: 12, fontWeight: '700' }}>
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+
+      {/* Pace */}
+      <View>
+        <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>
+          Target Reduction Pace
+        </Text>
+        <View style={{ gap: 6 }}>
+          {paces.map((opt) => {
+            const isSel = journeyPace === opt.value;
+            return (
+              <TouchableOpacity
+                key={opt.value}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setJourneyPace(opt.value);
+                }}
+                style={{
+                  width: '100%',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  backgroundColor: isSel ? C.amberLight : C.cardInner,
+                  borderColor: isSel ? C.amber : C.cardBorder,
+                  borderWidth: 1.5,
+                  borderRadius: 12,
+                  paddingHorizontal: 12,
+                  paddingVertical: 10,
+                }}
+              >
+                <Text style={{ color: isSel ? C.amber : C.text, fontSize: 12, fontWeight: '700' }}>
+                  {opt.label}
+                </Text>
+                <View style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: 7,
+                  borderWidth: 1.5,
+                  borderColor: isSel ? C.amber : C.textMuted,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  {isSel && <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.amber }} />}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
     </View>
   );
 }
 
 // ─────────────────────────────────────────────────────────
-// Slide 5: Tutorial Opt-In Screen
-// ─────────────────────────────────────────────────────────
-type TutorialOption = 'yes' | 'no' | 'none';
-
-function TutorialOptInCard({
-  cardW,
-  C,
-  selected,
-  onSelect,
-}: {
-  cardW: number;
-  C: any;
-  selected: TutorialOption;
-  onSelect: (val: TutorialOption) => void;
-}) {
-  const options: { label: string; value: TutorialOption }[] = [
-    { label: "See how it works", value: 'yes' },
-    { label: "Skip to the dashboard", value: 'no' },
-  ];
-
-  return (
-    <View style={{
-      width: cardW,
-      backgroundColor: C.card,
-      borderRadius: 20,
-      borderWidth: 1,
-      borderColor: C.cardBorder,
-      padding: 16,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.12,
-      shadowRadius: 16,
-      elevation: 8,
-    }}>
-      <View style={{ gap: 8 }}>
-        {options.map((opt) => {
-          const isSelected = selected === opt.value;
-          return (
-            <TouchableOpacity
-              key={opt.value}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                onSelect(opt.value);
-              }}
-              activeOpacity={0.8}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                backgroundColor: isSelected ? C.amberLight : C.cardInner,
-                borderColor: isSelected ? C.amber : C.cardBorder,
-                borderWidth: 1.5,
-                borderRadius: 12,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-              }}
-            >
-              <Text style={{ color: C.text, fontSize: 13, fontWeight: '700' }}>
-                {opt.label}
-              </Text>
-              <View style={{
-                width: 16,
-                height: 16,
-                borderRadius: 8,
-                borderWidth: 1.5,
-                borderColor: isSelected ? C.amber : C.textMuted,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                {isSelected && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: C.amber }} />}
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
-
-// ─────────────────────────────────────────────────────────
-// Slide 8: Setup Complete Payoff Screen
+// Slide 6: Setup Complete Payoff Screen
 // ─────────────────────────────────────────────────────────
 function SetupCompleteCard({
   cardW,
@@ -685,60 +592,33 @@ const SLIDES: SlideData[] = [
   },
   {
     step: 3,
-    title: "Your Sweet Tooth",
-    highlight: "Sweet Tooth",
-    subtitle: "How would you describe your current sugar cravings?",
+    title: "Cravings & Commitment",
+    highlight: "Cravings & Commitment",
+    subtitle: "Select your craving level and target journey pace.",
     buttonLabel: 'Continue',
     isLast: false,
     mascotState: 'happy',
   },
   {
     step: 4,
-    title: "Your Commitment",
-    highlight: "Commitment",
-    subtitle: "Choose the pace that works best for you.",
-    buttonLabel: 'Continue',
+    title: 'Real Time Sugar Scanner',
+    highlight: 'Sugar Scanner',
+    subtitle: 'Scan product barcodes and see abstract grams instantly converted into teaspoons.',
+    buttonLabel: 'Next',
     isLast: false,
     mascotState: 'happy',
   },
   {
     step: 5,
-    title: "Your Personalized Roadmap",
-    highlight: "Roadmap",
-    subtitle: "Our Tools Help you Track and Manage Sugar Intake for Better Control over your Health.",
-    buttonLabel: 'Continue',
+    title: 'Log your Blood Sugar.',
+    highlight: 'Blood Sugar.',
+    subtitle: 'Log fasting and post-meal readings to manage clinical blood sugar trends.',
+    buttonLabel: 'Next',
     isLast: false,
     mascotState: 'happy',
   },
   {
     step: 6,
-    title: 'Real Time Sugar Scanner',
-    highlight: 'Sugar Scanner',
-    subtitle: 'Scan any barcode or label and App will tell you exact amount of Sugar in that Product',
-    buttonLabel: 'Next',
-    isLast: false,
-    mascotState: 'happy',
-  },
-  {
-    step: 7,
-    title: 'See it to Believe it',
-    highlight: 'Believe it',
-    subtitle: 'We translate abstract grams into a universal metric—teaspoons. Make faster, more informed dietary decisions at a glance.',
-    buttonLabel: 'Next',
-    isLast: false,
-    mascotState: 'dizzy',
-  },
-  {
-    step: 8,
-    title: 'Log your Blood Sugar.',
-    highlight: 'Blood Sugar.',
-    subtitle: 'We help you log your Blood Sugar on an empty stomach and post-meal over time, so you can track and manage blood sugar levels.',
-    buttonLabel: 'Next',
-    isLast: false,
-    mascotState: 'happy',
-  },
-  {
-    step: 9,
     title: "Your Setup is Complete",
     highlight: "Setup is Complete",
     subtitle: "We're ready to start this life-changing journey together.",
@@ -759,7 +639,6 @@ export default function OnboardingScreen() {
   const [userGoal, setUserGoal] = useState<GoalOption>('none');
   const [sweetTooth, setSweetTooth] = useState<SweetToothOption>('none');
   const [journeyPace, setJourneyPace] = useState<PaceOption>('none');
-  const [wantsTutorial, setWantsTutorial] = useState<TutorialOption>('none');
 
   const { setOnboardingComplete, setProfile } = useAppStore();
   const { width, height } = useWindowDimensions();
@@ -906,32 +785,14 @@ export default function OnboardingScreen() {
       }
     }
     if (currentSlide === 2) {
-      if (sweetTooth === 'none') {
+      if (sweetTooth === 'none' || journeyPace === 'none') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        return;
-      }
-    }
-    if (currentSlide === 3) {
-      if (journeyPace === 'none') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        return;
-      }
-    }
-    
-    if (currentSlide === 4) {
-      if (wantsTutorial === 'none') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        return;
-      }
-      if (wantsTutorial === 'no') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        setCurrentSlide(8); // Jump directly to Setup Complete
         return;
       }
     }
 
     // Camera permission request during feature showcase
-    if (currentSlide === 5) {
+    if (currentSlide === 3) {
       try {
         await Camera.requestCameraPermissionsAsync();
       } catch (_) {}
@@ -957,9 +818,7 @@ export default function OnboardingScreen() {
   const isNextDisabled = () => {
     if (currentSlide === 0 && !userName.trim()) return true;
     if (currentSlide === 1 && userGoal === 'none') return true;
-    if (currentSlide === 2 && sweetTooth === 'none') return true;
-    if (currentSlide === 3 && journeyPace === 'none') return true;
-    if (currentSlide === 4 && wantsTutorial === 'none') return true;
+    if (currentSlide === 2 && (sweetTooth === 'none' || journeyPace === 'none')) return true;
     return false;
   };
 
@@ -1087,33 +946,18 @@ export default function OnboardingScreen() {
                 />
               )}
               {currentCardIndex === 2 && (
-                <SweetToothCard
+                <ProfileCard
                   cardW={cardW}
                   C={C}
-                  selected={sweetTooth}
-                  onSelect={setSweetTooth}
+                  sweetTooth={sweetTooth}
+                  setSweetTooth={setSweetTooth}
+                  journeyPace={journeyPace}
+                  setJourneyPace={setJourneyPace}
                 />
               )}
-              {currentCardIndex === 3 && (
-                <PaceCard
-                  cardW={cardW}
-                  C={C}
-                  selected={journeyPace}
-                  onSelect={setJourneyPace}
-                />
-              )}
-              {currentCardIndex === 4 && (
-                <TutorialOptInCard
-                  cardW={cardW}
-                  C={C}
-                  selected={wantsTutorial}
-                  onSelect={setWantsTutorial}
-                />
-              )}
-              {currentCardIndex === 5 && <NutritionCard cardW={cardW} C={C} />}
-              {currentCardIndex === 6 && <TeaspoonCard cardW={cardW} C={C} />}
-              {currentCardIndex === 7 && <ProgressCard cardW={cardW} C={C} />}
-              {currentCardIndex === 8 && (
+              {currentCardIndex === 3 && <ScannerTeaspoonCard cardW={cardW} C={C} />}
+              {currentCardIndex === 4 && <ProgressCard cardW={cardW} C={C} />}
+              {currentCardIndex === 5 && (
                 <SetupCompleteCard
                   cardW={cardW}
                   C={C}
