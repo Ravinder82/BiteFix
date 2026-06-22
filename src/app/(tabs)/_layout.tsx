@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { useTheme } from '../../hooks/useTheme';
-import { Home, ScanBarcode, Droplet } from 'lucide-react-native';
+import { Home, ScanBarcode, Activity } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -85,6 +85,8 @@ export default function TabLayout() {
           height: 74,
           elevation: 0,
           shadowOpacity: 0,
+          paddingBottom: 0, // Fixes iOS safe area pushing content up
+          paddingTop: 0,
         },
         tabBarBackground: () => (
           <View
@@ -123,9 +125,11 @@ export default function TabLayout() {
           letterSpacing: 0.2,
         },
         tabBarItemStyle: {
-          height: 52,
-          alignSelf: 'center',
+          height: 74,
           justifyContent: 'center',
+          alignItems: 'center',
+          paddingTop: Platform.OS === 'ios' ? 12 : 8,
+          paddingBottom: Platform.OS === 'ios' ? 8 : 4,
         },
       }}
     >
@@ -162,11 +166,10 @@ export default function TabLayout() {
         options={{
           title: 'Tracker',
           tabBarIcon: ({ color, focused }) => (
-            <Droplet
+            <Activity
               size={22}
               color={color}
               strokeWidth={focused ? 2.5 : 2}
-              fill={focused ? `${color}15` : 'transparent'}
             />
           ),
         }}
