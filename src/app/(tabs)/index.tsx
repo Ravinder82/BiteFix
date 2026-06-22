@@ -10,7 +10,7 @@ import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
-import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle, Menu, HelpCircle, Flame, Zap, ArrowUpRight, TrendingUp } from 'lucide-react-native';
+import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle, Menu, HelpCircle, Flame, Zap, ArrowUpRight, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { formatBloodSugarValue, getStatusColor, getStatusLabel } from '../../utils/bloodSugar';
 import SettingsScreen from './settings';
 import * as Haptics from 'expo-haptics';
@@ -30,6 +30,274 @@ const formatGroupDate = (timestamp: number) => {
   }
 };
 
+
+function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelectedScan, deleteScan }: any) {
+  const scrollRef = useRef<ScrollView>(null);
+  const [scrollX, setScrollX] = useState(0);
+
+  const cardWidth = 320;
+  const gap = 12;
+  const snapInterval = cardWidth + gap;
+
+  const firstItemDate = new Date(group.items[0].timestamp);
+  const dateString = firstItemDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const displayTitle = group.title === 'Today' || group.title === 'Yesterday' 
+    ? `${group.title}, ${dateString}` 
+    : group.title;
+
+  return (
+    <AnimatedReanimated.View
+      entering={FadeInDown.delay(Math.min(groupIndex * 100, 400)).duration(300)}
+      style={{
+        backgroundColor: colors.surface,
+        borderColor: colors.border,
+        borderWidth: 1.5,
+        borderRadius: 28,
+        padding: 16,
+        marginBottom: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: isDark ? 0.15 : 0.04,
+        shadowRadius: 12,
+        elevation: 3
+      }}
+    >
+      {/* Top Bar */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+          <Text style={{
+            color: colors.text,
+            fontSize: 16,
+            fontWeight: '900',
+            textTransform: 'uppercase',
+            letterSpacing: 1.0,
+            flexShrink: 1
+          }} numberOfLines={1}>
+            {displayTitle}
+          </Text>
+          
+          <View style={{
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.04)',
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 16,
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0,0,0,0.03)',
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}>
+            <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '800' }}>
+              {group.items.length} {group.items.length === 1 ? 'Product' : 'Products'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Swipe Arrows */}
+        {group.items.length > 1 && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 8 }}>
+            <TouchableOpacity 
+              onPress={() => scrollRef.current?.scrollTo({ x: Math.max(0, scrollX - snapInterval), animated: true })}
+              style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', padding: 8, borderRadius: 12 }}
+            >
+              <ChevronLeft size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              onPress={() => scrollRef.current?.scrollTo({ x: scrollX + snapInterval, animated: true })}
+              style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', padding: 8, borderRadius: 12 }}
+            >
+              <ChevronRight size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 2, gap, paddingBottom: 4 }}
+        snapToInterval={snapInterval}
+        decelerationRate="fast"
+        onScroll={(e) => setScrollX(e.nativeEvent.contentOffset.x)}
+        scrollEventThrottle={16}
+      >
+        {group.items.map((item: any) => {
+          const cardMascotState = item.sugarTeaspoons === 0 ? 'happy' : (item.sugarTeaspoons <= 2 ? 'idle' : (item.sugarTeaspoons <= 5 ? 'shocked' : 'dizzy'));
+          const sugarColor = getSugarColor(item.sugarTeaspoons, colors);
+          const calColor = (item.calories || 0) > 250 ? '#FF3B30' : ((item.calories || 0) > 100 ? '#FF9500' : '#34C759');
+          const sugColor = item.sugarGrams > 10 ? '#FF3B30' : (item.sugarGrams > 4 ? '#FF9500' : '#34C759');
+          const itemRunMinutes = Math.round((item.calories || 0) / 10);
+          const itemWhoPercent = Math.min(100, Math.round((item.sugarGrams / 25) * 100));
+          const whoBarColor = itemWhoPercent > 100 ? '#FF3B30' : (itemWhoPercent > 60 ? '#FF9500' : '#34C759');
+
+          return (
+            <TouchableOpacity
+              key={item.id}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                panY.setValue(0);
+                setSelectedScan(item);
+              }}
+              style={{
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : colors.background,
+                borderColor: colors.border,
+                borderWidth: 1.5,
+                borderRadius: 24,
+                padding: 12,
+                width: cardWidth,
+                height: 240,
+                flexDirection: 'row',
+                alignItems: 'center',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: isDark ? 0.15 : 0.04,
+                shadowRadius: 10,
+                elevation: 2
+              }}
+              activeOpacity={0.85}
+            >
+              {/* Left Column: Product Image Full Height */}
+              <View style={{
+                width: 110,
+                alignSelf: 'stretch',
+                borderRadius: 16,
+                overflow: 'hidden',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
+                borderWidth: 1,
+                borderColor: colors.border,
+              }}>
+                {item.imageUrl ? (
+                  <Image source={{ uri: item.imageUrl }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={200} />
+                ) : (
+                  <View style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
+                    <ScanBarcode size={36} color={colors.primary} />
+                  </View>
+                )}
+              </View>
+
+              {/* Right Column */}
+              <View style={{ flex: 1, paddingLeft: 16, height: '100%', justifyContent: 'space-between' }}>
+                
+                {/* Row 1: Title & Mascot Avatar */}
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text numberOfLines={2} style={{ color: colors.text, fontSize: 16, fontWeight: '900', lineHeight: 22 }}>
+                      {item.name}
+                    </Text>
+                  </View>
+                  
+                  {/* Fixed circular container for mini mascot to prevent cut off */}
+                  <View style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: 25,
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.03)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderWidth: 2,
+                    borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
+                  }}>
+                    <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+                      <Mascot size={44} state={cardMascotState} />
+                    </View>
+                  </View>
+                </View>
+
+                {/* Row 2: Telemetry LEDs */}
+                <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                  {/* Calories LED Pill */}
+                  <View style={{
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.02)',
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                    borderRadius: 12,
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6
+                  }}>
+                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: calColor + '33', alignItems: 'center', justifyContent: 'center' }}>
+                      <View style={{ width: 4.5, height: 4.5, borderRadius: 2.25, backgroundColor: calColor }} />
+                    </View>
+                    <Zap size={12} color={colors.textSecondary} />
+                    <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>
+                      {item.calories || 0} kcal
+                    </Text>
+                  </View>
+
+                  {/* Sugar Grams LED Pill */}
+                  <View style={{
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.02)',
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                    borderRadius: 12,
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6
+                  }}>
+                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: sugColor + '33', alignItems: 'center', justifyContent: 'center' }}>
+                      <View style={{ width: 4.5, height: 4.5, borderRadius: 2.25, backgroundColor: sugColor }} />
+                    </View>
+                    <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>
+                      {item.sugarGrams}g sugar
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Row 3: Jogging & Size Details */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Activity size={14} color="#007AFF" />
+                    <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '800' }}>
+                      {itemRunMinutes}m jogging
+                    </Text>
+                  </View>
+
+                  {(item.packageSize || item.servingSize) && (
+                    <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800' }}>
+                      {item.servingSize ? `Serve: ${item.servingSize}` : `Pack: ${item.packageSize}`}
+                    </Text>
+                  )}
+                </View>
+
+                {/* Row 4: WHO Limit Progress & Delete Trash button */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '800', marginBottom: 6 }}>
+                      WHO Limit: {itemWhoPercent}%
+                    </Text>
+                    <View style={{ height: 6, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+                      <View style={{ height: '100%', width: `${itemWhoPercent}%`, backgroundColor: whoBarColor }} />
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      deleteScan(item.id);
+                    }}
+                    style={{
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255, 59, 48, 0.08)',
+                      padding: 10,
+                      borderRadius: 12
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Trash2 size={16} color={colors.error} />
+                  </TouchableOpacity>
+                </View>
+
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </AnimatedReanimated.View>
+  );
+}
 
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
@@ -300,7 +568,7 @@ export default function HomeScreen() {
                   </View>
 
                   <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800', marginBottom: 8 }}>
-                    Sugar Consumed
+                    Sugar Consumed Today
                   </Text>
 
                   {/* WHO Limit Pill */}
@@ -364,7 +632,7 @@ export default function HomeScreen() {
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   {/* Energy Stat */}
                   <View style={{ flex: 1, alignItems: 'center' }}>
-                    <View style={{ backgroundColor: 'rgba(255, 59, 48, 0.12)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
+                    <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.12)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
                       <Zap size={18} color="#FF3B30" />
                     </View>
                     <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
@@ -380,7 +648,7 @@ export default function HomeScreen() {
 
                   {/* Scanned Stat */}
                   <View style={{ flex: 1, alignItems: 'center' }}>
-                    <View style={{ backgroundColor: 'rgba(52, 199, 89, 0.12)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
+                    <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.12)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
                       <ScanBarcode size={18} color="#34C759" />
                     </View>
                     <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
@@ -396,8 +664,8 @@ export default function HomeScreen() {
 
                   {/* Jogging Stat */}
                   <View style={{ flex: 1, alignItems: 'center' }}>
-                    <View style={{ backgroundColor: 'rgba(0, 122, 255, 0.12)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
-                      <Activity size={18} color="#007AFF" />
+                    <View style={{ backgroundColor: 'rgba(0, 191, 255, 0.4)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
+                      <Activity size={18} color="#000000ff" />
                     </View>
                     <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
                       Jogging
@@ -518,246 +786,16 @@ export default function HomeScreen() {
               }, [] as { title: string, items: typeof scans }[]);
 
               return groupedScans.map((group, groupIndex) => (
-                <AnimatedReanimated.View
+                <ScanHistoryGroup
                   key={`group-${group.title}`}
-                  entering={FadeInDown.delay(Math.min(groupIndex * 100, 400)).duration(300)}
-                  style={{
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                    borderWidth: 1.5,
-                    borderRadius: 28,
-                    padding: 16,
-                    marginBottom: 20,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: isDark ? 0.15 : 0.04,
-                    shadowRadius: 12,
-                    elevation: 3
-                  }}
-                >
-                  <Text style={{
-                    color: colors.text,
-                    fontSize: 13,
-                    fontWeight: '900',
-                    marginBottom: 16,
-                    marginLeft: 4,
-                    textTransform: 'uppercase',
-                    letterSpacing: 1.0
-                  }}>
-                    {group.title}
-                  </Text>
-
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ paddingHorizontal: 2, gap: 12, paddingBottom: 4 }}
-                  >
-                    {group.items.map((item) => {
-                      // Determine Mascot facial state
-                      const cardMascotState = item.sugarTeaspoons === 0 
-                        ? 'happy' 
-                        : (item.sugarTeaspoons <= 2 ? 'idle' : (item.sugarTeaspoons <= 5 ? 'shocked' : 'dizzy'));
-                      
-                      const sugarColor = getSugarColor(item.sugarTeaspoons, colors);
-
-                      // Calories LED Color: High (>250 kcal) Red, Mid (>100 kcal) Orange, Low Green
-                      const calColor = (item.calories || 0) > 250 ? '#FF3B30' : ((item.calories || 0) > 100 ? '#FF9500' : '#34C759');
-
-                      // Sugar Grams LED Color: High (>10g) Red, Mid (>4g) Orange, Low Green
-                      const sugColor = item.sugarGrams > 10 ? '#FF3B30' : (item.sugarGrams > 4 ? '#FF9500' : '#34C759');
-
-                      // Jogging Time Calculation
-                      const itemRunMinutes = Math.round((item.calories || 0) / 10);
-
-                      // WHO limit percent representation of daily sugar intake limit (25g)
-                      const itemWhoPercent = Math.min(100, Math.round((item.sugarGrams / 25) * 100));
-                      const whoBarColor = itemWhoPercent > 100 ? '#FF3B30' : (itemWhoPercent > 60 ? '#FF9500' : '#34C759');
-
-                      return (
-                        <TouchableOpacity
-                          key={item.id}
-                          onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            panY.setValue(0);
-                            setSelectedScan(item);
-                          }}
-                          style={{
-                            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : colors.background,
-                            borderColor: colors.border,
-                            borderWidth: 1.5,
-                            borderRadius: 24,
-                            padding: 10,
-                            width: 320,
-                            height: 190,
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            shadowColor: '#000',
-                            shadowOffset: { width: 0, height: 4 },
-                            shadowOpacity: isDark ? 0.15 : 0.04,
-                            shadowRadius: 10,
-                            elevation: 2
-                          }}
-                          activeOpacity={0.85}
-                        >
-                          {/* Left Column: Product Image (Full Height) */}
-                          <View style={{
-                            width: 95,
-                            alignSelf: 'stretch',
-                            borderRadius: 16,
-                            overflow: 'hidden',
-                            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
-                            borderWidth: 1,
-                            borderColor: colors.border,
-                          }}>
-                            {item.imageUrl ? (
-                              <Image
-                                source={{ uri: item.imageUrl }}
-                                style={{ width: '100%', height: '100%' }}
-                                contentFit="cover"
-                                transition={200}
-                              />
-                            ) : (
-                              <View
-                                style={{
-                                  width: '100%',
-                                  height: '100%',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                }}
-                              >
-                                <ScanBarcode size={28} color={colors.primary} />
-                              </View>
-                            )}
-                          </View>
-
-                          {/* Right Column: Details stacked vertically */}
-                          <View style={{ flex: 1, paddingLeft: 12, height: '100%', justifyContent: 'space-between' }}>
-                            {/* Row 1: Title & Mascot */}
-                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                              <View style={{ flex: 1 }}>
-                                <Text
-                                  numberOfLines={2}
-                                  style={{ color: colors.text, fontSize: 13, fontWeight: '800', lineHeight: 17 }}
-                                >
-                                  {item.name}
-                                </Text>
-                                <Text
-                                  style={{ color: sugarColor, fontSize: 14, fontWeight: '900', marginTop: 1 }}
-                                >
-                                  {item.sugarTeaspoons} <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>tsp</Text>
-                                </Text>
-                              </View>
-
-                              {/* Mini Mascot Avatar (Fixed sizing & overflow so it doesn't cut out) */}
-                              <View style={{
-                                width: 42,
-                                height: 42,
-                                borderRadius: 21,
-                                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.03)',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                borderWidth: 1.5,
-                                borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
-                              }}>
-                                <View style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }}>
-                                  <Mascot size={36} state={cardMascotState} />
-                                </View>
-                              </View>
-                            </View>
-
-                            {/* Row 2: Telemetry LEDs (Calories & Sugar grams) */}
-                            <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
-                              {/* Calories LED Pill */}
-                              <View style={{
-                                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.02)',
-                                borderColor: colors.border,
-                                borderWidth: 1,
-                                borderRadius: 8,
-                                paddingHorizontal: 6,
-                                paddingVertical: 3,
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                gap: 4
-                              }}>
-                                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: calColor + '33', alignItems: 'center', justifyContent: 'center' }}>
-                                  <View style={{ width: 3.5, height: 3.5, borderRadius: 1.75, backgroundColor: calColor }} />
-                                </View>
-                                <Zap size={8} color={colors.textSecondary} />
-                                <Text style={{ color: colors.text, fontSize: 8, fontWeight: '700' }}>
-                                  {item.calories || 0} kcal
-                                </Text>
-                              </View>
-
-                              {/* Sugar Grams LED Pill */}
-                              <View style={{
-                                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.02)',
-                                borderColor: colors.border,
-                                borderWidth: 1,
-                                borderRadius: 8,
-                                paddingHorizontal: 6,
-                                paddingVertical: 3,
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                gap: 4
-                              }}>
-                                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: sugColor + '33', alignItems: 'center', justifyContent: 'center' }}>
-                                  <View style={{ width: 3.5, height: 3.5, borderRadius: 1.75, backgroundColor: sugColor }} />
-                                </View>
-                                <Text style={{ color: colors.text, fontSize: 8, fontWeight: '700' }}>
-                                  {item.sugarGrams}g sugar
-                                </Text>
-                              </View>
-                            </View>
-
-                            {/* Row 3: Jogging & Size details */}
-                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
-                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                                <Activity size={10} color="#007AFF" />
-                                <Text style={{ color: colors.textSecondary, fontSize: 8.5, fontWeight: '700' }}>
-                                  {itemRunMinutes}m jogging
-                                </Text>
-                              </View>
-
-                              {/* Pack / Serving Sizes */}
-                              {(item.packageSize || item.servingSize) && (
-                                <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '800' }}>
-                                  {item.servingSize ? `Serve: ${item.servingSize}` : `Pack: ${item.packageSize}`}
-                                </Text>
-                              )}
-                            </View>
-
-                            {/* Row 4: WHO Limit Progress & Delete Trash button */}
-                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                              <View style={{ flex: 1 }}>
-                                <Text style={{ color: colors.textSecondary, fontSize: 8, fontWeight: '700', marginBottom: 2 }}>
-                                  WHO Limit: {itemWhoPercent}%
-                                </Text>
-                                <View style={{ height: 4, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', borderRadius: 2, overflow: 'hidden' }}>
-                                  <View style={{ height: '100%', width: `${itemWhoPercent}%`, backgroundColor: whoBarColor }} />
-                                </View>
-                              </View>
-
-                              <TouchableOpacity
-                                onPress={() => {
-                                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                  deleteScan(item.id);
-                                }}
-                                style={{
-                                  backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255, 59, 48, 0.08)',
-                                  padding: 7,
-                                  borderRadius: 8
-                                }}
-                                activeOpacity={0.8}
-                              >
-                                <Trash2 size={11} color={colors.error} />
-                              </TouchableOpacity>
-                            </View>
-                          </View>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </ScrollView>
-                </AnimatedReanimated.View>
+                  group={group}
+                  groupIndex={groupIndex}
+                  colors={colors}
+                  isDark={isDark}
+                  panY={panY}
+                  setSelectedScan={setSelectedScan}
+                  deleteScan={deleteScan}
+                />
               ));
             })()
           )}
