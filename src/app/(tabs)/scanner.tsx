@@ -19,7 +19,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
 import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
-import * as FileSystem from 'expo-file-system';
+
 import * as ImagePicker from 'expo-image-picker';
 import AnimatedReanimated, {
   useSharedValue,
@@ -32,6 +32,18 @@ import AnimatedReanimated, {
 } from 'react-native-reanimated';
 import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
+
+import {
+  ScanResultData,
+  isAbortError,
+  isRequestTimeoutError,
+  lookupOpenFoodFacts,
+  lookupUSDA,
+  fetchWithTimeout,
+  extractSugarFromNutriments,
+  parseQuantityString,
+  API_TIMEOUT_MS
+} from '../../utils/scannerAPI';
 
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
@@ -57,133 +69,9 @@ import { BlurView } from 'expo-blur';
 // ─────────────────────────────────────────────────────────
 type ScanMode = 'camera' | 'manual' | 'result' | 'not-found';
 
-// Timeout for external product database calls.
-const API_TIMEOUT_MS = 15_000;
 // Minimum delay before next scan can fire (prevents double-scans)
 const SCAN_COOLDOWN_MS = 2_500;
-const PRODUCT_BARCODE_TYPES = ['upc_a', 'upc_e', 'ean13', 'ean8', 'code128', 'itf14'] as const;
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-// ─────────────────────────────────────────────────────────
-// Fetch with timeout helper — prevents scanner from hanging
-// ─────────────────────────────────────────────────────────
-class RequestTimeoutError extends Error {
-  constructor(timeoutMs: number) {
-    super(`Request timed out after ${timeoutMs}ms`);
-    this.name = 'RequestTimeoutError';
-  }
-}
-
-function isAbortError(err: unknown): boolean {
-  return err instanceof Error && err.name === 'AbortError';
-}
-
-function isRequestTimeoutError(err: unknown): boolean {
-  return err instanceof RequestTimeoutError;
-}
-
-async function fetchWithTimeout(url: string, timeoutMs: number, signal?: AbortSignal): Promise<Response> {
-  const controller = new AbortController();
-  let timedOut = false;
-  const timer = setTimeout(() => {
-    timedOut = true;
-    controller.abort();
-  }, timeoutMs);
-  const abortFromParent = () => controller.abort();
-
-  if (signal?.aborted) {
-    controller.abort();
-  } else {
-    signal?.addEventListener('abort', abortFromParent, { once: true });
-  }
-
-  try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'GoodbyeSugarApp/1.0.0 (React Native; iOS/Android; contact@goodbyesugar.org)',
-        'Accept': 'application/json',
-      },
-    });
-    clearTimeout(timer);
-    return response;
-  } catch (err) {
-    clearTimeout(timer);
-    if (timedOut) {
-      throw new RequestTimeoutError(timeoutMs);
-    }
-    throw err;
-  } finally {
-    signal?.removeEventListener('abort', abortFromParent);
-  }
-}
-
-// ─────────────────────────────────────────────────────────
-// Robust sugar extraction from OpenFoodFacts nutriments
-// ─────────────────────────────────────────────────────────
-// OpenFoodFacts is a community database and MANY products have
-// `sugars_100g = 0` even when the product is mostly sugar (e.g. glucose/
-// dextrose-based products like Glucon D). This function uses a smart
-// priority waterfall to extract the most accurate sugar value possible.
-//
-// Priority order:
-//  1. sugars_serving        → most accurate (per-serving value)
-//  2. sugars_100g (> 0)     → per-100g value, ONLY if non-zero
-//  3. added-sugars_100g     → partial fallback (when sugars field is 0)
-//  4. carbohydrates_100g    → last-resort: carbs = sugars for pure-sugar
-//                             products (glucose, dextrose, honey, etc.)
-//                             but only when sugars field is explicitly 0
-//                             and carbs represent a plausibly "sugar-like"
-//                             fraction of the product.
-//
-// The function NEVER silently returns 0 when meaningful data is present.
-function extractSugarFromNutriments(n: Record<string, any>): number {
-  if (!n) return 0;
-
-  const toNum = (v: any): number | null => {
-    if (v === undefined || v === null || v === '') return null;
-    const num = parseFloat(String(v));
-    return isNaN(num) ? null : num;
-  };
-
-  // Priority 1: added-sugars_serving (explicit per-serving added sugar)
-  const addedSugarServing = toNum(n['added-sugars_serving']);
-  if (addedSugarServing !== null) return addedSugarServing;
-
-  // Priority 2: added-sugars_100g (explicit per-100g added sugar)
-  const addedSugar100g = toNum(n['added-sugars_100g'] ?? n['added-sugars']);
-  if (addedSugar100g !== null) return addedSugar100g;
-
-  // Fallback to total sugars / other fields if added sugars data is completely missing
-  // (to prevent showing 0 sugar for foods where added sugar is not explicitly filled in the community database)
-  const sugarServing = toNum(n.sugars_serving);
-  if (sugarServing !== null && sugarServing > 0) return sugarServing;
-
-  const sugar100g = toNum(n.sugars_100g ?? n.sugars);
-  if (sugar100g !== null && sugar100g > 0) return sugar100g;
-
-  const carbs100g = toNum(n.carbohydrates_100g ?? n.carbohydrates);
-  const sugarFieldExistsAsZero = sugar100g === 0;
-  if (sugarFieldExistsAsZero && carbs100g !== null && carbs100g > 0) {
-    return carbs100g;
-  }
-
-  return sugar100g ?? 0;
-}
-
-function parseQuantityString(str: any): number | null {
-  if (!str) return null;
-  const cleaned = String(str).toLowerCase().replace(/,/g, '.');
-  const match = cleaned.match(/([\d\.]+)\s*(g|ml|kg|l|cl)/);
-  if (!match) return null;
-  const val = parseFloat(match[1]);
-  const unit = match[2];
-  if (isNaN(val)) return null;
-  if (unit === 'kg' || unit === 'l') return val * 1000;
-  if (unit === 'cl') return val * 10;
-  return val;
-}
+const PRODUCT_BARCODE_TYPES = ['qr', 'upc_a', 'upc_e', 'ean13', 'ean8', 'code128', 'code39', 'itf14'] as const;
 
 // ─────────────────────────────────────────────────────────
 // Main Scanner Screen
@@ -241,6 +129,8 @@ export default function ScannerScreen() {
     return () => subscription.remove();
   }, []);
 
+
+
   const stopActiveScannerSession = useCallback((clearLoading = true) => {
     activeLookupControllerRef.current?.abort();
     activeLookupControllerRef.current = null;
@@ -255,6 +145,27 @@ export default function ScannerScreen() {
       setLoadingText('Analyzing...');
     }
   }, []);
+
+  // 10-Second Hardware Camera Timeout
+  useEffect(() => {
+    let timeoutTimer: ReturnType<typeof setTimeout>;
+    
+    if (scannerIsLive) {
+      timeoutTimer = setTimeout(() => {
+        // If 10 seconds have passed, we are still live, and NOT actively querying the database:
+        if (scannerIsLiveRef.current && !isScanningRef.current) {
+          stopActiveScannerSession();
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          setErrorMsg('Having trouble scanning? The barcode might be damaged or unsupported.');
+          setMode('manual');
+        }
+      }, 10000);
+    }
+
+    return () => {
+      if (timeoutTimer) clearTimeout(timeoutTimer);
+    };
+  }, [scannerIsLive, stopActiveScannerSession]);
 
   // Animated laser line (0 → 1 normalized, mapped in style)
   const laserY = useSharedValue(0);
@@ -489,272 +400,81 @@ export default function ScannerScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     let productFound = false;
+    let localErrorMsg = null;
 
-    // --- PHASE 1: OpenFoodFacts ---
     try {
-      const response = await fetchWithTimeout(
-        `https://world.openfoodfacts.org/api/v3/product/${encodeURIComponent(barcode)}.json`,
-        API_TIMEOUT_MS,
-        lookupController.signal
-      );
-
+      // --- PHASE 1: OpenFoodFacts ---
+      let result = await lookupOpenFoodFacts(barcode, lookupController.signal);
+      
       if (!isCurrentLookup()) return;
 
-      let resData: any = null;
-      if (response.ok) {
-        resData = await response.json();
+      // --- PHASE 2: USDA FoodData Central ---
+      if (!result && process.env.EXPO_PUBLIC_USDA_API_KEY) {
+        result = await lookupUSDA(barcode, process.env.EXPO_PUBLIC_USDA_API_KEY, lookupController.signal);
         if (!isCurrentLookup()) return;
       }
 
-      if (!resData?.product && isCurrentLookup()) {
-        const fallbackResponse = await fetchWithTimeout(
-          `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json`,
-          API_TIMEOUT_MS,
-          lookupController.signal
+      if (result) {
+        addScan(
+          result.name,
+          result.sugarGrams ?? 0,
+          result.brand,
+          result.imageUrl,
+          data,
+          result.servingSize,
+          result.calories,
+          result.carbsGrams,
+          result.fatGrams,
+          result.proteinGrams,
+          result.sugarPer100g,
+          result.categoryTag,
+          result.totalSugarGrams,
+          result.packageSize,
+          result.totalCalories,
+          result.totalCarbsGrams,
+          result.totalFatGrams,
+          result.totalProteinGrams
         );
-        if (!isCurrentLookup()) return;
-        if (fallbackResponse.ok) {
-          resData = await fallbackResponse.json();
-          if (!isCurrentLookup()) return;
+
+        if (isCurrentLookup()) {
+          setScanResult(result);
+          productFound = true;
         }
       }
-
-      if (resData?.product) {
-        const p = resData.product;
-        const name = (p.product_name || p.product_name_en || 'Unknown Product').trim();
-          
-        if (name !== 'Unknown Product') {
-          const brand = (p.brands || 'Generic Brand').trim();
-          const imageUrl: string | undefined = p.image_front_url || p.image_url || undefined;
-
-            const toNum = (v: any): number | null => {
-              if (v === undefined || v === null || v === '') return null;
-              const num = parseFloat(String(v));
-              return isNaN(num) ? null : num;
-            };
-
-            const n = p.nutriments ?? {};
-
-            // A. Get 100g base values (raw source values)
-            const addedSugar100g = toNum(n['added-sugars_100g'] ?? n['added-sugars']);
-            const totalSugar100g = toNum(n.sugars_100g ?? n.sugars);
-            const rawCarbs100g = toNum(n.carbohydrates_100g ?? n.carbohydrates);
-            
-            let sugarPer100g = 0;
-            if (addedSugar100g !== null) {
-              sugarPer100g = addedSugar100g;
-            } else if (totalSugar100g !== null && totalSugar100g > 0) {
-              sugarPer100g = totalSugar100g;
-            } else if (totalSugar100g === 0 && rawCarbs100g !== null && rawCarbs100g > 0) {
-              sugarPer100g = rawCarbs100g;
-            }
-
-            const kcal100g = toNum(n['energy-kcal_100g']);
-            const carbs100g = toNum(n.carbohydrates_100g);
-            const fat100g = toNum(n.fat_100g);
-            const protein100g = toNum(n.proteins_100g);
-
-            // B. Resolve Serving Size and Serving Sugar/Nutrients
-            const addedSugarServing = toNum(n['added-sugars_serving']);
-            const totalSugarServing = toNum(n.sugars_serving);
-            
-            let servingSugarGrams: number | undefined = undefined;
-            let servingSize: string | undefined = undefined;
-            
-            // Do we have explicit serving-based sugar?
-            const explicitSugarServing = addedSugarServing !== null ? addedSugarServing : (totalSugarServing !== null && totalSugarServing > 0 ? totalSugarServing : null);
-
-            if (explicitSugarServing !== null) {
-              servingSugarGrams = explicitSugarServing;
-              servingSize = p.serving_size ? String(p.serving_size).trim() : '1 serving';
-            }
-
-            const getServingMacro = (servingField: string): number | undefined => {
-              const sVal = toNum(n[servingField]);
-              if (sVal !== null) return sVal;
-              return undefined;
-            };
-
-            const calories = getServingMacro('energy-kcal_serving');
-            const carbsGrams = getServingMacro('carbohydrates_serving');
-            const fatGrams = getServingMacro('fat_serving');
-            const proteinGrams = getServingMacro('proteins_serving');
-
-            const sugarTeaspoons = servingSugarGrams !== undefined ? parseFloat((servingSugarGrams / 4.2).toFixed(1)) : undefined;
-
-            // C. Resolve Package Size and Package Sugar/Nutrients
-            const packageWeight = toNum(p.product_quantity) ?? parseQuantityString(p.quantity);
-            
-            let totalSugarGrams: number | undefined = undefined;
-            let totalSugarTeaspoons: number | undefined = undefined;
-            let packageSize: string | undefined = undefined;
-            let totalCalories: number | undefined = undefined;
-            let totalCarbsGrams: number | undefined = undefined;
-            let totalFatGrams: number | undefined = undefined;
-            let totalProteinGrams: number | undefined = undefined;
-
-            if (packageWeight !== null && packageWeight > 0) {
-              const packageScale = packageWeight / 100;
-              totalSugarGrams = parseFloat((sugarPer100g * packageScale).toFixed(1));
-              totalSugarTeaspoons = parseFloat((totalSugarGrams / 4.2).toFixed(1));
-              packageSize = p.quantity ? String(p.quantity).trim() : `${packageWeight} g`;
-              
-              if (kcal100g !== null) totalCalories = parseFloat((kcal100g * packageScale).toFixed(1));
-              if (carbs100g !== null) totalCarbsGrams = parseFloat((carbs100g * packageScale).toFixed(1));
-              if (fat100g !== null) totalFatGrams = parseFloat((fat100g * packageScale).toFixed(1));
-              if (protein100g !== null) totalProteinGrams = parseFloat((protein100g * packageScale).toFixed(1));
-            }
-
-            // Best category tag for "Better Choices" lookup
-            // Prefer the most specific category (last in the array) from categories_tags
-            const categoryTag: string | undefined =
-              Array.isArray(p.categories_tags) && p.categories_tags.length > 0
-                ? p.categories_tags[p.categories_tags.length - 1]
-                : undefined;
-
-            if (!isCurrentLookup()) return;
-            addScan(
-              name,
-              servingSugarGrams ?? sugarPer100g,
-              brand,
-              imageUrl,
-              data,
-              servingSize,
-              calories,
-              carbsGrams,
-              fatGrams,
-              proteinGrams,
-              sugarPer100g,
-              categoryTag,
-              totalSugarGrams,
-              packageSize,
-              totalCalories,
-              totalCarbsGrams,
-              totalFatGrams,
-              totalProteinGrams
-            );
-
-            if (isCurrentLookup()) {
-              setScanResult({
-                name,
-                brand,
-                sugarGrams: servingSugarGrams,
-                sugarTeaspoons,
-                sugarPer100g,
-                imageUrl,
-                servingSize,
-                calories,
-                carbsGrams,
-                fatGrams,
-                proteinGrams,
-                categoryTag,
-                totalSugarGrams,
-                totalSugarTeaspoons,
-                packageSize,
-                totalCalories,
-                totalCarbsGrams,
-                totalFatGrams,
-                totalProteinGrams,
-              });
-              productFound = true;
-            }
-          }
-        }
     } catch (err: any) {
-      if (lookupController.signal.aborted || isAbortError(err)) return;
-      console.warn(
-        isRequestTimeoutError(err) ? 'OpenFoodFacts request timed out:' : 'OpenFoodFacts fetch error:',
-        err
-      );
-    }
-
-    // --- PHASE 2: USDA FoodData Central ---
-    if (!productFound && process.env.EXPO_PUBLIC_USDA_API_KEY && isCurrentLookup()) {
-      try {
-        const response = await fetchWithTimeout(
-          `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(barcode)}&api_key=${process.env.EXPO_PUBLIC_USDA_API_KEY}&pageSize=1`,
-          API_TIMEOUT_MS,
-          lookupController.signal
-        );
-        if (!isCurrentLookup()) return;
-        if (response.ok) {
-          const resData = await response.json();
-          if (!isCurrentLookup()) return;
-          if (resData.foods && resData.foods.length > 0) {
-            const food = resData.foods[0];
-            const name = food.description || 'Unknown Product';
-            const brand = food.brandOwner || food.brandName || 'Generic Brand';
-            
-            // Look for added sugar in the nutrients array first
-            const addedSugarsNutrient = food.foodNutrients?.find((n: any) => 
-              n.nutrientName?.toLowerCase().includes('sugars, added') || 
-              n.nutrientName?.toLowerCase() === 'added sugar' ||
-              n.nutrientName?.toLowerCase() === 'added sugars'
-            );
-            
-            let sugarGrams = 0;
-            if (addedSugarsNutrient && addedSugarsNutrient.value !== undefined) {
-               sugarGrams = parseFloat(addedSugarsNutrient.value);
-            } else {
-              // Fallback to total sugars if added sugars data is missing
-              const sugarsNutrient = food.foodNutrients?.find((n: any) => 
-                n.nutrientName?.toLowerCase().includes('sugars, total') || 
-                n.nutrientName?.toLowerCase() === 'sugars'
-              );
-              if (sugarsNutrient && sugarsNutrient.value !== undefined) {
-                 sugarGrams = parseFloat(sugarsNutrient.value);
-              }
-            }
-
-            const sugarTeaspoons = parseFloat((sugarGrams / 4.2).toFixed(1));
-            const servingSize = food.servingSize ? `${food.servingSize} ${food.servingSizeUnit || ''}`.trim() : undefined;
-
-            if (!isCurrentLookup()) return;
-            addScan(name, sugarGrams, brand, undefined, data, servingSize, undefined, undefined, undefined, undefined);
-
-            if (isCurrentLookup()) {
-              setScanResult({ name, brand, sugarGrams, sugarTeaspoons, servingSize });
-              productFound = true;
-            }
-          }
-        }
-      } catch (err: any) {
-        if (lookupController.signal.aborted || isAbortError(err)) return;
-        console.warn(
-          isRequestTimeoutError(err) ? 'USDA API request timed out:' : 'USDA API fetch error:',
-          err
-        );
+      if (!isCurrentLookup() || isAbortError(err)) return;
+      console.warn('Scanner API Error:', err);
+      if (isRequestTimeoutError(err)) {
+        localErrorMsg = 'Connection timed out. Please check your internet.';
+      } else {
+        localErrorMsg = 'Network error. Please try again later.';
       }
+    } finally {
+      if (!isCurrentLookup()) return;
+      
+      activeLookupControllerRef.current = null;
+      loadingRef.current = false;
+      setLoading(false);
+      setLoadingText('Analyzing...');
+      
+      if (productFound) {
+        setMode('result');
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        setErrorMsg(localErrorMsg || 'Product not found. Entering manual mode.');
+        setMode('manual');
+      }
+
+      // Release scan lock after cooldown so user can try again
+      if (scanCooldownTimerRef.current) {
+        clearTimeout(scanCooldownTimerRef.current);
+      }
+      scanCooldownTimerRef.current = setTimeout(() => {
+        isScanningRef.current = false;
+        scanCooldownTimerRef.current = null;
+      }, SCAN_COOLDOWN_MS);
     }
-
-
-
-    // --- FINAL OUTCOME ---
-    if (!isCurrentLookup()) return;
-    
-    activeLookupControllerRef.current = null;
-    loadingRef.current = false;
-    setLoading(false);
-    setLoadingText('Analyzing...');
-    
-    if (productFound) {
-      setMode('result');
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } else {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setErrorMsg('Product not found. Entering manual mode.');
-      setMode('manual');
-    }
-
-    // Release scan lock after cooldown so user can try again
-    if (scanCooldownTimerRef.current) {
-      clearTimeout(scanCooldownTimerRef.current);
-    }
-    scanCooldownTimerRef.current = setTimeout(() => {
-      isScanningRef.current = false;
-      scanCooldownTimerRef.current = null;
-    }, SCAN_COOLDOWN_MS);
-
   }, [addScan]);
 
   const handlePickImage = async () => {
