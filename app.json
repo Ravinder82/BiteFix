@@ -30,7 +30,8 @@
         {
           "cameraPermission": "GoodBye Sugar needs access to your camera to scan food barcodes and analyse their sugar content.",
           "microphonePermission": false,
-          "recordAudioAndroid": false
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
         }
       ],
       "expo-font"

@@ -12,9 +12,12 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Modal,
+  AppState,
+  AppStateStatus,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
@@ -54,19 +57,47 @@ import { BlurView } from 'expo-blur';
 // ─────────────────────────────────────────────────────────
 type ScanMode = 'camera' | 'manual' | 'result' | 'not-found';
 
-// Timeout for the Open Food Facts API call — 10 seconds
-const API_TIMEOUT_MS = 10_000;
+// Timeout for external product database calls.
+const API_TIMEOUT_MS = 15_000;
 // Minimum delay before next scan can fire (prevents double-scans)
 const SCAN_COOLDOWN_MS = 2_500;
+const PRODUCT_BARCODE_TYPES = ['upc_a', 'upc_e', 'ean13', 'ean8', 'code128', 'itf14'] as const;
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ─────────────────────────────────────────────────────────
 // Fetch with timeout helper — prevents scanner from hanging
 // ─────────────────────────────────────────────────────────
-async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Response> {
+class RequestTimeoutError extends Error {
+  constructor(timeoutMs: number) {
+    super(`Request timed out after ${timeoutMs}ms`);
+    this.name = 'RequestTimeoutError';
+  }
+}
+
+function isAbortError(err: unknown): boolean {
+  return err instanceof Error && err.name === 'AbortError';
+}
+
+function isRequestTimeoutError(err: unknown): boolean {
+  return err instanceof RequestTimeoutError;
+}
+
+async function fetchWithTimeout(url: string, timeoutMs: number, signal?: AbortSignal): Promise<Response> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+  const abortFromParent = () => controller.abort();
+
+  if (signal?.aborted) {
+    controller.abort();
+  } else {
+    signal?.addEventListener('abort', abortFromParent, { once: true });
+  }
+
   try {
     const response = await fetch(url, {
       signal: controller.signal,
@@ -79,7 +110,12 @@ async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Respons
     return response;
   } catch (err) {
     clearTimeout(timer);
+    if (timedOut) {
+      throw new RequestTimeoutError(timeoutMs);
+    }
     throw err;
+  } finally {
+    signal?.removeEventListener('abort', abortFromParent);
   }
 }
 
@@ -158,27 +194,73 @@ export default function ScannerScreen() {
 
   // Camera permission hook from expo-camera
   const [permission, requestPermission] = useCameraPermissions();
+  const isFocused = useIsFocused();
 
   const [mode, setMode] = useState<ScanMode>('camera');
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('Analyzing...');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [torchOn, setTorchOn] = useState(false);
+  const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
+  const scannerIsVisible = isFocused && appState === 'active';
+  const scannerIsLive = scannerIsVisible && mode === 'camera' && permission?.granted === true;
 
   // Synchronous ref-lock prevents duplicate scan callbacks from camera frames
   const isScanningRef = useRef(false);
+  const loadingRef = useRef(false);
+  const activeLookupControllerRef = useRef<AbortController | null>(null);
+  const scanCooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scannerIsLiveRef = useRef(false);
   // Track whether the component is still mounted to prevent setState after unmount
   const mountedRef = useRef(true);
   useEffect(() => {
     mountedRef.current = true;
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+      activeLookupControllerRef.current?.abort();
+      activeLookupControllerRef.current = null;
+      if (scanCooldownTimerRef.current) {
+        clearTimeout(scanCooldownTimerRef.current);
+        scanCooldownTimerRef.current = null;
+      }
+      isScanningRef.current = false;
+      loadingRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
+
+  useEffect(() => {
+    scannerIsLiveRef.current = scannerIsLive;
+  }, [scannerIsLive]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', setAppState);
+    return () => subscription.remove();
+  }, []);
+
+  const stopActiveScannerSession = useCallback((clearLoading = true) => {
+    activeLookupControllerRef.current?.abort();
+    activeLookupControllerRef.current = null;
+    if (scanCooldownTimerRef.current) {
+      clearTimeout(scanCooldownTimerRef.current);
+      scanCooldownTimerRef.current = null;
+    }
+    isScanningRef.current = false;
+    loadingRef.current = false;
+    if (clearLoading && mountedRef.current) {
+      setLoading(false);
+      setLoadingText('Analyzing...');
+    }
   }, []);
 
   // Animated laser line (0 → 1 normalized, mapped in style)
   const laserY = useSharedValue(0);
 
   useEffect(() => {
-    if (mode === 'camera' && permission?.granted) {
+    if (scannerIsLive) {
       laserY.value = withRepeat(
         withSequence(
           withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.quad) }),
@@ -190,7 +272,7 @@ export default function ScannerScreen() {
     } else {
       laserY.value = withTiming(0, { duration: 300 });
     }
-  }, [mode, permission?.granted]);
+  }, [scannerIsLive]);
 
   const laserStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: laserY.value * 230 }],
@@ -201,6 +283,11 @@ export default function ScannerScreen() {
   const torchStyle = useAnimatedStyle(() => ({ transform: [{ scale: torchScale.value }] }));
 
   const toggleTorch = () => {
+    if (!scannerIsLive) {
+      setTorchOn(false);
+      return;
+    }
+
     torchScale.value = withSequence(
       withSpring(0.85, { damping: 8 }),
       withSpring(1, { damping: 8 })
@@ -275,23 +362,36 @@ export default function ScannerScreen() {
     if (permission && !permission.granted && mode === 'camera') {
       setMode('manual');
     }
-  }, [permission]);
+  }, [mode, permission]);
 
-  // Turn torch off when leaving camera mode
+  // Stop camera-owned side effects whenever the scanner is not the active screen.
+  useEffect(() => {
+    if (!scannerIsLive) {
+      setTorchOn(false);
+      if (mode === 'camera') {
+        stopActiveScannerSession();
+      }
+    }
+  }, [mode, scannerIsLive, stopActiveScannerSession]);
+
+  // Turn torch and any in-flight camera lookup off when leaving camera mode.
   useEffect(() => {
     if (mode !== 'camera') {
       setTorchOn(false);
+      stopActiveScannerSession();
     }
-  }, [mode]);
+  }, [mode, stopActiveScannerSession]);
 
   // Unlock scanner lock when mode changes to camera
   useEffect(() => {
-    if (mode === 'camera') {
+    if (mode === 'camera' && scannerIsVisible) {
       isScanningRef.current = false;
+      loadingRef.current = false;
       setLoading(false);
+      setLoadingText('Analyzing...');
       setErrorMsg(null);
     }
-  }, [mode]);
+  }, [mode, scannerIsVisible]);
 
   // Auto-Save Manual Entry
   useEffect(() => {
@@ -368,15 +468,23 @@ export default function ScannerScreen() {
 
   // ─── Core barcode scan handler (Waterfall Lookup) ───────────────────────────
   const handleBarcodeScanned = useCallback(async ({ data }: BarcodeScanningResult) => {
-    // Double-scan guard
-    if (isScanningRef.current || loading) return;
+    if (!scannerIsLiveRef.current || isScanningRef.current || loadingRef.current) return;
     const barcode = data?.trim();
     if (!barcode) return;
 
     isScanningRef.current = true;
+    const lookupController = new AbortController();
+    activeLookupControllerRef.current?.abort();
+    activeLookupControllerRef.current = lookupController;
+    const isCurrentLookup = () =>
+      mountedRef.current &&
+      activeLookupControllerRef.current === lookupController &&
+      !lookupController.signal.aborted;
 
-    if (!mountedRef.current) return;
+    if (!isCurrentLookup()) return;
+    loadingRef.current = true;
     setLoading(true);
+    setLoadingText('Checking product databases...');
     setErrorMsg(null);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
@@ -386,18 +494,38 @@ export default function ScannerScreen() {
     try {
       const response = await fetchWithTimeout(
         `https://world.openfoodfacts.org/api/v3/product/${encodeURIComponent(barcode)}.json`,
-        API_TIMEOUT_MS
+        API_TIMEOUT_MS,
+        lookupController.signal
       );
 
+      if (!isCurrentLookup()) return;
+
+      let resData: any = null;
       if (response.ok) {
-        const resData = await response.json();
-        if (resData?.product) {
-          const p = resData.product;
-          const name = (p.product_name || p.product_name_en || 'Unknown Product').trim();
+        resData = await response.json();
+        if (!isCurrentLookup()) return;
+      }
+
+      if (!resData?.product && isCurrentLookup()) {
+        const fallbackResponse = await fetchWithTimeout(
+          `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json`,
+          API_TIMEOUT_MS,
+          lookupController.signal
+        );
+        if (!isCurrentLookup()) return;
+        if (fallbackResponse.ok) {
+          resData = await fallbackResponse.json();
+          if (!isCurrentLookup()) return;
+        }
+      }
+
+      if (resData?.product) {
+        const p = resData.product;
+        const name = (p.product_name || p.product_name_en || 'Unknown Product').trim();
           
-          if (name !== 'Unknown Product') {
-            const brand = (p.brands || 'Generic Brand').trim();
-            const imageUrl: string | undefined = p.image_front_url || p.image_url || undefined;
+        if (name !== 'Unknown Product') {
+          const brand = (p.brands || 'Generic Brand').trim();
+          const imageUrl: string | undefined = p.image_front_url || p.image_url || undefined;
 
             const toNum = (v: any): number | null => {
               if (v === undefined || v === null || v === '') return null;
@@ -484,6 +612,7 @@ export default function ScannerScreen() {
                 ? p.categories_tags[p.categories_tags.length - 1]
                 : undefined;
 
+            if (!isCurrentLookup()) return;
             addScan(
               name,
               servingSugarGrams ?? sugarPer100g,
@@ -505,7 +634,7 @@ export default function ScannerScreen() {
               totalProteinGrams
             );
 
-            if (mountedRef.current) {
+            if (isCurrentLookup()) {
               setScanResult({
                 name,
                 brand,
@@ -531,20 +660,26 @@ export default function ScannerScreen() {
             }
           }
         }
-      }
     } catch (err: any) {
-      console.warn('OpenFoodFacts fetch error:', err);
+      if (lookupController.signal.aborted || isAbortError(err)) return;
+      console.warn(
+        isRequestTimeoutError(err) ? 'OpenFoodFacts request timed out:' : 'OpenFoodFacts fetch error:',
+        err
+      );
     }
 
     // --- PHASE 2: USDA FoodData Central ---
-    if (!productFound && process.env.EXPO_PUBLIC_USDA_API_KEY && mountedRef.current) {
+    if (!productFound && process.env.EXPO_PUBLIC_USDA_API_KEY && isCurrentLookup()) {
       try {
         const response = await fetchWithTimeout(
           `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(barcode)}&api_key=${process.env.EXPO_PUBLIC_USDA_API_KEY}&pageSize=1`,
-          API_TIMEOUT_MS
+          API_TIMEOUT_MS,
+          lookupController.signal
         );
+        if (!isCurrentLookup()) return;
         if (response.ok) {
           const resData = await response.json();
+          if (!isCurrentLookup()) return;
           if (resData.foods && resData.foods.length > 0) {
             const food = resData.foods[0];
             const name = food.description || 'Unknown Product';
@@ -574,25 +709,33 @@ export default function ScannerScreen() {
             const sugarTeaspoons = parseFloat((sugarGrams / 4.2).toFixed(1));
             const servingSize = food.servingSize ? `${food.servingSize} ${food.servingSizeUnit || ''}`.trim() : undefined;
 
+            if (!isCurrentLookup()) return;
             addScan(name, sugarGrams, brand, undefined, data, servingSize, undefined, undefined, undefined, undefined);
 
-            if (mountedRef.current) {
+            if (isCurrentLookup()) {
               setScanResult({ name, brand, sugarGrams, sugarTeaspoons, servingSize });
               productFound = true;
             }
           }
         }
       } catch (err: any) {
-        console.warn('USDA API fetch error:', err);
+        if (lookupController.signal.aborted || isAbortError(err)) return;
+        console.warn(
+          isRequestTimeoutError(err) ? 'USDA API request timed out:' : 'USDA API fetch error:',
+          err
+        );
       }
     }
 
 
 
     // --- FINAL OUTCOME ---
-    if (!mountedRef.current) return;
+    if (!isCurrentLookup()) return;
     
+    activeLookupControllerRef.current = null;
+    loadingRef.current = false;
     setLoading(false);
+    setLoadingText('Analyzing...');
     
     if (productFound) {
       setMode('result');
@@ -604,11 +747,15 @@ export default function ScannerScreen() {
     }
 
     // Release scan lock after cooldown so user can try again
-    setTimeout(() => {
+    if (scanCooldownTimerRef.current) {
+      clearTimeout(scanCooldownTimerRef.current);
+    }
+    scanCooldownTimerRef.current = setTimeout(() => {
       isScanningRef.current = false;
+      scanCooldownTimerRef.current = null;
     }, SCAN_COOLDOWN_MS);
 
-  }, [loading, addScan]);
+  }, [addScan]);
 
   const handlePickImage = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -631,10 +778,12 @@ export default function ScannerScreen() {
 
 
   const resetScanner = () => {
+    stopActiveScannerSession();
     setScanResult(null);
     setErrorMsg(null);
     isScanningRef.current = false;
     setLoading(false);
+    setLoadingText('Analyzing...');
     setTorchOn(false);
     setManualName('');
     setManualSugarGrams('');
@@ -755,64 +904,70 @@ export default function ScannerScreen() {
       {mode === 'camera' && (
         <View style={{ flex: 1 }}>
           {permission.granted ? (
-            <CameraView
-              style={StyleSheet.absoluteFill}
-              facing="back"
-              enableTorch={torchOn}
-              barcodeScannerSettings={{
-                barcodeTypes: ['qr', 'upc_a', 'upc_e', 'ean13', 'ean8', 'code128', 'code39', 'aztec', 'pdf417', 'datamatrix', 'code93', 'itf14', 'codabar'],
-              }}
-              onBarcodeScanned={handleBarcodeScanned}
-            >
-              {/* Dark overlay with scanning reticle */}
-              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.55)' }}>
-                {/* Scanning Reticle Box */}
-                <View style={{
-                  width: 280,
-                  height: 280,
-                  borderColor: 'rgba(255,255,255,0.2)',
-                  borderWidth: 1,
-                  borderRadius: 32,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: 'transparent',
-                  position: 'relative',
-                }}>
-                  {/* Corner: Top Left */}
-                  <View style={{ borderColor: colors.primary, position: 'absolute', top: 0, left: 0, width: 32, height: 32, borderTopWidth: 5, borderLeftWidth: 5, borderTopLeftRadius: 28 }} />
-                  {/* Corner: Top Right */}
-                  <View style={{ borderColor: colors.primary, position: 'absolute', top: 0, right: 0, width: 32, height: 32, borderTopWidth: 5, borderRightWidth: 5, borderTopRightRadius: 28 }} />
-                  {/* Corner: Bottom Left */}
-                  <View style={{ borderColor: colors.primary, position: 'absolute', bottom: 0, left: 0, width: 32, height: 32, borderBottomWidth: 5, borderLeftWidth: 5, borderBottomLeftRadius: 28 }} />
-                  {/* Corner: Bottom Right */}
-                  <View style={{ borderColor: colors.primary, position: 'absolute', bottom: 0, right: 0, width: 32, height: 32, borderBottomWidth: 5, borderRightWidth: 5, borderBottomRightRadius: 28 }} />
+            scannerIsLive ? (
+              <CameraView
+                style={StyleSheet.absoluteFill}
+                active={scannerIsLive}
+                facing="back"
+                autofocus="on"
+                enableTorch={scannerIsLive && torchOn}
+                barcodeScannerSettings={{
+                  barcodeTypes: [...PRODUCT_BARCODE_TYPES],
+                }}
+                onBarcodeScanned={!loading ? handleBarcodeScanned : undefined}
+              >
+                {/* Dark overlay with scanning reticle */}
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.55)' }}>
+                  {/* Scanning Reticle Box */}
+                  <View style={{
+                    width: 280,
+                    height: 280,
+                    borderColor: 'rgba(255,255,255,0.2)',
+                    borderWidth: 1,
+                    borderRadius: 32,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'transparent',
+                    position: 'relative',
+                  }}>
+                    {/* Corner: Top Left */}
+                    <View style={{ borderColor: colors.primary, position: 'absolute', top: 0, left: 0, width: 32, height: 32, borderTopWidth: 5, borderLeftWidth: 5, borderTopLeftRadius: 28 }} />
+                    {/* Corner: Top Right */}
+                    <View style={{ borderColor: colors.primary, position: 'absolute', top: 0, right: 0, width: 32, height: 32, borderTopWidth: 5, borderRightWidth: 5, borderTopRightRadius: 28 }} />
+                    {/* Corner: Bottom Left */}
+                    <View style={{ borderColor: colors.primary, position: 'absolute', bottom: 0, left: 0, width: 32, height: 32, borderBottomWidth: 5, borderLeftWidth: 5, borderBottomLeftRadius: 28 }} />
+                    {/* Corner: Bottom Right */}
+                    <View style={{ borderColor: colors.primary, position: 'absolute', bottom: 0, right: 0, width: 32, height: 32, borderBottomWidth: 5, borderRightWidth: 5, borderBottomRightRadius: 28 }} />
 
-                  {/* Animated Scanning Laser Line */}
-                  <AnimatedReanimated.View
-                    style={[
-                      {
-                        position: 'absolute',
-                        top: 2,
-                        left: 8,
-                        right: 8,
-                        height: 3,
-                        backgroundColor: colors.primary,
-                        shadowColor: colors.primary,
-                        shadowOffset: { width: 0, height: 0 },
-                        shadowOpacity: 0.9,
-                        shadowRadius: 8,
-                        borderRadius: 1.5,
-                      },
-                      laserStyle,
-                    ]}
-                  />
+                    {/* Animated Scanning Laser Line */}
+                    <AnimatedReanimated.View
+                      style={[
+                        {
+                          position: 'absolute',
+                          top: 2,
+                          left: 8,
+                          right: 8,
+                          height: 3,
+                          backgroundColor: colors.primary,
+                          shadowColor: colors.primary,
+                          shadowOffset: { width: 0, height: 0 },
+                          shadowOpacity: 0.9,
+                          shadowRadius: 8,
+                          borderRadius: 1.5,
+                        },
+                        laserStyle,
+                      ]}
+                    />
 
-                  <Text style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12, fontWeight: '700', textAlign: 'center', position: 'absolute', bottom: -44 }}>
-                    Align barcode inside the box
-                  </Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12, fontWeight: '700', textAlign: 'center', position: 'absolute', bottom: -44 }}>
+                      Align barcode inside the box
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            </CameraView>
+              </CameraView>
+            ) : (
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: '#000' }]} />
+            )
           ) : (
             /* Permission Denied UI */
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, backgroundColor: '#1a1a1a' }}>
