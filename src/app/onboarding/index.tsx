@@ -27,6 +27,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot } from '../../components/features/OrbMascot';
+import { MagicalBackground } from '../../components/features/MagicalBackground';
 import { ArrowRight, Check } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, {
@@ -61,6 +62,68 @@ function MascotShadow({ size, scaleStyle }: { size: number; scaleStyle: any }) {
 }
 
 // ─────────────────────────────────────────────────────────
+// Animated Comic-Style Thought Bubble for Mascot
+// ─────────────────────────────────────────────────────────
+function ThoughtBubble({ text, visible }: { text: string; visible: boolean }) {
+  const scale = useSharedValue(0);
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (visible && text) {
+      scale.value = withDelay(300, withSpring(1, { damping: 14, stiffness: 200 }));
+      opacity.value = withDelay(300, withTiming(1, { duration: 300 }));
+    } else {
+      scale.value = withTiming(0, { duration: 200 });
+      opacity.value = withTiming(0, { duration: 200 });
+    }
+  }, [visible, text]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  if (!text) return null;
+
+  return (
+    <Animated.View style={[{
+      position: 'absolute',
+      right: -70,
+      top: -80,
+      width: 140,
+      backgroundColor: '#FFFFFF',
+      borderRadius: 16,
+      padding: 12,
+      shadowColor: '#FF9500',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.2,
+      shadowRadius: 16,
+      elevation: 8,
+      borderWidth: 1.5,
+      borderColor: '#FFD54F',
+      zIndex: 100,
+    }, animStyle]}>
+      <Text style={{ fontSize: 10, fontWeight: '700', color: '#B26A00', lineHeight: 14, textAlign: 'center' }}>
+        {text}
+      </Text>
+      {/* Little tail pointing to mascot */}
+      <View style={{
+        position: 'absolute',
+        bottom: -6,
+        left: 30,
+        width: 12,
+        height: 12,
+        backgroundColor: '#FFFFFF',
+        borderBottomWidth: 1.5,
+        borderRightWidth: 1.5,
+        borderColor: '#FFD54F',
+        transform: [{ rotate: '45deg' }],
+      }} />
+    </Animated.View>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
 // Slide Helper Card: Scanner + Teaspoons Combined
 // ─────────────────────────────────────────────────────────
 function ScannerTeaspoonCard({ cardW, C }: { cardW: number; C: any }) {
@@ -68,7 +131,7 @@ function ScannerTeaspoonCard({ cardW, C }: { cardW: number; C: any }) {
   useEffect(() => {
     scanLineY.value = withRepeat(
       withSequence(
-        withTiming(65, { duration: 1500, easing: Easing.inOut(Easing.sin) }),
+        withTiming(100, { duration: 1500, easing: Easing.inOut(Easing.sin) }),
         withTiming(0, { duration: 1500, easing: Easing.inOut(Easing.sin) })
       ),
       -1,
@@ -89,57 +152,58 @@ function ScannerTeaspoonCard({ cardW, C }: { cardW: number; C: any }) {
     <View style={{
       width: cardW,
       backgroundColor: C.card,
-      borderRadius: 28,
+      borderRadius: 24,
       borderWidth: 1,
       borderColor: C.cardBorder,
       padding: 16,
-      shadowColor: '#000',
+      shadowColor: '#FF9500',
       shadowOffset: { width: 0, height: 16 },
-      shadowOpacity: 0.08,
+      shadowOpacity: 0.15,
       shadowRadius: 24,
       elevation: 8,
       flexDirection: 'row',
       alignItems: 'center',
       gap: 16,
-      aspectRatio: 1.6,
+      aspectRatio: 1.8,
     }}>
-      {/* Left: Barcode scan box */}
+      {/* Left: Glowing Barcode Scanner SVG */}
       <View style={{
         flex: 1,
         height: '100%',
-        borderRadius: 20,
-        backgroundColor: C.cardInner,
-        borderWidth: 1.5,
-        borderColor: C.cardBorder,
+        borderRadius: 16,
+        backgroundColor: '#000000', // Dark contrast for glow
+        borderWidth: 2,
+        borderColor: '#FFD54F',
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
         position: 'relative',
       }}>
-        {/* Tilted Label */}
-        <View style={{ position: 'absolute', top: 8, left: 8, transform: [{ rotate: '-8deg' }], zIndex: 10 }}>
-          <View style={{ backgroundColor: C.amberLight, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, borderWidth: 1, borderColor: C.amber + '40' }}>
-            <Text style={{ color: C.amber, fontSize: 8, fontWeight: '900', letterSpacing: 0.5 }}>SCANNING</Text>
-          </View>
-        </View>
-
-        <View style={{ flexDirection: 'row', gap: 3.5, height: 45, alignItems: 'center' }}>
-          {[20, 38, 28, 38, 18, 32, 38, 25, 38].map((h, i) => (
-            <View key={i} style={{ width: i % 3 === 0 ? 5 : 2.5, height: h, backgroundColor: C.text, opacity: 0.15, borderRadius: 1 }} />
-          ))}
-        </View>
+        <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: 'absolute' }}>
+          <Defs>
+            <SvgRadialGradient id="scanGlow" cx="50%" cy="50%" rx="50%" ry="50%">
+              <Stop offset="0%" stopColor="#FF9500" stopOpacity="0.4" />
+              <Stop offset="100%" stopColor="#000000" stopOpacity="0" />
+            </SvgRadialGradient>
+          </Defs>
+          <Circle cx="50" cy="50" r="80" fill="url(#scanGlow)" />
+          {/* HD Barcode Lines */}
+          <Path d="M20 20 L20 80 M30 20 L30 80 M40 20 L40 80 M45 20 L45 80 M55 20 L55 80 M65 20 L65 80 M75 20 L75 80" stroke="#FFFFFF" strokeWidth="3" strokeOpacity="0.6" strokeLinecap="round" />
+          <Path d="M25 20 L25 80 M35 20 L35 80 M50 20 L50 80 M60 20 L60 80 M70 20 L70 80 M80 20 L80 80" stroke="#FFFFFF" strokeWidth="1" strokeOpacity="0.4" strokeLinecap="round" />
+        </Svg>
         <Animated.View style={[
           {
             position: 'absolute',
-            top: 20,
+            top: -5,
             left: 0,
             right: 0,
-            height: 2,
-            backgroundColor: C.green,
-            shadowColor: C.green,
+            height: 3,
+            backgroundColor: '#FF3B30', // Red laser
+            shadowColor: '#FF3B30',
             shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: 0.8,
-            shadowRadius: 4
+            shadowOpacity: 1,
+            shadowRadius: 8,
+            elevation: 10,
           },
           lineAnimStyle
         ]} />
@@ -149,21 +213,38 @@ function ScannerTeaspoonCard({ cardW, C }: { cardW: number; C: any }) {
       <View style={{
         flex: 1,
         height: '100%',
-        borderRadius: 20,
-        backgroundColor: C.cardInner,
-        borderWidth: 1.5,
-        borderColor: C.cardBorder,
+        borderRadius: 16,
+        backgroundColor: '#000000', // Dark contrast for glow to match left side
+        borderWidth: 2,
+        borderColor: '#FFD54F',
         alignItems: 'center',
         justifyContent: 'center',
+        position: 'relative',
+        overflow: 'hidden'
       }}>
+        <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: 'absolute' }}>
+          <Defs>
+            <SvgRadialGradient id="gaugeGlow" cx="50%" cy="50%" rx="50%" ry="50%">
+              <Stop offset="0%" stopColor="#FF9500" stopOpacity="0.3" />
+              <Stop offset="100%" stopColor="#000000" stopOpacity="0" />
+            </SvgRadialGradient>
+          </Defs>
+          <Circle cx="50" cy="50" r="80" fill="url(#gaugeGlow)" />
+        </Svg>
         <View style={{ width: 90, height: 90, alignItems: 'center', justifyContent: 'center' }}>
           <Svg width="90" height="90" viewBox="0 0 90 90" style={{ position: 'absolute' }}>
-            <Circle cx="45" cy="45" r={radius} stroke={C.cardBorder} strokeWidth={strokeWidth} fill="none" />
+            <Defs>
+              <SvgLinearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <Stop offset="0%" stopColor="#FF9500" stopOpacity="1" />
+                <Stop offset="100%" stopColor="#E8820C" stopOpacity="1" />
+              </SvgLinearGradient>
+            </Defs>
+            <Circle cx="45" cy="45" r={radius} stroke="#333333" strokeWidth={strokeWidth} fill="none" />
             <Circle
               cx="45"
               cy="45"
               r={radius}
-              stroke={C.amber}
+              stroke="url(#ringGrad)"
               strokeWidth={strokeWidth}
               fill="none"
               strokeDasharray={`${progress} ${circumference}`}
@@ -171,8 +252,8 @@ function ScannerTeaspoonCard({ cardW, C }: { cardW: number; C: any }) {
               transform="rotate(-90 45 45)"
             />
           </Svg>
-          <Text style={{ color: C.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>8.4</Text>
-          <Text style={{ color: C.amber, fontSize: 8, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.0, marginTop: -2 }}>tsp</Text>
+          <Text style={{ color: '#FFFFFF', fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>4.2</Text>
+          <Text style={{ color: '#FFD54F', fontSize: 8, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.0, marginTop: -2 }}>tsp</Text>
         </View>
       </View>
     </View>
@@ -180,43 +261,67 @@ function ScannerTeaspoonCard({ cardW, C }: { cardW: number; C: any }) {
 }
 
 // ─────────────────────────────────────────────────────────
-// Slide 5: Progress Chart Card
+// Slide 4: Progress Chart Card (HD Glowing Trendline)
 // ─────────────────────────────────────────────────────────
 function ProgressCard({ cardW, C }: { cardW: number; C: any }) {
-  const linePath = "M10 90 Q50 40 90 60 T170 50 T250 20";
+  const linePath = "M10 100 Q40 60 80 80 T160 60 T250 20";
   const areaPath = `${linePath} L250 140 L10 140 Z`;
 
   return (
     <View style={{
       width: cardW,
       backgroundColor: C.card,
-      borderRadius: 28,
+      borderRadius: 24,
       borderWidth: 1,
       borderColor: C.cardBorder,
-      padding: 32,
+      padding: 24,
       alignItems: 'center',
       justifyContent: 'center',
-      shadowColor: '#000',
+      shadowColor: '#34C759',
       shadowOffset: { width: 0, height: 16 },
-      shadowOpacity: 0.08,
+      shadowOpacity: 0.15,
       shadowRadius: 24,
       elevation: 8,
-      aspectRatio: 1.2,
+      aspectRatio: 1.4,
     }}>
-      <View style={{ width: '100%', height: '100%', borderRadius: 20, overflow: 'hidden', backgroundColor: C.cardInner, borderWidth: 1, borderColor: C.cardBorder }}>
-        <Svg width="100%" height="100%" viewBox="0 0 260 140" preserveAspectRatio="none">
+      <View style={{
+        width: '100%',
+        height: '100%',
+        borderRadius: 16,
+        overflow: 'hidden',
+        backgroundColor: '#000000',
+        borderWidth: 2,
+        borderColor: '#34C759',
+        position: 'relative'
+      }}>
+        <Svg width="100%" height="100%" viewBox="0 0 260 140" preserveAspectRatio="none" style={{ position: 'absolute' }}>
           <Defs>
-            <SvgLinearGradient id="grad2" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0%" stopColor={C.green} stopOpacity="0.3" />
-              <Stop offset="100%" stopColor={C.green} stopOpacity="0" />
+            <SvgLinearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0%" stopColor="#34C759" stopOpacity="0.6" />
+              <Stop offset="100%" stopColor="#34C759" stopOpacity="0" />
+            </SvgLinearGradient>
+            <SvgLinearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+              <Stop offset="0%" stopColor="#34C759" />
+              <Stop offset="100%" stopColor="#A4E3B4" />
             </SvgLinearGradient>
           </Defs>
-          <Path d={areaPath} fill="url(#grad2)" />
-          <Path d={linePath} fill="none" stroke={C.green} strokeWidth="5" strokeLinecap="round" />
-          <Circle cx="250" cy="20" r="7" fill={C.bg} stroke={C.green} strokeWidth="4" />
+
+          {/* Background Grid Lines */}
+          <Path d="M0 35 L260 35 M0 70 L260 70 M0 105 L260 105" stroke="#FFFFFF" strokeWidth="1" strokeOpacity="0.1" strokeDasharray="4 4" />
+
+          <Path d={areaPath} fill="url(#chartGrad)" />
+          <Path d={linePath} fill="none" stroke="url(#lineGrad)" strokeWidth="6" strokeLinecap="round" />
+
+          {/* Glowing Data Points */}
+          <Circle cx="80" cy="80" r="5" fill="#000000" stroke="#34C759" strokeWidth="3" />
+          <Circle cx="160" cy="60" r="5" fill="#000000" stroke="#34C759" strokeWidth="3" />
+          <Circle cx="250" cy="20" r="7" fill="#FFFFFF" stroke="#34C759" strokeWidth="4" />
+          {/* Outer glow ring for latest point */}
+          <Circle cx="250" cy="20" r="14" fill="none" stroke="#34C759" strokeWidth="2" strokeOpacity="0.5" />
         </Svg>
-        <View style={{ position: 'absolute', right: 20, top: 20, backgroundColor: C.green, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 }}>
-          <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 }}>In Range</Text>
+
+        <View style={{ position: 'absolute', right: 12, top: 12, backgroundColor: '#34C759', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, shadowColor: '#34C759', shadowOpacity: 0.8, shadowRadius: 8, elevation: 5 }}>
+          <Text style={{ color: '#000', fontSize: 11, fontWeight: '900', letterSpacing: 0.5 }}>TARGET ZONE</Text>
         </View>
       </View>
     </View>
@@ -285,7 +390,7 @@ function NameCard({
 }
 
 // ─────────────────────────────────────────────────────────
-// Slide 2: Personalized Goal Card
+// Slide 2: Primary Goal Card (4 Options)
 // ─────────────────────────────────────────────────────────
 type GoalOption = 'energy' | 'weight' | 'medical' | 'mental' | 'none';
 
@@ -301,9 +406,10 @@ function GoalCard({
   onSelect: (val: GoalOption) => void;
 }) {
   const options: { label: string; value: GoalOption }[] = [
-    { label: "Boost daily energy", value: 'energy' },
-    { label: "Lose weight naturally", value: 'weight' },
-    { label: "Medical/Health reasons", value: 'medical' },
+    { label: "Boost daily Energy", value: 'energy' },
+    { label: "Lose Weight", value: 'weight' },
+    { label: "Manage Blood Sugar", value: 'medical' },
+    { label: "Build Healthy Eating Habits", value: 'mental' },
   ];
 
   return (
@@ -366,192 +472,60 @@ function GoalCard({
 }
 
 // ─────────────────────────────────────────────────────────
-// Slide 3: Combined Cravings & Pace Profile Card
-// ─────────────────────────────────────────────────────────
-type SweetToothOption = 'high' | 'moderate' | 'low' | 'none';
-type PaceOption = 'cold_turkey' | 'gradual' | 'tracking' | 'none';
-
-function ProfileCard({
-  cardW,
-  C,
-  sweetTooth,
-  setSweetTooth,
-  journeyPace,
-  setJourneyPace,
-}: {
-  cardW: number;
-  C: any;
-  sweetTooth: SweetToothOption;
-  setSweetTooth: (val: SweetToothOption) => void;
-  journeyPace: PaceOption;
-  setJourneyPace: (val: PaceOption) => void;
-}) {
-  const cravings: { label: string; value: SweetToothOption }[] = [
-    { label: "High", value: 'high' },
-    { label: "Moderate", value: 'moderate' },
-    { label: "Low", value: 'low' },
-  ];
-
-  const paces: { label: string; value: PaceOption }[] = [
-    { label: "Cold Turkey", value: 'cold_turkey' },
-    { label: "Gradual", value: 'gradual' },
-    { label: "Just Track", value: 'tracking' },
-  ];
-
-  return (
-    <View style={{
-      width: cardW,
-      backgroundColor: C.card,
-      borderRadius: 20,
-      borderWidth: 1,
-      borderColor: C.cardBorder,
-      padding: 16,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.12,
-      shadowRadius: 16,
-      elevation: 8,
-      gap: 14,
-    }}>
-      {/* Cravings */}
-      <View>
-        <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>
-          Sugar Cravings Level
-        </Text>
-        <View style={{ flexDirection: 'row', gap: 6 }}>
-          {cravings.map((opt) => {
-            const isSel = sweetTooth === opt.value;
-            return (
-              <TouchableOpacity
-                key={opt.value}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setSweetTooth(opt.value);
-                }}
-                style={{
-                  flex: 1,
-                  backgroundColor: isSel ? C.amberLight : C.cardInner,
-                  borderColor: isSel ? C.amber : C.cardBorder,
-                  borderWidth: 1.5,
-                  borderRadius: 12,
-                  paddingVertical: 10,
-                  alignItems: 'center',
-                }}
-              >
-                <Text style={{ color: isSel ? C.amber : C.text, fontSize: 12, fontWeight: '700' }}>
-                  {opt.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
-
-      {/* Pace */}
-      <View>
-        <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>
-          Target Reduction Pace
-        </Text>
-        <View style={{ gap: 6 }}>
-          {paces.map((opt) => {
-            const isSel = journeyPace === opt.value;
-            return (
-              <TouchableOpacity
-                key={opt.value}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setJourneyPace(opt.value);
-                }}
-                style={{
-                  width: '100%',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  backgroundColor: isSel ? C.amberLight : C.cardInner,
-                  borderColor: isSel ? C.amber : C.cardBorder,
-                  borderWidth: 1.5,
-                  borderRadius: 12,
-                  paddingHorizontal: 12,
-                  paddingVertical: 10,
-                }}
-              >
-                <Text style={{ color: isSel ? C.amber : C.text, fontSize: 12, fontWeight: '700' }}>
-                  {opt.label}
-                </Text>
-                <View style={{
-                  width: 14,
-                  height: 14,
-                  borderRadius: 7,
-                  borderWidth: 1.5,
-                  borderColor: isSel ? C.amber : C.textMuted,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                  {isSel && <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.amber }} />}
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
-    </View>
-  );
-}
-
-// ─────────────────────────────────────────────────────────
-// Slide 6: Setup Complete Payoff Screen
+// Slide 5: Setup Complete Payoff Screen
 // ─────────────────────────────────────────────────────────
 function SetupCompleteCard({
   cardW,
   C,
-  userName,
-  userGoal,
 }: {
   cardW: number;
   C: any;
-  userName: string;
-  userGoal: GoalOption;
 }) {
-  let payoffMsg = "Going sugar-free will boost your daily energy levels and long-term vitality!";
-  if (userGoal === 'weight') {
-    payoffMsg = "We'll help you cut out hidden sugars to support your natural weight loss goals!";
-  } else if (userGoal === 'medical') {
-    payoffMsg = "We will help you monitor sugar levels closely to protect your long-term health.";
-  } else if (userGoal === 'mental') {
-    payoffMsg = "Say goodbye to sugar crashes and hello to sustained, clear focus!";
-  }
-
   return (
     <View style={{
       width: cardW,
       backgroundColor: C.card,
-      borderRadius: 28,
+      borderRadius: 24,
       borderWidth: 1,
       borderColor: C.cardBorder,
       padding: 32,
-      shadowColor: '#000',
+      shadowColor: '#FF9500',
       shadowOffset: { width: 0, height: 16 },
-      shadowOpacity: 0.08,
-      shadowRadius: 24,
+      shadowOpacity: 0.2,
+      shadowRadius: 32,
       elevation: 8,
       alignItems: 'center',
       justifyContent: 'center',
       aspectRatio: 1.2,
+      overflow: 'hidden',
     }}>
+      <Svg style={{ position: 'absolute' }} width="100%" height="100%" viewBox="0 0 200 200">
+        <Defs>
+          <SvgRadialGradient id="celebrationGlow" cx="50%" cy="50%" rx="50%" ry="50%">
+            <Stop offset="0%" stopColor="#FFC107" stopOpacity="0.6" />
+            <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
+          </SvgRadialGradient>
+        </Defs>
+        <Circle cx="100" cy="100" r="100" fill="url(#celebrationGlow)" />
+        {/* Animated Burst Lines */}
+        <Path d="M100 20 L100 40 M100 160 L100 180 M20 100 L40 100 M160 100 L180 100 M43 43 L57 57 M143 143 L157 157 M157 43 L143 57 M43 157 L57 143" stroke="#FF9500" strokeWidth="4" strokeLinecap="round" />
+      </Svg>
+
       <View style={{
-        backgroundColor: C.cardInner,
-        borderRadius: 16,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
         padding: 24,
         width: '100%',
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: C.cardBorder,
+        borderWidth: 1.5,
+        borderColor: '#FFD54F',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
       }}>
-        <Text style={{ color: C.amberMid, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
-          Your Customized Journey
-        </Text>
-        <Text style={{ color: C.text, fontSize: 15, fontWeight: '700', textAlign: 'center', lineHeight: 22 }}>
-          {payoffMsg}
+        <Text style={{ color: C.amber, fontSize: 16, fontWeight: '900', textAlign: 'center', lineHeight: 26 }}>
+          We Welcome you on your SugarFree Lifestyle
         </Text>
       </View>
     </View>
@@ -583,24 +557,15 @@ const SLIDES: SlideData[] = [
   },
   {
     step: 2,
-    title: "What brings you here?",
-    highlight: "brings you here?",
-    subtitle: "Select your primary goal so we can tailor your experience.",
+    title: "Describe Your Goals",
+    highlight: "Goals",
+    subtitle: "Choose What Brings you on this App",
     buttonLabel: 'Continue',
     isLast: false,
     mascotState: 'idle',
   },
   {
     step: 3,
-    title: "Cravings & Commitment",
-    highlight: "Cravings & Commitment",
-    subtitle: "Select your craving level and target journey pace.",
-    buttonLabel: 'Continue',
-    isLast: false,
-    mascotState: 'happy',
-  },
-  {
-    step: 4,
     title: 'Real Time Sugar Scanner',
     highlight: 'Sugar Scanner',
     subtitle: 'Scan product barcodes and see abstract grams instantly converted into teaspoons.',
@@ -609,7 +574,7 @@ const SLIDES: SlideData[] = [
     mascotState: 'happy',
   },
   {
-    step: 5,
+    step: 4,
     title: 'Log your Blood Sugar.',
     highlight: 'Blood Sugar.',
     subtitle: 'Log fasting and post-meal readings to manage clinical blood sugar trends.',
@@ -618,7 +583,7 @@ const SLIDES: SlideData[] = [
     mascotState: 'happy',
   },
   {
-    step: 6,
+    step: 5,
     title: "Your Setup is Complete",
     highlight: "Setup is Complete",
     subtitle: "We're ready to start this life-changing journey together.",
@@ -633,12 +598,10 @@ const SLIDES: SlideData[] = [
 // ─────────────────────────────────────────────────────────
 export default function OnboardingScreen() {
   const [currentSlide, setCurrentSlide] = useState(0);
-  
+
   // Questionnaire states
   const [userName, setUserName] = useState('');
   const [userGoal, setUserGoal] = useState<GoalOption>('none');
-  const [sweetTooth, setSweetTooth] = useState<SweetToothOption>('none');
-  const [journeyPace, setJourneyPace] = useState<PaceOption>('none');
 
   const { setOnboardingComplete, setProfile } = useAppStore();
   const { width, height } = useWindowDimensions();
@@ -784,18 +747,12 @@ export default function OnboardingScreen() {
         return;
       }
     }
-    if (currentSlide === 2) {
-      if (sweetTooth === 'none' || journeyPace === 'none') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        return;
-      }
-    }
 
     // Camera permission request during feature showcase
-    if (currentSlide === 3) {
+    if (currentSlide === 2) {
       try {
         await Camera.requestCameraPermissionsAsync();
-      } catch (_) {}
+      } catch (_) { }
     }
 
     if (currentSlide < SLIDES.length - 1) {
@@ -807,8 +764,6 @@ export default function OnboardingScreen() {
       setProfile({
         userName: userName.trim(),
         userGoal,
-        sweetTooth,
-        journeyPace,
       });
       setOnboardingComplete(true);
       router.replace('/(tabs)');
@@ -818,7 +773,6 @@ export default function OnboardingScreen() {
   const isNextDisabled = () => {
     if (currentSlide === 0 && !userName.trim()) return true;
     if (currentSlide === 1 && userGoal === 'none') return true;
-    if (currentSlide === 2 && (sweetTooth === 'none' || journeyPace === 'none')) return true;
     return false;
   };
 
@@ -920,9 +874,20 @@ export default function OnboardingScreen() {
           {/* ── 2. Middle Section: Vertical Stacking of Mascot and Card ── */}
           <View style={{ flex: 1, justifyContent: 'center', marginVertical: isShort ? 10 : 20 }}>
             {/* A. Mascot floating container */}
-            <View style={{ height: orbSize + 20, justifyContent: 'center', marginBottom: isShort ? 4 : 8 }}>
-              <Animated.View style={[{ alignSelf: 'center' }, mascotAnimStyle]}>
+            <View style={{ height: orbSize + 20, justifyContent: 'center', marginBottom: isShort ? 4 : 8, zIndex: 10 }}>
+              <MagicalBackground />
+              <Animated.View style={[{ alignSelf: 'center', position: 'relative' }, mascotAnimStyle]}>
                 <OrbMascot state={slide.mascotState} size={orbSize} />
+                <ThoughtBubble
+                  visible={true}
+                  text={[
+                    "WHO Standard \n 1 Teaspoon = 4.2 grams of sugar.",
+                    "Measuring Teaspoons of sugar helps visualize the actual sugar content in the food we consume.",
+                    "Don't Let Sugar in Grams Confuse you, Scan Any Packaged Food Barcode for Instant Sugar Amount",
+                    "Track your Blood Sugar and keep yourself up to date with Blood Sugar Trends.",
+                    ""
+                  ][currentSlide] || ""}
+                />
               </Animated.View>
               <MascotShadow size={orbSize * 0.75} scaleStyle={shadowScaleStyle} />
             </View>
@@ -945,24 +910,12 @@ export default function OnboardingScreen() {
                   onSelect={setUserGoal}
                 />
               )}
-              {currentCardIndex === 2 && (
-                <ProfileCard
-                  cardW={cardW}
-                  C={C}
-                  sweetTooth={sweetTooth}
-                  setSweetTooth={setSweetTooth}
-                  journeyPace={journeyPace}
-                  setJourneyPace={setJourneyPace}
-                />
-              )}
-              {currentCardIndex === 3 && <ScannerTeaspoonCard cardW={cardW} C={C} />}
-              {currentCardIndex === 4 && <ProgressCard cardW={cardW} C={C} />}
-              {currentCardIndex === 5 && (
+              {currentCardIndex === 2 && <ScannerTeaspoonCard cardW={cardW} C={C} />}
+              {currentCardIndex === 3 && <ProgressCard cardW={cardW} C={C} />}
+              {currentCardIndex === 4 && (
                 <SetupCompleteCard
                   cardW={cardW}
                   C={C}
-                  userName={userName}
-                  userGoal={userGoal}
                 />
               )}
             </Animated.View>

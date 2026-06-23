@@ -12,8 +12,6 @@ interface AppState {
   scans: ScanHistoryItem[];
   userName?: string;
   userGoal?: 'energy' | 'weight' | 'medical' | 'mental' | 'none';
-  sweetTooth?: 'high' | 'moderate' | 'low' | 'none';
-  journeyPace?: 'cold_turkey' | 'gradual' | 'tracking' | 'none';
 
   // Actions
   setOnboardingComplete: (complete: boolean) => void;
@@ -22,8 +20,6 @@ interface AppState {
   setProfile: (profile: {
     userName?: string;
     userGoal?: 'energy' | 'weight' | 'medical' | 'mental' | 'none';
-    sweetTooth?: 'high' | 'moderate' | 'low' | 'none';
-    journeyPace?: 'cold_turkey' | 'gradual' | 'tracking' | 'none';
   }) => void;
 
   // Log Actions
@@ -70,8 +66,6 @@ export const useAppStore = create<AppState>()(
       scans: [],
       userName: undefined,
       userGoal: 'none',
-      sweetTooth: 'none',
-      journeyPace: 'none',
 
       setOnboardingComplete: (complete) => set({ onboardingComplete: complete }),
       setTheme: (theme) => set({ theme }),
@@ -79,8 +73,6 @@ export const useAppStore = create<AppState>()(
       setProfile: (profile) => set((state) => ({
         userName: profile.userName !== undefined ? profile.userName : state.userName,
         userGoal: profile.userGoal !== undefined ? profile.userGoal : state.userGoal,
-        sweetTooth: profile.sweetTooth !== undefined ? profile.sweetTooth : state.sweetTooth,
-        journeyPace: profile.journeyPace !== undefined ? profile.journeyPace : state.journeyPace,
       })),
 
       addLog: (value, type, notes, customTimestamp) => set((state) => {
@@ -172,8 +164,6 @@ export const useAppStore = create<AppState>()(
         scans: [],
         userName: undefined,
         userGoal: 'none',
-        sweetTooth: 'none',
-        journeyPace: 'none',
       }),
     }),
     {
