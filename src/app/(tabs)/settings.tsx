@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View,  ScrollView, TouchableOpacity, Switch, Alert, Modal, SafeAreaView } from 'react-native';
+import { View, ScrollView, TouchableOpacity, Switch, Alert, Modal, SafeAreaView } from 'react-native';
 import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useAppStore } from '../../stores/appStore';
@@ -61,12 +61,12 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
-      <View 
-        style={{ borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.surface }} 
+      <View
+        style={{ borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.surface }}
         className="flex-row items-center px-6 py-4"
       >
         {onClose && (
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               onClose();
@@ -80,15 +80,15 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
         <Text style={{ color: colors.text }} className="text-lg font-black tracking-tight">App Settings</Text>
       </View>
 
-      <ScrollView 
-        className="flex-1" 
+      <ScrollView
+        className="flex-1"
         contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 20 }}
         showsVerticalScrollIndicator={false}
       >
         {/* PREFERENCES SECTION */}
         <SettingsGroup title="Preferences" colors={colors}>
-          <View 
-            style={{ backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border }} 
+          <View
+            style={{ backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border }}
             className="flex-row items-center justify-between p-4"
           >
             <View className="flex-row items-center gap-3">
@@ -201,19 +201,19 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
         {/* Version */}
         <View className="mb-16 items-center">
           <Text style={{ color: colors.textMuted }} className="text-[10px] font-black uppercase tracking-wider">GoodBye Sugar v1.0.0</Text>
-          <Text style={{ color: colors.textMuted }} className="text-[9px] mt-0.5">First-Attempt App Store Approved</Text>
+
         </View>
       </ScrollView>
 
       {/* LEGAL VIEWER MODAL */}
       <Modal visible={legalModalVisible} animationType="slide" presentationStyle="pageSheet">
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-          <View 
-            style={{ borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.surface }} 
+          <View
+            style={{ borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.surface }}
             className="flex-row items-center justify-between px-6 py-4"
           >
-            <TouchableOpacity 
-              onPress={() => setLegalModalVisible(false)} 
+            <TouchableOpacity
+              onPress={() => setLegalModalVisible(false)}
               style={{ backgroundColor: colors.surfaceRaised }}
               className="p-2 rounded-full"
             >
@@ -239,15 +239,15 @@ function SettingsGroup({ title, children, colors }: { title: string; children: R
   return (
     <View className="mb-6">
       <Text style={{ color: colors.textSecondary }} className="font-black uppercase tracking-wider text-[9px] mb-2 px-1">{title}</Text>
-      <View 
-        style={{ 
+      <View
+        style={{
           borderColor: colors.border,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: isDarkMode ? 0.35 : 0.03,
           shadowRadius: 8,
           elevation: 1,
-        }} 
+        }}
         className="rounded-[24px] overflow-hidden border"
       >
         {children}
@@ -272,7 +272,7 @@ function SettingsRowItem({ label, icon, onPress, textColor = 'normal', colors, i
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress();
       }}
-      style={{ 
+      style={{
         backgroundColor: colors.surface,
         borderBottomWidth: isLast ? 0 : 1,
         borderBottomColor: colors.border
