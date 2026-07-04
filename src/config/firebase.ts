@@ -22,6 +22,8 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
+console.log("🚀 Initializing Firebase with API Key:", firebaseConfig.apiKey ? `${firebaseConfig.apiKey.substring(0, 10)}...` : 'undefined');
+
 const hasKeys = !!process.env.EXPO_PUBLIC_FIREBASE_API_KEY;
 
 let app: any;
