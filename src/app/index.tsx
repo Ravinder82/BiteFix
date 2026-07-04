@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { Redirect, useRootNavigationState } from 'expo-router';
 import { useAppStore } from '../stores/appStore';
+import { useAuthStore } from '../stores/authStore';
 import { useTheme } from '../hooks/useTheme';
 
 // Track initial JS engine bundle load to detect restarts vs hot reloads
@@ -9,6 +10,7 @@ let isFirstLoad = true;
 
 export default function Index() {
   const { onboardingComplete } = useAppStore();
+  const { user, isInitialized } = useAuthStore();
   const { colors } = useTheme();
   const [hydrated, setHydrated] = useState(false);
   const rootNavigationState = useRootNavigationState();
@@ -36,8 +38,8 @@ export default function Index() {
     }
   }, []);
 
-  // Wait until the store is hydrated AND the root navigation state is ready
-  if (!hydrated || !rootNavigationState?.key) {
+  // Wait until the store is hydrated, auth is initialized, AND navigation is ready
+  if (!hydrated || !isInitialized || !rootNavigationState?.key) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
         <ActivityIndicator size="large" color={colors.primary || '#6D28D9'} />
@@ -45,9 +47,17 @@ export default function Index() {
     );
   }
 
+  // Flow: Onboarding → Auth → Tabs
+  // Step 1: If onboarding not complete, go to onboarding
   if (!onboardingComplete) {
     return <Redirect href="/onboarding" />;
   }
 
+  // Step 2: If not authenticated, go to auth screen
+  if (!user) {
+    return <Redirect href="/auth" />;
+  }
+
+  // Step 3: Authenticated + onboarded → go to main tabs
   return <Redirect href="/(tabs)" />;
 }

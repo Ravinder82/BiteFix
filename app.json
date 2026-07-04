@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "CutSugar: Scan Teaspoons & Log",
+    "name": "CutSugar: Sugar Teaspoons Scanner",
     "slug": "cutsugar",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -34,7 +34,22 @@
           "barcodeScannerEnabled": true
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.1097829102652-ru6prpd4kgv621fnni74eg3q2n2eh859"
+        }
+      ],
+      "expo-apple-authentication"
     ]
   }
 }

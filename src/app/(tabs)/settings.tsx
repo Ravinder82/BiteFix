@@ -3,13 +3,15 @@ import { View, ScrollView, TouchableOpacity, Switch, Alert, Modal, SafeAreaView 
 import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useAppStore } from '../../stores/appStore';
+import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
-import { ChevronRight, ArrowLeft, ShieldAlert, HeartHandshake, Eye, Moon, Layers, RotateCcw } from 'lucide-react-native';
+import { ChevronRight, ArrowLeft, ShieldAlert, HeartHandshake, Eye, Moon, Layers, RotateCcw, LogOut, User } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   const { colors, theme, toggleTheme } = useTheme();
   const { unit, setUnit, sugarUnit, setSugarUnit, clearScans, clearAllData } = useAppStore();
+  const { user, displayName, providerLabel, signOut, deleteAccount } = useAuth();
 
   const [legalModalVisible, setLegalModalVisible] = useState(false);
   const [legalContent, setLegalContent] = useState({ title: '', body: '' });
@@ -85,6 +87,60 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
         contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 20 }}
         showsVerticalScrollIndicator={false}
       >
+        {/* ACCOUNT SECTION */}
+        {user && (
+          <View style={{ marginBottom: 20 }}>
+            <View
+              style={{
+                backgroundColor: colors.surface,
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: colors.border,
+                padding: 16,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 14,
+              }}
+            >
+              {/* Avatar circle */}
+              <View
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  backgroundColor: colors.primary + '20',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text style={{ color: colors.primary, fontSize: 18, fontWeight: '900' }}>
+                  {(displayName || 'U').charAt(0).toUpperCase()}
+                </Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.text, fontWeight: '800', fontSize: 15 }}>
+                  {displayName}
+                </Text>
+                <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '500', marginTop: 2 }}>
+                  {user.email}
+                </Text>
+              </View>
+              <View
+                style={{
+                  backgroundColor: colors.primary + '15',
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  borderRadius: 8,
+                }}
+              >
+                <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '800', letterSpacing: 0.5 }}>
+                  {providerLabel.toUpperCase()}
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
+
         {/* PREFERENCES SECTION */}
         <SettingsGroup title="Preferences" colors={colors}>
           <View
@@ -238,6 +294,45 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
             isLast
           />
         </SettingsGroup>
+
+        {/* LOG OUT */}
+        {user && (
+          <SettingsGroup title="Session" colors={colors}>
+            <TouchableOpacity
+              onPress={() => {
+                Alert.alert(
+                  'Log Out',
+                  'Are you sure you want to log out of CutSugar?',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Log Out',
+                      style: 'destructive',
+                      onPress: async () => {
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                        try {
+                          await signOut();
+                        } catch (e) {
+                          Alert.alert('Error', 'Failed to log out. Please try again.');
+                        }
+                      },
+                    },
+                  ]
+                );
+              }}
+              style={{
+                backgroundColor: colors.surface,
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: colors.error + '30',
+              }}
+              className="flex-row items-center justify-center gap-2 p-4"
+            >
+              <LogOut size={16} color={colors.error} />
+              <Text style={{ color: colors.error, fontWeight: '800', fontSize: 14 }}>Log Out</Text>
+            </TouchableOpacity>
+          </SettingsGroup>
+        )}
 
         {/* Version */}
         <View className="mb-16 items-center">

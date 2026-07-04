@@ -10,6 +10,7 @@ import { useFonts, Inter_300Light, Inter_400Regular, Inter_500Medium, Inter_600S
 import * as SplashScreen from 'expo-splash-screen';
 import { TextInput } from 'react-native';
 import { Text } from '@/components/Text';
+import { useAuthStore } from '../stores/authStore';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -52,6 +53,12 @@ export default function RootLayout() {
     }
   }, [fontsLoaded, fontError]);
 
+  // Initialize Firebase Auth listener
+  useEffect(() => {
+    const unsubscribe = useAuthStore.getState().initialize();
+    return () => unsubscribe();
+  }, []);
+
   if (!fontsLoaded && !fontError) {
     return null;
   }
@@ -64,6 +71,7 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
             <Stack.Screen name="index" />
             <Stack.Screen name="onboarding/index" />
+            <Stack.Screen name="auth/index" />
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="delete-account" options={{ presentation: 'modal' }} />
           </Stack>
