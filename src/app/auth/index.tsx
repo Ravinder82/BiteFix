@@ -53,7 +53,7 @@ export default function AuthScreen() {
   const passwordRef = useRef<TextInput>(null);
 
   // ── Error Message Parser ──────────────────────────────
-  const parseFirebaseError = (code: string): string => {
+  const parseFirebaseError = (code: string): string | undefined => {
     const map: Record<string, string> = {
       'auth/invalid-email': 'Please enter a valid email address.',
       'auth/user-disabled': 'This account has been disabled.',
@@ -64,8 +64,9 @@ export default function AuthScreen() {
       'auth/too-many-requests': 'Too many attempts. Please wait a moment.',
       'auth/network-request-failed': 'Network error. Check your connection.',
       'auth/invalid-credential': 'Invalid credentials. Please try again.',
+      'auth/operation-not-allowed': 'Email/Password sign-in is disabled in your Firebase console. Please enable it under Authentication > Sign-in method.',
     };
-    return map[code] || 'Something went wrong. Please try again.';
+    return map[code];
   };
 
   // ── Google Sign-In ────────────────────────────────────
@@ -147,7 +148,8 @@ export default function AuthScreen() {
         await signUpWithEmail(email.trim(), password, displayName.trim());
       }
     } catch (error: any) {
-      setErrorMsg(parseFirebaseError(error.code));
+      console.error("Firebase Email Auth Error:", error);
+      setErrorMsg(parseFirebaseError(error.code) || error.message || 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -163,7 +165,8 @@ export default function AuthScreen() {
       await resetPassword(email.trim());
       Alert.alert('Check Your Email', `Password reset link sent to ${email.trim()}`);
     } catch (error: any) {
-      setErrorMsg(parseFirebaseError(error.code));
+      console.error("Firebase Password Reset Error:", error);
+      setErrorMsg(parseFirebaseError(error.code) || error.message || 'Something went wrong. Please try again.');
     }
   };
 
