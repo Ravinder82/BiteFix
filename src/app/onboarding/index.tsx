@@ -264,7 +264,8 @@ function ScannerTeaspoonCard({ cardW, C }: { cardW: number; C: any }) {
 // Slide 4: Progress Chart Card (HD Glowing Trendline)
 // ─────────────────────────────────────────────────────────
 function ProgressCard({ cardW, C }: { cardW: number; C: any }) {
-  const linePath = "M10 100 Q40 60 80 80 T160 60 T250 20";
+  // Starts high (Y=30), drops smoothly, and stabilizes in the healthy target range (Y=95)
+  const linePath = "M10 30 C 60 30, 100 95, 170 95 S 220 95, 250 95";
   const areaPath = `${linePath} L250 140 L10 140 Z`;
 
   return (
@@ -296,31 +297,39 @@ function ProgressCard({ cardW, C }: { cardW: number; C: any }) {
       }}>
         <Svg width="100%" height="100%" viewBox="0 0 260 140" preserveAspectRatio="none" style={{ position: 'absolute' }}>
           <Defs>
+            {/* Gradient fill under the curve */}
             <SvgLinearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0%" stopColor="#34C759" stopOpacity="0.6" />
+              <Stop offset="0%" stopColor="#34C759" stopOpacity="0.4" />
               <Stop offset="100%" stopColor="#34C759" stopOpacity="0" />
             </SvgLinearGradient>
+            {/* Line transition from High (Brand Amber/Orange) to Stabilized (Success Green) */}
             <SvgLinearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-              <Stop offset="0%" stopColor="#34C759" />
-              <Stop offset="100%" stopColor="#A4E3B4" />
+              <Stop offset="0%" stopColor="#E8820C" />
+              <Stop offset="40%" stopColor="#F5A623" />
+              <Stop offset="100%" stopColor="#34C759" />
             </SvgLinearGradient>
           </Defs>
 
           {/* Background Grid Lines */}
           <Path d="M0 35 L260 35 M0 70 L260 70 M0 105 L260 105" stroke="#FFFFFF" strokeWidth="1" strokeOpacity="0.1" strokeDasharray="4 4" />
 
+          {/* Fill and Line */}
           <Path d={areaPath} fill="url(#chartGrad)" />
           <Path d={linePath} fill="none" stroke="url(#lineGrad)" strokeWidth="6" strokeLinecap="round" />
 
-          {/* Glowing Data Points */}
-          <Circle cx="80" cy="80" r="5" fill="#000000" stroke="#34C759" strokeWidth="3" />
-          <Circle cx="160" cy="60" r="5" fill="#000000" stroke="#34C759" strokeWidth="3" />
-          <Circle cx="250" cy="20" r="7" fill="#FFFFFF" stroke="#34C759" strokeWidth="4" />
+          {/* Glowing Data Points along the stabilization trend */}
+          <Circle cx="10" cy="30" r="5" fill="#000000" stroke="#E8820C" strokeWidth="3" />
+          <Circle cx="100" cy="72" r="5" fill="#000000" stroke="#F5A623" strokeWidth="3" />
+          <Circle cx="180" cy="95" r="5" fill="#000000" stroke="#34C759" strokeWidth="3" />
+          
+          {/* Target Stabilized End Point */}
+          <Circle cx="250" cy="95" r="7" fill="#FFFFFF" stroke="#34C759" strokeWidth="4" />
           {/* Outer glow ring for latest point */}
-          <Circle cx="250" cy="20" r="14" fill="none" stroke="#34C759" strokeWidth="2" strokeOpacity="0.5" />
+          <Circle cx="250" cy="95" r="14" fill="none" stroke="#34C759" strokeWidth="2" strokeOpacity="0.5" />
         </Svg>
 
-        <View style={{ position: 'absolute', right: 12, top: 12, backgroundColor: '#34C759', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, shadowColor: '#34C759', shadowOpacity: 0.8, shadowRadius: 8, elevation: 5 }}>
+        {/* Target Zone Label aligned vertically with the stabilized Y=95 range */}
+        <View style={{ position: 'absolute', right: 12, bottom: 20, backgroundColor: '#34C759', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, shadowColor: '#34C759', shadowOpacity: 0.8, shadowRadius: 8, elevation: 5 }}>
           <Text style={{ color: '#000', fontSize: 11, fontWeight: '900', letterSpacing: 0.5 }}>TARGET ZONE</Text>
         </View>
       </View>
