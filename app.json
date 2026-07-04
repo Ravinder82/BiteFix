@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "CutSugar: Sugar Teaspoons Scanner",
+    "name": "CutSugar",
     "slug": "cutsugar",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,9 +8,11 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.ravinderpoonia.cutsugar",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "supportsTablet": false,
       "infoPlist": {
-        "NSCameraUsageDescription": "CutSugar needs access to the camera to scan food barcodes and analyze sugar values."
+        "NSCameraUsageDescription": "CutSugar needs access to the camera to scan food barcodes and analyze sugar values.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -18,7 +20,10 @@
       "adaptiveIcon": {
         "backgroundColor": "#faf8f5",
         "foregroundImage": "./assets/icon.png"
-      }
+      },
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -50,6 +55,12 @@
         }
       ],
       "expo-apple-authentication"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "68694ce8-b35f-4f1c-a54d-992c21869423"
+      }
+    }
   }
 }
