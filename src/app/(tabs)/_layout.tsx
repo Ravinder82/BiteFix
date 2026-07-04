@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
-import { Tabs } from 'expo-router';
+import { Tabs, Redirect } from 'expo-router';
 import { useTheme } from '../../hooks/useTheme';
+import { useAuthStore } from '../../stores/authStore';
 import { Home, ScanBarcode, Activity } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -68,6 +69,12 @@ function FloatingScannerButton({ onPress, accessibilityState }: any) {
 
 export default function TabLayout() {
   const { colors, isDark } = useTheme();
+  const { user, isInitialized } = useAuthStore();
+
+  // If Firebase Auth has finished loading and no user is logged in, redirect to the Auth Screen
+  if (isInitialized && !user) {
+    return <Redirect href="/auth" />;
+  }
 
   return (
     <Tabs
