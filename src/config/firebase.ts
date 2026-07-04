@@ -22,13 +22,34 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase (prevent duplicate initialization on hot reload)
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+const hasKeys = !!process.env.EXPO_PUBLIC_FIREBASE_API_KEY;
 
-// Initialize Auth with React Native AsyncStorage persistence
-// This keeps users signed in between app restarts automatically
-const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage),
-});
+let app: any;
+let auth: any;
+
+if (hasKeys) {
+  // Initialize Firebase (prevent duplicate initialization on hot reload)
+  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+
+  // Initialize Auth with React Native AsyncStorage persistence
+  // This keeps users signed in between app restarts automatically
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage),
+  });
+} else {
+  console.warn(
+    "⚠️ Firebase configuration keys are missing in your .env file. " +
+    "Please fill in EXPO_PUBLIC_FIREBASE_API_KEY in your .env file to enable authentication."
+  );
+  app = {} as any;
+  auth = {
+    currentUser: null,
+    onAuthStateChanged: (callback: any) => {
+      // Simulate unauthenticated user so routing doesn't hang
+      const timer = setTimeout(() => callback(null), 100);
+      return () => clearTimeout(timer);
+    },
+  } as any;
+}
 
 export { app, auth };

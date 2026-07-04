@@ -78,6 +78,11 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   // Subscribe to Firebase auth state changes.
   // Returns an unsubscribe function for cleanup.
   initialize: () => {
+    // Safety guard if Firebase config keys are not loaded yet
+    if (!auth || typeof auth.onAuthStateChanged !== 'function') {
+      set({ user: null, isLoading: false, isInitialized: true });
+      return () => {};
+    }
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         set({
