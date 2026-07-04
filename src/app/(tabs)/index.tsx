@@ -13,6 +13,7 @@ import { NutritionFacts } from '../../components/features/NutritionFacts';
 import { SugarProgressRing } from '../../components/features/SugarProgressRing';
 import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle, Menu, HelpCircle, Flame, Zap, ArrowUpRight, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { formatBloodSugarValue, getStatusColor, getStatusLabel } from '../../utils/bloodSugar';
+import { formatSugar } from '../../utils/sugar';
 import SettingsScreen from './settings';
 import * as Haptics from 'expo-haptics';
 import { ScanHistoryItem } from '../../types/app.types';
@@ -34,6 +35,7 @@ const formatGroupDate = (timestamp: number) => {
 
 
 function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelectedScan, deleteScan }: any) {
+  const { sugarUnit } = useAppStore();
   const scrollRef = useRef<ScrollView>(null);
   const [scrollX, setScrollX] = useState(0);
 
@@ -241,7 +243,7 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                       <View style={{ width: 4.5, height: 4.5, borderRadius: 2.25, backgroundColor: sugColor }} />
                     </View>
                     <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>
-                      Sugar: {item.sugarGrams} g
+                      Sugar: {formatSugar(item.sugarGrams, sugarUnit)}
                     </Text>
                   </View>
 
@@ -324,7 +326,7 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
 
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
-  const { logs, scans, deleteScan, clearScans, userName } = useAppStore();
+  const { logs, scans, deleteScan, clearScans, userName, sugarUnit } = useAppStore();
   const [selectedScan, setSelectedScan] = useState<ScanHistoryItem | null>(null);
   const [settingsVisible, setSettingsVisible] = useState(false);
 
@@ -463,12 +465,12 @@ export default function HomeScreen() {
             <Text
               style={{ color: colors.text, fontSize: 20, fontWeight: '900', letterSpacing: -0.6 }}
             >
-              GoodBye Sugar
+              CutSugar
             </Text>
             <Text
               style={{ color: colors.primary, fontSize: 9.5, fontWeight: '800', letterSpacing: 1.6 }}
             >
-              SUGAR SCANNER
+              SCAN TEASPOONS & GLUCOSE LOG
             </Text>
           </View>
         </View>
@@ -556,7 +558,7 @@ export default function HomeScreen() {
               <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 10, marginRight: 12 }}>
                 <Text style={{ color: colors.text, fontSize: 11, lineHeight: 16, fontWeight: '700' }}>
                   <Text style={{ color: colors.text, fontWeight: '900' }}>WHO Standard:</Text>
-                  {'\n'}1 tsp = 4.2g of Sugar
+                  {'\n'}1 tsp = {formatSugar(4.2, sugarUnit)} of Sugar
                 </Text>
               </View>
 
@@ -965,7 +967,7 @@ export default function HomeScreen() {
                           <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', marginTop: 10 }}>
                             {selectedScan.sugarTeaspoons} <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary }}>tsp</Text>
                           </Text>
-                          <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 4 }}>({selectedScan.sugarGrams}g sugar)</Text>
+                          <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 4 }}>({formatSugar(selectedScan.sugarGrams, sugarUnit)} sugar)</Text>
                         </>
                       ) : (
                         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 12 }}>
@@ -994,7 +996,7 @@ export default function HomeScreen() {
                           <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', marginTop: 10 }}>
                             {parseFloat((selectedScan.sugarPer100g / 4.2).toFixed(1))} <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary }}>tsp</Text>
                           </Text>
-                          <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 4 }}>({selectedScan.sugarPer100g}g sugar)</Text>
+                          <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 4 }}>({formatSugar(selectedScan.sugarPer100g, sugarUnit)} sugar)</Text>
                         </>
                       ) : (
                         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 12 }}>
@@ -1065,7 +1067,7 @@ export default function HomeScreen() {
                         </Text>
                         <View style={{ backgroundColor: colors.surface, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
                           <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Recommended Daily Sugar Amount</Text>
-                          <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 6 tsp (25g) for best health benefits.</Text>
+                          <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 6 tsp ({formatSugar(25, sugarUnit)}) for best health benefits.</Text>
                           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                             <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
                             <Text style={{ color: currentTsp > 6 ? colors.error : colors.text, fontWeight: '900', fontSize: 16 }}>{((currentTsp / 6) * 100).toFixed(0)}%</Text>
@@ -1074,7 +1076,7 @@ export default function HomeScreen() {
 
                         <View style={{ backgroundColor: colors.surface, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
                           <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Maximum Suggested Daily Sugar Amount</Text>
-                          <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 12 tsp (50g) to reduce health risks.</Text>
+                          <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 12 tsp ({formatSugar(50, sugarUnit)}) to reduce health risks.</Text>
                           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                             <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
                             <Text style={{ color: currentTsp > 12 ? colors.error : colors.text, fontWeight: '900', fontSize: 16 }}>{((currentTsp / 12) * 100).toFixed(0)}%</Text>

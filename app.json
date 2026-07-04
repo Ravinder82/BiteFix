@@ -1,20 +1,20 @@
 {
   "expo": {
-    "name": "GoodBye Sugar",
-    "slug": "goodbye-sugar",
+    "name": "CutSugar: Scan Teaspoons & Log",
+    "slug": "cutsugar",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.ravinderpoonia.goodbyesugar",
+      "bundleIdentifier": "com.ravinderpoonia.cutsugar",
       "supportsTablet": false,
       "infoPlist": {
-        "NSCameraUsageDescription": "GoodBye Sugar needs access to the camera to scan food barcodes and analyze sugar values."
+        "NSCameraUsageDescription": "CutSugar needs access to the camera to scan food barcodes and analyze sugar values."
       }
     },
     "android": {
-      "package": "com.ravinderpoonia.goodbyesugar",
+      "package": "com.ravinderpoonia.cutsugar",
       "adaptiveIcon": {
         "backgroundColor": "#faf8f5",
         "foregroundImage": "./assets/icon.png"
@@ -28,7 +28,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "GoodBye Sugar needs access to your camera to scan food barcodes and analyse their sugar content.",
+          "cameraPermission": "CutSugar needs access to your camera to scan food barcodes and analyse their sugar content.",
           "microphonePermission": false,
           "recordAudioAndroid": false,
           "barcodeScannerEnabled": true

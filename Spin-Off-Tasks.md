@@ -1,17 +1,17 @@
 # CleanBite App: AI Agent Execution Roadmap & Instructions
 
-This document is the **Ultimate Blueprint** for the AI Agent tasked with building the `CleanBite` app. It provides a crystal clear path to spin off from the `GoodBye-Sugar` codebase and transform it into a highly engaging, gamified, clean-eating scanner app.
+This document is the **Ultimate Blueprint** for the AI Agent tasked with building the `CleanBite` app. It provides a crystal clear path to spin off from the `CutSugar` codebase and transform it into a highly engaging, gamified, clean-eating scanner app.
 
 ## 🌟 The Vision: CleanBite
-**CleanBite** is a gamified, ultra-processed food scanner. While *GoodBye-Sugar* focused strictly on metabolic health and diabetes management, *CleanBite* focuses on **NOVA scores, food additives, ingredient transparency, and a dynamic Mascot Health Score**.
+**CleanBite** is a gamified, ultra-processed food scanner. While *CutSugar* focused strictly on metabolic health and diabetes management, *CleanBite* focuses on **NOVA scores, food additives, ingredient transparency, and a dynamic Mascot Health Score**.
 
 ---
 
 ## Phase 1: The Codebase Spin-Off (Starting Point)
-You (the AI Agent) will begin with the finalized `GoodBye-Sugar` codebase. Your first task is a clean, surgical pivot.
+You (the AI Agent) will begin with the finalized `CutSugar` codebase. Your first task is a clean, surgical pivot.
 
-- [ ] **Clone/Duplicate:** Copy the final `GoodBye-Sugar` codebase into a new directory named `CleanBite`.
-- [ ] **Rebrand Configuration:** Update `app.json`, `package.json`, bundle identifiers, schemes, and display names from "GoodBye-Sugar" to "CleanBite".
+- [ ] **Clone/Duplicate:** Copy the final `CutSugar` codebase into a new directory named `CleanBite`.
+- [ ] **Rebrand Configuration:** Update `app.json`, `package.json`, bundle identifiers, schemes, and display names from "CutSugar" to "CleanBite".
 - [ ] **Surgical Removal of Glucose/Sugar logic:** 
   - Delete blood glucose logging screens and components.
   - Remove teaspoon conversion logic and "sugar pile" visualizations.
@@ -38,7 +38,7 @@ This is the core differentiator. The user's home screen is no longer a dashboard
 - [ ] **Animations:** Integrate smooth, dynamic animations (using Lottie or Reanimated) to transition the mascot based on the current score.
 
 ## Phase 4: Re-designing the UI/UX & Theming
-- [ ] **Color Palette Pivot:** Shift from GoodBye-Sugar's clinical amber/blue to organic, vibrant **greens, teals, and earthy tones**.
+- [ ] **Color Palette Pivot:** Shift from CutSugar's clinical amber/blue to organic, vibrant **greens, teals, and earthy tones**.
 - [ ] **Product Detail Sheets:** Redesign the scanner result sheet to prominently display:
   - A massive NOVA score indicator.
   - An expandable list of additives (with AI-generated brief explanations of harmful ones).
@@ -46,7 +46,7 @@ This is the core differentiator. The user's home screen is no longer a dashboard
 - [ ] **Onboarding:** Create a fresh 4-6 screen onboarding flow introducing the Mascot and the concept of "Ultra-Processed Foods".
 
 ## Phase 5: Final Polish & App Store Prep
-- [ ] **Performance Audit:** Ensure camera scanner loads instantly and the 10-second timeout logic (from GoodBye-Sugar) is preserved.
+- [ ] **Performance Audit:** Ensure camera scanner loads instantly and the 10-second timeout logic (from CutSugar) is preserved.
 - [ ] **Asset Generation:** Generate app icons, splash screens, and App Store preview images highlighting the Mascot and NOVA scanning.
 
 ---

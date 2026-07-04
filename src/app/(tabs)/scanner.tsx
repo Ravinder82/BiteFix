@@ -32,6 +32,7 @@ import AnimatedReanimated, {
 } from 'react-native-reanimated';
 import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
+import { formatSugar } from '../../utils/sugar';
 
 import {
   ScanResultData,
@@ -78,7 +79,7 @@ const PRODUCT_BARCODE_TYPES = ['qr', 'upc_a', 'upc_e', 'ean13', 'ean8', 'code128
 // ─────────────────────────────────────────────────────────
 export default function ScannerScreen() {
   const { colors, isDark } = useTheme();
-  const { addScan } = useAppStore();
+  const { addScan, sugarUnit } = useAppStore();
 
   // Camera permission hook from expo-camera
   const [permission, requestPermission] = useCameraPermissions();
@@ -1281,7 +1282,7 @@ export default function ScannerScreen() {
                       <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', marginTop: 10 }}>
                         {scanResult.sugarTeaspoons} <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textSecondary }}>tsp</Text>
                       </Text>
-                      <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 4 }}>({scanResult.sugarGrams}g sugar)</Text>
+                      <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 4 }}>({formatSugar(scanResult.sugarGrams ?? 0, sugarUnit)} sugar)</Text>
                     </>
                   ) : (
                     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 12 }}>
@@ -1310,7 +1311,7 @@ export default function ScannerScreen() {
                       <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', marginTop: 10 }}>
                         {parseFloat((scanResult.sugarPer100g / 4.2).toFixed(1))} <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textSecondary }}>tsp</Text>
                       </Text>
-                      <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 4 }}>({scanResult.sugarPer100g}g sugar)</Text>
+                      <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 4 }}>({formatSugar(scanResult.sugarPer100g ?? 0, sugarUnit)} sugar)</Text>
                     </>
                   ) : (
                     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 12 }}>
@@ -1385,7 +1386,7 @@ export default function ScannerScreen() {
                     <View style={{ gap: 12 }}>
                       <View style={{ backgroundColor: colors.background, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
                         <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Conditional Recommendation</Text>
-                        <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 6 tsp (25g) for additional health benefits.</Text>
+                        <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 6 tsp ({formatSugar(25, sugarUnit)}) for additional health benefits.</Text>
                         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
                           <Text style={{ color: currentTsp > 6 ? colors.error : colors.text, fontWeight: '900', fontSize: 16 }}>{((currentTsp / 6) * 100).toFixed(0)}%</Text>
@@ -1394,7 +1395,7 @@ export default function ScannerScreen() {
 
                       <View style={{ backgroundColor: colors.background, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
                         <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Strong Recommendation</Text>
-                        <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 12 tsp (50g) to reduce health risks.</Text>
+                        <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 12 tsp ({formatSugar(50, sugarUnit)}) to reduce health risks.</Text>
                         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                           <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
                           <Text style={{ color: currentTsp > 12 ? colors.error : colors.text, fontWeight: '900', fontSize: 16 }}>{((currentTsp / 12) * 100).toFixed(0)}%</Text>
@@ -1466,7 +1467,7 @@ export default function ScannerScreen() {
                 }}>
                   <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 18 }}>
                     You scanned <Text style={{ fontWeight: '900', color: colors.text }}>{scanResult.name}</Text> with{' '}
-                    <Text style={{ fontWeight: '900', color: colors.error }}>{scanResult.sugarGrams ?? scanResult.sugarPer100g}g sugar</Text>.
+                    <Text style={{ fontWeight: '900', color: colors.error }}>{formatSugar(scanResult.sugarGrams ?? scanResult.sugarPer100g ?? 0, sugarUnit)} sugar</Text>.
                     Here are alternatives in the same category with less sugar:
                   </Text>
                 </View>
@@ -1561,7 +1562,7 @@ export default function ScannerScreen() {
                             borderRadius: 99,
                           }}>
                             <Text style={{ color: colors.success, fontSize: 11, fontWeight: '900' }}>
-                              {alt.sugarGrams}g sugar
+                              {formatSugar(alt.sugarGrams, sugarUnit)} sugar
                             </Text>
                           </View>
                           {pctLess > 0 && (

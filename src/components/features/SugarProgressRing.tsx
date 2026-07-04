@@ -11,6 +11,8 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { Text } from '@/components/Text';
+import { useAppStore } from '../../stores/appStore';
+import { formatSugar } from '../../utils/sugar';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -28,6 +30,7 @@ export function SugarProgressRing({
   isDark = true,
   colors,
 }: SugarProgressRingProps) {
+  const { sugarUnit } = useAppStore();
   // Convert total sugar to teaspoons (1 tsp = 4.2g)
   const totalTsp = totalSugar / 4.2;
   
@@ -408,9 +411,9 @@ export function SugarProgressRing({
           <Text style={[styles.tspLabel, { color: colors.textSecondary, fontSize: 10 * scale }]}>teaspoons</Text>
         </View>
 
-        {/* Total Sugar in Grams */}
+        {/* Total Sugar in Grams/Ounces */}
         <Text style={[styles.gramText, { color: isDark ? '#9E9EA7' : '#5A4E42', fontSize: 12 * scale }]}>
-          {totalSugar.toFixed(1)}g total
+          {formatSugar(totalSugar, sugarUnit)} total
         </Text>
 
         {/* Dynamic Zone Status badge */}

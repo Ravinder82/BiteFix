@@ -8,6 +8,7 @@ interface AppState {
   onboardingComplete: boolean;
   theme: 'light' | 'dark' | 'system';
   unit: 'mg/dL' | 'mmol/L';
+  sugarUnit: 'g' | 'oz';
   logs: BloodSugarLog[];
   scans: ScanHistoryItem[];
   userName?: string;
@@ -17,6 +18,7 @@ interface AppState {
   setOnboardingComplete: (complete: boolean) => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   setUnit: (unit: 'mg/dL' | 'mmol/L') => void;
+  setSugarUnit: (sugarUnit: 'g' | 'oz') => void;
   setProfile: (profile: {
     userName?: string;
     userGoal?: 'energy' | 'weight' | 'medical' | 'mental' | 'none';
@@ -62,6 +64,7 @@ export const useAppStore = create<AppState>()(
       onboardingComplete: false,
       theme: 'light',
       unit: 'mg/dL',
+      sugarUnit: 'g',
       logs: [],
       scans: [],
       userName: undefined,
@@ -70,6 +73,7 @@ export const useAppStore = create<AppState>()(
       setOnboardingComplete: (complete) => set({ onboardingComplete: complete }),
       setTheme: (theme) => set({ theme }),
       setUnit: (unit) => set({ unit }),
+      setSugarUnit: (sugarUnit) => set({ sugarUnit }),
       setProfile: (profile) => set((state) => ({
         userName: profile.userName !== undefined ? profile.userName : state.userName,
         userGoal: profile.userGoal !== undefined ? profile.userGoal : state.userGoal,
@@ -160,6 +164,7 @@ export const useAppStore = create<AppState>()(
         onboardingComplete: false,
         theme: 'light',
         unit: 'mg/dL',
+        sugarUnit: 'g',
         logs: [],
         scans: [],
         userName: undefined,
@@ -167,12 +172,15 @@ export const useAppStore = create<AppState>()(
       }),
     }),
     {
-      name: '@goodbye-sugar-storage',
+      name: '@cutsugar-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 1,
+      version: 2,
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
           persistedState.theme = 'light';
+        }
+        if (version < 2) {
+          persistedState.sugarUnit = 'g';
         }
         return persistedState as AppState;
       },

@@ -1,13 +1,13 @@
 # CODEX COMPLIANCE SHIELD 🛡️
 ## App Store Submission Protocol & Codebase Refactoring Roadmap
-**Target Release**: GoodBye Sugar v1.0.0 (Local-First Release)
+**Target Release**: CutSugar v1.0.0 (Local-First Release)
 
 ---
 
 ## I. Codex Persona & Mission
 
 > **Protocol Name**: `Codex App Store Gatekeeper Shield (Codex-AGS)`
-> **Mission**: Build an unbreakable, policy-compliant, and production-hardened binary for *GoodBye Sugar v1.0.0* that breezes through the Apple App Store Review team on the **first attempt** with zero friction.
+> **Mission**: Build an unbreakable, policy-compliant, and production-hardened binary for *CutSugar v1.0.0* that breezes through the Apple App Store Review team on the **first attempt** with zero friction.
 >
 > We operate under the assumption that the Apple Reviewer is extremely rigorous, specifically looking for compliance regarding **health tracking apps (Guideline 1.4.1)** and **user data privacy (Guideline 5.1.1)**. Our codebase must be bulletproof, self-contained, and perfectly declared.
 
@@ -32,7 +32,7 @@
 ### 3. Guideline 4.8 - Sign in with Apple
 * **Rule**: Apps that offer third-party logins (like Google/Facebook) must also offer Sign in with Apple.
 * **Current Status**: 
-  * **Perfect**: GoodBye Sugar v1.0.0 does not use third-party OAuth (like Google or Apple Login). The user simply inputs their name locally during onboarding. Since there is no remote database registration, Sign in with Apple is **not required**.
+  * **Perfect**: CutSugar v1.0.0 does not use third-party OAuth (like Google or Apple Login). The user simply inputs their name locally during onboarding. Since there is no remote database registration, Sign in with Apple is **not required**.
 * **Compliance Check**: ✅ *Fully Compliant.*
 
 ### 4. Guideline 3.1.1 - In-App Purchase (IAP) & Paywall Cleanup
@@ -62,7 +62,7 @@ Add a clean, styled footnote at the bottom of the ScrollView in `tracker.tsx` so
 * **Target Content**:
 ```tsx
 <Text style={{ color: colors.textMuted, fontSize: 10, textAlign: 'center', marginVertical: 16, lineHeight: 14 }}>
-  Disclaimer: GoodBye Sugar is an informational log tracker and not a medical device. Consult a physician before acting on blood sugar readings.
+  Disclaimer: CutSugar is an informational log tracker and not a medical device. Consult a physician before acting on blood sugar readings.
 </Text>
 ```
 

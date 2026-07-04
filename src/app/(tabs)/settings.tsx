@@ -9,7 +9,7 @@ import * as Haptics from 'expo-haptics';
 
 export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   const { colors, theme, toggleTheme } = useTheme();
-  const { unit, setUnit, clearScans, clearAllData } = useAppStore();
+  const { unit, setUnit, sugarUnit, setSugarUnit, clearScans, clearAllData } = useAppStore();
 
   const [legalModalVisible, setLegalModalVisible] = useState(false);
   const [legalContent, setLegalContent] = useState({ title: '', body: '' });
@@ -103,7 +103,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
             />
           </View>
 
-          <View style={{ backgroundColor: colors.surface }} className="flex-row items-center justify-between p-4">
+          <View style={{ backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border }} className="flex-row items-center justify-between p-4">
             <View className="flex-row items-center gap-3">
               <Layers size={16} color={colors.primary} />
               <Text style={{ color: colors.text }} className="font-bold text-sm">Blood Sugar Unit</Text>
@@ -139,6 +139,47 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
               >
                 <Text style={{ color: unit === 'mmol/L' ? colors.primary : colors.textSecondary }} className="text-xs font-black">
                   mmol/L
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={{ backgroundColor: colors.surface }} className="flex-row items-center justify-between p-4">
+            <View className="flex-row items-center gap-3">
+              <Layers size={16} color={colors.primary} />
+              <Text style={{ color: colors.text }} className="font-bold text-sm">Product Sugar Unit</Text>
+            </View>
+            <View className="flex-row gap-2">
+              <TouchableOpacity
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSugarUnit('g');
+                }}
+                style={{
+                  backgroundColor: sugarUnit === 'g' ? colors.primary + '15' : 'transparent',
+                  borderColor: sugarUnit === 'g' ? colors.primary : colors.border,
+                  borderWidth: 1
+                }}
+                className="py-1.5 px-3 rounded-xl active:opacity-85"
+              >
+                <Text style={{ color: sugarUnit === 'g' ? colors.primary : colors.textSecondary }} className="text-xs font-black">
+                  g
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSugarUnit('oz');
+                }}
+                style={{
+                  backgroundColor: sugarUnit === 'oz' ? colors.primary + '15' : 'transparent',
+                  borderColor: sugarUnit === 'oz' ? colors.primary : colors.border,
+                  borderWidth: 1
+                }}
+                className="py-1.5 px-3 rounded-xl active:opacity-85"
+              >
+                <Text style={{ color: sugarUnit === 'oz' ? colors.primary : colors.textSecondary }} className="text-xs font-black">
+                  oz
                 </Text>
               </TouchableOpacity>
             </View>
@@ -200,7 +241,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
 
         {/* Version */}
         <View className="mb-16 items-center">
-          <Text style={{ color: colors.textMuted }} className="text-[10px] font-black uppercase tracking-wider">GoodBye Sugar v1.0.0</Text>
+          <Text style={{ color: colors.textMuted }} className="text-[10px] font-black uppercase tracking-wider">CutSugar v1.0.0</Text>
 
         </View>
       </ScrollView>
@@ -294,7 +335,7 @@ function SettingsRowItem({ label, icon, onPress, textColor = 'normal', colors, i
 const PRIVACY_POLICY_TEXT = `Last Updated: June 2026
 
 1. INFORMATION WE COLLECT
-GoodBye Sugar collects blood sugar readings that you manually log in the application, along with your scan history. This information is saved locally on your device via AsyncStorage and SecureStore and is never shared, uploaded, or sold to third parties.
+CutSugar collects blood sugar readings that you manually log in the application, along with your scan history. This information is saved locally on your device via AsyncStorage and SecureStore and is never shared, uploaded, or sold to third parties.
 
 2. HEALTH DATA ENCRYPTION
 Any logged sensitive data is processed locally on your hardware. We do not maintain remote cloud infrastructure to host your personal biological indexes.
@@ -303,17 +344,17 @@ Any logged sensitive data is processed locally on your hardware. We do not maint
 You have full access to view, edit, and delete your logs and scan records. You can use the "Clear Scan History" or "Reset App Data" actions to wipe all device state instantly.
 
 4. THIRD PARTY SERVICE PROVIDERS
-GoodBye Sugar uses the Open Food Facts API to query food ingredients. No personal identifiers or location statistics are sent to this database during search queries.
+CutSugar uses the Open Food Facts API to query food ingredients. No personal identifiers or location statistics are sent to this database during search queries.
 
-Contact: support@goodbyesugarapp.com`;
+Contact: support@cutsugarapp.com`;
 
 const TERMS_OF_SERVICE_TEXT = `Last Updated: June 2026
 
 1. ACCEPTANCE
-By installing and using the GoodBye Sugar mobile application, you agree to these Terms of Service.
+By installing and using the CutSugar mobile application, you agree to these Terms of Service.
 
 2. MEDICAL DISCLAIMER
-GoodBye Sugar is an informational scanner and blood sugar log tracker. It is NOT a medical device, nor does it replace professional diagnostic equipment, clinical consulting, or pharmaceutical advice. Always consult a healthcare specialist before making dietary modifications or acting on blood sugar logs.
+CutSugar is an informational scanner and blood sugar log tracker. It is NOT a medical device, nor does it replace professional diagnostic equipment, clinical consulting, or pharmaceutical advice. Always consult a healthcare specialist before making dietary modifications or acting on blood sugar logs.
 
 3. PAYMENTS & SUBSCRIPTIONS
 In-app subscription payments (if applicable) are governed by App Store and Play Store terms. Subscriptions automatically renew unless cancelled 24 hours before expiration.
@@ -321,20 +362,20 @@ In-app subscription payments (if applicable) are governed by App Store and Play 
 4. USER REPRESENTATION
 You agree to use this application in compliance with local laws and regulations.
 
-Contact: legal@goodbyesugarapp.com`;
+Contact: legal@cutsugarapp.com`;
 
 const EULA_TEXT = `Last Updated: June 2026
 
 1. LICENSE GRANT
-GoodBye Sugar grants you a personal, non-transferable, revocable license to run this mobile application on your personal device.
+CutSugar grants you a personal, non-transferable, revocable license to run this mobile application on your personal device.
 
 2. PROHIBITED USES
-You may not reverse-engineer, distribute, or compile the source code or binary configurations of GoodBye Sugar.
+You may not reverse-engineer, distribute, or compile the source code or binary configurations of CutSugar.
 
 3. WARRANTY AND LIABILITY
-The application is provided "as is" without warranties of any kind. GoodBye Sugar is not liable for health modifications, inaccurate measurements, or device damage.
+The application is provided "as is" without warranties of any kind. CutSugar is not liable for health modifications, inaccurate measurements, or device damage.
 
 4. PLATFORM GOVERNING
 This Agreement is fully compliant with Apple's Standard EULA terms and guidelines.
 
-Contact: license@goodbyesugarapp.com`;
+Contact: license@cutsugarapp.com`;

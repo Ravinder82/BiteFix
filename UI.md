@@ -1,4 +1,4 @@
-# Premium UI/UX Concepts for GoodBye-Sugar
+# Premium UI/UX Concepts for CutSugar
 
 To elevate the app from a standard utility to a "multi-billion dollar" ecosystem experience (like Apple Health, Oura, or Zero), we need to adopt the elite design trends of 2026. The goal is to make the app feel **tactile, intelligent, and deeply premium**.
 

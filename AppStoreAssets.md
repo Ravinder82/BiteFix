@@ -1,6 +1,6 @@
-# 🚀 GOODBYE SUGAR: GENZ ONBOARDING FLOW & GRAPHICS SPECIFICATION
+# 🚀 CUTSUGAR: GENZ ONBOARDING FLOW & GRAPHICS SPECIFICATION
 
-This document outlines the final 5-step onboarding flow for **GoodBye Sugar**. It integrates the newly designed premium 9:16 App Store-style layered graphics (with 3D glassmorphic elements and shadows) and specifies the exact text and interactive layouts that the user will experience.
+This document outlines the final 5-step onboarding flow for **CutSugar**. It integrates the newly designed premium 9:16 App Store-style layered graphics (with 3D glassmorphic elements and shadows) and specifies the exact text and interactive layouts that the user will experience.
 
 ---
 
@@ -23,7 +23,7 @@ This document outlines the final 5-step onboarding flow for **GoodBye Sugar**. I
 ### 1. Slide 1: Welcome & Cravings Setup
 * **Screen Focus:** Asking for user's Name and identifying their Sweet Tooth profile.
 * **Graphic Asset (Screen 1):**
-  ![GoodBye Sugar - Slide 1 Welcome Screen](file:///Users/ravinderpoonia/GoodBye-Sugar/assets/app-screenshots/onboarding_screen_1.png)
+  ![CutSugar - Slide 1 Welcome Screen](file:///Users/ravinderpoonia/GoodBye-Sugar/assets/app-screenshots/onboarding_screen_1.png)
 * **Visual & Style Layers:** Collaged light-mode and dark-mode iPhone interfaces floating with deep drop shadows against an obsidian gradient. Surrounded by glowing amber rings and floating glass-like sugar cubes.
 * **Core Information to Read:**
   - **Title:** "Let's personalize your path."
@@ -35,7 +35,7 @@ This document outlines the final 5-step onboarding flow for **GoodBye Sugar**. I
 ### 2. Slide 2: Real-Time Scanner Intro
 * **Screen Focus:** Introducing the barcode lookup engine translating grams into teaspoons.
 * **Graphic Asset (Screen 2):**
-  ![GoodBye Sugar - Slide 2 Scanner Results](file:///Users/ravinderpoonia/GoodBye-Sugar/assets/app-screenshots/onboarding_screen_2.png)
+  ![CutSugar - Slide 2 Scanner Results](file:///Users/ravinderpoonia/GoodBye-Sugar/assets/app-screenshots/onboarding_screen_2.png)
 * **Visual & Style Layers:** Overlapping cards showing Coca-Cola's sugar details (`25.2 tsp`) and the Scan History page. Surrounded by a grid of glossy orange cubes on a dark platform.
 * **Core Information to Read:**
   - **Title:** "Real-Time Sugar Scanner"
@@ -47,7 +47,7 @@ This document outlines the final 5-step onboarding flow for **GoodBye Sugar**. I
 ### 3. Slide 3: Scanner Viewfinder Walkthrough
 * **Screen Focus:** Showing the active camera viewfinder interface.
 * **Graphic Asset (Screen 3):**
-  ![GoodBye Sugar - Slide 3 Viewfinder](file:///Users/ravinderpoonia/GoodBye-Sugar/assets/app-screenshots/onboarding_screen_3.png)
+  ![CutSugar - Slide 3 Viewfinder](file:///Users/ravinderpoonia/GoodBye-Sugar/assets/app-screenshots/onboarding_screen_3.png)
 * **Visual & Style Layers:** Interactive camera preview overlay with glowing scanning brackets. A neon success green (#34d399) and warm amber laser beam sweeps over a floating barcode.
 * **Core Information to Read:**
   - **Title:** "Point & Scan"
@@ -59,7 +59,7 @@ This document outlines the final 5-step onboarding flow for **GoodBye Sugar**. I
 ### 4. Slide 4: Daily Burn & Better Choices
 * **Screen Focus:** Finding low-sugar alternatives and tracking the Daily Burn.
 * **Graphic Asset (Screen 4):**
-  ![GoodBye Sugar - Slide 4 Alternatives](file:///Users/ravinderpoonia/GoodBye-Sugar/assets/app-screenshots/onboarding_screen_4.png)
+  ![CutSugar - Slide 4 Alternatives](file:///Users/ravinderpoonia/GoodBye-Sugar/assets/app-screenshots/onboarding_screen_4.png)
 * **Visual & Style Layers:** Floating cards representing alternative options and daily energy burn meters. Glassmorphic overlays with glowing circular halos.
 * **Core Information to Read:**
   - **Title:** "Smart Swaps & Daily Burn"
@@ -71,7 +71,7 @@ This document outlines the final 5-step onboarding flow for **GoodBye Sugar**. I
 ### 5. Slide 5: Blood Sugar Tracker (Your Health Insurance)
 * **Screen Focus:** Logging fasting and post-meal glucose trends to keep health in check.
 * **Graphic Asset (Screen 5):**
-  ![GoodBye Sugar - Slide 5 Health Tracker](file:///Users/ravinderpoonia/GoodBye-Sugar/assets/app-screenshots/onboarding_screen_5.png)
+  ![CutSugar - Slide 5 Health Tracker](file:///Users/ravinderpoonia/GoodBye-Sugar/assets/app-screenshots/onboarding_screen_5.png)
 * **Visual & Style Layers:** Floating clinic-style digital dashboard displaying Fasting and Post-meal glucose metrics (`103 mg/dL` and `129 mg/dL`) with diagnostic ranges. Glowing orange grid base.
 * **Core Information to Read:**
   - **Title:** "Clinical Blood Sugar Tracker"

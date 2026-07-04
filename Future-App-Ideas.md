@@ -1,6 +1,6 @@
 # Future Capabilities with OpenFoodFacts & USDA APIs
 
-Right now, "GoodBye-Sugar" is laser-focused on one thing: **Sugar tracking**. 
+Right now, "CutSugar" is laser-focused on one thing: **Sugar tracking**. 
 
 However, by building the robust OpenFoodFacts + USDA FoodData Central waterfall, you've accidentally unlocked two of the most powerful nutritional databases in the world. 
 
@@ -10,7 +10,7 @@ Here are the biggest ideas for what we can build next using the APIs we already 
 
 ## 1. The "Ultra-Processed" Detector (NOVA Classification)
 * **The API Data:** OpenFoodFacts provides a `nova_group` score from 1 to 4. Group 4 represents "Ultra-processed food and drink products" (high in additives, preservatives, and artificial flavors).
-* **The Feature:** When a user scans a product, we don't just show sugar. If `nova_group === 4`, the app screen flashes red with an **"Ultra-Processed Warning"**, listing the artificial additives (which OFF also provides as an `additives_n` count). This aligns perfectly with the "healthy eating" ethos of GoodBye-Sugar.
+* **The Feature:** When a user scans a product, we don't just show sugar. If `nova_group === 4`, the app screen flashes red with an **"Ultra-Processed Warning"**, listing the artificial additives (which OFF also provides as an `additives_n` count). This aligns perfectly with the "healthy eating" ethos of CutSugar.
 
 ## 2. Health & Eco-Scoring Gamification
 * **The API Data:** OFF provides `nutriscore_grade` (A to E for nutritional quality) and `ecoscore_grade` (A to E for environmental impact).

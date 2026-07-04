@@ -525,7 +525,7 @@ function SetupCompleteCard({
         shadowRadius: 8,
       }}>
         <Text style={{ color: C.amber, fontSize: 16, fontWeight: '900', textAlign: 'center', lineHeight: 26 }}>
-          We Welcome you on your SugarFree Lifestyle
+          Welcome to CutSugar — Your Sugar-Free Lifestyle
         </Text>
       </View>
     </View>
@@ -548,8 +548,8 @@ interface SlideData {
 const SLIDES: SlideData[] = [
   {
     step: 1,
-    title: "Welcome! What's your name?",
-    highlight: "What's your name?",
+    title: "Welcome to CutSugar!",
+    highlight: "CutSugar!",
     subtitle: "Let's personalize your path to a sugar-free lifestyle.",
     buttonLabel: 'Continue',
     isLast: false,
@@ -566,8 +566,8 @@ const SLIDES: SlideData[] = [
   },
   {
     step: 3,
-    title: 'Real Time Sugar Scanner',
-    highlight: 'Sugar Scanner',
+    title: 'CutSugar Barcode Scanner',
+    highlight: 'Barcode Scanner',
     subtitle: 'Scan product barcodes and see abstract grams instantly converted into teaspoons.',
     buttonLabel: 'Next',
     isLast: false,
@@ -584,9 +584,9 @@ const SLIDES: SlideData[] = [
   },
   {
     step: 5,
-    title: "Your Setup is Complete",
+    title: "Your CutSugar Setup is Complete",
     highlight: "Setup is Complete",
-    subtitle: "We're ready to start this life-changing journey together.",
+    subtitle: "We're ready to start this life-changing journey together with CutSugar.",
     buttonLabel: 'Get Started',
     isLast: true,
     mascotState: 'happy',

@@ -57,7 +57,7 @@ export async function fetchWithTimeout(url: string, timeoutMs: number, signal?: 
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        'User-Agent': 'GoodbyeSugarApp/1.0.0 (React Native; iOS/Android; contact@goodbyesugar.org)',
+        'User-Agent': 'CutSugarApp/1.0.0 (React Native; iOS/Android; contact@cutsugarapp.com)',
         'Accept': 'application/json',
       },
     });
@@ -107,13 +107,15 @@ export function extractSugarFromNutriments(n: Record<string, any>): number {
 export function parseQuantityString(str: any): number | null {
   if (!str) return null;
   const cleaned = String(str).toLowerCase().replace(/,/g, '.');
-  const match = cleaned.match(/([\d\.]+)\s*(g|ml|kg|l|cl)/);
+  const match = cleaned.match(/([\d\.]+)\s*(g|ml|kg|l|cl|fl\s*oz|fl\.\s*oz|oz|ounce|ounces)/);
   if (!match) return null;
   const val = parseFloat(match[1]);
   const unit = match[2];
   if (isNaN(val)) return null;
   if (unit === 'kg' || unit === 'l') return val * 1000;
   if (unit === 'cl') return val * 10;
+  if (unit.startsWith('fl') || unit.includes('fl')) return val * 29.5735;
+  if (unit === 'oz' || unit === 'ounce' || unit === 'ounces') return val * 28.3495;
   return val;
 }
 

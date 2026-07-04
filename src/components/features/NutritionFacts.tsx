@@ -1,6 +1,8 @@
 import React from 'react';
 import { View } from 'react-native';
 import { Text } from '@/components/Text';
+import { useAppStore } from '../../stores/appStore';
+import { formatSugar } from '../../utils/sugar';
 
 interface NutritionFactsProps {
   colors: any;
@@ -17,6 +19,7 @@ export function NutritionFacts({
   sugarGrams,
   servingSize,
 }: NutritionFactsProps) {
+  const { sugarUnit } = useAppStore();
   // Use a softer border for dark mode so it feels premium and integrated
   const isDarkMode = colors.background === '#000000';
   const labelColor = colors.text;
@@ -123,7 +126,7 @@ export function NutritionFacts({
           Total Sugars
         </Text>
         <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '900' }}>
-          {sugarGrams.toFixed(1)}g
+          {formatSugar(sugarGrams, sugarUnit)}
         </Text>
       </View>
     </View>
