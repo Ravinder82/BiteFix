@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "CutSugar",
+    "name": "CutSugar: Scan Teaspoons & Log",
     "slug": "cutsugar",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,6 +11,7 @@
       "googleServicesFile": "./GoogleService-Info.plist",
       "supportsTablet": false,
       "infoPlist": {
+        "CFBundleDisplayName": "CutSugar",
         "NSCameraUsageDescription": "CutSugar needs access to the camera to scan food barcodes and analyze sugar values.",
         "ITSAppUsesNonExemptEncryption": false
       }
