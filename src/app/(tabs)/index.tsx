@@ -11,8 +11,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
 import { SugarProgressRing } from '../../components/features/SugarProgressRing';
-import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle, Menu, HelpCircle, Flame, Zap, ArrowUpRight, TrendingUp, ChevronLeft, ChevronRight, LogOut } from 'lucide-react-native';
-import { useAuth } from '../../hooks/useAuth';
+import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle, Menu, HelpCircle, Flame, Zap, ArrowUpRight, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { formatBloodSugarValue, getStatusColor, getStatusLabel } from '../../utils/bloodSugar';
 import { formatSugar } from '../../utils/sugar';
 import SettingsScreen from './settings';
@@ -330,7 +329,6 @@ export default function HomeScreen() {
   const { logs, scans, deleteScan, clearScans, userName, sugarUnit } = useAppStore();
   const [selectedScan, setSelectedScan] = useState<ScanHistoryItem | null>(null);
   const [settingsVisible, setSettingsVisible] = useState(false);
-  const { signOut } = useAuth();
 
   // Animated shine coordinate for the CTA button
   const shineX = useSharedValue(-220);
@@ -477,35 +475,6 @@ export default function HomeScreen() {
           </View>
         </View>
         <View className="flex-row items-center gap-2">
-          {/* Quick Logout Button */}
-          <TouchableOpacity
-            onPress={() => {
-              Alert.alert(
-                'Log Out',
-                'Are you sure you want to log out of CutSugar?',
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  {
-                    text: 'Log Out',
-                    style: 'destructive',
-                    onPress: async () => {
-                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-                      try {
-                        await signOut();
-                      } catch (e) {
-                        Alert.alert('Error', 'Failed to log out.');
-                      }
-                    },
-                  },
-                ]
-              );
-            }}
-            style={{ backgroundColor: colors.surfaceRaised }}
-            className="p-2 active:opacity-80 rounded-full"
-          >
-            <LogOut size={18} color={colors.error} />
-          </TouchableOpacity>
-
           <TouchableOpacity
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
