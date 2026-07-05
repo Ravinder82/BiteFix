@@ -390,27 +390,31 @@ export default function HomeScreen() {
 
   // --- Bento Grid Logic ---
   const getLatestActiveScans = () => {
-    const todayStr = new Date().toDateString();
-
     if (scans.length === 0) {
       return { dateStr: 'Today', items: [], isEmpty: true };
     }
 
-    // Filter scans to ONLY include today's items. 
-    // This prevents the dashboard from falling back to yesterday's data 
-    // if the user deletes all of today's history items.
-    const activeScans = scans.filter(scan => new Date(scan.timestamp).toDateString() === todayStr);
+    const todayStr = new Date().toDateString();
+    const todayScans = scans.filter(scan => new Date(scan.timestamp).toDateString() === todayStr);
 
-    if (activeScans.length === 0) {
-      return { dateStr: 'Today', items: [], isEmpty: true };
+    if (todayScans.length > 0) {
+      return { dateStr: 'Today', items: todayScans, isEmpty: false };
     }
 
-    return { dateStr: 'Today', items: activeScans, isEmpty: false };
+    // Fallback: Find the most recent date in history that has scans
+    const sortedScansByTime = [...scans].sort((a, b) => b.timestamp - a.timestamp);
+    const latestScanDateStr = new Date(sortedScansByTime[0].timestamp).toDateString();
+    const latestScans = scans.filter(scan => new Date(scan.timestamp).toDateString() === latestScanDateStr);
+
+    const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+    const dateFormatted = new Date(sortedScansByTime[0].timestamp).toLocaleDateString(undefined, options);
+
+    return { dateStr: dateFormatted, items: latestScans, isEmpty: false };
   };
 
   const activeDayInfo = getLatestActiveScans();
 
-  const totalSugar = activeDayInfo.items.reduce((sum, item) => sum + item.sugarGrams, 0);
+  const totalSugar = activeDayInfo.items.reduce((sum, item) => sum + (item.totalSugarGrams ?? item.sugarGrams), 0);
 
   // 1. Total Daily Intake (Serving Size)
   const sumTotalPackagesCalories = activeDayInfo.items.reduce((sum, item) => sum + (item.calories ?? 0), 0);
@@ -551,38 +555,183 @@ export default function HomeScreen() {
 
             {/* Central Visual: Mascot-styled Sugar Ring */}
             <View style={{ width: '100%', alignItems: 'center', marginVertical: 16 }}>
+              {/* Side-by-Side Odometer Mini Containers */}
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'stretch',
+                gap: 12,
+                marginBottom: 16,
+                width: '100%',
+              }}>
+                {/* Left Mini Container (Bigger) */}
+                <View style={{
+                  flex: 1,
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  borderWidth: isDark ? 1.5 : 1,
+                  borderRadius: 20,
+                  padding: 14,
+                  justifyContent: 'center',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: isDark ? 0.15 : 0.05,
+                  shadowRadius: 12,
+                  elevation: 3,
+                }}>
+                  <View style={{
+                    alignSelf: 'flex-start',
+                    backgroundColor: isDark ? 'rgba(34, 197, 94, 0.15)' : colors.successLight,
+                    paddingHorizontal: 8,
+                    paddingVertical: 4,
+                    borderRadius: 6,
+                    marginBottom: 6,
+                  }}>
+                    <Text style={{
+                      color: colors.success,
+                      fontSize: 9,
+                      fontWeight: '900',
+                      letterSpacing: 0.5,
+                      textTransform: 'uppercase',
+                    }}>
+                      1 Circle = 6 Teaspoons
+                    </Text>
+                  </View>
+                  <Text style={{
+                    color: colors.text,
+                    fontSize: 13,
+                    fontWeight: '800',
+                    letterSpacing: -0.2,
+                  }}>
+                    Circles Completed
+                  </Text>
+                </View>
+
+                {/* Right Mini Container (Smaller, Coloured Container for Digits) */}
+                <View style={{
+                  minWidth: 80,
+                  backgroundColor: isDark ? 'rgba(34, 197, 94, 0.15)' : colors.successLight,
+                  borderColor: isDark ? 'rgba(34, 197, 94, 0.35)' : '#22C55E',
+                  borderWidth: 1.5,
+                  borderRadius: 20,
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  shadowColor: colors.success,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: isDark ? 0.25 : 0.12,
+                  shadowRadius: 10,
+                  elevation: 3,
+                }}>
+                  <Text style={{
+                    color: colors.success,
+                    fontSize: 32,
+                    fontWeight: '900',
+                    letterSpacing: -0.5,
+                  }}>
+                    {Math.floor((totalSugar / 4.2) / 6.0)}
+                  </Text>
+                </View>
+              </View>
+
               <SugarProgressRing totalSugar={totalSugar} size={260} isDark={isDark} colors={colors} />
             </View>
 
-            {/* Bottom: WHO Info & Limit Pill */}
-            <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
-              {/* WHO Standard Text */}
-              <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 10, marginRight: 12 }}>
-                <Text style={{ color: colors.text, fontSize: 11, lineHeight: 16, fontWeight: '700' }}>
-                  <Text style={{ color: colors.text, fontWeight: '900' }}>WHO Standard:</Text>
-                  {'\n'}1 tsp = {formatSugar(4.2, sugarUnit)} of Sugar
+            {/* Sleek WHO Standard Pill */}
+            <View style={{ width: '100%', alignItems: 'center', marginTop: 10, marginBottom: 14 }}>
+              <View style={{
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+                borderRadius: 20,
+                paddingHorizontal: 16,
+                paddingVertical: 6,
+                borderWidth: 1,
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+              }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700', textAlign: 'center' }}>
+                  WHO Standard
+                </Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700', textAlign: 'center' }}>
+                  1 Teaspoon = {formatSugar(4.2, sugarUnit)} of Sugar
+                </Text>
+              </View>
+            </View>
+
+            {/* Total Days to Consume Container */}
+            <View style={{
+              width: '100%',
+              backgroundColor: isDark ? 'rgba(251, 248, 248, 0.06)' : 'rgba(255, 255, 255, 0.7)',
+              borderRadius: 24,
+              borderWidth: 1,
+              borderColor: colors.border,
+              padding: 16,
+            }}>
+              {/* Title & Date Pill */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <Text style={{ color: colors.text, fontSize: 12, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                  Sugar Consumption
+                </Text>
+                <View style={{
+                  backgroundColor: colors.primary + '15',
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: colors.primary + '30',
+                }}>
+                  <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '800' }}>
+                    {activeDayInfo.dateStr === 'Today' ? "Today's Scans" : `Scans on ${activeDayInfo.dateStr}`}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Cute Floating Mini Info Container */}
+              <View style={{
+                backgroundColor: isDark ? 'rgba(255, 149, 0, 0.1)' : 'rgba(255, 149, 0, 0.08)',
+                borderColor: isDark ? 'rgba(255, 149, 0, 0.25)' : 'rgba(255, 149, 0, 0.3)',
+                borderWidth: 1,
+                borderRadius: 14,
+                padding: 10,
+                marginBottom: 12,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+              }}>
+                <Sparkles size={14} color="#FF9500" />
+                <Text style={{ color: colors.text, fontSize: 10.5, fontWeight: '600', flex: 1, lineHeight: 15 }}>
+                  Do you know How many Days it will take to consume all the sugar for today as per WHO guidelines?
                 </Text>
               </View>
 
-              {/* WHO Limit Pill */}
-              <View style={{
-                backgroundColor: activeDayInfo.isEmpty ? (isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)') : (totalSugar > 25 ? 'rgba(255, 59, 48, 0.12)' : (totalSugar > 15 ? 'rgba(255, 149, 0, 0.12)' : 'rgba(52, 199, 89, 0.12)')),
-                paddingHorizontal: 12,
-                paddingVertical: 10,
-                borderRadius: 16,
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-                  <ArrowUpRight size={14} color={activeDayInfo.isEmpty ? colors.textSecondary : (totalSugar > 25 ? '#FF3B30' : (totalSugar > 15 ? '#FF9500' : '#34C759'))} />
-                  <Text style={{ color: activeDayInfo.isEmpty ? colors.textSecondary : (totalSugar > 25 ? '#FF3B30' : (totalSugar > 15 ? '#FF9500' : '#34C759')), fontSize: 14, fontWeight: '900' }}>
-                    {activeDayInfo.isEmpty ? '0' : Math.round((totalSugar / 25) * 100)}%
-                  </Text>
+              {/* Consumption Pace Rows */}
+              <View style={{ gap: 10 }}>
+                {/* 6 tsp Pace */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <View style={{ gap: 2, flex: 1 }}>
+                    <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700' }}>Recommended</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '500' }}>WHO: Safe 6 teaspoons/day</Text>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={{ color: colors.success || '#22C55E', fontSize: 18, fontWeight: '900' }}>
+                      {activeDayInfo.isEmpty ? '0.0' : (totalSugar / 4.2 / 6.0).toFixed(1)} <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textSecondary }}>Days</Text>
+                    </Text>
+                  </View>
                 </View>
-                <Text style={{ color: activeDayInfo.isEmpty ? colors.textSecondary : (totalSugar > 25 ? '#FF3B30' : (totalSugar > 15 ? '#FF9500' : '#34C759')), fontSize: 9, fontWeight: '800', textTransform: 'uppercase' }}>
-                  WHO Limit
-                </Text>
+
+                {/* Separator line */}
+                <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 2 }} />
+
+                {/* 12 tsp Pace */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <View style={{ gap: 2, flex: 1 }}>
+                    <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700' }}>Maximum</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '500' }}>WHO: Max 12 teaspoons/day</Text>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={{ color: colors.primary, fontSize: 18, fontWeight: '900' }}>
+                      {activeDayInfo.isEmpty ? '0.0' : (totalSugar / 4.2 / 12.0).toFixed(1)} <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textSecondary }}>Days</Text>
+                    </Text>
+                  </View>
+                </View>
               </View>
             </View>
           </BlurView>

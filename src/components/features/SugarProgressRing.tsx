@@ -31,14 +31,13 @@ export function SugarProgressRing({
   colors,
 }: SugarProgressRingProps) {
   const { sugarUnit } = useAppStore();
-  // Convert total sugar to teaspoons (1 tsp = 4.2g)
+  // Convert total sugar to teaspoons (1 tsp = 4.2g) - Always represents cumulative daily total! Never resets when a circle completes.
   const totalTsp = totalSugar / 4.2;
-  
-  // 12 tsp (50g) represents 100% of the gauge scale.
-  // WHO Limit is 6 tsp (25g), which is exactly 50% of the circle.
-  const limitTsp = 6.0;
-  const maxTsp = 12.0;
-  const targetProgress = Math.min(1.0, totalTsp / maxTsp);
+
+  // Each cycle represents 6 teaspoons of sugar. Used strictly for the visual progress ring bar animation and color zones.
+  const completedCycles = Math.floor(totalTsp / 6.0);
+  const currentCycleTsp = totalTsp - (completedCycles * 6.0);
+  const targetProgress = Math.min(1.0, currentCycleTsp / 6.0);
 
   // Shared values for animations
   const progressVal = useSharedValue(0);
@@ -86,26 +85,22 @@ export function SugarProgressRing({
     );
   }, []);
 
-  // Determine current health zone status and colors
+  // Determine current health zone status and colors dynamically based on currentCycleTsp
   let zone: 'safe' | 'warning' | 'limit' | 'danger' = 'safe';
   let zoneColor = colors.success || '#22C55E';
-  let zoneText = 'SAFE';
   let glowColor = '#22C55E';
 
-  if (totalTsp > 12.0) {
+  if (currentCycleTsp > 5.0) {
     zone = 'danger';
-    zoneColor = '#A855F7'; // Deep purple for danger zone
-    zoneText = 'DANGER ZONE';
+    zoneColor = '#A855F7'; // Deep purple for danger zone in current cycle
     glowColor = '#A855F7';
-  } else if (totalTsp > 6.0) {
+  } else if (currentCycleTsp > 3.5) {
     zone = 'limit';
-    zoneColor = colors.error || '#DC2626'; // Red for exceeding WHO recommended limit
-    zoneText = 'LIMIT EXCEEDED';
+    zoneColor = colors.error || '#DC2626'; // Red for exceeding cycle warning limit
     glowColor = '#DC2626';
-  } else if (totalTsp > 3.5) {
+  } else if (currentCycleTsp > 2.0) {
     zone = 'warning';
-    zoneColor = colors.warning || '#F5A623'; // Amber/orange for warning zone
-    zoneText = 'WARNING';
+    zoneColor = colors.warning || '#F5A623'; // Amber/orange
     glowColor = '#F5A623';
   }
 
@@ -149,13 +144,13 @@ export function SugarProgressRing({
       if (bubbleProgress < p) {
         return { cx: cx, cy: cy, opacity: 0, r: 0 };
       }
-      
+
       const wobble = bubbleWobble.value;
       const angle = -Math.PI / 2 + (bubbleProgress * p) * 2 * Math.PI + (wobble * 0.08 - 0.04) + angleShift;
       const currentRadius = r + rOffset + (wobble * 3.6 - 1.8);
       const x = cx + currentRadius * Math.cos(angle);
       const y = cy + currentRadius * Math.sin(angle);
-      
+
       // Bubble size based on wobble
       const bubbleSize = 1.6 + wobble * 1.2;
       const bubbleOpacity = 0.5 + wobble * 0.35;
@@ -247,16 +242,16 @@ export function SugarProgressRing({
           const angle = -Math.PI / 2 + t * (Math.PI / 6); // 30 degrees per teaspoon
           const tx = cx + tickRadius * Math.cos(angle);
           const ty = cy + tickRadius * Math.sin(angle);
-          
-          // Determine if this tick is active (sugar consumed reaches it)
-          const isActive = totalTsp >= t;
+
+          // Determine if this tick is active (sugar consumed reaches it in current cycle)
+          const isActive = currentCycleTsp >= (t * 0.5);
           const tickColor = isActive ? zoneColor : (isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)');
-          
+
           if (t === 6) {
-            // Highlight WHO Limit (6 tsp) with a prominent double ring
+            // Highlight halfway (3 tsp) with a prominent double ring
             return (
               <G key={`tick-${t}`}>
-                {/* Glowing ring under WHO tick */}
+                {/* Glowing ring under tick */}
                 <Circle cx={tx} cy={ty} r={6} fill={isActive ? zoneColor : 'transparent'} opacity={0.25} />
                 <Circle cx={tx} cy={ty} r={3.5} fill={tickColor} />
                 {/* Visual line pointing to circle */}
@@ -268,15 +263,15 @@ export function SugarProgressRing({
               </G>
             );
           }
-          
+
           if (t === 12) {
-            // Highlight Max limit (12 tsp)
+            // Highlight Max limit (6 tsp / 100% of cycle)
             return (
               <G key={`tick-${t}`}>
-                <Circle cx={tx} cy={ty} r={4.5} fill={isActive ? '#DC2626' : tickColor} />
+                <Circle cx={tx} cy={ty} r={4.5} fill={isActive ? zoneColor : tickColor} />
                 <Path
                   d={`M ${cx + (tickRadius - 4) * Math.cos(angle)} ${cy + (tickRadius - 4) * Math.sin(angle)} L ${cx + (tickRadius - 1) * Math.cos(angle)} ${cy + (tickRadius - 1) * Math.sin(angle)}`}
-                  stroke={isActive ? '#DC2626' : tickColor}
+                  stroke={isActive ? zoneColor : tickColor}
                   strokeWidth={2}
                 />
               </G>
@@ -303,7 +298,7 @@ export function SugarProgressRing({
               {/* WHO marker label */}
               <Path
                 d={`M ${cx + 80 * Math.cos(whoAngle)} ${cy + 80 * Math.sin(whoAngle)} L ${cx + 83 * Math.cos(whoAngle)} ${cy + 83 * Math.sin(whoAngle)}`}
-                stroke={totalTsp >= 6 ? zoneColor : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)')}
+                stroke={currentCycleTsp >= 3.0 ? zoneColor : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)')}
                 strokeWidth={1.5}
               />
             </G>
@@ -315,10 +310,10 @@ export function SugarProgressRing({
 
         {/* Glass Cylinder Track Body */}
         <Circle cx={cx} cy={cy} r={r} fill="none" stroke={isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'} strokeWidth={strokeWidth} />
-        
+
         {/* Glass Cylinder Inner/Outer refraction borders */}
-        <Circle cx={cx} cy={cy} r={r - strokeWidth/2} fill="none" stroke="url(#glassRefraction)" strokeWidth={1} />
-        <Circle cx={cx} cy={cy} r={r + strokeWidth/2} fill="none" stroke="url(#glassRefraction)" strokeWidth={1} />
+        <Circle cx={cx} cy={cy} r={r - strokeWidth / 2} fill="none" stroke="url(#glassRefraction)" strokeWidth={1} />
+        <Circle cx={cx} cy={cy} r={r + strokeWidth / 2} fill="none" stroke="url(#glassRefraction)" strokeWidth={1} />
 
         {/* Active Liquid Progress Arc */}
         <AnimatedPath
@@ -402,24 +397,25 @@ export function SugarProgressRing({
 
       {/* Central Information Overlay (Absolutely Positioned HTML/React Native Views over Center of SVG) */}
       <View style={styles.centerContainer} pointerEvents="none">
-        {/* Fraction Teaspoons display */}
+        {/* Teaspoons / Grams display - ALWAYS represents cumulative Daily Total, never resets on circle completion */}
         <View style={styles.tspContainer}>
+          <Text style={{
+            color: colors.primary,
+            fontSize: 9 * scale,
+            fontWeight: '900',
+            letterSpacing: 1.2,
+            textTransform: 'uppercase',
+            marginBottom: 2 * scale,
+          }}>
+            Daily Total
+          </Text>
           <Text style={[styles.tspText, { color: colors.text, fontSize: 28 * scale }]} numberOfLines={1}>
             {totalTsp.toFixed(1)}
-            <Text style={[styles.limitSlash, { color: isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.4)', fontSize: 15 * scale }]}>/{limitTsp.toFixed(0)}</Text>
+            <Text style={{ fontSize: 10 * scale, fontWeight: '700', color: colors.textSecondary }}> teaspoons</Text>
           </Text>
-          <Text style={[styles.tspLabel, { color: colors.textSecondary, fontSize: 10 * scale }]}>teaspoons</Text>
-        </View>
-
-        {/* Total Sugar in Grams/Ounces */}
-        <Text style={[styles.gramText, { color: isDark ? '#9E9EA7' : '#5A4E42', fontSize: 12 * scale }]}>
-          {formatSugar(totalSugar, sugarUnit)} total
-        </Text>
-
-        {/* Dynamic Zone Status badge */}
-        <View style={[styles.badge, { backgroundColor: zoneColor + '20', borderColor: zoneColor + '40', marginTop: 8 * scale, paddingHorizontal: 8 * scale, paddingVertical: 3.5 * scale }]}>
-          <View style={[styles.badgeDot, { backgroundColor: zoneColor, width: 5 * scale, height: 5 * scale, borderRadius: 2.5 * scale }]} />
-          <Text style={[styles.badgeText, { color: zoneColor, fontSize: 8 * scale }]}>{zoneText}</Text>
+          <Text style={[styles.gramText, { color: colors.textSecondary, fontSize: 12 * scale, marginTop: 2 * scale }]}>
+            {formatSugar(totalSugar, sugarUnit)}
+          </Text>
         </View>
       </View>
     </Animated.View>
