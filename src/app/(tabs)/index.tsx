@@ -33,6 +33,29 @@ const formatGroupDate = (timestamp: number) => {
   }
 };
 
+const getFullProductCalories = (item: any): number => {
+  if (item && item.totalCalories !== undefined && item.totalCalories > 0) {
+    return item.totalCalories;
+  }
+  return item?.calories ?? 0;
+};
+
+const calculateJoggingMinutes = (calories: number): number => {
+  if (!calories || isNaN(calories) || calories <= 0) return 0;
+  // Standard rule: ~10 kcal burned per minute of jogging
+  return Math.round(calories / 10);
+};
+
+const formatJogTime = (totalMinutes: number): string => {
+  if (!totalMinutes || isNaN(totalMinutes) || totalMinutes <= 0) return '0m';
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+  if (hours > 0) {
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  }
+  return `${mins}m`;
+};
+
 
 function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelectedScan, deleteScan }: any) {
   const { sugarUnit } = useAppStore();
@@ -125,11 +148,17 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
         {group.items.map((item: any) => {
           const cardMascotState = item.sugarTeaspoons === 0 ? 'happy' : (item.sugarTeaspoons <= 2 ? 'idle' : (item.sugarTeaspoons <= 5 ? 'shocked' : 'dizzy'));
           const sugarColor = getSugarColor(item.sugarTeaspoons, colors);
-          const calColor = (item.calories || 0) > 250 ? '#FF3B30' : ((item.calories || 0) > 100 ? '#FF9500' : '#34C759');
+          const itemCal = getFullProductCalories(item);
+          const calColor = itemCal > 250 ? '#FF3B30' : (itemCal > 100 ? '#FF9500' : '#34C759');
           const sugColor = item.sugarGrams > 10 ? '#FF3B30' : (item.sugarGrams > 4 ? '#FF9500' : '#34C759');
-          const itemRunMinutes = Math.round((item.calories || 0) / 10);
+          const itemRunMinutes = calculateJoggingMinutes(itemCal);
           const itemWhoPercent = Math.min(100, Math.round((item.sugarGrams / 25) * 100));
           const whoBarColor = itemWhoPercent > 100 ? '#FF3B30' : (itemWhoPercent > 60 ? '#FF9500' : '#34C759');
+          const totalSugarTsp = item.totalSugarTeaspoons !== undefined ? item.totalSugarTeaspoons : (item.sugarTeaspoons ?? 0);
+          const servingSugarTsp = item.sugarTeaspoons ?? 0;
+          const productWeightStr = item.packageSize || item.servingSize || 'N/A';
+          const servingWeightStr = item.servingSize || '1 Serving';
+          const servingCal = item.calories ?? 0;
 
           return (
             <TouchableOpacity
@@ -146,7 +175,7 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                 borderRadius: 24,
                 padding: 12,
                 width: cardWidth,
-                height: 240,
+                height: 310,
                 flexDirection: 'row',
                 alignItems: 'center',
                 shadowColor: '#000',
@@ -204,68 +233,66 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                   </View>
                 </View>
 
-                {/* Row 2: Metrics Grid (Bento style) */}
-                <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
-                  {/* Calories LED Pill */}
+                {/* Row 2: Separate Containers for Product Weight/Sugar, Serving Weight/Sugar, Energy */}
+                <View style={{ gap: 10, marginVertical: 7 }}>
+                  {/* Container 1: Product Weight & Total Sugar (tsp) */}
                   <View style={{
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.06)',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 185, 56, 0.04)',
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                    borderRadius: 10,
+                    paddingHorizontal: 8,
+                    paddingVertical: 6,
+                    gap: 4
+                  }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Product Weight:</Text>
+                      <Text style={{ color: colors.text, fontSize: 11, fontWeight: '900' }}>{productWeightStr}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Total Sugar:</Text>
+                      <Text style={{ color: sugColor, fontSize: 11, fontWeight: '900' }}>{totalSugarTsp.toFixed(1).replace(/\.0$/, '')} tsp</Text>
+                    </View>
+                  </View>
+
+                  {/* Container 2: Per Serving Weight & Sugar (tsp) */}
+                  <View style={{
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 185, 56, 0.04)',
                     borderColor: colors.border,
                     borderWidth: 1,
                     borderRadius: 10,
                     paddingHorizontal: 8,
                     paddingVertical: 5,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 5
+                    gap: 4
                   }}>
-                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: calColor + '33', alignItems: 'center', justifyContent: 'center' }}>
-                      <View style={{ width: 4.5, height: 4.5, borderRadius: 2.25, backgroundColor: calColor }} />
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Per Serving Weight:</Text>
+                      <Text style={{ color: colors.text, fontSize: 11, fontWeight: '900' }}>{servingWeightStr}</Text>
                     </View>
-
-                    <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>
-                      Energy: {item.calories || 0} kcal
-                    </Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Per Serving Sugar:</Text>
+                      <Text style={{ color: sugColor, fontSize: 11, fontWeight: '900' }}>{servingSugarTsp.toFixed(1).replace(/\.0$/, '')} tsp</Text>
+                    </View>
                   </View>
 
-                  {/* Sugar Grams LED Pill */}
+                  {/* Container 3: Total Energy & Per Serving Energy */}
                   <View style={{
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.06)',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 185, 56, 0.04)',
                     borderColor: colors.border,
                     borderWidth: 1,
                     borderRadius: 10,
                     paddingHorizontal: 8,
                     paddingVertical: 5,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 5
+                    gap: 4
                   }}>
-                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: sugColor + '33', alignItems: 'center', justifyContent: 'center' }}>
-                      <View style={{ width: 4.5, height: 4.5, borderRadius: 2.25, backgroundColor: sugColor }} />
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Total Energy:</Text>
+                      <Text style={{ color: calColor, fontSize: 11, fontWeight: '900' }}>{itemCal} kcal</Text>
                     </View>
-                    <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>
-                      Sugar: {formatSugar(item.sugarGrams, sugarUnit)}
-                    </Text>
-                  </View>
-
-                  {/* Jogging Pill */}
-                  <View style={{
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.06)',
-                    borderColor: colors.border,
-                    borderWidth: 1,
-                    borderRadius: 12,
-                    paddingHorizontal: 8,
-                    paddingVertical: 5,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 5
-                  }}>
-                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: sugColor + '33', alignItems: 'center', justifyContent: 'center' }}>
-                      <View style={{ width: 4.5, height: 4.5, borderRadius: 2.25, backgroundColor: sugColor }} />
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Serving Energy:</Text>
+                      <Text style={{ color: colors.text, fontSize: 11, fontWeight: '900' }}>{servingCal} kcal</Text>
                     </View>
-
-                    <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>
-                      Jog: {itemRunMinutes} m
-                    </Text>
                   </View>
                 </View>
 
@@ -273,7 +300,7 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                 <View style={{ flexDirection: 'row', alignItems: 'stretch', justifyContent: 'space-between', gap: 8, marginTop: 'auto' }}>
                   <View style={{
                     flex: 1,
-                    backgroundColor: isDark ? 'rgba(0, 0, 0, 0.06)' : 'rgba(0,0,0,0.06)',
+                    backgroundColor: isDark ? 'rgba(0, 0, 0, 0.06)' : 'rgba(0, 0, 0, 0)',
                     borderColor: colors.border,
                     borderWidth: 2,
                     borderRadius: 12,
@@ -281,11 +308,7 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                     justifyContent: 'center',
                     gap: 6
                   }}>
-                    {(item.packageSize || item.servingSize) && (
-                      <Text numberOfLines={1} style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800' }}>
-                        {getSmartServingText(item.servingSize, item.packageSize)}
-                      </Text>
-                    )}
+
                     <View>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                         <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '800' }}>WHO Limit</Text>
@@ -416,18 +439,9 @@ export default function HomeScreen() {
 
   const totalSugar = activeDayInfo.items.reduce((sum, item) => sum + (item.totalSugarGrams ?? item.sugarGrams), 0);
 
-  // 1. Total Daily Intake (Serving Size)
-  const sumTotalPackagesCalories = activeDayInfo.items.reduce((sum, item) => sum + (item.calories ?? 0), 0);
-  const tpRunTimeMinutes = Math.round(sumTotalPackagesCalories / 11);
-  const tpRunHours = Math.floor(tpRunTimeMinutes / 60);
-  const tpRunMins = tpRunTimeMinutes % 60;
-
-  // 2. Latest Scanned Item (Per Serving)
-  const latestScanItem = activeDayInfo.items.length > 0 ? activeDayInfo.items[0] : null;
-  const lsCalories = latestScanItem ? (latestScanItem.calories ?? latestScanItem.totalCalories ?? 0) : 0;
-  const lsRunTimeMinutes = Math.round(lsCalories / 11);
-  const lsRunHours = Math.floor(lsRunTimeMinutes / 60);
-  const lsRunMins = lsRunTimeMinutes % 60;
+  // 1. Total Daily Intake (Full Product Size)
+  const sumTotalPackagesCalories = activeDayInfo.items.reduce((sum, item) => sum + getFullProductCalories(item), 0);
+  const totalJoggingMinutesToday = activeDayInfo.items.reduce((sum, item) => sum + calculateJoggingMinutes(getFullProductCalories(item)), 0);
 
 
 
@@ -696,9 +710,9 @@ export default function HomeScreen() {
                 alignItems: 'center',
                 gap: 8,
               }}>
-                <Sparkles size={14} color="#FF9500" />
+
                 <Text style={{ color: colors.text, fontSize: 10.5, fontWeight: '600', flex: 1, lineHeight: 15 }}>
-                  Do you know How many Days it will take to consume all the sugar for today as per WHO guidelines?
+                  Do you know How many Days it will take to consume today's Total Sugar as per WHO guidelines?
                 </Text>
               </View>
 
@@ -764,7 +778,7 @@ export default function HomeScreen() {
             }}>
               <Flame size={12} color="#FF8C00" />
               <Text style={{ color: '#FF8C00', fontSize: 9, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase' }}>
-                Daily Burn System
+                Calories Counter
               </Text>
             </View>
 
@@ -779,7 +793,7 @@ export default function HomeScreen() {
             }}>
               <Info size={10} color={colors.textSecondary} />
               <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800' }}>
-                Per serving size
+                Total Energy Boost
               </Text>
             </View>
           </View>
@@ -827,7 +841,7 @@ export default function HomeScreen() {
                 Jogging
               </Text>
               <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
-                {activeDayInfo.isEmpty ? '--' : (tpRunHours > 0 ? `${tpRunHours}h ${tpRunMins}m` : `${tpRunMins}m`)}
+                {activeDayInfo.isEmpty ? '0m' : formatJogTime(totalJoggingMinutesToday)}
               </Text>
             </View>
           </View>
@@ -1169,8 +1183,10 @@ export default function HomeScreen() {
 
                 {/* 3. Extra Nutritional Data */}
                 {(() => {
-                  const currentCalories = selectedScan.calories;
-                  if (currentCalories !== undefined) {
+                  const currentCalories = getFullProductCalories(selectedScan);
+                  if (currentCalories > 0) {
+                    const runMins = calculateJoggingMinutes(currentCalories);
+                    const hasPackageSize = selectedScan.totalCalories !== undefined && selectedScan.totalCalories > 0;
                     return (
                       <View style={{ marginBottom: 24, gap: 12 }}>
                         {/* Burn Down Tagline */}
@@ -1183,7 +1199,7 @@ export default function HomeScreen() {
                               The Burn Down
                             </Text>
                             <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', lineHeight: 18 }}>
-                              You would need to run for <Text style={{ fontWeight: '900', color: '#F97316', fontSize: 15 }}>{Math.round(currentCalories / 10)} mins</Text> straight to burn off this serving.
+                              You would need to jog for <Text style={{ fontWeight: '900', color: '#F97316', fontSize: 15 }}>{formatJogTime(runMins)}</Text> straight to burn off this {hasPackageSize ? 'full product' : 'serving'}.
                             </Text>
                           </View>
                         </View>

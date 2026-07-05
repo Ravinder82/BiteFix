@@ -407,7 +407,7 @@ export function SugarProgressRing({
             textTransform: 'uppercase',
             marginBottom: 2 * scale,
           }}>
-            Daily Total
+            Total Sugar
           </Text>
           <Text style={[styles.tspText, { color: colors.text, fontSize: 28 * scale }]} numberOfLines={1}>
             {totalTsp.toFixed(1)}
