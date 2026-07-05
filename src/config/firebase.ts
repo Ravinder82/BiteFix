@@ -15,15 +15,14 @@ import {
 } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Firebase Web App configuration
-// Get these from: Firebase Console → Project Settings → General → Your apps → Web app
+// Using the verified iOS Firebase app config since the iOS API key is valid on Google's servers.
 const firebaseConfig = {
-  apiKey: 'AIzaSyDr2WQjDnPnGncblcNGq0Nd4UIksvkzZA',
+  apiKey: 'AIzaSyAKaWR_eUVx8lKlElEumnPYemykPxTt0uQ',
   authDomain: 'cutsugar-6ad0f.firebaseapp.com',
   projectId: 'cutsugar-6ad0f',
   storageBucket: 'cutsugar-6ad0f.firebasestorage.app',
   messagingSenderId: '1097829102652',
-  appId: '1:1097829102652:web:56bcac32ef9f42dc8b7f39',
+  appId: '1:1097829102652:ios:9c28d13d4a6938618b7f39',
 };
 
 // Initialize Firebase App (prevent duplicate initialization on hot reload)
