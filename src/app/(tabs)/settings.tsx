@@ -10,8 +10,18 @@ import * as Haptics from 'expo-haptics';
 
 export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   const { colors, theme, toggleTheme } = useTheme();
-  const { unit, setUnit, sugarUnit, setSugarUnit, clearScans, clearAllData } = useAppStore();
+  const { unit, setUnit, sugarUnit, setSugarUnit, clearScans, clearAllData, userName, userGoal } = useAppStore();
   const { user, displayName, providerLabel, signOut, deleteAccount } = useAuth();
+
+  const getGoalLabel = (goal?: string) => {
+    switch (goal) {
+      case 'energy': return 'Increase Energy';
+      case 'weight': return 'Weight Management';
+      case 'medical': return 'Medical Tracking';
+      case 'mental': return 'Focus & Brain Health';
+      default: return 'General Wellness';
+    }
+  };
 
   const [legalModalVisible, setLegalModalVisible] = useState(false);
   const [legalContent, setLegalContent] = useState({ title: '', body: '' });
@@ -44,16 +54,16 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   const handleClearScans = () => {
     Alert.alert(
       'Clear Scan History',
-      'Are you sure you want to clear your scanned food history?',
+      'Are you sure you want to clear your scanned foods history?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Clear',
           style: 'destructive',
           onPress: () => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
             clearScans();
-            Alert.alert('Cleared', 'Scanned food history has been cleared.');
+            Alert.alert('Scans Cleared', 'Your scan history has been successfully cleared.');
           },
         },
       ]
@@ -87,7 +97,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
         contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 20 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* ACCOUNT SECTION */}
+        {/* USER PROFILE SECTION */}
         {user && (
           <View style={{ marginBottom: 20 }}>
             <View
@@ -105,37 +115,56 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
               {/* Avatar circle */}
               <View
                 style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 24,
-                  backgroundColor: colors.primary + '20',
+                  width: 52,
+                  height: 52,
+                  borderRadius: 26,
+                  backgroundColor: colors.primary + '15',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  borderWidth: 1,
+                  borderColor: colors.primary + '30',
                 }}
               >
-                <Text style={{ color: colors.primary, fontSize: 18, fontWeight: '900' }}>
-                  {(displayName || 'U').charAt(0).toUpperCase()}
+                <Text style={{ color: colors.primary, fontSize: 20, fontWeight: '900' }}>
+                  {(userName || displayName || 'U').charAt(0).toUpperCase()}
                 </Text>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.text, fontWeight: '800', fontSize: 15 }}>
-                  {displayName}
+              
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={{ color: colors.text, fontWeight: '900', fontSize: 16, letterSpacing: -0.3 }}>
+                  {userName || displayName}
                 </Text>
-                <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '500', marginTop: 2 }}>
-                  {user.email}
-                </Text>
-              </View>
-              <View
-                style={{
-                  backgroundColor: colors.primary + '15',
-                  paddingHorizontal: 10,
-                  paddingVertical: 4,
-                  borderRadius: 8,
-                }}
-              >
-                <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '800', letterSpacing: 0.5 }}>
-                  {providerLabel.toUpperCase()}
-                </Text>
+                {user.email ? (
+                  <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '500' }} numberOfLines={1}>
+                    {user.email}
+                  </Text>
+                ) : null}
+                <View className="flex-row items-center gap-1.5 mt-1">
+                  <View
+                    style={{
+                      backgroundColor: colors.primary + '10',
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '800' }}>
+                      {getGoalLabel(userGoal)}
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      backgroundColor: colors.border,
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800' }}>
+                      {providerLabel}
+                    </Text>
+                  </View>
+                </View>
               </View>
             </View>
           </View>
