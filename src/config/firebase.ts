@@ -1,9 +1,9 @@
 // ─────────────────────────────────────────────────────────
 // Firebase Configuration — CutSugar
 // ─────────────────────────────────────────────────────────
-// All config values are loaded from environment variables.
 // Firebase config keys are PUBLIC by design — security is
 // enforced by Firebase Security Rules, not by hiding keys.
+// See: https://firebase.google.com/docs/projects/api-keys
 // ─────────────────────────────────────────────────────────
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -15,52 +15,34 @@ import {
 } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Firebase Web App configuration
+// Get these from: Firebase Console → Project Settings → General → Your apps → Web app
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+  apiKey: 'AIzaSyDr2WQjDnPnGncblcNGq0Nd4UIksvkzZA',
+  authDomain: 'cutsugar-6ad0f.firebaseapp.com',
+  projectId: 'cutsugar-6ad0f',
+  storageBucket: 'cutsugar-6ad0f.firebasestorage.app',
+  messagingSenderId: '1097829102652',
+  appId: '1:1097829102652:web:56bcac32ef9f42dc8b7f39',
 };
 
-const hasKeys = !!process.env.EXPO_PUBLIC_FIREBASE_API_KEY;
+// Initialize Firebase App (prevent duplicate initialization on hot reload)
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-let app: any;
+// Initialize Auth with React Native AsyncStorage persistence.
+// Wrap in try/catch to handle "auth/already-initialized" on hot reload.
 let auth: any;
-
-if (hasKeys) {
-  // Initialize Firebase App (prevent duplicate initialization on hot reload)
-  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-
-  // Initialize Auth with React Native AsyncStorage persistence.
-  // Wrap in try/catch to handle "auth/already-initialized" on hot reload.
-  try {
-    auth = initializeAuth(app, {
-      persistence: getReactNativePersistence(AsyncStorage),
-    });
-  } catch (error: any) {
-    if (error.code === 'auth/already-initialized') {
-      // Auth was already initialized (e.g. during hot reload), get existing instance
-      auth = getAuth(app);
-    } else {
-      throw error;
-    }
+try {
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage),
+  });
+} catch (error: any) {
+  if (error.code === 'auth/already-initialized') {
+    // Auth was already initialized (e.g. during hot reload), get existing instance
+    auth = getAuth(app);
+  } else {
+    throw error;
   }
-} else {
-  console.warn(
-    '⚠️ Firebase configuration keys are missing in your .env file. ' +
-      'Please fill in EXPO_PUBLIC_FIREBASE_API_KEY in your .env file to enable authentication.'
-  );
-  app = {} as any;
-  auth = {
-    currentUser: null,
-    onAuthStateChanged: (callback: any) => {
-      // Simulate unauthenticated user so routing doesn't hang
-      const timer = setTimeout(() => callback(null), 100);
-      return () => clearTimeout(timer);
-    },
-  } as any;
 }
 
 export { app, auth };
