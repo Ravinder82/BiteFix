@@ -142,26 +142,14 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
                 <View className="flex-row items-center gap-1.5 mt-1">
                   <View
                     style={{
-                      backgroundColor: colors.primary + '10',
-                      paddingHorizontal: 8,
-                      paddingVertical: 3,
-                      borderRadius: 6,
+                      backgroundColor: colors.primary + '15',
+                      paddingHorizontal: 10,
+                      paddingVertical: 4,
+                      borderRadius: 8,
                     }}
                   >
-                    <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '800' }}>
-                      {getGoalLabel(userGoal)}
-                    </Text>
-                  </View>
-                  <View
-                    style={{
-                      backgroundColor: colors.border,
-                      paddingHorizontal: 8,
-                      paddingVertical: 3,
-                      borderRadius: 6,
-                    }}
-                  >
-                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800' }}>
-                      {providerLabel}
+                    <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '800', letterSpacing: 0.5 }}>
+                      {providerLabel.toUpperCase()}
                     </Text>
                   </View>
                 </View>
