@@ -29,6 +29,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import Svg, { Path } from 'react-native-svg';
+import { router } from 'expo-router';
 
 // ── Configure Google Sign-In ─────────────────────────────
 // Note: iosClientId is only passed when explicitly set.
@@ -91,6 +92,11 @@ export default function AuthScreen() {
       const idToken = response.data?.idToken;
       if (!idToken) throw new Error('No ID token received from Google');
       await signInWithGoogle(idToken);
+      Alert.alert(
+        'Success',
+        'Signed in with Google successfully!',
+        [{ text: 'Continue', onPress: () => router.replace('/(tabs)') }]
+      );
     } catch (error: any) {
       console.error('Google Sign-In Error:', error);
       if (error.code === 'SIGN_IN_CANCELLED') {
@@ -136,6 +142,11 @@ export default function AuthScreen() {
 
       if (!credential.identityToken) throw new Error('No identity token from Apple');
       await signInWithApple(credential.identityToken, rawNonce);
+      Alert.alert(
+        'Success',
+        'Signed in with Apple successfully!',
+        [{ text: 'Continue', onPress: () => router.replace('/(tabs)') }]
+      );
     } catch (error: any) {
       console.error('Apple Sign-In Error:', error);
       if (error.code !== 'ERR_REQUEST_CANCELED') {
@@ -165,8 +176,18 @@ export default function AuthScreen() {
     try {
       if (mode === 'signin') {
         await signInWithEmail(email.trim(), password);
+        Alert.alert(
+          'Success',
+          'Signed in successfully!',
+          [{ text: 'Continue', onPress: () => router.replace('/(tabs)') }]
+        );
       } else {
         await signUpWithEmail(email.trim(), password, displayName.trim());
+        Alert.alert(
+          'Account Created',
+          `Welcome to CutSugar, ${displayName.trim()}! Your account has been successfully created.`,
+          [{ text: 'Get Started', onPress: () => router.replace('/(tabs)') }]
+        );
       }
     } catch (error: any) {
       console.error("Firebase Email Auth Error:", error);
