@@ -31,10 +31,21 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import Svg, { Path } from 'react-native-svg';
 
 // ── Configure Google Sign-In ─────────────────────────────
-GoogleSignin.configure({
+// Note: iosClientId is only passed when explicitly set.
+// The native SDK reads CLIENT_ID from GoogleService-Info.plist at build time.
+// If you see "You must specify clientID in GIDConfiguration", you need to:
+// 1. Enable Google Sign-In in Firebase Console → Authentication → Sign-in method
+// 2. Re-download GoogleService-Info.plist (it will now contain CLIENT_ID)
+// 3. Replace the file in the project root
+// 4. Run a new EAS development build
+const googleConfig: { webClientId?: string; iosClientId?: string } = {
   webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-});
+};
+// Only pass iosClientId if it has an actual value (not empty string)
+if (process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID) {
+  googleConfig.iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+}
+GoogleSignin.configure(googleConfig);
 
 // ── Main Component ──────────────────────────────────────
 
@@ -81,7 +92,16 @@ export default function AuthScreen() {
       if (!idToken) throw new Error('No ID token received from Google');
       await signInWithGoogle(idToken);
     } catch (error: any) {
-      if (error.code !== 'SIGN_IN_CANCELLED') {
+      console.error('Google Sign-In Error:', error);
+      if (error.code === 'SIGN_IN_CANCELLED') {
+        // User cancelled — do nothing
+      } else if (error.message?.includes('clientID') || error.message?.includes('GIDConfiguration')) {
+        setErrorMsg(
+          'Google Sign-In is not fully configured yet. ' +
+          'Please re-download GoogleService-Info.plist from Firebase Console ' +
+          '(after enabling Google Sign-In provider) and create a new development build.'
+        );
+      } else {
         setErrorMsg(error.message || 'Google sign-in failed.');
       }
     } finally {
@@ -117,6 +137,7 @@ export default function AuthScreen() {
       if (!credential.identityToken) throw new Error('No identity token from Apple');
       await signInWithApple(credential.identityToken, rawNonce);
     } catch (error: any) {
+      console.error('Apple Sign-In Error:', error);
       if (error.code !== 'ERR_REQUEST_CANCELED') {
         setErrorMsg(error.message || 'Apple sign-in failed.');
       }

@@ -5,9 +5,6 @@ import { useAppStore } from '../stores/appStore';
 import { useAuthStore } from '../stores/authStore';
 import { useTheme } from '../hooks/useTheme';
 
-// Track initial JS engine bundle load to detect restarts vs hot reloads
-let isFirstLoad = true;
-
 export default function Index() {
   const { onboardingComplete } = useAppStore();
   const { user, isInitialized } = useAuthStore();
@@ -17,12 +14,6 @@ export default function Index() {
 
   useEffect(() => {
     const handleHydration = () => {
-      if (__DEV__ && isFirstLoad) {
-        isFirstLoad = false;
-        // Automatically reset onboarding completion and theme on startup in development for full flow testing
-        useAppStore.getState().setOnboardingComplete(false);
-        useAppStore.getState().setTheme('light');
-      }
       setHydrated(true);
     };
 
