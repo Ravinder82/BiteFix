@@ -5,12 +5,26 @@ import { useAppStore } from '../stores/appStore';
 import { useAuthStore } from '../stores/authStore';
 import { useTheme } from '../hooks/useTheme';
 
+// Track initial JS engine bundle load to detect restarts vs hot reloads
+let isFirstLoad = true;
+
 export default function Index() {
   const { onboardingComplete } = useAppStore();
   const { user, isInitialized } = useAuthStore();
   const { colors } = useTheme();
   const [hydrated, setHydrated] = useState(false);
   const rootNavigationState = useRootNavigationState();
+
+  // Dev reset helper: Reset onboarding on fresh startup in development mode
+  // only if the user is not authenticated.
+  useEffect(() => {
+    if (hydrated && isInitialized && __DEV__ && isFirstLoad) {
+      isFirstLoad = false;
+      if (!user) {
+        useAppStore.getState().setOnboardingComplete(false);
+      }
+    }
+  }, [hydrated, isInitialized, user]);
 
   useEffect(() => {
     const handleHydration = () => {
