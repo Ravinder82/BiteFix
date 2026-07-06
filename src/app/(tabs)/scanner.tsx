@@ -40,7 +40,6 @@ import {
   isAbortError,
   isRequestTimeoutError,
   lookupOpenFoodFacts,
-  lookupUSDA,
   fetchWithTimeout,
   extractSugarFromNutriments,
   parseQuantityString,
@@ -399,11 +398,7 @@ export default function ScannerScreen() {
       
       if (!isCurrentLookup()) return;
 
-      // --- PHASE 2: USDA FoodData Central ---
-      if (!result && process.env.EXPO_PUBLIC_USDA_API_KEY) {
-        result = await lookupUSDA(barcode, process.env.EXPO_PUBLIC_USDA_API_KEY, lookupController.signal);
-        if (!isCurrentLookup()) return;
-      }
+
 
       if (result) {
         addScan(
