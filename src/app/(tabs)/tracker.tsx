@@ -73,11 +73,38 @@ export default function TrackerScreen() {
     });
   }, [collection, filterFavoritesOnly]);
 
-  // Stats
+  // Stats Calculations
   const totalSaved = collection.length;
-  const totalFavorites = collection.filter((i) => i.isFavorite).length;
+  
+  const totalSugarTspAll = collection.reduce((sum, item) => {
+    const tsp = item.totalSugarTeaspoons !== undefined ? item.totalSugarTeaspoons : (item.sugarTeaspoons ?? 0);
+    return sum + tsp;
+  }, 0);
 
+  const totalServingSugarTspAll = collection.reduce((sum, item) => {
+    return sum + (item.sugarTeaspoons ?? 0);
+  }, 0);
 
+  const basketHealthScore = useMemo(() => {
+    if (collection.length === 0) return 100;
+    const avgServing = totalServingSugarTspAll / collection.length;
+    const avgTotal = totalSugarTspAll / collection.length;
+    
+    // Scale: 6 tsp serving average drops servingScore to 28%
+    const servingScore = Math.max(0, 100 - (avgServing * 12));
+    // Scale: 12 tsp package average drops totalScore to 52%
+    const totalScore = Math.max(0, 100 - (avgTotal * 4));
+    
+    return Math.round((servingScore * 0.7) + (totalScore * 0.3));
+  }, [collection, totalSugarTspAll, totalServingSugarTspAll]);
+
+  const getScoreInfo = (score: number) => {
+    if (score >= 80) return { label: 'Excellent', color: '#34C759', desc: 'Highly clean choice basket!' };
+    if (score >= 50) return { label: 'Fair', color: '#FF9500', desc: 'Moderate sugar levels.' };
+    return { label: 'Poor', color: '#FF3B30', desc: 'High risk of sugar spike!' };
+  };
+
+  const scoreInfo = getScoreInfo(basketHealthScore);
 
   const handleRemove = (id: string, name: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -114,78 +141,132 @@ export default function TrackerScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <View>
-            <View style={styles.titleRow}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View style={{ flex: 1, paddingRight: 12 }}>
               <Text style={[styles.title, { color: colors.text }]}>My Collections</Text>
+              <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+                Your curated list of Favorite Products
+              </Text>
             </View>
-            <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-              Your curated list of Favorite Products
-            </Text>
-          </View>
-        </View>
-
-        {/* Bento Grid Summary Cards */}
-        <View style={styles.bentoGrid}>
-          {/* Card 1: Total Saved */}
-          <View
-            style={[
-              styles.bentoCard,
-              styles.bentoCardLarge,
-              {
-                backgroundColor: isDark ? colors.surfaceRaised : colors.surface,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <View style={styles.bentoCardHeader}>
-              <View style={[styles.iconBadge, { backgroundColor: `${colors.primary}15` }]}>
-                <Bookmark size={20} color={colors.primary} />
-              </View>
-              <Text style={[styles.bentoLabel, { color: colors.textMuted }]}>SAVED ITEMS</Text>
-            </View>
-            <Text style={[styles.bentoValueLarge, { color: colors.text }]}>{totalSaved}</Text>
-            <Text style={[styles.bentoSubtext, { color: colors.textMuted }]}>
-              {totalSaved === 1 ? '1 product bookmarked' : `${totalSaved} products bookmarked`}
-            </Text>
-          </View>
-
-          {/* Right Column: Favorites */}
-          <View style={styles.bentoRightCol}>
-            {/* Favorites Card */}
+            
+            {/* Filter Favorites Toggle */}
             <TouchableOpacity
-              activeOpacity={0.8}
+              activeOpacity={0.7}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setFilterFavoritesOnly(!filterFavoritesOnly);
               }}
-              style={[
-                styles.bentoCard,
-                styles.bentoCardLarge,
-                {
-                  backgroundColor: filterFavoritesOnly
-                    ? `${colors.primary}15`
-                    : isDark
-                      ? colors.surfaceRaised
-                      : colors.surface,
-                  borderColor: filterFavoritesOnly ? colors.primary : colors.border,
-                },
-              ]}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                backgroundColor: filterFavoritesOnly ? 'rgba(255, 82, 82, 0.12)' : isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                borderRadius: 16,
+                borderWidth: 1,
+                borderColor: filterFavoritesOnly ? '#FF5252' : colors.border,
+              }}
             >
-              <View style={styles.bentoCardHeader}>
-                <View style={[styles.iconBadge, { backgroundColor: '#FF525215' }]}>
-                  <Heart
-                    size={20}
-                    color="#FF5252"
-                    fill={totalFavorites > 0 || filterFavoritesOnly ? '#FF5252' : 'transparent'}
-                  />
-                </View>
-                <Text style={[styles.bentoLabel, { color: colors.textMuted }]}>FAVORITES</Text>
-              </View>
-              <Text style={[styles.bentoValueLarge, { color: colors.text }]}>{totalFavorites}</Text>
-              <Text style={[styles.bentoSubtext, { color: colors.textMuted }]}>
-                {filterFavoritesOnly ? 'Showing favorites only' : 'Toggle to show favorites'}
+              <Heart size={14} color={filterFavoritesOnly ? '#FF5252' : colors.textMuted} fill={filterFavoritesOnly ? '#FF5252' : 'transparent'} />
+              <Text style={{ color: filterFavoritesOnly ? '#FF5252' : colors.text, fontSize: 11, fontWeight: '700' }}>
+                {filterFavoritesOnly ? 'Favorites' : 'All Items'}
               </Text>
             </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Sleek and Clean Single Dashboard */}
+        <View style={{
+          backgroundColor: isDark ? colors.surfaceRaised : colors.surface,
+          borderColor: colors.border,
+          borderWidth: 1.5,
+          borderRadius: 28,
+          padding: 16,
+          marginBottom: 24,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 16,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: isDark ? 0.15 : 0.05,
+          shadowRadius: 16,
+          elevation: 4,
+        }}>
+          {/* Left Side: Giant Circular Basket Health Score */}
+          <View style={{
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 110,
+          }}>
+            <View style={{
+              width: 84,
+              height: 84,
+              borderRadius: 42,
+              borderWidth: 5,
+              borderColor: scoreInfo.color + '25',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>
+                {basketHealthScore}
+              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '800', marginTop: -2, textTransform: 'uppercase' }}>
+                Score
+              </Text>
+            </View>
+            <View style={{
+              backgroundColor: scoreInfo.color + '15',
+              paddingHorizontal: 8,
+              paddingVertical: 3,
+              borderRadius: 8,
+              marginTop: 10,
+              borderWidth: 0.5,
+              borderColor: scoreInfo.color + '30',
+            }}>
+              <Text style={{ color: scoreInfo.color, fontSize: 9, fontWeight: '900', textTransform: 'uppercase' }}>
+                {scoreInfo.label}
+              </Text>
+            </View>
+          </View>
+
+          {/* Vertical Divider */}
+          <View style={{ width: 1, alignSelf: 'stretch', backgroundColor: colors.border }} />
+
+          {/* Right Side: Bento Stats List */}
+          <View style={{ flex: 1, gap: 10, justifyContent: 'center' }}>
+            {/* Stat 1: Total Items Saved */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Bookmark size={14} color={colors.primary} />
+                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700' }}>Items Saved</Text>
+              </View>
+              <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900' }}>
+                {totalSaved}
+              </Text>
+            </View>
+
+            {/* Stat 2: Total Sugar */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Sparkles size={14} color="#FF9500" />
+                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700' }}>Total Sugar</Text>
+              </View>
+              <Text style={{ color: '#FF9500', fontSize: 13, fontWeight: '900' }}>
+                {totalSugarTspAll.toFixed(1).replace(/\.0$/, '')} tsp
+              </Text>
+            </View>
+
+            {/* Stat 3: Servings Sugar */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Tag size={14} color="#FF3B30" />
+                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700' }}>Servings Sugar</Text>
+              </View>
+              <Text style={{ color: '#FF3B30', fontSize: 13, fontWeight: '900' }}>
+                {totalServingSugarTspAll.toFixed(1).replace(/\.0$/, '')} tsp
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -260,7 +341,7 @@ export default function TrackerScreen() {
                     borderRadius: 24,
                     padding: 12,
                     width: '100%',
-                    height: 388,
+                    height: 310,
                     flexDirection: 'row',
                     alignItems: 'center',
                     shadowColor: '#000',
