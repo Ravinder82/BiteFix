@@ -146,7 +146,7 @@ export default function TabLayout() {
           title: '',
           tabBarIcon: ({ color, focused }) => (
             <Home
-              size={32}
+              size={30}
               color={color}
               strokeWidth={focused ? 2.5 : 2}
               fill={focused ? `${color}15` : 'transparent'}
@@ -174,7 +174,7 @@ export default function TabLayout() {
           title: '',
           tabBarIcon: ({ color, focused }) => (
             <Heart
-              size={32}
+              size={30}
               color={color}
               strokeWidth={focused ? 2.5 : 2}
               fill={focused ? color : 'transparent'}
