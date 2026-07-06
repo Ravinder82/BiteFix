@@ -12,12 +12,11 @@ import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
 import { SugarProgressRing } from '../../components/features/SugarProgressRing';
 import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle, Menu, HelpCircle, Flame, Zap, ArrowUpRight, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react-native';
-import { formatBloodSugarValue, getStatusColor, getStatusLabel } from '../../utils/bloodSugar';
 import { formatSugar } from '../../utils/sugar';
 import SettingsScreen from './settings';
 import * as Haptics from 'expo-haptics';
 import { ScanHistoryItem } from '../../types/app.types';
-import { getSmartServingText } from '../../utils/format';
+import { getSmartServingText, formatWeight } from '../../utils/format';
 const formatGroupDate = (timestamp: number) => {
   const date = new Date(timestamp);
   const today = new Date();
@@ -156,8 +155,8 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
           const whoBarColor = itemWhoPercent > 100 ? '#FF3B30' : (itemWhoPercent > 60 ? '#FF9500' : '#34C759');
           const totalSugarTsp = item.totalSugarTeaspoons !== undefined ? item.totalSugarTeaspoons : (item.sugarTeaspoons ?? 0);
           const servingSugarTsp = item.sugarTeaspoons ?? 0;
-          const productWeightStr = item.packageSize || item.servingSize || 'N/A';
-          const servingWeightStr = item.servingSize || '1 Serving';
+          const productWeightStr = formatWeight(item.packageSize || item.servingSize, sugarUnit) || 'N/A';
+          const servingWeightStr = formatWeight(item.servingSize, sugarUnit) || '1 Serving';
           const servingCal = item.calories ?? 0;
 
           return (
@@ -349,11 +348,18 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
 
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
-  const { logs, scans, deleteScan, clearScans, userName, sugarUnit } = useAppStore();
+  const { scans, deleteScan, clearScans, userName, sugarUnit } = useAppStore();
   const [selectedScan, setSelectedScan] = useState<ScanHistoryItem | null>(null);
   const [settingsVisible, setSettingsVisible] = useState(false);
 
   // Animated shine coordinate for the CTA button
+  const shineAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const floatAnim = useRef(new Animated.Value(0)).current;
+
+  const latestScan = scans[0];
   const shineX = useSharedValue(-220);
 
   useEffect(() => {
@@ -407,9 +413,6 @@ export default function HomeScreen() {
   ).current;
 
 
-
-  const latestLog = logs[0];
-  const latestScan = scans[0];
 
   // --- Bento Grid Logic ---
   const getLatestActiveScans = () => {
@@ -1105,7 +1108,7 @@ export default function HomeScreen() {
                           Total Sugars in Full Package
                         </Text>
                         <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 2 }}>
-                          {selectedScan.packageSize ? `(${selectedScan.packageSize})` : '(Package Size Unknown)'}
+                          {selectedScan.packageSize ? `(${formatWeight(selectedScan.packageSize, sugarUnit)})` : '(Package Size Unknown)'}
                         </Text>
                       </View>
                     );
@@ -1128,7 +1131,7 @@ export default function HomeScreen() {
                       <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>Per Serving</Text>
                       {selectedScan.servingSize && selectedScan.sugarTeaspoons !== undefined ? (
                         <>
-                          <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800', marginTop: 2 }}>{selectedScan.servingSize}</Text>
+                          <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800', marginTop: 2 }}>{formatWeight(selectedScan.servingSize, sugarUnit) || selectedScan.servingSize}</Text>
                           <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', marginTop: 10 }}>
                             {selectedScan.sugarTeaspoons} <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary }}>tsp</Text>
                           </Text>
@@ -1178,7 +1181,7 @@ export default function HomeScreen() {
                   productName={selectedScan.name}
                   sugarGrams={selectedScan.sugarGrams ?? selectedScan.sugarPer100g ?? 0}
                   calories={selectedScan.calories}
-                  servingSize={selectedScan.servingSize ?? '100 g'}
+                  servingSize={formatWeight(selectedScan.servingSize, sugarUnit) || '100 g'}
                 />
 
                 {/* 3. Extra Nutritional Data */}

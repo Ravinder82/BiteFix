@@ -1,32 +1,24 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BloodSugarLog, ScanHistoryItem } from '../types/app.types';
-import { determineBloodSugarStatus } from '../utils/bloodSugar';
+import { ScanHistoryItem } from '../types/app.types';
 
 interface AppState {
   onboardingComplete: boolean;
   theme: 'light' | 'dark' | 'system';
-  unit: 'mg/dL' | 'mmol/L';
   sugarUnit: 'g' | 'oz';
-  logs: BloodSugarLog[];
   scans: ScanHistoryItem[];
   userName?: string;
-  userGoal?: 'energy' | 'weight' | 'medical' | 'mental' | 'none';
+  userGoal?: 'energy' | 'weight' | 'mental' | 'none';
 
   // Actions
   setOnboardingComplete: (complete: boolean) => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
-  setUnit: (unit: 'mg/dL' | 'mmol/L') => void;
   setSugarUnit: (sugarUnit: 'g' | 'oz') => void;
   setProfile: (profile: {
     userName?: string;
-    userGoal?: 'energy' | 'weight' | 'medical' | 'mental' | 'none';
+    userGoal?: 'energy' | 'weight' | 'mental' | 'none';
   }) => void;
-
-  // Log Actions
-  addLog: (value: number, type: 'fasting' | 'post-meal', notes?: string, customTimestamp?: number) => void;
-  deleteLog: (id: string) => void;
 
   // Scan Actions
   addScan: (
@@ -63,41 +55,17 @@ export const useAppStore = create<AppState>()(
     (set) => ({
       onboardingComplete: false,
       theme: 'light',
-      unit: 'mg/dL',
       sugarUnit: 'g',
-      logs: [],
       scans: [],
       userName: undefined,
       userGoal: 'none',
 
       setOnboardingComplete: (complete) => set({ onboardingComplete: complete }),
       setTheme: (theme) => set({ theme }),
-      setUnit: (unit) => set({ unit }),
       setSugarUnit: (sugarUnit) => set({ sugarUnit }),
       setProfile: (profile) => set((state) => ({
         userName: profile.userName !== undefined ? profile.userName : state.userName,
         userGoal: profile.userGoal !== undefined ? profile.userGoal : state.userGoal,
-      })),
-
-      addLog: (value, type, notes, customTimestamp) => set((state) => {
-        const timestamp = customTimestamp || Date.now();
-        const status = determineBloodSugarStatus(value, type, state.unit);
-        const newLog: BloodSugarLog = {
-          id: `${timestamp}-${Math.random().toString(36).substr(2, 9)}`,
-          value,
-          unit: state.unit,
-          timestamp,
-          type,
-          notes,
-          status,
-        };
-        // Keep logs sorted by timestamp descending
-        const logs = [newLog, ...state.logs].sort((a, b) => b.timestamp - a.timestamp);
-        return { logs };
-      }),
-
-      deleteLog: (id) => set((state) => ({
-        logs: state.logs.filter((log) => log.id !== id),
       })),
 
       addScan: (
@@ -163,9 +131,7 @@ export const useAppStore = create<AppState>()(
       clearAllData: () => set({
         onboardingComplete: false,
         theme: 'light',
-        unit: 'mg/dL',
         sugarUnit: 'g',
-        logs: [],
         scans: [],
         userName: undefined,
         userGoal: 'none',

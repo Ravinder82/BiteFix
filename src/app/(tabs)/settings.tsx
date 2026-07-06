@@ -10,14 +10,13 @@ import * as Haptics from 'expo-haptics';
 
 export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   const { colors, theme, toggleTheme } = useTheme();
-  const { unit, setUnit, sugarUnit, setSugarUnit, clearScans, clearAllData, userName, userGoal } = useAppStore();
+  const { sugarUnit, setSugarUnit, clearScans, clearAllData, userName, userGoal } = useAppStore();
   const { user, displayName, providerLabel, signOut, deleteAccount } = useAuth();
 
   const getGoalLabel = (goal?: string) => {
     switch (goal) {
       case 'energy': return 'Increase Energy';
       case 'weight': return 'Weight Management';
-      case 'medical': return 'Medical Tracking';
       case 'mental': return 'Focus & Brain Health';
       default: return 'General Wellness';
     }
@@ -35,7 +34,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   const handleResetData = () => {
     Alert.alert(
       'Reset All Data',
-      'This will erase all your logged blood sugar readings and scanned food history. This action cannot be undone.',
+      'This will erase all your scanned food history. This action cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -174,47 +173,6 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
               trackColor={{ false: '#e2e8f0', true: colors.primary }}
               thumbColor={theme === 'dark' ? '#ffffff' : '#f4f4f5'}
             />
-          </View>
-
-          <View style={{ backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border }} className="flex-row items-center justify-between p-4">
-            <View className="flex-row items-center gap-3">
-              <Layers size={16} color={colors.primary} />
-              <Text style={{ color: colors.text }} className="font-bold text-sm">Blood Sugar Unit</Text>
-            </View>
-            <View className="flex-row gap-2">
-              <TouchableOpacity
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setUnit('mg/dL');
-                }}
-                style={{
-                  backgroundColor: unit === 'mg/dL' ? colors.primary + '15' : 'transparent',
-                  borderColor: unit === 'mg/dL' ? colors.primary : colors.border,
-                  borderWidth: 1
-                }}
-                className="py-1.5 px-3 rounded-xl active:opacity-85"
-              >
-                <Text style={{ color: unit === 'mg/dL' ? colors.primary : colors.textSecondary }} className="text-xs font-black">
-                  mg/dL
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setUnit('mmol/L');
-                }}
-                style={{
-                  backgroundColor: unit === 'mmol/L' ? colors.primary + '15' : 'transparent',
-                  borderColor: unit === 'mmol/L' ? colors.primary : colors.border,
-                  borderWidth: 1
-                }}
-                className="py-1.5 px-3 rounded-xl active:opacity-85"
-              >
-                <Text style={{ color: unit === 'mmol/L' ? colors.primary : colors.textSecondary }} className="text-xs font-black">
-                  mmol/L
-                </Text>
-              </TouchableOpacity>
-            </View>
           </View>
 
           <View style={{ backgroundColor: colors.surface }} className="flex-row items-center justify-between p-4">
@@ -447,13 +405,13 @@ function SettingsRowItem({ label, icon, onPress, textColor = 'normal', colors, i
 const PRIVACY_POLICY_TEXT = `Last Updated: June 2026
 
 1. INFORMATION WE COLLECT
-CutSugar collects blood sugar readings that you manually log in the application, along with your scan history. This information is saved locally on your device via AsyncStorage and SecureStore and is never shared, uploaded, or sold to third parties.
+CutSugar collects your food scan history. This information is saved locally on your device via AsyncStorage and SecureStore and is never shared, uploaded, or sold to third parties.
 
 2. HEALTH DATA ENCRYPTION
-Any logged sensitive data is processed locally on your hardware. We do not maintain remote cloud infrastructure to host your personal biological indexes.
+Any scanned history data is processed locally on your hardware. We do not maintain remote cloud infrastructure.
 
 3. YOUR RIGHTS
-You have full access to view, edit, and delete your logs and scan records. You can use the "Clear Scan History" or "Reset App Data" actions to wipe all device state instantly.
+You have full access to view and delete your scan records. You can use the "Clear Scan History" or "Reset App Data" actions to wipe all device state instantly.
 
 4. THIRD PARTY SERVICE PROVIDERS
 CutSugar uses the Open Food Facts API to query food ingredients. No personal identifiers or location statistics are sent to this database during search queries.
@@ -466,7 +424,7 @@ const TERMS_OF_SERVICE_TEXT = `Last Updated: June 2026
 By installing and using the CutSugar mobile application, you agree to these Terms of Service.
 
 2. MEDICAL DISCLAIMER
-CutSugar is an informational scanner and blood sugar log tracker. It is NOT a medical device, nor does it replace professional diagnostic equipment, clinical consulting, or pharmaceutical advice. Always consult a healthcare specialist before making dietary modifications or acting on blood sugar logs.
+CutSugar is an informational food scanner. It is NOT a medical device, nor does it replace professional diagnostic equipment, clinical consulting, or pharmaceutical advice. Always consult a healthcare specialist before making dietary modifications.
 
 3. PAYMENTS & SUBSCRIPTIONS
 In-app subscription payments (if applicable) are governed by App Store and Play Store terms. Subscriptions automatically renew unless cancelled 24 hours before expiration.

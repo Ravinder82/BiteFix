@@ -1,13 +1,3 @@
-export interface BloodSugarLog {
-  id: string;
-  value: number; // e.g. 95 or 5.3
-  unit: 'mg/dL' | 'mmol/L';
-  timestamp: number;
-  type: 'fasting' | 'post-meal';
-  notes?: string;
-  status: 'normal' | 'pre-diabetes' | 'diabetes' | 'low';
-}
-
 export interface ScanHistoryItem {
   id: string;
   barcode?: string;

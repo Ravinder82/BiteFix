@@ -33,6 +33,7 @@ import AnimatedReanimated, {
 import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
 import { formatSugar } from '../../utils/sugar';
+import { formatWeight } from '../../utils/format';
 
 import {
   ScanResultData,
@@ -1255,7 +1256,7 @@ export default function ScannerScreen() {
                       Total Sugars in Full Package
                     </Text>
                     <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 2 }}>
-                      {scanResult.packageSize ? `(${scanResult.packageSize})` : '(Package Size Unknown)'}
+                      {scanResult.packageSize ? `(${formatWeight(scanResult.packageSize, sugarUnit)})` : '(Package Size Unknown)'}
                     </Text>
                   </View>
                 );
@@ -1278,7 +1279,7 @@ export default function ScannerScreen() {
                   <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>Per Serving</Text>
                   {scanResult.servingSize && scanResult.sugarTeaspoons !== undefined ? (
                     <>
-                      <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800', marginTop: 2 }}>{scanResult.servingSize}</Text>
+                      <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800', marginTop: 2 }}>{formatWeight(scanResult.servingSize, sugarUnit) || scanResult.servingSize}</Text>
                       <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', marginTop: 10 }}>
                         {scanResult.sugarTeaspoons} <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textSecondary }}>tsp</Text>
                       </Text>
@@ -1356,7 +1357,7 @@ export default function ScannerScreen() {
               productName={scanResult.name}
               sugarGrams={scanResult.sugarGrams ?? scanResult.sugarPer100g ?? 0}
               calories={scanResult.calories}
-              servingSize={scanResult.servingSize ?? '100 g'}
+              servingSize={formatWeight(scanResult.servingSize, sugarUnit) || '100 g'}
             />
 
             {/* WHO Reference Card */}

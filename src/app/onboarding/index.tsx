@@ -261,83 +261,6 @@ function ScannerTeaspoonCard({ cardW, C }: { cardW: number; C: any }) {
 }
 
 // ─────────────────────────────────────────────────────────
-// Slide 4: Progress Chart Card (HD Glowing Trendline)
-// ─────────────────────────────────────────────────────────
-function ProgressCard({ cardW, C }: { cardW: number; C: any }) {
-  // Starts high (Y=30), drops smoothly, and stabilizes in the healthy target range (Y=95)
-  const linePath = "M10 30 C 60 30, 100 95, 170 95 S 220 95, 250 95";
-  const areaPath = `${linePath} L250 140 L10 140 Z`;
-
-  return (
-    <View style={{
-      width: cardW,
-      backgroundColor: C.card,
-      borderRadius: 24,
-      borderWidth: 1,
-      borderColor: C.cardBorder,
-      padding: 24,
-      alignItems: 'center',
-      justifyContent: 'center',
-      shadowColor: '#34C759',
-      shadowOffset: { width: 0, height: 16 },
-      shadowOpacity: 0.15,
-      shadowRadius: 24,
-      elevation: 8,
-      aspectRatio: 1.4,
-    }}>
-      <View style={{
-        width: '100%',
-        height: '100%',
-        borderRadius: 16,
-        overflow: 'hidden',
-        backgroundColor: '#000000',
-        borderWidth: 2,
-        borderColor: '#34C759',
-        position: 'relative'
-      }}>
-        <Svg width="100%" height="100%" viewBox="0 0 260 140" preserveAspectRatio="none" style={{ position: 'absolute' }}>
-          <Defs>
-            {/* Gradient fill under the curve */}
-            <SvgLinearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0%" stopColor="#34C759" stopOpacity="0.4" />
-              <Stop offset="100%" stopColor="#34C759" stopOpacity="0" />
-            </SvgLinearGradient>
-            {/* Line transition from High (Brand Amber/Orange) to Stabilized (Success Green) */}
-            <SvgLinearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-              <Stop offset="0%" stopColor="#E8820C" />
-              <Stop offset="40%" stopColor="#F5A623" />
-              <Stop offset="100%" stopColor="#34C759" />
-            </SvgLinearGradient>
-          </Defs>
-
-          {/* Background Grid Lines */}
-          <Path d="M0 35 L260 35 M0 70 L260 70 M0 105 L260 105" stroke="#FFFFFF" strokeWidth="1" strokeOpacity="0.1" strokeDasharray="4 4" />
-
-          {/* Fill and Line */}
-          <Path d={areaPath} fill="url(#chartGrad)" />
-          <Path d={linePath} fill="none" stroke="url(#lineGrad)" strokeWidth="6" strokeLinecap="round" />
-
-          {/* Glowing Data Points along the stabilization trend */}
-          <Circle cx="10" cy="30" r="5" fill="#000000" stroke="#E8820C" strokeWidth="3" />
-          <Circle cx="100" cy="72" r="5" fill="#000000" stroke="#F5A623" strokeWidth="3" />
-          <Circle cx="180" cy="95" r="5" fill="#000000" stroke="#34C759" strokeWidth="3" />
-          
-          {/* Target Stabilized End Point */}
-          <Circle cx="250" cy="95" r="7" fill="#FFFFFF" stroke="#34C759" strokeWidth="4" />
-          {/* Outer glow ring for latest point */}
-          <Circle cx="250" cy="95" r="14" fill="none" stroke="#34C759" strokeWidth="2" strokeOpacity="0.5" />
-        </Svg>
-
-        {/* Target Zone Label aligned vertically with the stabilized Y=95 range */}
-        <View style={{ position: 'absolute', right: 12, bottom: 20, backgroundColor: '#34C759', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, shadowColor: '#34C759', shadowOpacity: 0.8, shadowRadius: 8, elevation: 5 }}>
-          <Text style={{ color: '#000', fontSize: 11, fontWeight: '900', letterSpacing: 0.5 }}>TARGET ZONE</Text>
-        </View>
-      </View>
-    </View>
-  );
-}
-
-// ─────────────────────────────────────────────────────────
 // Slide 1: Personalized Name Question Card
 // ─────────────────────────────────────────────────────────
 function NameCard({
@@ -401,7 +324,7 @@ function NameCard({
 // ─────────────────────────────────────────────────────────
 // Slide 2: Primary Goal Card (4 Options)
 // ─────────────────────────────────────────────────────────
-type GoalOption = 'energy' | 'weight' | 'medical' | 'mental' | 'none';
+type GoalOption = 'energy' | 'weight' | 'mental' | 'none';
 
 function GoalCard({
   cardW,
@@ -417,7 +340,6 @@ function GoalCard({
   const options: { label: string; value: GoalOption }[] = [
     { label: "Boost daily Energy", value: 'energy' },
     { label: "Lose Weight", value: 'weight' },
-    { label: "Manage Blood Sugar", value: 'medical' },
     { label: "Build Healthy Eating Habits", value: 'mental' },
   ];
 
@@ -584,15 +506,6 @@ const SLIDES: SlideData[] = [
   },
   {
     step: 4,
-    title: 'Log your Blood Sugar.',
-    highlight: 'Blood Sugar.',
-    subtitle: 'Log fasting and post-meal readings to manage clinical blood sugar trends.',
-    buttonLabel: 'Next',
-    isLast: false,
-    mascotState: 'happy',
-  },
-  {
-    step: 5,
     title: "Your CutSugar Setup is Complete",
     highlight: "Setup is Complete",
     subtitle: "We're ready to start this life-changing journey together with CutSugar.",
@@ -893,7 +806,6 @@ export default function OnboardingScreen() {
                     "WHO Standard \n 1 Teaspoon = 4.2 grams of sugar.",
                     "Measuring Teaspoons of sugar helps visualize the actual sugar content in the food we consume.",
                     "Don't Let Sugar in Grams Confuse you, Scan Any Packaged Food Barcode for Instant Sugar Amount",
-                    "Track your Blood Sugar and keep yourself up to date with Blood Sugar Trends.",
                     ""
                   ][currentSlide] || ""}
                 />
@@ -920,8 +832,7 @@ export default function OnboardingScreen() {
                 />
               )}
               {currentCardIndex === 2 && <ScannerTeaspoonCard cardW={cardW} C={C} />}
-              {currentCardIndex === 3 && <ProgressCard cardW={cardW} C={C} />}
-              {currentCardIndex === 4 && (
+              {currentCardIndex === 3 && (
                 <SetupCompleteCard
                   cardW={cardW}
                   C={C}
