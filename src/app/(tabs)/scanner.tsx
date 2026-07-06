@@ -1305,6 +1305,13 @@ export default function ScannerScreen() {
                         servingSize: scanResult.servingSize,
                         sugarPer100g: scanResult.sugarPer100g,
                         categoryTag: scanResult.categoryTag,
+                        totalSugarGrams: scanResult.totalSugarGrams,
+                        totalSugarTeaspoons: scanResult.totalSugarTeaspoons,
+                        packageSize: scanResult.packageSize,
+                        totalCalories: scanResult.totalCalories,
+                        totalCarbsGrams: scanResult.totalCarbsGrams,
+                        totalFatGrams: scanResult.totalFatGrams,
+                        totalProteinGrams: scanResult.totalProteinGrams,
                       });
                     }
                   }}

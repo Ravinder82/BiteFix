@@ -334,19 +334,7 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                             e.stopPropagation?.();
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                             if (!isAlreadySaved) {
-                              addToCollection({
-                                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                                name: item.name,
-                                brand: item.brand,
-                                sugarGrams: item.sugarGrams ?? item.sugarPer100g ?? 0,
-                                sugarTeaspoons: item.sugarTeaspoons ?? 0,
-                                timestamp: Date.now(),
-                                imageUrl: item.imageUrl,
-                                calories: item.calories,
-                                servingSize: item.servingSize,
-                                sugarPer100g: item.sugarPer100g,
-                                categoryTag: item.categoryTag,
-                              });
+                              addToCollection(item);
                             }
                           }}
                           disabled={isAlreadySaved}

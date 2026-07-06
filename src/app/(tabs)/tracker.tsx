@@ -4,10 +4,10 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  Image,
   Platform,
   Alert,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -28,6 +28,31 @@ import { useTheme } from '../../hooks/useTheme';
 import { useAppStore } from '../../stores/appStore';
 import { Text } from '../../components/Text';
 import { CleanBiteCategory, CollectionItem } from '../../types/app.types';
+import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
+import { formatSugar } from '../../utils/sugar';
+import { getSmartServingText, formatWeight } from '../../utils/format';
+
+const getFullProductCalories = (item: any): number => {
+  if (item && item.totalCalories !== undefined && item.totalCalories > 0) {
+    return item.totalCalories;
+  }
+  return item?.calories ?? 0;
+};
+
+const calculateJoggingMinutes = (calories: number): number => {
+  if (!calories || isNaN(calories) || calories <= 0) return 0;
+  return Math.round(calories / 10);
+};
+
+function getSugarColor(teaspoons: number, colors: any) {
+  if (teaspoons > 6) {
+    return colors.error || '#ff7d7dff';
+  }
+  if (teaspoons > 3) {
+    return colors.warning || '#ffe072ff';
+  }
+  return colors.success || '#3dffbeff';
+}
 
 
 
@@ -211,81 +236,222 @@ export default function TrackerScreen() {
               </TouchableOpacity>
             </View>
           ) : (
-            filteredCollection.map((item) => (
-              <View
-                key={item.id}
-                style={[
-                  styles.itemCard,
-                  {
-                    backgroundColor: isDark ? colors.surfaceRaised : colors.surface,
+            filteredCollection.map((item) => {
+              const cardMascotState = item.sugarTeaspoons === 0 ? 'happy' : (item.sugarTeaspoons <= 2 ? 'idle' : (item.sugarTeaspoons <= 5 ? 'shocked' : 'dizzy'));
+              const sugarColor = getSugarColor(item.sugarTeaspoons, colors);
+              const itemCal = getFullProductCalories(item);
+              const calColor = itemCal > 250 ? '#FF3B30' : (itemCal > 100 ? '#FF9500' : '#34C759');
+              const sugColor = item.sugarGrams > 10 ? '#FF3B30' : (item.sugarGrams > 4 ? '#FF9500' : '#34C759');
+              const itemWhoPercent = Math.min(100, Math.round((item.sugarGrams / 25) * 100));
+              const whoBarColor = itemWhoPercent > 100 ? '#FF3B30' : (itemWhoPercent > 60 ? '#FF9500' : '#34C759');
+              const totalSugarTsp = item.totalSugarTeaspoons !== undefined ? item.totalSugarTeaspoons : (item.sugarTeaspoons ?? 0);
+              const servingSugarTsp = item.sugarTeaspoons ?? 0;
+              const productWeightStr = formatWeight(item.packageSize || item.servingSize, sugarUnit) || 'N/A';
+              const servingWeightStr = formatWeight(item.servingSize, sugarUnit) || '1 Serving';
+              const servingCal = item.calories ?? 0;
+
+              return (
+                <View
+                  key={item.id}
+                  style={{
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : colors.surface,
                     borderColor: colors.border,
-                  },
-                ]}
-              >
-                {/* Product Image or Fallback */}
-                <View style={styles.imageContainer}>
-                  {item.imageUrl ? (
-                    <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
-                  ) : (
-                    <View style={[styles.imageFallback, { backgroundColor: `${colors.primary}15` }]}>
-                      <ShoppingBag size={24} color={colors.primary} />
-                    </View>
-                  )}
-                </View>
-
-                {/* Product Info */}
-                <View style={styles.itemInfo}>
-                  <View style={styles.itemHeaderRow}>
-                    <Text style={[styles.itemBrand, { color: colors.textMuted }]}>
-                      {item.brand || 'Generic'}
-                    </Text>
-                  </View>
-
-                  <Text style={[styles.itemName, { color: colors.text }]}>
-                    {item.name}
-                  </Text>
-
-                  {/* Sugar & Nutrition summary badge */}
-                  <View style={styles.nutritionRow}>
-                    <View style={[styles.sugarBadge, { backgroundColor: 'rgba(255, 82, 82, 0.12)' }]}>
-                      <Text style={styles.sugarBadgeText}>
-                        {sugarUnit === 'oz'
-                          ? `${(item.sugarGrams * 0.035274).toFixed(1)} oz Sugar`
-                          : `${item.sugarGrams.toFixed(1)}g Sugar`}
-                      </Text>
-                    </View>
-                    {item.sugarTeaspoons !== undefined && (
-                      <Text style={[styles.teaspoonText, { color: colors.textMuted }]}>
-                        ({item.sugarTeaspoons} tsp)
-                      </Text>
+                    borderWidth: 1.5,
+                    borderRadius: 24,
+                    padding: 12,
+                    width: '100%',
+                    height: 388,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: isDark ? 0.15 : 0.04,
+                    shadowRadius: 10,
+                    elevation: 2,
+                    marginBottom: 12,
+                  }}
+                >
+                  {/* Left Column: Product Image Full Height */}
+                  <View style={{
+                    width: 110,
+                    alignSelf: 'stretch',
+                    borderRadius: 16,
+                    overflow: 'hidden',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.06)',
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                  }}>
+                    {item.imageUrl ? (
+                      <Image source={{ uri: item.imageUrl }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={200} />
+                    ) : (
+                      <View style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
+                        <ScanBarcode size={36} color={colors.primary} />
+                      </View>
                     )}
                   </View>
-                </View>
 
-                {/* Actions (Favorite & Delete) */}
-                <View style={styles.itemActions}>
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={() => handleToggleFavorite(item.id)}
-                    style={styles.actionButton}
-                  >
-                    <Heart
-                      size={20}
-                      color={item.isFavorite ? '#FF5252' : colors.textMuted}
-                      fill={item.isFavorite ? '#FF5252' : 'transparent'}
-                    />
-                  </TouchableOpacity>
+                  {/* Right Column */}
+                  <View style={{ flex: 1, paddingLeft: 16, height: '100%', justifyContent: 'space-between' }}>
+                    {/* Row 1: Title & Mascot Avatar */}
+                    <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900', lineHeight: 22 }}>
+                          {item.name}
+                        </Text>
+                      </View>
 
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={() => handleRemove(item.id, item.name)}
-                    style={styles.actionButton}
-                  >
-                    <Trash2 size={18} color={colors.textMuted} />
-                  </TouchableOpacity>
+                      {/* Fixed circular container for mini mascot to prevent cut off */}
+                      <View style={{
+                        width: 50,
+                        height: 50,
+                        borderRadius: 25,
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.06)',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderWidth: 2,
+                        borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
+                      }}>
+                        <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+                          <Mascot size={44} state={cardMascotState} />
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Row 2: Separate Containers for Product Weight/Sugar, Serving Weight/Sugar, Energy */}
+                    <View style={{ gap: 10, marginVertical: 7 }}>
+                      {/* Container 1: Product Weight & Total Sugar (tsp) */}
+                      <View style={{
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 185, 56, 0.04)',
+                        borderColor: colors.border,
+                        borderWidth: 1,
+                        borderRadius: 10,
+                        paddingHorizontal: 8,
+                        paddingVertical: 6,
+                        gap: 4
+                      }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Product Weight:</Text>
+                          <Text style={{ color: colors.text, fontSize: 11, fontWeight: '900' }}>{productWeightStr}</Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Total Sugar:</Text>
+                          <Text style={{ color: sugColor, fontSize: 11, fontWeight: '900' }}>{totalSugarTsp.toFixed(1).replace(/\.0$/, '')} tsp</Text>
+                        </View>
+                      </View>
+
+                      {/* Container 2: Per Serving Weight & Sugar (tsp) */}
+                      <View style={{
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 185, 56, 0.04)',
+                        borderColor: colors.border,
+                        borderWidth: 1,
+                        borderRadius: 10,
+                        paddingHorizontal: 8,
+                        paddingVertical: 5,
+                        gap: 4
+                      }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Per Serving Weight:</Text>
+                          <Text style={{ color: colors.text, fontSize: 11, fontWeight: '900' }}>{servingWeightStr}</Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Per Serving Sugar:</Text>
+                          <Text style={{ color: sugColor, fontSize: 11, fontWeight: '900' }}>{servingSugarTsp.toFixed(1).replace(/\.0$/, '')} tsp</Text>
+                        </View>
+                      </View>
+
+                      {/* Container 3: Total Energy & Per Serving Energy */}
+                      <View style={{
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 185, 56, 0.04)',
+                        borderColor: colors.border,
+                        borderWidth: 1,
+                        borderRadius: 10,
+                        paddingHorizontal: 8,
+                        paddingVertical: 5,
+                        gap: 4
+                      }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Total Energy:</Text>
+                          <Text style={{ color: calColor, fontSize: 11, fontWeight: '900' }}>{itemCal} kcal</Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Serving Energy:</Text>
+                          <Text style={{ color: colors.text, fontSize: 11, fontWeight: '900' }}>{servingCal} kcal</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Row 3: WHO Limit Bento & Save / Delete */}
+                    <View style={{ flexDirection: 'row', alignItems: 'stretch', justifyContent: 'space-between', gap: 8, marginTop: 'auto' }}>
+                      <View style={{
+                        flex: 1,
+                        backgroundColor: isDark ? 'rgba(0, 0, 0, 0.06)' : 'rgba(0, 0, 0, 0)',
+                        borderColor: colors.border,
+                        borderWidth: 2,
+                        borderRadius: 12,
+                        padding: 10,
+                        justifyContent: 'center',
+                        minHeight: 70,
+                        gap: 6
+                      }}>
+                        <View>
+                          <View style={{ alignSelf: 'flex-start', backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', paddingHorizontal: 5, paddingVertical: 1.5, borderRadius: 4, marginBottom: 4 }}>
+                            <Text style={{ color: colors.textSecondary, fontSize: 8, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.2 }}>Per serving</Text>
+                          </View>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800' }}>WHO Limit</Text>
+                            <Text style={{ color: colors.text, fontSize: 11, fontWeight: '900' }}>{itemWhoPercent}%</Text>
+                          </View>
+                          <View style={{ height: 7, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', borderRadius: 3.5, overflow: 'hidden' }}>
+                            <View style={{ height: '100%', width: `${itemWhoPercent}%`, backgroundColor: whoBarColor }} />
+                          </View>
+                        </View>
+                      </View>
+
+                      {/* Actions (Favorite & Delete) */}
+                      <View style={{ gap: 6, width: 40, justifyContent: 'space-between' }}>
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={() => handleToggleFavorite(item.id)}
+                          style={{
+                            flex: 1,
+                            backgroundColor: item.isFavorite ? 'rgba(255, 82, 82, 0.12)' : isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0, 0, 0, 0.04)',
+                            borderColor: item.isFavorite ? '#FF5252' : colors.border,
+                            borderWidth: item.isFavorite ? 1.5 : 1,
+                            borderRadius: 12,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            height: 38,
+                          }}
+                        >
+                          <Heart
+                            size={18}
+                            color={item.isFavorite ? '#FF5252' : colors.textMuted}
+                            fill={item.isFavorite ? '#FF5252' : 'transparent'}
+                          />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={() => handleRemove(item.id, item.name)}
+                          style={{
+                            flex: 1,
+                            backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0, 0, 0, 0.04)',
+                            borderColor: colors.border,
+                            borderWidth: 1,
+                            borderRadius: 12,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            height: 38,
+                          }}
+                        >
+                          <Trash2 size={18} color={colors.textMuted} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
                 </View>
-              </View>
-            ))
+              );
+            })
           )}
         </View>
       </ScrollView>
