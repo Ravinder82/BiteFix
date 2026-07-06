@@ -11,7 +11,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
 import { SugarProgressRing } from '../../components/features/SugarProgressRing';
-import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle, Menu, HelpCircle, Flame, Zap, ArrowUpRight, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle, Menu, HelpCircle, Flame, Zap, ArrowUpRight, TrendingUp, ChevronLeft, ChevronRight, Bookmark } from 'lucide-react-native';
 import { formatSugar } from '../../utils/sugar';
 import SettingsScreen from './settings';
 import * as Haptics from 'expo-haptics';
@@ -57,7 +57,7 @@ const formatJogTime = (totalMinutes: number): string => {
 
 
 function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelectedScan, deleteScan }: any) {
-  const { sugarUnit } = useAppStore();
+  const { sugarUnit, addToCollection, collection } = useAppStore();
   const scrollRef = useRef<ScrollView>(null);
   const [scrollX, setScrollX] = useState(0);
 
@@ -174,7 +174,7 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                 borderRadius: 24,
                 padding: 12,
                 width: cardWidth,
-                height: 310,
+                height: 388,
                 flexDirection: 'row',
                 alignItems: 'center',
                 shadowColor: '#000',
@@ -210,7 +210,7 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                 {/* Row 1: Title & Mascot Avatar */}
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
                   <View style={{ flex: 1 }}>
-                    <Text numberOfLines={2} style={{ color: colors.text, fontSize: 16, fontWeight: '900', lineHeight: 22 }}>
+                    <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900', lineHeight: 22 }}>
                       {item.name}
                     </Text>
                   </View>
@@ -295,7 +295,7 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                   </View>
                 </View>
 
-                {/* Row 3: WHO Limit Bento & Delete */}
+                {/* Row 3: WHO Limit Bento & Save / Delete */}
                 <View style={{ flexDirection: 'row', alignItems: 'stretch', justifyContent: 'space-between', gap: 8, marginTop: 'auto' }}>
                   <View style={{
                     flex: 1,
@@ -303,38 +303,89 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                     borderColor: colors.border,
                     borderWidth: 2,
                     borderRadius: 12,
-                    padding: 8,
+                    padding: 10,
                     justifyContent: 'center',
+                    minHeight: 70,
                     gap: 6
                   }}>
 
                     <View>
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                        <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '800' }}>WHO Limit</Text>
-                        <Text style={{ color: colors.text, fontSize: 10, fontWeight: '900' }}>{itemWhoPercent}%</Text>
+                      <View style={{ alignSelf: 'flex-start', backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', paddingHorizontal: 5, paddingVertical: 1.5, borderRadius: 4, marginBottom: 4 }}>
+                        <Text style={{ color: colors.textSecondary, fontSize: 8, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.2 }}>Per serving</Text>
                       </View>
-                      <View style={{ height: 6, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800' }}>WHO Limit</Text>
+                        <Text style={{ color: colors.text, fontSize: 11, fontWeight: '900' }}>{itemWhoPercent}%</Text>
+                      </View>
+                      <View style={{ height: 7, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', borderRadius: 3.5, overflow: 'hidden' }}>
                         <View style={{ height: '100%', width: `${itemWhoPercent}%`, backgroundColor: whoBarColor }} />
                       </View>
                     </View>
                   </View>
 
-                  <TouchableOpacity
-                    onPress={(e) => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                      deleteScan(item.id);
-                    }}
-                    style={{
-                      backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255, 205, 202, 0.54)',
-                      padding: 12,
-                      borderRadius: 12,
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <Trash2 size={16} color={colors.error} />
-                  </TouchableOpacity>
+                  <View style={{ gap: 6, width: 40, justifyContent: 'space-between' }}>
+                    {(() => {
+                      const isAlreadySaved = collection.some(
+                        (colItem) => colItem.name === item.name && colItem.brand === item.brand
+                      );
+                      return (
+                        <TouchableOpacity
+                          onPress={(e) => {
+                            e.stopPropagation?.();
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            if (!isAlreadySaved) {
+                              addToCollection({
+                                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                                name: item.name,
+                                brand: item.brand,
+                                sugarGrams: item.sugarGrams ?? item.sugarPer100g ?? 0,
+                                sugarTeaspoons: item.sugarTeaspoons ?? 0,
+                                timestamp: Date.now(),
+                                imageUrl: item.imageUrl,
+                                calories: item.calories,
+                                servingSize: item.servingSize,
+                                sugarPer100g: item.sugarPer100g,
+                                categoryTag: item.categoryTag,
+                              });
+                            }
+                          }}
+                          disabled={isAlreadySaved}
+                          style={{
+                            flex: 1,
+                            backgroundColor: isAlreadySaved ? `${colors.primary}25` : isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0, 0, 0, 0.04)',
+                            borderColor: isAlreadySaved ? colors.primary : colors.border,
+                            borderWidth: isAlreadySaved ? 1.5 : 1,
+                            borderRadius: 12,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            minHeight: 32,
+                          }}
+                          activeOpacity={0.8}
+                        >
+                          <Bookmark size={15} color={colors.primary} fill={isAlreadySaved ? colors.primary : 'transparent'} />
+                        </TouchableOpacity>
+                      );
+                    })()}
+
+                    <TouchableOpacity
+                      onPress={(e) => {
+                        e.stopPropagation?.();
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        deleteScan(item.id);
+                      }}
+                      style={{
+                        flex: 1,
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255, 205, 202, 0.54)',
+                        borderRadius: 12,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        minHeight: 32,
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Trash2 size={15} color={colors.error} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
               </View>
@@ -348,7 +399,7 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
 
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
-  const { scans, deleteScan, clearScans, userName, sugarUnit } = useAppStore();
+  const { scans, deleteScan, clearScans, userName, sugarUnit, addToCollection, collection } = useAppStore();
   const [selectedScan, setSelectedScan] = useState<ScanHistoryItem | null>(null);
   const [settingsVisible, setSettingsVisible] = useState(false);
 

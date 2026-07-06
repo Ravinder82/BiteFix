@@ -27,3 +27,19 @@ export interface ScanHistoryItem {
   sugarPer100g?: number;
   categoryTag?: string;
 }
+
+export type CleanBiteCategory = 
+  | 'All' 
+  | 'Beverages' 
+  | 'Breakfast' 
+  | 'Snacks' 
+  | 'Dairy & Alternatives' 
+  | 'Condiments & Sauces' 
+  | 'Pantry & Other';
+
+export interface CollectionItem extends ScanHistoryItem {
+  addedAt: number;
+  cleanBiteCategory: CleanBiteCategory;
+  notes?: string;
+  isFavorite?: boolean;
+}

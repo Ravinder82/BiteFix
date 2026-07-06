@@ -1,13 +1,15 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ScanHistoryItem } from '../types/app.types';
+import { ScanHistoryItem, CollectionItem, CleanBiteCategory } from '../types/app.types';
+import { mapToCleanBiteCategory } from '../utils/categoryMapper';
 
 interface AppState {
   onboardingComplete: boolean;
   theme: 'light' | 'dark' | 'system';
   sugarUnit: 'g' | 'oz';
   scans: ScanHistoryItem[];
+  collection: CollectionItem[];
   userName?: string;
   userGoal?: 'energy' | 'weight' | 'mental' | 'none';
 
@@ -44,6 +46,12 @@ interface AppState {
   deleteScan: (id: string) => void;
   clearScans: () => void;
 
+  // Collection Actions
+  addToCollection: (item: ScanHistoryItem, category?: CleanBiteCategory, notes?: string) => void;
+  removeFromCollection: (id: string) => void;
+  toggleFavoriteCollectionItem: (id: string) => void;
+  clearCollection: () => void;
+
   // Global Actions
   clearAllData: () => void;
 }
@@ -57,6 +65,7 @@ export const useAppStore = create<AppState>()(
       theme: 'light',
       sugarUnit: 'g',
       scans: [],
+      collection: [],
       userName: undefined,
       userGoal: 'none',
 
@@ -128,11 +137,40 @@ export const useAppStore = create<AppState>()(
 
       clearScans: () => set({ scans: [] }),
 
+      addToCollection: (item, category, notes) => set((state) => {
+        // Prevent duplicates by ID or barcode/name
+        if (state.collection.some((col) => col.id === item.id || (col.barcode && item.barcode && col.barcode === item.barcode))) {
+          return state;
+        }
+        const cleanBiteCategory = category || mapToCleanBiteCategory(item.name, item.brand, item.categoryTag);
+        const newItem: CollectionItem = {
+          ...item,
+          addedAt: Date.now(),
+          cleanBiteCategory,
+          notes,
+          isFavorite: false,
+        };
+        return { collection: [newItem, ...state.collection] };
+      }),
+
+      removeFromCollection: (id) => set((state) => ({
+        collection: state.collection.filter((item) => item.id !== id),
+      })),
+
+      toggleFavoriteCollectionItem: (id) => set((state) => ({
+        collection: state.collection.map((item) =>
+          item.id === id ? { ...item, isFavorite: !item.isFavorite } : item
+        ),
+      })),
+
+      clearCollection: () => set({ collection: [] }),
+
       clearAllData: () => set({
         onboardingComplete: false,
         theme: 'light',
         sugarUnit: 'g',
         scans: [],
+        collection: [],
         userName: undefined,
         userGoal: 'none',
       }),
@@ -140,13 +178,16 @@ export const useAppStore = create<AppState>()(
     {
       name: '@cutsugar-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 2,
+      version: 3,
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
           persistedState.theme = 'light';
         }
         if (version < 2) {
           persistedState.sugarUnit = 'g';
+        }
+        if (version < 3) {
+          persistedState.collection = [];
         }
         return persistedState as AppState;
       },

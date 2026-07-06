@@ -61,6 +61,7 @@ import {
   RotateCcw,
   X,
   Leaf,
+  Bookmark,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { BlurView } from 'expo-blur';
@@ -79,7 +80,7 @@ const PRODUCT_BARCODE_TYPES = ['qr', 'upc_a', 'upc_e', 'ean13', 'ean8', 'code128
 // ─────────────────────────────────────────────────────────
 export default function ScannerScreen() {
   const { colors, isDark } = useTheme();
-  const { addScan, sugarUnit } = useAppStore();
+  const { addScan, sugarUnit, addToCollection, collection } = useAppStore();
 
   // Camera permission hook from expo-camera
   const [permission, requestPermission] = useCameraPermissions();
@@ -1281,6 +1282,55 @@ export default function ScannerScreen() {
                 );
               })()}
             </View>
+
+            {/* Save to CleanBite Collection Button */}
+            {(() => {
+              const isAlreadySaved = collection.some(
+                (item) => item.name === scanResult.name && item.brand === scanResult.brand
+              );
+              return (
+                <TouchableOpacity
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    if (!isAlreadySaved) {
+                      addToCollection({
+                        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                        name: scanResult.name,
+                        brand: scanResult.brand,
+                        sugarGrams: scanResult.sugarGrams ?? scanResult.sugarPer100g ?? 0,
+                        sugarTeaspoons: scanResult.sugarTeaspoons ?? 0,
+                        timestamp: Date.now(),
+                        imageUrl: scanResult.imageUrl,
+                        calories: scanResult.calories,
+                        servingSize: scanResult.servingSize,
+                        sugarPer100g: scanResult.sugarPer100g,
+                        categoryTag: scanResult.categoryTag,
+                      });
+                    }
+                  }}
+                  disabled={isAlreadySaved}
+                  style={{
+                    backgroundColor: isAlreadySaved ? `${colors.primary}20` : isDark ? colors.surfaceRaised : colors.surface,
+                    borderWidth: 1.5,
+                    borderColor: colors.primary,
+                    width: '100%',
+                    paddingVertical: 16,
+                    borderRadius: 16,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'row',
+                    gap: 8,
+                    marginBottom: 12,
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Bookmark size={18} color={colors.primary} fill={isAlreadySaved ? colors.primary : 'transparent'} />
+                  <Text style={{ color: colors.primary, fontWeight: '800', fontSize: 14 }}>
+                    {isAlreadySaved ? 'Saved in CleanBite Collection' : 'Save to CleanBite Collection'}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })()}
 
             {/* Scan Again Button */}
             <TouchableOpacity
