@@ -174,7 +174,7 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
                 borderRadius: 24,
                 padding: 12,
                 width: cardWidth,
-                height: 388,
+                height: 360,
                 flexDirection: 'row',
                 alignItems: 'center',
                 shadowColor: '#000',

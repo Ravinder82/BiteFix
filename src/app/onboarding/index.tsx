@@ -131,7 +131,7 @@ function ThoughtBubble({ text, visible }: { text: string; visible: boolean }) {
 // ─────────────────────────────────────────────────────────
 function CuriosityCard({ cardW, C }: { cardW: number; C: any }) {
   const pourProgress = useSharedValue(0);
-  
+
   useEffect(() => {
     pourProgress.value = withRepeat(
       withSequence(
@@ -154,8 +154,8 @@ function CuriosityCard({ cardW, C }: { cardW: number; C: any }) {
   // Falling sugar particles path calculations
   const p1Style = useAnimatedStyle(() => {
     const p = (pourProgress.value * 1.4) % 1.0;
-    const x = 32 + p * 22; 
-    const y = 30 + p * 42; 
+    const x = 32 + p * 22;
+    const y = 30 + p * 42;
     return {
       transform: [{ translateX: x }, { translateY: y }],
       opacity: pourProgress.value > 0.05 && pourProgress.value < 0.95 ? 1 : 0,
