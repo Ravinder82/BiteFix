@@ -623,84 +623,6 @@ export default function HomeScreen() {
 
             {/* Central Visual: Mascot-styled Sugar Ring */}
             <View style={{ width: '100%', alignItems: 'center', marginVertical: 16 }}>
-              {/* Side-by-Side Odometer Mini Containers */}
-              <View style={{
-                flexDirection: 'row',
-                alignItems: 'stretch',
-                gap: 12,
-                marginBottom: 16,
-                width: '100%',
-              }}>
-                {/* Left Mini Container (Bigger) */}
-                <View style={{
-                  flex: 1,
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  borderWidth: isDark ? 1.5 : 1,
-                  borderRadius: 20,
-                  padding: 14,
-                  justifyContent: 'center',
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: isDark ? 0.15 : 0.05,
-                  shadowRadius: 12,
-                  elevation: 3,
-                }}>
-                  <View style={{
-                    alignSelf: 'flex-start',
-                    backgroundColor: isDark ? 'rgba(34, 197, 94, 0.15)' : colors.successLight,
-                    paddingHorizontal: 8,
-                    paddingVertical: 4,
-                    borderRadius: 6,
-                    marginBottom: 6,
-                  }}>
-                    <Text style={{
-                      color: colors.success,
-                      fontSize: 9,
-                      fontWeight: '900',
-                      letterSpacing: 0.5,
-                      textTransform: 'uppercase',
-                    }}>
-                      1 Circle = 6 Teaspoons
-                    </Text>
-                  </View>
-                  <Text style={{
-                    color: colors.text,
-                    fontSize: 13,
-                    fontWeight: '800',
-                    letterSpacing: -0.2,
-                  }}>
-                    Circles Completed
-                  </Text>
-                </View>
-
-                {/* Right Mini Container (Smaller, Coloured Container for Digits) */}
-                <View style={{
-                  minWidth: 80,
-                  backgroundColor: isDark ? 'rgba(34, 197, 94, 0.15)' : colors.successLight,
-                  borderColor: isDark ? 'rgba(34, 197, 94, 0.35)' : '#22C55E',
-                  borderWidth: 1.5,
-                  borderRadius: 20,
-                  paddingHorizontal: 16,
-                  paddingVertical: 14,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  shadowColor: colors.success,
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: isDark ? 0.25 : 0.12,
-                  shadowRadius: 10,
-                  elevation: 3,
-                }}>
-                  <Text style={{
-                    color: colors.success,
-                    fontSize: 32,
-                    fontWeight: '900',
-                    letterSpacing: -0.5,
-                  }}>
-                    {Math.floor((totalSugar / 4.2) / 6.0)}
-                  </Text>
-                </View>
-              </View>
 
               {/* Scan Date Pill just above Progress Ring */}
               <View style={{
@@ -713,8 +635,8 @@ export default function HomeScreen() {
                 marginBottom: 16,
                 alignSelf: 'center',
               }}>
-                <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                  {activeDayInfo.dateStr === 'Today' ? "Today's Scans" : `Scans on ${activeDayInfo.dateStr}`}
+                <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  {activeDayInfo.dateStr === 'Today' ? "Today's Scans" : `Last Scan on ${activeDayInfo.dateStr}`}
                 </Text>
               </View>
 
