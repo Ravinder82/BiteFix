@@ -3,7 +3,7 @@ import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
 import { Tabs, Redirect } from 'expo-router';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuthStore } from '../../stores/authStore';
-import { Home, ScanBarcode, Activity } from 'lucide-react-native';
+import { Home, ScanBarcode } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -171,17 +171,13 @@ export default function TabLayout() {
       <Tabs.Screen
         name="tracker"
         options={{
-          title: 'Tracker',
-          tabBarIcon: ({ color, focused }) => (
-            <Activity
-              size={22}
-              color={color}
-              strokeWidth={focused ? 2.5 : 2}
-            />
-          ),
+          tabBarLabel: () => null,
+          tabBarIcon: () => null,
         }}
         listeners={{
-          tabPress: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light),
+          tabPress: (e) => {
+            e.preventDefault();
+          },
         }}
       />
       <Tabs.Screen
