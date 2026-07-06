@@ -702,6 +702,22 @@ export default function HomeScreen() {
                 </View>
               </View>
 
+              {/* Scan Date Pill just above Progress Ring */}
+              <View style={{
+                backgroundColor: colors.primary + '15',
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: colors.primary + '30',
+                marginBottom: 16,
+                alignSelf: 'center',
+              }}>
+                <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  {activeDayInfo.dateStr === 'Today' ? "Today's Scans" : `Scans on ${activeDayInfo.dateStr}`}
+                </Text>
+              </View>
+
               <SugarProgressRing totalSugar={totalSugar} size={260} isDark={isDark} colors={colors} />
             </View>
 
