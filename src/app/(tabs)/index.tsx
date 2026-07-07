@@ -125,11 +125,9 @@ function ScanHistoryItemRow({ item, colors, isDark, onPress, onDelete }: any) {
         >
           {item.name}
         </Text>
-        {metrics.servingCalories !== undefined && (
-          <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600', marginTop: 2 }}>
-            {Math.round(metrics.servingCalories)} kcal per serving
-          </Text>
-        )}
+        <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600', marginTop: 2 }}>
+          {formatWeight(item.servingSize, sugarUnit) || '1 serving'}{metrics.servingCalories !== undefined ? ` • ${Math.round(metrics.servingCalories)} kcal` : ''}
+        </Text>
       </View>
 
       {/* Right Column: Mini LED + Teaspoons */}
