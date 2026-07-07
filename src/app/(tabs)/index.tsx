@@ -126,7 +126,7 @@ function ScanHistoryItemRow({ item, colors, isDark, onPress, onDelete }: any) {
           {item.name}
         </Text>
         <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600', marginTop: 2 }}>
-          {formatWeight(item.servingSize, sugarUnit) || '1 serving'}{metrics.servingCalories !== undefined ? ` • ${Math.round(metrics.servingCalories)} kcal` : ''}
+          {formatSugar(metrics.servingSugarG ?? 0, sugarUnit)} per serving
         </Text>
       </View>
 
