@@ -97,6 +97,8 @@ export default function ScannerScreen() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [torchOn, setTorchOn] = useState(false);
   const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
+  // cameraReady: set to true only after the CameraView fires onCameraReady
+  const [cameraReady, setCameraReady] = useState(false);
   const scannerIsVisible = isFocused && appState === 'active';
   const scannerIsLive = scannerIsVisible && mode === 'camera' && permission?.granted === true;
 
@@ -153,26 +155,12 @@ export default function ScannerScreen() {
     }
   }, []);
 
-  // 10-Second Hardware Camera Timeout
+  // Reset cameraReady when scanner goes offline (tab switch / mode switch)
   useEffect(() => {
-    let timeoutTimer: ReturnType<typeof setTimeout>;
-    
-    if (scannerIsLive) {
-      timeoutTimer = setTimeout(() => {
-        // If 10 seconds have passed, we are still live, and NOT actively querying the database:
-        if (scannerIsLiveRef.current && !isScanningRef.current) {
-          stopActiveScannerSession();
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          setErrorMsg('Having trouble scanning? The barcode might be damaged or unsupported.');
-          setMode('manual');
-        }
-      }, 10000);
+    if (!scannerIsLive) {
+      setCameraReady(false);
     }
-
-    return () => {
-      if (timeoutTimer) clearTimeout(timeoutTimer);
-    };
-  }, [scannerIsLive, stopActiveScannerSession]);
+  }, [scannerIsLive]);
 
   // Animated laser line (0 → 1 normalized, mapped in style)
   const laserY = useSharedValue(0);
@@ -294,9 +282,11 @@ export default function ScannerScreen() {
     }
   }, [mode, stopActiveScannerSession]);
 
-  // Unlock scanner lock when mode changes to camera
+  // Unconditionally reset scan lock whenever the scanner tab gains focus.
+  // This is the most important unlock: if the user navigated away and returned,
+  // isScanningRef must be false so the next barcode registers immediately.
   useEffect(() => {
-    if (mode === 'camera' && scannerIsVisible) {
+    if (scannerIsVisible && mode === 'camera') {
       isScanningRef.current = false;
       loadingRef.current = false;
       setLoading(false);
@@ -578,66 +568,84 @@ export default function ScannerScreen() {
             scannerIsLive ? (
               <CameraView
                 style={StyleSheet.absoluteFill}
-                active={scannerIsLive}
+                active={true}
                 facing="back"
                 autofocus="on"
-                enableTorch={scannerIsLive && torchOn}
+                enableTorch={torchOn}
                 barcodeScannerSettings={{
                   barcodeTypes: [...PRODUCT_BARCODE_TYPES],
                 }}
-                onBarcodeScanned={!loading ? handleBarcodeScanned : undefined}
+                onCameraReady={() => {
+                  setCameraReady(true);
+                  // Forcefully unlock scan ref after camera is confirmed ready
+                  isScanningRef.current = false;
+                  loadingRef.current = false;
+                }}
+                onBarcodeScanned={handleBarcodeScanned}
               >
                 {/* Dark overlay with scanning reticle */}
                 <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.55)' }}>
-                  {/* Scanning Reticle Box */}
+                  {/* Scanning Reticle Box — landscape-wide for EAN-13 grocery barcodes */}
                   <View style={{
-                    width: 280,
-                    height: 280,
-                    borderColor: 'rgba(255,255,255,0.2)',
+                    width: 340,
+                    height: 190,
+                    borderColor: cameraReady ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.08)',
                     borderWidth: 1,
-                    borderRadius: 32,
+                    borderRadius: 24,
                     alignItems: 'center',
                     justifyContent: 'center',
                     backgroundColor: 'transparent',
                     position: 'relative',
                   }}>
                     {/* Corner: Top Left */}
-                    <View style={{ borderColor: colors.primary, position: 'absolute', top: 0, left: 0, width: 32, height: 32, borderTopWidth: 5, borderLeftWidth: 5, borderTopLeftRadius: 28 }} />
+                    <View style={{ borderColor: cameraReady ? colors.primary : 'rgba(255,255,255,0.3)', position: 'absolute', top: 0, left: 0, width: 32, height: 32, borderTopWidth: 5, borderLeftWidth: 5, borderTopLeftRadius: 20 }} />
                     {/* Corner: Top Right */}
-                    <View style={{ borderColor: colors.primary, position: 'absolute', top: 0, right: 0, width: 32, height: 32, borderTopWidth: 5, borderRightWidth: 5, borderTopRightRadius: 28 }} />
+                    <View style={{ borderColor: cameraReady ? colors.primary : 'rgba(255,255,255,0.3)', position: 'absolute', top: 0, right: 0, width: 32, height: 32, borderTopWidth: 5, borderRightWidth: 5, borderTopRightRadius: 20 }} />
                     {/* Corner: Bottom Left */}
-                    <View style={{ borderColor: colors.primary, position: 'absolute', bottom: 0, left: 0, width: 32, height: 32, borderBottomWidth: 5, borderLeftWidth: 5, borderBottomLeftRadius: 28 }} />
+                    <View style={{ borderColor: cameraReady ? colors.primary : 'rgba(255,255,255,0.3)', position: 'absolute', bottom: 0, left: 0, width: 32, height: 32, borderBottomWidth: 5, borderLeftWidth: 5, borderBottomLeftRadius: 20 }} />
                     {/* Corner: Bottom Right */}
-                    <View style={{ borderColor: colors.primary, position: 'absolute', bottom: 0, right: 0, width: 32, height: 32, borderBottomWidth: 5, borderRightWidth: 5, borderBottomRightRadius: 28 }} />
+                    <View style={{ borderColor: cameraReady ? colors.primary : 'rgba(255,255,255,0.3)', position: 'absolute', bottom: 0, right: 0, width: 32, height: 32, borderBottomWidth: 5, borderRightWidth: 5, borderBottomRightRadius: 20 }} />
 
-                    {/* Animated Scanning Laser Line */}
-                    <AnimatedReanimated.View
-                      style={[
-                        {
-                          position: 'absolute',
-                          top: 2,
-                          left: 8,
-                          right: 8,
-                          height: 3,
-                          backgroundColor: colors.primary,
-                          shadowColor: colors.primary,
-                          shadowOffset: { width: 0, height: 0 },
-                          shadowOpacity: 0.9,
-                          shadowRadius: 8,
-                          borderRadius: 1.5,
-                        },
-                        laserStyle,
-                      ]}
-                    />
+                    {/* Animated Scanning Laser Line — only show after camera is ready */}
+                    {cameraReady && (
+                      <AnimatedReanimated.View
+                        style={[
+                          {
+                            position: 'absolute',
+                            top: 2,
+                            left: 8,
+                            right: 8,
+                            height: 3,
+                            backgroundColor: colors.primary,
+                            shadowColor: colors.primary,
+                            shadowOffset: { width: 0, height: 0 },
+                            shadowOpacity: 0.9,
+                            shadowRadius: 8,
+                            borderRadius: 1.5,
+                          },
+                          laserStyle,
+                        ]}
+                      />
+                    )}
 
-                    <Text style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12, fontWeight: '700', textAlign: 'center', position: 'absolute', bottom: -44 }}>
-                      Align barcode inside the box
+                    {/* Camera initializing indicator */}
+                    {!cameraReady && (
+                      <View style={{ alignItems: 'center', gap: 8 }}>
+                        <ActivityIndicator size="small" color="rgba(255,255,255,0.6)" />
+                        <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: '600' }}>Initializing camera...</Text>
+                      </View>
+                    )}
+
+                    <Text style={{ color: cameraReady ? 'rgba(255,255,255,0.65)' : 'rgba(255,255,255,0.3)', fontSize: 11, fontWeight: '700', textAlign: 'center', position: 'absolute', bottom: -44 }}>
+                      {cameraReady ? 'Hold barcode steady inside the box' : 'Please wait...'}
                     </Text>
                   </View>
                 </View>
               </CameraView>
             ) : (
-              <View style={[StyleSheet.absoluteFill, { backgroundColor: '#000' }]} />
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' }]}>
+                <ActivityIndicator size="large" color={colors.primary} />
+              </View>
             )
           ) : (
             /* Permission Denied UI */
