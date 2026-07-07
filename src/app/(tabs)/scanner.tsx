@@ -1241,7 +1241,7 @@ export default function ScannerScreen() {
                           {scanResult.brand || 'Generic Brand'}
                         </Text>
                       </View>
-                      <Text style={{ color: colors.text, fontSize: 20, fontWeight: '900', lineHeight: 24 }} numberOfLines={2}>
+                      <Text style={{ color: colors.text, fontSize: 20, fontWeight: '900', lineHeight: 24 }}>
                         {scanResult.name}
                       </Text>
                     </View>
