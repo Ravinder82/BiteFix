@@ -886,17 +886,7 @@ export default function HomeScreen() {
                   />
                 </View>
 
-                {/* 2. Dynamic Nutrition Facts */}
-                <NutritionFacts
-                  colors={colors}
-                  productName={selectedScan.name}
-                  sugarGrams={selectedScan.sugarGrams ?? selectedScan.sugarPer100g ?? 0}
-                  calories={selectedScan.calories}
-                  servingSize={formatWeight(selectedScan.servingSize, sugarUnit) || '100 g / 100 ml'}
-                  sugarPer100g={selectedScan.sugarPer100g}
-                  whoLimitServingPercent={selectedScan.whoLimitServingPercent ?? (selectedScan.sugarTeaspoons !== undefined ? Math.round((selectedScan.sugarTeaspoons / 12) * 100) : undefined)}
-                  isDefaultServing={selectedScan.isDefaultServing}
-                />
+
 
                 {/* 3. Extra Nutritional Data */}
                 {(() => {
@@ -925,51 +915,6 @@ export default function HomeScreen() {
                   return null;
                 })()}
 
-                {/* 4. WHO Reference Card */}
-                <View style={{ backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1, padding: 20, borderRadius: 24, marginBottom: 32, gap: 16 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                    <View style={{ backgroundColor: colors.primary + '12', padding: 8, borderRadius: 12 }}>
-                      <HelpCircle size={18} color={colors.primary} />
-                    </View>
-                    <Text style={{ color: colors.text, fontWeight: '900', fontSize: 15 }}>WHO daily limits for adults:</Text>
-                  </View>
-
-                  {(() => {
-                    const metrics = getConsistentNutritionalMetrics(selectedScan);
-                    const currentTsp = metrics.servingTsp;
-                    if (currentTsp === undefined) {
-                      return (
-                        <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20 }}>
-                          Serving size is unknown, so we can't calculate your total daily limit usage for this serving.
-                        </Text>
-                      );
-                    }
-                    return (
-                      <View style={{ gap: 12 }}>
-                        <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20, marginBottom: 4 }}>
-                          This serving contains <Text style={{ fontWeight: '900', color: colors.text }}>{currentTsp} tsp</Text> of sugar.
-                        </Text>
-                        <View style={{ backgroundColor: colors.surface, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
-                          <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Recommended Daily Sugar Amount</Text>
-                          <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 6 tsp ({formatSugar(25, sugarUnit)}) for best health benefits.</Text>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
-                            <Text style={{ color: currentTsp > 6 ? colors.error : colors.text, fontWeight: '900', fontSize: 16 }}>{((currentTsp / 6) * 100).toFixed(0)}%</Text>
-                          </View>
-                        </View>
-
-                        <View style={{ backgroundColor: colors.surface, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
-                          <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Maximum Suggested Daily Sugar Amount</Text>
-                          <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 12 tsp ({formatSugar(50, sugarUnit)}) to reduce health risks.</Text>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
-                            <Text style={{ color: currentTsp > 12 ? colors.error : colors.text, fontWeight: '900', fontSize: 16 }}>{((currentTsp / 12) * 100).toFixed(0)}%</Text>
-                          </View>
-                        </View>
-                      </View>
-                    );
-                  })()}
-                </View>
 
                 {/* Delete and Close scan option from details */}
                 <View className="flex-row gap-3">
