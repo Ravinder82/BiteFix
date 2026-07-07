@@ -687,18 +687,11 @@ export default function ScannerScreen() {
 
 
 
-              {/* Torch toggle */}
-              <AnimatedReanimated.View style={torchStyle}>
-                <TouchableOpacity onPress={toggleTorch} style={{ borderRadius: 99, overflow: 'hidden' }} activeOpacity={0.85}>
-                  <BlurView intensity={60} tint="dark" style={{ padding: 10, borderWidth: 1.5, borderColor: torchOn ? '#FFD700' + '80' : 'rgba(255,255,255,0.25)', borderRadius: 99 }}>
-                    {torchOn ? <Zap size={20} color="#FFD700" /> : <ZapOff size={20} color="rgba(255,255,255,0.7)" />}
-                  </BlurView>
-                </TouchableOpacity>
-              </AnimatedReanimated.View>
+              {/* Left back button only */}
             </View>
           </SafeAreaView>
 
-          {/* ─── Bottom Controls Row: Manual Entry ─── */}
+          {/* ─── Bottom Controls Row: Manual Entry & Torch ─── */}
           <View
             style={{ position: 'absolute', bottom: 130, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
             pointerEvents="box-none"
@@ -733,6 +726,49 @@ export default function ScannerScreen() {
               </BlurView>
             </TouchableOpacity>
           </View>
+
+          {/* Torch toggle bottom right */}
+          <AnimatedReanimated.View
+            style={[
+              torchStyle,
+              {
+                position: 'absolute',
+                bottom: 120,
+                right: 24,
+                width: 56,
+                height: 56,
+                borderRadius: 28,
+                overflow: 'hidden',
+                shadowColor: torchOn ? '#FFD700' : '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 4,
+              }
+            ]}
+          >
+            <TouchableOpacity
+              onPress={toggleTorch}
+              style={{ width: '100%', height: '100%' }}
+              activeOpacity={0.85}
+            >
+              <BlurView
+                intensity={60}
+                tint="dark"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderWidth: 1.5,
+                  borderColor: torchOn ? '#FFD700' : 'rgba(255,255,255,0.25)',
+                  borderRadius: 28,
+                }}
+              >
+                {torchOn ? <Zap size={24} color="#FFD700" /> : <ZapOff size={24} color="rgba(255,255,255,0.7)" />}
+              </BlurView>
+            </TouchableOpacity>
+          </AnimatedReanimated.View>
         </View>
       )}
 
