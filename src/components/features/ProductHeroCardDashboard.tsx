@@ -378,15 +378,15 @@ export default function ProductHeroCardDashboard({
           <Text
             style={{
               color: colors.textSecondary,
-              fontSize: 11,
-              fontWeight: '800',
+              fontSize: 10,
+              fontWeight: '900',
               textTransform: 'uppercase',
-              letterSpacing: 0.5,
+              letterSpacing: 1.0,
             }}
           >
             WHO Daily Limit (Per Serving)
           </Text>
-          <Text style={{ color: ratingColor, fontSize: 12, fontWeight: '900' }}>
+          <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '900' }}>
             {isUnknown
               ? '0%'
               : `${scanResult.whoLimitServingPercent ?? Math.round((servingTsp / 12) * 100)}%`}
@@ -396,11 +396,13 @@ export default function ProductHeroCardDashboard({
         {/* Progress Bar Track */}
         <View
           style={{
-            height: 10,
-            backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
-            borderRadius: 5,
+            height: 12,
+            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+            borderRadius: 6,
             overflow: 'hidden',
             position: 'relative',
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
           }}
         >
           {/* Active Fill */}
@@ -414,16 +416,43 @@ export default function ProductHeroCardDashboard({
                 )}%`,
               height: '100%',
               backgroundColor: ledColor,
-              borderRadius: 5,
+              borderRadius: 6,
+            }}
+          />
+
+          {/* Halfway indicator tick line (6 tsp mark / 50%) */}
+          <View
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: 0,
+              bottom: 0,
+              width: 1.5,
+              backgroundColor: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.25)',
+              zIndex: 10,
             }}
           />
         </View>
 
         {/* Gauge labels below progress bar */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700' }}>0 tsp</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700' }}>6 tsp (safe limit)</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700' }}>12 tsp (max limit)</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4, paddingHorizontal: 2 }}>
+          {/* 0 tsp tick */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#34C759' }} />
+            <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '800' }}>0 tsp</Text>
+          </View>
+
+          {/* 6 tsp Recommended limit tick */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#FF9500' }} />
+            <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900' }}>6 tsp limit</Text>
+          </View>
+
+          {/* 12 tsp Max limit tick */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#FF3B30' }} />
+            <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '800' }}>12 tsp max</Text>
+          </View>
         </View>
       </View>
 
