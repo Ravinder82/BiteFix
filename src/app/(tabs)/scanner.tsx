@@ -1138,9 +1138,30 @@ export default function ScannerScreen() {
           >
             {/* 1. Unified Hero Section: Screenshot-Ready Report Card */}
             {(() => {
-              const isUnknown = scanResult.totalSugarTeaspoons === undefined;
-              const currentTsp = isUnknown ? 0 : scanResult.totalSugarTeaspoons!;
-              const servingTsp = scanResult.sugarTeaspoons ?? (scanResult.totalSugarTeaspoons ?? 0);
+              const isUnknown = scanResult.totalSugarTeaspoons === undefined && 
+                                scanResult.sugarTeaspoons === undefined && 
+                                scanResult.sugarPer100g === undefined;
+              
+              let displayTsp = 0;
+              let displayLabel = 'Total package sugar';
+              let displaySubLabel = '';
+              
+              if (scanResult.totalSugarTeaspoons !== undefined) {
+                displayTsp = scanResult.totalSugarTeaspoons;
+                displayLabel = 'Total package sugar';
+                displaySubLabel = scanResult.packageSize ? `(${formatWeight(scanResult.packageSize, sugarUnit)})` : '(Size Unknown)';
+              } else if (scanResult.sugarTeaspoons !== undefined) {
+                displayTsp = scanResult.sugarTeaspoons;
+                displayLabel = 'Sugar per serving';
+                displaySubLabel = scanResult.servingSize ? `(${formatWeight(scanResult.servingSize, sugarUnit)})` : '';
+              } else if (scanResult.sugarPer100g !== undefined) {
+                displayTsp = parseFloat((scanResult.sugarPer100g / 4.2).toFixed(1));
+                displayLabel = 'Sugar per 100g';
+                displaySubLabel = '(Standard 100g/ml)';
+              }
+
+              const currentTsp = displayTsp;
+              const servingTsp = scanResult.sugarTeaspoons ?? displayTsp;
               
               // Define dynamic theme based on sugar rating
               let cardBg: [string, string];
@@ -1263,10 +1284,10 @@ export default function ScannerScreen() {
                         )}
                       </View>
                       <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                        Total package sugar
+                        {displayLabel}
                       </Text>
                       <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600' }}>
-                        {scanResult.packageSize ? `(${formatWeight(scanResult.packageSize, sugarUnit)})` : '(Size Unknown)'}
+                        {displaySubLabel}
                       </Text>
                     </View>
 
