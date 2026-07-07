@@ -74,8 +74,8 @@ export default function ProductHeroCardDashboard({
   const displaySubLabel = scanResult.packageSize
     ? `(${formatWeight(scanResult.packageSize, sugarUnit)})`
     : scanResult.servingSize
-    ? `(${formatWeight(scanResult.servingSize, sugarUnit)})`
-    : '';
+      ? `(${formatWeight(scanResult.servingSize, sugarUnit)})`
+      : '';
 
   let cardBg: [string, string];
   let ledColor: string;
@@ -313,89 +313,171 @@ export default function ProductHeroCardDashboard({
         }}
       />
 
-      {/* Quick Comparison Box: Per Serving vs Full Package Size */}
-      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16, zIndex: 2 }}>
+      {/* 2 Vertically Stacked Premium Comparison Cards: Per Serving & Full Package */}
+      <View style={{ flexDirection: 'column', gap: 14, marginBottom: 20, zIndex: 2 }}>
+        {/* CARD 1: PER SERVING BASIS */}
         <View
           style={{
-            flex: 1,
             backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#FFFFFF',
-            paddingVertical: 12,
-            paddingHorizontal: 14,
-            borderRadius: 16,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: isDark ? 0.12 : 0.03,
-            shadowRadius: 10,
-            elevation: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 12,
+            borderRadius: 20,
+            padding: 18,
+            borderWidth: 1.5,
+            borderColor: colors.primary + (isDark ? '35' : '25'),
+            shadowColor: colors.primary,
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: isDark ? 0.15 : 0.06,
+            shadowRadius: 16,
+            elevation: 3,
           }}
         >
-          {/* Accent Line */}
-          <View style={{ width: 3, alignSelf: 'stretch', backgroundColor: colors.primary, borderRadius: 1.5 }} />
-          <View style={{ flex: 1 }}>
-            <Text
+          {/* Top Header Row */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary }} />
+              <Text
+                style={{
+                  color: colors.primary,
+                  fontSize: 11,
+                  fontWeight: '900',
+                  textTransform: 'uppercase',
+                  letterSpacing: 1.2,
+                }}
+              >
+                1. Per Serving
+              </Text>
+            </View>
+            <View
               style={{
-                color: colors.primary,
-                fontSize: 8.5,
-                fontWeight: '900',
-                textTransform: 'uppercase',
-                letterSpacing: 0.8,
-                marginBottom: 4,
+                backgroundColor: colors.primary + (isDark ? '25' : '15'),
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: colors.primary + '30',
               }}
             >
-              Per Serving
-            </Text>
-            <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800', marginBottom: 3 }} numberOfLines={1}>
-              {formatWeight(scanResult.servingSize, sugarUnit) || '100g Standard'}
-            </Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '600', lineHeight: 14 }}>
-              <Text style={{ fontWeight: '800', color: colors.text }}>{formatSugar(servingSugarG ?? 0, sugarUnit)}</Text> ({servingSugarTsp} tsp) sugar{'\n'}
-              <Text style={{ color: colors.textMuted }}>{servingCalories !== undefined ? `${Math.round(servingCalories)} kcal` : '— kcal'}</Text>
-            </Text>
+              <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '800' }}>
+                {formatWeight(scanResult.servingSize, sugarUnit) || '100g Standard'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Divider */}
+          <View
+            style={{
+              height: 1,
+              backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+              marginBottom: 14,
+            }}
+          />
+
+          {/* Metrics Row */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <View>
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                Sugar Content
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+                <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', letterSpacing: -0.8 }}>
+                  {formatSugar(servingSugarG ?? 0, sugarUnit)}
+                </Text>
+                <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '800' }}>
+                  ({servingSugarTsp} tsp)
+                </Text>
+              </View>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                Energy
+              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: 18, fontWeight: '800' }}>
+                {servingCalories !== undefined ? `${Math.round(servingCalories)} kcal` : '— kcal'}
+              </Text>
+            </View>
           </View>
         </View>
 
+        {/* CARD 2: FULL PACKAGE TOTAL */}
         <View
           style={{
-            flex: 1,
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#FFFFFF',
-            paddingVertical: 12,
-            paddingHorizontal: 14,
-            borderRadius: 16,
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : '#F8FAFC',
+            borderRadius: 20,
+            padding: 18,
+            borderWidth: 1.5,
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
             shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: isDark ? 0.12 : 0.03,
-            shadowRadius: 10,
-            elevation: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 12,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: isDark ? 0.2 : 0.04,
+            shadowRadius: 14,
+            elevation: 2,
           }}
         >
-          {/* Accent Line */}
-          <View style={{ width: 3, alignSelf: 'stretch', backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.12)', borderRadius: 1.5 }} />
-          <View style={{ flex: 1 }}>
-            <Text
+          {/* Top Header Row */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.textSecondary }} />
+              <Text
+                style={{
+                  color: colors.textSecondary,
+                  fontSize: 11,
+                  fontWeight: '900',
+                  textTransform: 'uppercase',
+                  letterSpacing: 1.2,
+                }}
+              >
+                2. Product Total
+              </Text>
+            </View>
+            <View
               style={{
-                color: colors.textSecondary,
-                fontSize: 8.5,
-                fontWeight: '900',
-                textTransform: 'uppercase',
-                letterSpacing: 0.8,
-                marginBottom: 4,
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)',
               }}
             >
-              Full Package
-            </Text>
-            <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800', marginBottom: 3 }} numberOfLines={1}>
-              {formatWeight(scanResult.packageSize, sugarUnit) || 'Size Not Listed'}
-            </Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '600', lineHeight: 14 }}>
-              <Text style={{ fontWeight: '800', color: colors.text }}>{totalSugarG !== undefined ? formatSugar(totalSugarG, sugarUnit) : '—'}</Text> {totalSugarTsp !== undefined ? `(${totalSugarTsp} tsp) sugar` : 'sugar'}{'\n'}
-              <Text style={{ color: colors.textMuted }}>{totalCalories !== undefined ? `${Math.round(totalCalories)} kcal` : '— kcal'}</Text>
-            </Text>
+              <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>
+                {formatWeight(scanResult.packageSize, sugarUnit) || 'Size Not Listed'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Divider */}
+          <View
+            style={{
+              height: 1,
+              backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+              marginBottom: 14,
+            }}
+          />
+
+          {/* Metrics Row */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <View>
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                Total Sugar
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+                <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', letterSpacing: -0.8 }}>
+                  {totalSugarG !== undefined ? formatSugar(totalSugarG, sugarUnit) : '—'}
+                </Text>
+                {totalSugarTsp !== undefined && (
+                  <Text style={{ color: colors.textSecondary, fontSize: 16, fontWeight: '800' }}>
+                    ({totalSugarTsp} tsp)
+                  </Text>
+                )}
+              </View>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                Total Energy
+              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: 18, fontWeight: '800' }}>
+                {totalCalories !== undefined ? `${Math.round(totalCalories)} kcal` : '— kcal'}
+              </Text>
+            </View>
           </View>
         </View>
       </View>
@@ -412,7 +494,7 @@ export default function ProductHeroCardDashboard({
               letterSpacing: 0.5,
             }}
           >
-            WHO Daily Limit Usage (Per Serving)
+            WHO Daily Limit (Per Serving)
           </Text>
           <Text style={{ color: ratingColor, fontSize: 12, fontWeight: '900' }}>
             {isUnknown
@@ -437,9 +519,9 @@ export default function ProductHeroCardDashboard({
               width: isUnknown
                 ? '0%'
                 : `${Math.min(
-                    100,
-                    scanResult.whoLimitServingPercent ?? Math.round((servingTsp / 12) * 100)
-                  )}%`,
+                  100,
+                  scanResult.whoLimitServingPercent ?? Math.round((servingTsp / 12) * 100)
+                )}%`,
               height: '100%',
               backgroundColor: ledColor,
               borderRadius: 5,
@@ -491,8 +573,8 @@ export default function ProductHeroCardDashboard({
                   backgroundColor: isSaved
                     ? `${colors.primary}25`
                     : isDark
-                    ? 'rgba(255,255,255,0.08)'
-                    : 'rgba(0, 0, 0, 0.05)',
+                      ? 'rgba(255,255,255,0.08)'
+                      : 'rgba(0, 0, 0, 0.05)',
                   borderColor: isSaved ? colors.primary : colors.border,
                   borderWidth: isSaved ? 1.5 : 1,
                   borderRadius: 12,

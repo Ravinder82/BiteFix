@@ -102,58 +102,129 @@ export function NutritionFacts({
         </Text>
       )}
 
-      {/* ─── SECTION 1: PER SERVING BREAKDOWN ─── */}
-      <View style={{ backgroundColor: colors.primary + '08', padding: 12, borderRadius: 12, marginBottom: 12, borderWidth: 1, borderColor: colors.primary + '20' }}>
-        <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>
-          1. Per Serving Breakdown
-        </Text>
-
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: rowDividerColor }}>
-          <Text style={{ color: labelColor, fontSize: 13, fontWeight: '700' }}>Serving Size</Text>
-          <Text style={{ color: labelColor, fontSize: 13, fontWeight: '800' }}>{servingSize || '100 g / 100 ml'}</Text>
-        </View>
-
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: rowDividerColor }}>
-          <Text style={{ color: labelColor, fontSize: 13, fontWeight: '700' }}>Serving Energy</Text>
-          <Text style={{ color: labelColor, fontSize: 13, fontWeight: '800' }}>{displayCalories !== undefined ? `${Math.round(displayCalories)} kcal` : '—'}</Text>
-        </View>
-
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: rowDividerColor }}>
-          <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '900' }}>Sugar per Serving</Text>
-          <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '900' }}>{formatSugar(displayServingSugarG, sugarUnit)} ({tspServing} tsp)</Text>
-        </View>
-
-        {displayWhoPercent !== undefined && (
-          <View style={{ marginTop: 8, paddingTop: 6, borderTopWidth: 1, borderTopColor: rowDividerColor, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700' }}>WHO Daily Limit (Per Serving)</Text>
-            <View style={{ backgroundColor: displayWhoPercent > 100 ? colors.error : colors.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-              <Text style={{ color: '#fff', fontSize: 10, fontWeight: '900' }}>{displayWhoPercent}% of 12 tsp Max</Text>
+      {/* ─── 2 VERTICALLY STACKED PREMIUM CARDS ─── */}
+      <View style={{ flexDirection: 'column', gap: 14 }}>
+        {/* CARD 1: PER SERVING BREAKDOWN */}
+        <View
+          style={{
+            backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#FFFFFF',
+            borderRadius: 18,
+            padding: 16,
+            borderWidth: 1.5,
+            borderColor: colors.primary + (isDarkMode ? '35' : '25'),
+            shadowColor: colors.primary,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: isDarkMode ? 0.15 : 0.05,
+            shadowRadius: 12,
+            elevation: 2,
+          }}
+        >
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary }} />
+              <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2 }}>
+                1. Per Serving Breakdown
+              </Text>
+            </View>
+            <View style={{ backgroundColor: colors.primary + (isDarkMode ? '25' : '15'), paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: colors.primary + '30' }}>
+              <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '800' }}>
+                {servingSize || '100 g / 100 ml'}
+              </Text>
             </View>
           </View>
-        )}
-      </View>
 
-      {/* ─── SECTION 2: FULL PRODUCT SIZE / PACKAGE TOTAL ─── */}
-      <View style={{ backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: rowDividerColor }}>
-        <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>
-          2. Full Product Size / Total Package
-        </Text>
+          <View style={{ height: 1, backgroundColor: rowDividerColor, marginBottom: 12 }} />
 
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: rowDividerColor }}>
-          <Text style={{ color: labelColor, fontSize: 13, fontWeight: '700' }}>Product Size</Text>
-          <Text style={{ color: labelColor, fontSize: 13, fontWeight: '800' }}>{packageSize || 'Size Not Listed'}</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: displayWhoPercent !== undefined ? 12 : 0 }}>
+            <View>
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                Sugar Content
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+                <Text style={{ color: labelColor, fontSize: 24, fontWeight: '900', letterSpacing: -0.6 }}>
+                  {formatSugar(displayServingSugarG, sugarUnit)}
+                </Text>
+                <Text style={{ color: colors.primary, fontSize: 15, fontWeight: '800' }}>
+                  ({tspServing} tsp)
+                </Text>
+              </View>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                Energy
+              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: 17, fontWeight: '800' }}>
+                {displayCalories !== undefined ? `${Math.round(displayCalories)} kcal` : '— kcal'}
+              </Text>
+            </View>
+          </View>
+
+          {displayWhoPercent !== undefined && (
+            <View style={{ paddingTop: 10, borderTopWidth: 1, borderTopColor: rowDividerColor, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700' }}>WHO Daily Limit (Per Serving)</Text>
+              <View style={{ backgroundColor: displayWhoPercent > 100 ? colors.error : colors.primary, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+                <Text style={{ color: '#fff', fontSize: 10, fontWeight: '900' }}>{displayWhoPercent}% of 12 tsp Max</Text>
+              </View>
+            </View>
+          )}
         </View>
 
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: rowDividerColor }}>
-          <Text style={{ color: labelColor, fontSize: 13, fontWeight: '700' }}>Total Energy</Text>
-          <Text style={{ color: labelColor, fontSize: 13, fontWeight: '800' }}>{displayTotalCalories !== undefined ? `${Math.round(displayTotalCalories)} kcal` : '—'}</Text>
-        </View>
+        {/* CARD 2: FULL PRODUCT SIZE / PACKAGE TOTAL */}
+        <View
+          style={{
+            backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.03)' : '#F8FAFC',
+            borderRadius: 18,
+            padding: 16,
+            borderWidth: 1.5,
+            borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: isDarkMode ? 0.2 : 0.03,
+            shadowRadius: 10,
+            elevation: 1,
+          }}
+        >
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.textSecondary }} />
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2 }}>
+                2. Full Package Total
+              </Text>
+            </View>
+            <View style={{ backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)' }}>
+              <Text style={{ color: labelColor, fontSize: 11, fontWeight: '800' }}>
+                {packageSize || 'Size Not Listed'}
+              </Text>
+            </View>
+          </View>
 
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 }}>
-          <Text style={{ color: labelColor, fontSize: 13, fontWeight: '900' }}>Total Sugar in Package</Text>
-          <Text style={{ color: labelColor, fontSize: 13, fontWeight: '900' }}>
-            {displayTotalSugarG !== undefined ? `${formatSugar(displayTotalSugarG, sugarUnit)} (${tspTotal} tsp)` : '—'}
-          </Text>
+          <View style={{ height: 1, backgroundColor: rowDividerColor, marginBottom: 12 }} />
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <View>
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                Total Sugar
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+                <Text style={{ color: labelColor, fontSize: 24, fontWeight: '900', letterSpacing: -0.6 }}>
+                  {displayTotalSugarG !== undefined ? formatSugar(displayTotalSugarG, sugarUnit) : '—'}
+                </Text>
+                {displayTotalSugarG !== undefined && (
+                  <Text style={{ color: colors.textSecondary, fontSize: 15, fontWeight: '800' }}>
+                    ({tspTotal} tsp)
+                  </Text>
+                )}
+              </View>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                Total Energy
+              </Text>
+              <Text style={{ color: colors.textMuted, fontSize: 17, fontWeight: '800' }}>
+                {displayTotalCalories !== undefined ? `${Math.round(displayTotalCalories)} kcal` : '— kcal'}
+              </Text>
+            </View>
+          </View>
         </View>
       </View>
     </View>
