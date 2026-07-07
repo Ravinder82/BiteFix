@@ -52,15 +52,132 @@ const formatJogTime = (totalMinutes: number): string => {
 };
 
 
+function ScanHistoryItemRow({ item, colors, isDark, onPress, onDelete }: any) {
+  const { sugarUnit } = useAppStore();
+  const metrics = getConsistentNutritionalMetrics(item);
+  const servingTsp = metrics.servingTsp ?? 0;
+
+  let ledColor = '#8E8E93';
+  if (servingTsp > 6) {
+    ledColor = '#FF3B30';
+  } else if (servingTsp > 3) {
+    ledColor = '#FF9500';
+  } else if (servingTsp > 0) {
+    ledColor = '#34C759';
+  }
+
+  const isUnknown = servingTsp === undefined || item.sugarGrams === undefined;
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={onPress}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#FFFFFF',
+        borderColor: colors.border,
+        borderWidth: 1,
+        borderRadius: 20,
+        padding: 12,
+        marginBottom: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: isDark ? 0.1 : 0.03,
+        shadowRadius: 4,
+        elevation: 1,
+      }}
+    >
+      {/* Product Image Thumbnail */}
+      <View style={{
+        width: 46,
+        height: 46,
+        borderRadius: 10,
+        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)',
+        borderWidth: 1,
+        borderColor: colors.border,
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+      }}>
+        {item.imageUrl ? (
+          <Image
+            source={{ uri: item.imageUrl }}
+            style={{ width: '100%', height: '100%' }}
+            contentFit="cover"
+          />
+        ) : (
+          <ScanBarcode size={20} color={colors.primary} />
+        )}
+      </View>
+
+      {/* Center Details */}
+      <View style={{ flex: 1, marginLeft: 12, paddingRight: 8 }}>
+        <Text
+          style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 1 }}
+          numberOfLines={1}
+        >
+          {item.brand || 'Generic Brand'}
+        </Text>
+        <Text
+          style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}
+          numberOfLines={1}
+        >
+          {item.name}
+        </Text>
+        {metrics.servingCalories !== undefined && (
+          <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600', marginTop: 2 }}>
+            {Math.round(metrics.servingCalories)} kcal per serving
+          </Text>
+        )}
+      </View>
+
+      {/* Right Column: Mini LED + Teaspoons */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+        {/* Teaspoon highlight */}
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text style={{ color: colors.primary, fontSize: 14, fontWeight: '900' }}>
+            {isUnknown ? '--' : servingTsp.toFixed(1).replace(/\.0$/, '')} <Text style={{ fontSize: 9, color: colors.textSecondary, fontWeight: '700' }}>tsp</Text>
+          </Text>
+        </View>
+
+        {/* Mini LED */}
+        <View
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: 5,
+            backgroundColor: ledColor,
+            shadowColor: ledColor,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.8,
+            shadowRadius: 4,
+            elevation: 2,
+          }}
+        />
+
+        {/* Delete button (small trash icon) */}
+        <TouchableOpacity
+          onPress={(e) => {
+            e.stopPropagation();
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            onDelete();
+          }}
+          style={{
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+            padding: 6,
+            borderRadius: 8,
+            marginLeft: 2,
+          }}
+        >
+          <Trash2 size={12} color={colors.textMuted} />
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelectedScan, deleteScan }: any) {
-  const { sugarUnit, addToCollection, collection } = useAppStore();
-  const scrollRef = useRef<ScrollView>(null);
-  const [scrollX, setScrollX] = useState(0);
-
-  const cardWidth = 330;
-  const gap = 12;
-  const snapInterval = cardWidth + gap;
-
   const firstItemDate = new Date(group.items[0].timestamp);
   const displayTitle = firstItemDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 
@@ -72,7 +189,7 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
         borderColor: isDark ? colors.border : 'rgba(220, 220, 220, 1)',
         borderWidth: isDark ? 1.5 : 1,
         borderRadius: 28,
-        padding: 12,
+        padding: 16,
         marginBottom: 20,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 6 },
@@ -110,67 +227,28 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
             </Text>
           </View>
         </View>
-
-        {/* Swipe Arrows */}
-        {group.items.length > 1 && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 8 }}>
-            <TouchableOpacity
-              onPress={() => scrollRef.current?.scrollTo({ x: Math.max(0, scrollX - snapInterval), animated: true })}
-              style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0, 0, 0, 0.06)', padding: 8, borderRadius: 12 }}
-            >
-              <ChevronLeft size={16} color={colors.textSecondary} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => scrollRef.current?.scrollTo({ x: scrollX + snapInterval, animated: true })}
-              style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', padding: 8, borderRadius: 12 }}
-            >
-              <ChevronRight size={16} color={colors.textSecondary} />
-            </TouchableOpacity>
-          </View>
-        )}
       </View>
 
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 2, gap, paddingBottom: 4 }}
-        snapToInterval={snapInterval}
-        decelerationRate="fast"
-        onScroll={(e) => setScrollX(e.nativeEvent.contentOffset.x)}
-        scrollEventThrottle={16}
-      >
+      <View style={{ gap: 4 }}>
         {group.items.map((item: any) => {
-          const isAlreadySaved = collection.some(
-            (colItem: any) => colItem.name === item.name && colItem.brand === item.brand
-          );
-
           return (
-            <ProductHeroCardDashboard
+            <ScanHistoryItemRow
               key={item.id}
-              scanResult={item}
+              item={item}
               colors={colors}
               isDark={isDark}
-              width={cardWidth}
-              showActions={true}
-              isSaved={isAlreadySaved}
-              onSave={() => {
-                if (!isAlreadySaved) {
-                  addToCollection(item);
-                }
-              }}
-              onDelete={() => {
-                deleteScan(item.id);
-              }}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 panY.setValue(0);
                 setSelectedScan(item);
               }}
+              onDelete={() => {
+                deleteScan(item.id);
+              }}
             />
           );
         })}
-      </ScrollView>
+      </View>
     </AnimatedReanimated.View>
   );
 }
