@@ -671,10 +671,10 @@ export default function HomeScreen() {
             {/* Vertical Divider */}
             <View style={{ width: 1, height: 44, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }} />
 
-             {/* Scanned Stat */}
+            {/* Scanned Stat */}
             <View style={{ flex: 1, alignItems: 'center' }}>
-              <View style={{ backgroundColor: colors.primary + '15', padding: 12, borderRadius: 16, marginBottom: 10 }}>
-                <ScanBarcode size={18} color={colors.primary} />
+              <View style={{ backgroundColor: 'rgba(251, 255, 0, 1)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
+                <ScanBarcode size={18} color="#34C759" />
               </View>
               <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
                 Scanned
@@ -689,8 +689,8 @@ export default function HomeScreen() {
 
             {/* Jogging Stat */}
             <View style={{ flex: 1, alignItems: 'center' }}>
-              <View style={{ backgroundColor: colors.primary + '15', padding: 12, borderRadius: 16, marginBottom: 10 }}>
-                <Activity size={18} color={colors.primary} />
+              <View style={{ backgroundColor: 'rgba(0, 191, 255, 1)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
+                <Activity size={18} color="#000000ff" />
               </View>
               <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
                 Jogging
@@ -897,7 +897,7 @@ export default function HomeScreen() {
                       <View style={{ marginBottom: 24, gap: 12 }}>
                         {/* Burn Down Tagline */}
                         <LinearGradient
-                          colors={['#F97316', '#EF4444']}
+                          colors={['#F97316', '#ef4444db']}
                           start={{ x: 0, y: 0 }}
                           end={{ x: 1, y: 1 }}
                           style={{
