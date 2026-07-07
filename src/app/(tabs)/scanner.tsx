@@ -14,8 +14,10 @@ import {
   Modal,
   AppState,
   AppStateStatus,
+  Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
 import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
@@ -40,6 +42,7 @@ import {
   isAbortError,
   isRequestTimeoutError,
   lookupOpenFoodFacts,
+  lookupAlternatives,
   fetchWithTimeout,
   extractSugarFromNutriments,
   parseQuantityString,
@@ -61,6 +64,9 @@ import {
   X,
   Leaf,
   Bookmark,
+  Search,
+  Share2,
+  Plus,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { BlurView } from 'expo-blur';
@@ -257,6 +263,11 @@ export default function ScannerScreen() {
     sugarPer100g?: number;     // Used for accurate normalized comparisons
     categoryTag?: string;      // e.g. 'en:breakfast-cereals'
   } | null>(null);
+
+  // Alternatives State
+  const [alternatives, setAlternatives] = useState<ScanResultData[]>([]);
+  const [loadingAlternatives, setLoadingAlternatives] = useState(false);
+  const [showAlternatives, setShowAlternatives] = useState(false);
 
   // Auto-switch to manual if camera permission is denied
   useEffect(() => {
@@ -497,7 +508,47 @@ export default function ScannerScreen() {
     setManualProductSize('');
     setManualImageUri(null);
     setCalculationMode('total');
+    setAlternatives([]);
+    setLoadingAlternatives(false);
+    setShowAlternatives(false);
     setMode('camera');
+  };
+
+  const handleFindAlternatives = async () => {
+    if (!scanResult) return;
+    const category = scanResult.categoryTag;
+    if (!category) {
+      Alert.alert(
+        'Alternatives Search',
+        'We couldn\'t find a specific category for this product in the database to search for alternatives.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setLoadingAlternatives(true);
+
+    try {
+      const currentSugar = scanResult.sugarPer100g ?? (scanResult.sugarGrams ?? 0);
+      const controller = new AbortController();
+      const list = await lookupAlternatives(category, currentSugar, controller.signal);
+      setAlternatives(list);
+      setShowAlternatives(true);
+      
+      if (list.length === 0) {
+        Alert.alert(
+          'Top Choice!',
+          'Great news! This product is already one of the lowest-sugar choices in its category.',
+          [{ text: 'Awesome' }]
+        );
+      }
+    } catch (err) {
+      console.warn('Error seeking alternatives:', err);
+      Alert.alert('Search Failed', 'Could not search for alternatives. Please check your network connection.');
+    } finally {
+      setLoadingAlternatives(false);
+    }
   };
 
 
@@ -1085,143 +1136,435 @@ export default function ScannerScreen() {
             contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }}
             showsVerticalScrollIndicator={false}
           >
-            {/* 1. Hero Section: Product Card & Sugar Impact */}
-            <View style={{ backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, padding: 24, borderRadius: 28, alignItems: 'center', marginBottom: 24 }}>
-              {scanResult.imageUrl && (
-                <Image
-                  source={{ uri: scanResult.imageUrl }}
-                  style={{ width: 112, height: 112, borderRadius: 16, marginBottom: 16 }}
-                  contentFit="contain"
-                  transition={200}
-                />
-              )}
-              <Text style={{ color: colors.text, fontSize: 21, fontWeight: '900', textAlign: 'center', lineHeight: 26 }}>
-                {scanResult.name}
-              </Text>
-              <View style={{ backgroundColor: colors.surfaceRaised, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 99, marginTop: 6 }}>
-                <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 }}>
-                  {scanResult.brand}
-                </Text>
-              </View>
+            {/* 1. Unified Hero Section: Screenshot-Ready Report Card */}
+            {(() => {
+              const isUnknown = scanResult.totalSugarTeaspoons === undefined;
+              const currentTsp = isUnknown ? 0 : scanResult.totalSugarTeaspoons!;
+              const servingTsp = scanResult.sugarTeaspoons ?? (scanResult.totalSugarTeaspoons ?? 0);
+              
+              // Define dynamic theme based on sugar rating
+              let cardBg: [string, string];
+              let ledColor: string;
+              let ledLabel: string;
+              let ratingColor: string;
+              let ratingDesc: string;
+              
+              if (isUnknown) {
+                cardBg = isDark ? ['#1C1C1E', '#111112'] : ['#F9F9FB', '#F2F2F7'];
+                ledColor = '#8E8E93';
+                ledLabel = 'Unknown';
+                ratingColor = colors.textMuted;
+                ratingDesc = 'No sugar data available';
+              } else if (currentTsp > 6) {
+                cardBg = isDark ? ['rgba(255, 59, 48, 0.16)', 'rgba(28, 28, 30, 0.95)'] : ['#FFF5F5', '#FFF0F0'];
+                ledColor = '#FF3B30';
+                ledLabel = 'High Sugar';
+                ratingColor = '#FF3B30';
+                ratingDesc = 'Exceeds daily recommendation';
+              } else if (currentTsp > 3) {
+                cardBg = isDark ? ['rgba(255, 149, 0, 0.16)', 'rgba(28, 28, 30, 0.95)'] : ['#FFF9F0', '#FFF4E0'];
+                ledColor = '#FF9500';
+                ledLabel = 'Moderate';
+                ratingColor = '#FF9500';
+                ratingDesc = 'Approach with caution';
+              } else {
+                cardBg = isDark ? ['rgba(52, 199, 89, 0.16)', 'rgba(28, 28, 30, 0.95)'] : ['#F2FBF4', '#EAF7EC'];
+                ledColor = '#34C759';
+                ledLabel = 'Low Sugar';
+                ratingColor = '#34C759';
+                ratingDesc = 'Safe to consume';
+              }
 
-              {/* Reactive Mascot based on full package sugar */}
-              {(() => {
-                const currentTsp = scanResult.totalSugarTeaspoons !== undefined ? scanResult.totalSugarTeaspoons : (scanResult.sugarTeaspoons ?? 0);
-                return (
-                  <View style={{ marginTop: 24, marginBottom: 16 }}>
-                    <Mascot
-                      state={
-                        currentTsp > 6 ? 'shocked'
-                          : currentTsp > 3 ? 'dizzy'
-                            : 'happy'
-                      }
-                      size={120}
-                    />
-                  </View>
-                );
-              })()}
+              return (
+                <LinearGradient
+                  colors={cardBg}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{
+                    borderColor: ledColor + '30',
+                    borderWidth: 2,
+                    borderRadius: 30,
+                    padding: 24,
+                    marginBottom: 24,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 12 },
+                    shadowOpacity: isDark ? 0.25 : 0.08,
+                    shadowRadius: 24,
+                    elevation: 8,
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {/* Glowing decorative background blob */}
+                  <View style={{
+                    position: 'absolute',
+                    top: -40,
+                    right: -40,
+                    width: 140,
+                    height: 140,
+                    borderRadius: 70,
+                    backgroundColor: ledColor + '12',
+                  }} />
 
-              {/* Massive Impact Typography for Total Package Sugar */}
-              {(() => {
-                const isUnknown = scanResult.totalSugarTeaspoons === undefined;
-                const currentTsp = isUnknown ? '--' : scanResult.totalSugarTeaspoons;
-                const currentColor = isUnknown ? colors.textMuted : (scanResult.totalSugarTeaspoons! > 6 ? colors.error : scanResult.totalSugarTeaspoons! > 3 ? colors.warning : colors.success);
-                
-                return (
-                  <View style={{ alignItems: 'center', marginTop: 8 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-                      <Text style={{
-                        color: currentColor,
-                        fontSize: 72,
-                        fontWeight: '900',
-                        letterSpacing: -2,
-                        lineHeight: 72
-                      }}>
-                        {currentTsp}
-                      </Text>
-                      {!isUnknown && (
-                        <Text style={{
-                          color: currentColor,
-                          fontSize: 24,
-                          fontWeight: '800',
-                          marginLeft: 6
-                        }}>
-                          tsp
-                        </Text>
+                  {/* Header Row: Product Image, Name, Brand */}
+                  <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center', zIndex: 2 }}>
+                    <View style={{
+                      width: 90,
+                      height: 90,
+                      borderRadius: 18,
+                      backgroundColor: '#FFFFFF',
+                      padding: 6,
+                      borderWidth: 1,
+                      borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.08,
+                      shadowRadius: 8,
+                    }}>
+                      {scanResult.imageUrl ? (
+                        <Image
+                          source={{ uri: scanResult.imageUrl }}
+                          style={{ width: '100%', height: '100%', borderRadius: 12 }}
+                          contentFit="contain"
+                          transition={200}
+                        />
+                      ) : (
+                        <Mascot state={currentTsp > 6 ? 'shocked' : currentTsp > 3 ? 'dizzy' : 'happy'} size={60} />
                       )}
                     </View>
-                    <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
-                      Total Sugars in Full Package
+
+                    <View style={{ flex: 1, gap: 4 }}>
+                      <View style={{ alignSelf: 'flex-start', backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 99 }}>
+                        <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                          {scanResult.brand || 'Generic Brand'}
+                        </Text>
+                      </View>
+                      <Text style={{ color: colors.text, fontSize: 20, fontWeight: '900', lineHeight: 24 }} numberOfLines={2}>
+                        {scanResult.name}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={{ height: 1.5, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', marginVertical: 20, zIndex: 2 }} />
+
+                  {/* Body Section: The Teaspoon Display and Safety LED Indicator */}
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 2 }}>
+                    <View>
+                      <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+                        <Text style={{ color: ratingColor, fontSize: 64, fontWeight: '900', letterSpacing: -1 }}>
+                          {isUnknown ? '--' : currentTsp.toFixed(1).replace(/\.0$/, '')}
+                        </Text>
+                        {!isUnknown && (
+                          <Text style={{ color: colors.textSecondary, fontSize: 20, fontWeight: '800', marginLeft: 4 }}>
+                            tsp
+                          </Text>
+                        )}
+                      </View>
+                      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                        Total package sugar
+                      </Text>
+                      <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600' }}>
+                        {scanResult.packageSize ? `(${formatWeight(scanResult.packageSize, sugarUnit)})` : '(Size Unknown)'}
+                      </Text>
+                    </View>
+
+                    {/* Safety LED Indicator Bulb */}
+                    <View style={{ alignItems: 'flex-end', gap: 6 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' }}>
+                        {/* Glowing LED Circle */}
+                        <View style={{
+                          width: 12,
+                          height: 12,
+                          borderRadius: 6,
+                          backgroundColor: ledColor,
+                          shadowColor: ledColor,
+                          shadowOffset: { width: 0, height: 0 },
+                          shadowOpacity: 0.8,
+                          shadowRadius: 6,
+                          elevation: 4,
+                        }} />
+                        <Text style={{ color: colors.text, fontSize: 12, fontWeight: '900', textTransform: 'uppercase' }}>
+                          {ledLabel}
+                        </Text>
+                      </View>
+                      <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '600', textAlign: 'right' }}>
+                        {ratingDesc}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={{ height: 1.5, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', marginVertical: 20, zIndex: 2 }} />
+
+                  {/* Measuring Progress Bar (WHO Guidelines) */}
+                  <View style={{ gap: 8, zIndex: 2 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                        WHO Daily Allowance Usage
+                      </Text>
+                      <Text style={{ color: ratingColor, fontSize: 12, fontWeight: '900' }}>
+                        {isUnknown ? '0%' : `${((servingTsp / 12) * 100).toFixed(0)}%`}
+                      </Text>
+                    </View>
+
+                    {/* Progress Bar Track */}
+                    <View style={{ height: 10, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', borderRadius: 5, overflow: 'hidden', position: 'relative' }}>
+                      {/* Active Fill */}
+                      <View style={{
+                        width: isUnknown ? '0%' : `${Math.min(100, (servingTsp / 12) * 100)}%`,
+                        height: '100%',
+                        backgroundColor: ledColor,
+                        borderRadius: 5,
+                      }} />
+                    </View>
+
+                    {/* Gauge labels below progress bar */}
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
+                      <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700' }}>
+                        0 tsp
+                      </Text>
+                      <View style={{ flexDirection: 'row', gap: 2, alignItems: 'center' }}>
+                        <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700' }}>
+                          6 tsp (limit)
+                        </Text>
+                      </View>
+                      <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700' }}>
+                        12 tsp (max)
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Watermark for sharing */}
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20, paddingTop: 12, borderTopWidth: 0.5, borderTopColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', zIndex: 2 }}>
+                    <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '800', letterSpacing: 0.5 }}>
+                      CUT SUGAR APP
                     </Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 2 }}>
-                      {scanResult.packageSize ? `(${formatWeight(scanResult.packageSize, sugarUnit)})` : '(Package Size Unknown)'}
+                    <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600' }}>
+                      Scan & Discover Hidden Sugars
                     </Text>
                   </View>
+                </LinearGradient>
+              );
+            })()}
+
+            {/* Action Buttons Row */}
+            <View style={{ flexDirection: 'row', gap: 12, width: '100%', marginBottom: 16 }}>
+              {/* Save to Collections Button */}
+              {(() => {
+                const isAlreadySaved = collection.some(
+                  (item) => item.name === scanResult.name && item.brand === scanResult.brand
+                );
+                return (
+                  <TouchableOpacity
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      if (!isAlreadySaved) {
+                        addToCollection({
+                          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                          name: scanResult.name,
+                          brand: scanResult.brand,
+                          sugarGrams: scanResult.sugarGrams ?? scanResult.sugarPer100g ?? 0,
+                          sugarTeaspoons: scanResult.sugarTeaspoons ?? 0,
+                          timestamp: Date.now(),
+                          imageUrl: scanResult.imageUrl,
+                          calories: scanResult.calories,
+                          servingSize: scanResult.servingSize,
+                          sugarPer100g: scanResult.sugarPer100g,
+                          categoryTag: scanResult.categoryTag,
+                          totalSugarGrams: scanResult.totalSugarGrams,
+                          totalSugarTeaspoons: scanResult.totalSugarTeaspoons,
+                          packageSize: scanResult.packageSize,
+                          totalCalories: scanResult.totalCalories,
+                          totalCarbsGrams: scanResult.totalCarbsGrams,
+                          totalFatGrams: scanResult.totalFatGrams,
+                          totalProteinGrams: scanResult.totalProteinGrams,
+                        });
+                      }
+                    }}
+                    disabled={isAlreadySaved}
+                    style={{
+                      flex: 1,
+                      backgroundColor: isAlreadySaved ? `${colors.primary}15` : isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
+                      borderWidth: 1.5,
+                      borderColor: colors.primary,
+                      paddingVertical: 14,
+                      borderRadius: 16,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexDirection: 'row',
+                      gap: 8,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.05,
+                      shadowRadius: 4,
+                      elevation: 1,
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Bookmark size={16} color={colors.primary} fill={isAlreadySaved ? colors.primary : 'transparent'} />
+                    <Text style={{ color: colors.primary, fontWeight: '800', fontSize: 13 }}>
+                      {isAlreadySaved ? 'Saved' : 'Save to Pantry'}
+                    </Text>
+                  </TouchableOpacity>
                 );
               })()}
 
-              {/* Side-by-side summary cards */}
-              <View style={{ flexDirection: 'row', gap: 12, width: '100%', marginTop: 28 }}>
-                {/* Per Serving Card */}
-                <View
-                  style={{
-                    flex: 1,
-                    backgroundColor: colors.surfaceRaised,
-                    padding: 16,
-                    borderRadius: 20,
-                    alignItems: 'center',
-                    borderWidth: 1,
-                    borderColor: colors.border
-                  }}
-                >
-                  <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>Per Serving</Text>
-                  {scanResult.servingSize && scanResult.sugarTeaspoons !== undefined ? (
-                    <>
-                      <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800', marginTop: 2 }}>{formatWeight(scanResult.servingSize, sugarUnit) || scanResult.servingSize}</Text>
-                      <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', marginTop: 10 }}>
-                        {scanResult.sugarTeaspoons} <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textSecondary }}>tsp</Text>
-                      </Text>
-                      <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 4 }}>({formatSugar(scanResult.sugarGrams ?? 0, sugarUnit)} sugar)</Text>
-                    </>
-                  ) : (
-                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 12 }}>
-                      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', textAlign: 'center' }}>No Serving Size found</Text>
-                    </View>
-                  )}
-                </View>
-
-                {/* Per 100g Card */}
-                <View
-                  style={{
-                    flex: 1,
-                    backgroundColor: colors.surfaceRaised,
-                    padding: 16,
-                    borderRadius: 20,
-                    alignItems: 'center',
-                    borderWidth: 1,
-                    borderColor: colors.border
-                  }}
-                >
-                  <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>Per 100g / 100ml</Text>
-                  <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800', marginTop: 2 }}>Standard</Text>
-                  
-                  {scanResult.sugarPer100g !== undefined && scanResult.sugarPer100g > 0 ? (
-                    <>
-                      <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', marginTop: 10 }}>
-                        {parseFloat((scanResult.sugarPer100g / 4.2).toFixed(1))} <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textSecondary }}>tsp</Text>
-                      </Text>
-                      <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 4 }}>({formatSugar(scanResult.sugarPer100g ?? 0, sugarUnit)} sugar)</Text>
-                    </>
-                  ) : (
-                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 12 }}>
-                      <Text style={{ color: colors.textMuted, fontSize: 26, fontWeight: '900', textAlign: 'center' }}>--</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
+              {/* Find Healthy Alternatives Button */}
+              <TouchableOpacity
+                onPress={handleFindAlternatives}
+                disabled={loadingAlternatives}
+                style={{
+                  flex: 1.2,
+                  backgroundColor: colors.primary,
+                  paddingVertical: 14,
+                  borderRadius: 16,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'row',
+                  gap: 8,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 8,
+                  elevation: 3,
+                }}
+                activeOpacity={0.9}
+              >
+                {loadingAlternatives ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <>
+                    <Search size={16} color="#ffffff" />
+                    <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 13 }}>
+                      Alternatives
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
             </View>
 
-            {/* 3. Nutrition Facts - Shows 100g fallback or serving size if available */}
+            {/* Healthy Alternatives Section */}
+            {showAlternatives && alternatives.length > 0 && (
+              <View style={{
+                backgroundColor: isDark ? colors.surfaceRaised : colors.surface,
+                borderColor: colors.border,
+                borderWidth: 1.5,
+                borderRadius: 24,
+                padding: 16,
+                marginBottom: 24,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.05,
+                shadowRadius: 12,
+                elevation: 2,
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                  <Leaf size={16} color="#34C759" />
+                  <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900' }}>
+                    Smarter Low-Sugar Choices
+                  </Text>
+                </View>
+
+                <View style={{ gap: 10 }}>
+                  {alternatives.map((alt, index) => {
+                    const isAltSaved = collection.some(
+                      (item) => item.name === alt.name && item.brand === alt.brand
+                    );
+                    
+                    // Calculate savings
+                    const originalTsp = scanResult.totalSugarTeaspoons ?? 0;
+                    const altTsp = alt.sugarTeaspoons ?? 0;
+                    const savings = Math.max(0, originalTsp - altTsp);
+
+                    return (
+                      <View
+                        key={index}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                          padding: 10,
+                          borderRadius: 16,
+                          borderWidth: 1,
+                          borderColor: colors.border,
+                        }}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+                          <View style={{
+                            width: 50,
+                            height: 50,
+                            borderRadius: 10,
+                            backgroundColor: '#FFFFFF',
+                            padding: 4,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}>
+                            {alt.imageUrl ? (
+                              <Image source={{ uri: alt.imageUrl }} style={{ width: '100%', height: '100%', borderRadius: 8 }} contentFit="contain" />
+                            ) : (
+                              <Leaf size={24} color="#34C759" />
+                            )}
+                          </View>
+
+                          <View style={{ flex: 1, gap: 2 }}>
+                            <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }} numberOfLines={1}>
+                              {alt.name}
+                            </Text>
+                            <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '600' }} numberOfLines={1}>
+                              {alt.brand} • {alt.sugarTeaspoons} tsp sugar
+                            </Text>
+                            {savings > 0 && (
+                              <Text style={{ color: '#34C759', fontSize: 9, fontWeight: '700' }}>
+                                Saves {savings.toFixed(1).replace(/\.0$/, '')} tsp sugar!
+                              </Text>
+                            )}
+                          </View>
+                        </View>
+
+                        {/* Quick Add Button */}
+                        <TouchableOpacity
+                          onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            if (!isAltSaved) {
+                              addToCollection({
+                                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                                name: alt.name,
+                                brand: alt.brand,
+                                sugarGrams: alt.sugarGrams ?? alt.sugarPer100g ?? 0,
+                                sugarTeaspoons: alt.sugarTeaspoons ?? 0,
+                                timestamp: Date.now(),
+                                imageUrl: alt.imageUrl,
+                                calories: alt.calories,
+                                servingSize: alt.servingSize,
+                                sugarPer100g: alt.sugarPer100g,
+                                categoryTag: alt.categoryTag,
+                              });
+                            }
+                          }}
+                          disabled={isAltSaved}
+                          style={{
+                            backgroundColor: isAltSaved ? 'rgba(52, 199, 89, 0.15)' : colors.primary,
+                            paddingHorizontal: 12,
+                            paddingVertical: 8,
+                            borderRadius: 12,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Text style={{ color: isAltSaved ? '#34C759' : '#FFFFFF', fontSize: 11, fontWeight: '800' }}>
+                            {isAltSaved ? 'Saved' : 'Add'}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {/* Collapsible/Clean Nutrition Facts */}
             <NutritionFacts
               colors={colors}
               productName={scanResult.name}
@@ -1230,114 +1573,10 @@ export default function ScannerScreen() {
               servingSize={formatWeight(scanResult.servingSize, sugarUnit) || '100 g'}
             />
 
-            {/* WHO Reference Card */}
-            <View style={{ backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, padding: 20, borderRadius: 24, marginBottom: 32, gap: 16 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <View style={{ backgroundColor: colors.primary + '12', padding: 8, borderRadius: 12 }}>
-                  <HelpCircle size={18} color={colors.primary} />
-                </View>
-                <Text style={{ color: colors.text, fontWeight: '900', fontSize: 15 }}>WHO Guidelines</Text>
-              </View>
-
-              {(() => {
-                const currentTsp = scanResult.sugarTeaspoons;
-                if (currentTsp === undefined) {
-                   return (
-                    <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20 }}>
-                      Serving size is unknown, so we can't calculate your total daily limit usage for this serving.
-                    </Text>
-                   )
-                }
-                return (
-                  <>
-                    <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20 }}>
-                      This serving contains <Text style={{ fontWeight: '900', color: colors.text }}>{currentTsp} tsp</Text> of sugar. Here is how it compares to the World Health Organization's daily limits for adults:
-                    </Text>
-
-                    <View style={{ gap: 12 }}>
-                      <View style={{ backgroundColor: colors.background, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
-                        <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Conditional Recommendation</Text>
-                        <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 6 tsp ({formatSugar(25, sugarUnit)}) for additional health benefits.</Text>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
-                          <Text style={{ color: currentTsp > 6 ? colors.error : colors.text, fontWeight: '900', fontSize: 16 }}>{((currentTsp / 6) * 100).toFixed(0)}%</Text>
-                        </View>
-                      </View>
-
-                      <View style={{ backgroundColor: colors.background, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
-                        <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13, marginBottom: 4 }}>Strong Recommendation</Text>
-                        <Text style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8, lineHeight: 18 }}>Limit to 12 tsp ({formatSugar(50, sugarUnit)}) to reduce health risks.</Text>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Daily Limit Used</Text>
-                          <Text style={{ color: currentTsp > 12 ? colors.error : colors.text, fontWeight: '900', fontSize: 16 }}>{((currentTsp / 12) * 100).toFixed(0)}%</Text>
-                        </View>
-                      </View>
-                    </View>
-                  </>
-                );
-              })()}
-            </View>
-
-            {/* Save to CleanBite Collection Button */}
-            {(() => {
-              const isAlreadySaved = collection.some(
-                (item) => item.name === scanResult.name && item.brand === scanResult.brand
-              );
-              return (
-                <TouchableOpacity
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    if (!isAlreadySaved) {
-                      addToCollection({
-                        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                        name: scanResult.name,
-                        brand: scanResult.brand,
-                        sugarGrams: scanResult.sugarGrams ?? scanResult.sugarPer100g ?? 0,
-                        sugarTeaspoons: scanResult.sugarTeaspoons ?? 0,
-                        timestamp: Date.now(),
-                        imageUrl: scanResult.imageUrl,
-                        calories: scanResult.calories,
-                        servingSize: scanResult.servingSize,
-                        sugarPer100g: scanResult.sugarPer100g,
-                        categoryTag: scanResult.categoryTag,
-                        totalSugarGrams: scanResult.totalSugarGrams,
-                        totalSugarTeaspoons: scanResult.totalSugarTeaspoons,
-                        packageSize: scanResult.packageSize,
-                        totalCalories: scanResult.totalCalories,
-                        totalCarbsGrams: scanResult.totalCarbsGrams,
-                        totalFatGrams: scanResult.totalFatGrams,
-                        totalProteinGrams: scanResult.totalProteinGrams,
-                      });
-                    }
-                  }}
-                  disabled={isAlreadySaved}
-                  style={{
-                    backgroundColor: isAlreadySaved ? `${colors.primary}20` : isDark ? colors.surfaceRaised : colors.surface,
-                    borderWidth: 1.5,
-                    borderColor: colors.primary,
-                    width: '100%',
-                    paddingVertical: 16,
-                    borderRadius: 16,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexDirection: 'row',
-                    gap: 8,
-                    marginBottom: 12,
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Bookmark size={18} color={colors.primary} fill={isAlreadySaved ? colors.primary : 'transparent'} />
-                  <Text style={{ color: colors.primary, fontWeight: '800', fontSize: 14 }}>
-                    {isAlreadySaved ? 'Saved in CleanBite Collection' : 'Save to CleanBite Collection'}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })()}
-
             {/* Scan Again Button */}
             <TouchableOpacity
               onPress={resetScanner}
-              style={{ backgroundColor: colors.primary, width: '100%', paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}
+              style={{ backgroundColor: colors.primary, width: '100%', paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 20 }}
               activeOpacity={0.9}
             >
               <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 14 }}>Scan Another Item</Text>

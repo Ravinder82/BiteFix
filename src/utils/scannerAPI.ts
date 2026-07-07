@@ -269,3 +269,52 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
   }
 }
 
+export async function lookupAlternatives(categoryTag: string, maxSugarPer100g: number, signal: AbortSignal): Promise<ScanResultData[]> {
+  try {
+    const response = await fetchWithTimeout(
+      `https://world.openfoodfacts.org/api/v2/search?categories_tags=${encodeURIComponent(categoryTag)}&sort_by=nutriments.sugars_value&page_size=24`,
+      API_TIMEOUT_MS,
+      signal
+    );
+
+    if (signal.aborted || !response.ok) return [];
+
+    const data = await response.json();
+    if (!data?.products || data.products.length === 0) return [];
+
+    const results: ScanResultData[] = [];
+    for (const p of data.products) {
+      if (p.product_name) {
+        const sugarPer100g = p.nutriments?.sugars_100g ?? p.nutriments?.sugars ?? 0;
+        
+        // Only include alternatives with strictly lower sugar
+        if (sugarPer100g < maxSugarPer100g && p.product_name.trim() !== '') {
+          const name = (p.product_name || p.product_name_en || 'Unknown Product').trim();
+          const brand = (p.brands || 'Generic Brand').trim();
+          const imageUrl = p.image_front_url || p.image_url || undefined;
+          
+          const sugarGrams = p.nutriments?.sugars_serving ?? sugarPer100g;
+          const sugarTeaspoons = parseFloat((sugarGrams / 4.2).toFixed(1));
+
+          results.push({
+            name,
+            brand,
+            sugarGrams,
+            sugarTeaspoons,
+            sugarPer100g,
+            imageUrl,
+            servingSize: p.serving_size,
+            calories: p.nutriments?.energy_value,
+            categoryTag,
+          });
+        }
+      }
+      if (results.length >= 3) break;
+    }
+    return results;
+  } catch (err) {
+    console.warn('Error fetching alternatives:', err);
+    return [];
+  }
+}
+
