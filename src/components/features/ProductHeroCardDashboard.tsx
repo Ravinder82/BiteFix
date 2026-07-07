@@ -287,29 +287,29 @@ export default function ProductHeroCardDashboard({
       <View style={{ flexDirection: 'column', gap: 14, marginBottom: 20, zIndex: 2 }}>
         <View
           style={{
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#FFFFFF',
-            borderRadius: 20,
-            padding: 18,
-            borderWidth: 1.5,
-            borderColor: colors.primary + (isDark ? '35' : '25'),
-            shadowColor: colors.primary,
-            shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: isDark ? 0.15 : 0.06,
-            shadowRadius: 16,
-            elevation: 3,
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.01)',
+            borderRadius: 24,
+            padding: 16,
+            borderWidth: 1.2,
+            borderColor: colors.border,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: isDark ? 0.15 : 0.03,
+            shadowRadius: 12,
+            elevation: 2,
           }}
         >
           {/* Top Header Row */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary }} />
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primary }} />
               <Text
                 style={{
-                  color: colors.primary,
-                  fontSize: 11,
-                  fontWeight: '900',
+                  color: colors.textSecondary,
+                  fontSize: 10,
+                  fontWeight: '800',
                   textTransform: 'uppercase',
-                  letterSpacing: 1.2,
+                  letterSpacing: 1.0,
                 }}
               >
                 Serving Details
@@ -317,50 +317,55 @@ export default function ProductHeroCardDashboard({
             </View>
             <View
               style={{
-                backgroundColor: colors.primary + (isDark ? '25' : '15'),
-                paddingHorizontal: 10,
-                paddingVertical: 4,
-                borderRadius: 8,
+                backgroundColor: colors.primary + '15',
+                paddingHorizontal: 12,
+                paddingVertical: 5,
+                borderRadius: 99,
                 borderWidth: 1,
-                borderColor: colors.primary + '30',
+                borderColor: colors.primary + '25',
               }}
             >
-              <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '800' }}>
+              <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '900' }}>
                 {formatWeight(scanResult.servingSize, sugarUnit) || '100g Standard'}
               </Text>
             </View>
           </View>
 
-          {/* Divider */}
-          <View
-            style={{
-              height: 1,
-              backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-              marginBottom: 14,
-            }}
-          />
-
-          {/* Metrics Row */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-            <View>
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+          {/* Metrics Columns with Vertical Divider */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 }}>
+            {/* Left Column: Sugar Content */}
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 6 }}>
                 Sugar Content
               </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-                <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', letterSpacing: -0.8 }}>
-                  {formatSugar(servingSugarG ?? 0, sugarUnit)}
-                </Text>
-                <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '800' }}>
-                  ({servingSugarTsp} tsp)
-                </Text>
-              </View>
+              <Text style={{ color: colors.text, fontSize: 22, fontWeight: '900', letterSpacing: -0.5 }}>
+                {formatSugar(servingSugarG ?? 0, sugarUnit)}
+              </Text>
+              <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '800', marginTop: 2 }}>
+                ({servingSugarTsp.toFixed(1).replace(/\.0$/, '')} tsp)
+              </Text>
             </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+
+            {/* Vertical Divider */}
+            <View
+              style={{
+                width: 1,
+                height: 48,
+                backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                marginHorizontal: 12,
+              }}
+            />
+
+            {/* Right Column: Energy */}
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 6 }}>
                 Energy
               </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 18, fontWeight: '800' }}>
-                {servingCalories !== undefined ? `${Math.round(servingCalories)} kcal` : '— kcal'}
+              <Text style={{ color: colors.text, fontSize: 22, fontWeight: '900', letterSpacing: -0.5 }}>
+                {servingCalories !== undefined ? Math.round(servingCalories) : '—'}
+              </Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700', marginTop: 2 }}>
+                kcal
               </Text>
             </View>
           </View>
