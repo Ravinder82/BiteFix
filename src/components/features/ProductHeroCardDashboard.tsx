@@ -314,67 +314,89 @@ export default function ProductHeroCardDashboard({
       />
 
       {/* Quick Comparison Box: Per Serving vs Full Package Size */}
-      <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16, zIndex: 2 }}>
+      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16, zIndex: 2 }}>
         <View
           style={{
             flex: 1,
-            backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-            padding: 10,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#FFFFFF',
+            paddingVertical: 12,
+            paddingHorizontal: 14,
+            borderRadius: 16,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: isDark ? 0.12 : 0.03,
+            shadowRadius: 10,
+            elevation: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
           }}
         >
-          <Text
-            style={{
-              color: colors.primary,
-              fontSize: 9,
-              fontWeight: '900',
-              textTransform: 'uppercase',
-              letterSpacing: 0.5,
-              marginBottom: 2,
-            }}
-          >
-            Per Serving Basis
-          </Text>
-          <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800' }} numberOfLines={1}>
-            {formatWeight(scanResult.servingSize, sugarUnit) || '100g/ml Standard'}
-          </Text>
-          <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', marginTop: 2 }}>
-            {formatSugar(servingSugarG ?? 0, sugarUnit)} sugar •{' '}
-            {servingCalories !== undefined ? `${Math.round(servingCalories)} kcal` : '— kcal'}
-          </Text>
+          {/* Accent Line */}
+          <View style={{ width: 3, alignSelf: 'stretch', backgroundColor: colors.primary, borderRadius: 1.5 }} />
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                color: colors.primary,
+                fontSize: 8.5,
+                fontWeight: '900',
+                textTransform: 'uppercase',
+                letterSpacing: 0.8,
+                marginBottom: 4,
+              }}
+            >
+              Per Serving
+            </Text>
+            <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800', marginBottom: 3 }} numberOfLines={1}>
+              {formatWeight(scanResult.servingSize, sugarUnit) || '100g Standard'}
+            </Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '600', lineHeight: 14 }}>
+              <Text style={{ fontWeight: '800', color: colors.text }}>{formatSugar(servingSugarG ?? 0, sugarUnit)}</Text> ({servingSugarTsp} tsp) sugar{'\n'}
+              <Text style={{ color: colors.textMuted }}>{servingCalories !== undefined ? `${Math.round(servingCalories)} kcal` : '— kcal'}</Text>
+            </Text>
+          </View>
         </View>
 
         <View
           style={{
             flex: 1,
-            backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-            padding: 10,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#FFFFFF',
+            paddingVertical: 12,
+            paddingHorizontal: 14,
+            borderRadius: 16,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: isDark ? 0.12 : 0.03,
+            shadowRadius: 10,
+            elevation: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
           }}
         >
-          <Text
-            style={{
-              color: colors.textSecondary,
-              fontSize: 9,
-              fontWeight: '900',
-              textTransform: 'uppercase',
-              letterSpacing: 0.5,
-              marginBottom: 2,
-            }}
-          >
-            Full Package Basis
-          </Text>
-          <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800' }} numberOfLines={1}>
-            {formatWeight(scanResult.packageSize, sugarUnit) || 'Size Not Listed'}
-          </Text>
-          <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', marginTop: 2 }}>
-            {totalSugarG !== undefined ? `${formatSugar(totalSugarG, sugarUnit)} sugar` : '—'} •{' '}
-            {totalCalories !== undefined ? `${Math.round(totalCalories)} kcal` : '—'}
-          </Text>
+          {/* Accent Line */}
+          <View style={{ width: 3, alignSelf: 'stretch', backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.12)', borderRadius: 1.5 }} />
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                color: colors.textSecondary,
+                fontSize: 8.5,
+                fontWeight: '900',
+                textTransform: 'uppercase',
+                letterSpacing: 0.8,
+                marginBottom: 4,
+              }}
+            >
+              Full Package
+            </Text>
+            <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800', marginBottom: 3 }} numberOfLines={1}>
+              {formatWeight(scanResult.packageSize, sugarUnit) || 'Size Not Listed'}
+            </Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '600', lineHeight: 14 }}>
+              <Text style={{ fontWeight: '800', color: colors.text }}>{totalSugarG !== undefined ? formatSugar(totalSugarG, sugarUnit) : '—'}</Text> {totalSugarTsp !== undefined ? `(${totalSugarTsp} tsp) sugar` : 'sugar'}{'\n'}
+              <Text style={{ color: colors.textMuted }}>{totalCalories !== undefined ? `${Math.round(totalCalories)} kcal` : '— kcal'}</Text>
+            </Text>
+          </View>
         </View>
       </View>
 
