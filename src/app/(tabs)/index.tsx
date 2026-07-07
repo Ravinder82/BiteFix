@@ -896,19 +896,40 @@ export default function HomeScreen() {
                     return (
                       <View style={{ marginBottom: 24, gap: 12 }}>
                         {/* Burn Down Tagline */}
-                        <View style={{ backgroundColor: '#F9731615', borderColor: '#F9731630', borderWidth: 1, padding: 20, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-                          <View style={{ backgroundColor: '#F9731625', padding: 12, borderRadius: 16 }}>
-                            <Activity size={24} color="#F97316" />
+                        <LinearGradient
+                          colors={['#F97316', '#EF4444']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={{
+                            borderRadius: 24,
+                            padding: 20,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 16,
+                            shadowColor: '#EF4444',
+                            shadowOffset: { width: 0, height: 6 },
+                            shadowOpacity: 0.2,
+                            shadowRadius: 16,
+                            elevation: 5,
+                          }}
+                        >
+                          <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.22)', padding: 12, borderRadius: 16 }}>
+                            <Flame size={24} color="#FFFFFF" />
                           </View>
                           <View style={{ flex: 1 }}>
-                            <Text style={{ color: '#F97316', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
-                              The Burn Down
-                            </Text>
-                            <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', lineHeight: 18 }}>
-                              You would need to jog for <Text style={{ fontWeight: '900', color: '#F97316', fontSize: 15 }}>{formatJogTime(runMins)}</Text> straight to burn off this serving.
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                              <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.5 }}>
+                                The Burn Down
+                              </Text>
+                              <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.25)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
+                                <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '900' }}>{Math.round(currentCalories)} kcal</Text>
+                              </View>
+                            </View>
+                            <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '700', lineHeight: 18 }}>
+                              You need to jog for <Text style={{ fontWeight: '900', fontSize: 16, textDecorationLine: 'underline' }}>{formatJogTime(runMins)}</Text> straight to torch this serving! Stay motivated!
                             </Text>
                           </View>
-                        </View>
+                        </LinearGradient>
                       </View>
                     );
                   }
