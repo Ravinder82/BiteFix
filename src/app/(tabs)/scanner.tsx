@@ -1341,16 +1341,16 @@ export default function ScannerScreen() {
                           {/* Original Scanned Card */}
                           <View style={{
                             flex: 1,
-                            backgroundColor: isDark ? 'rgba(255,59,48,0.05)' : '#FFF5F5',
+                            backgroundColor: isDark ? colors.surfaceRaised : 'rgba(0,0,0,0.02)',
                             borderWidth: 1.5,
-                            borderColor: '#FF3B30',
+                            borderColor: colors.border,
                             borderRadius: 20,
                             padding: 12,
                             alignItems: 'center',
                             gap: 8,
                             minHeight: 180,
                           }}>
-                            <Text style={{ color: '#FF3B30', fontSize: 10, fontWeight: '900', textTransform: 'uppercase' }}>
+                            <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase' }}>
                               Current Item
                             </Text>
                             <View style={{
@@ -1371,7 +1371,7 @@ export default function ScannerScreen() {
                             <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800', textAlign: 'center' }} numberOfLines={2}>
                               {scanResult.name}
                             </Text>
-                            <Text style={{ color: '#FF3B30', fontSize: 16, fontWeight: '900', marginTop: 'auto' }}>
+                            <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '900', marginTop: 'auto' }}>
                               {originalTsp.toFixed(1).replace(/\.0$/, '')} tsp
                             </Text>
                           </View>
@@ -1393,16 +1393,16 @@ export default function ScannerScreen() {
                           {/* Healthiest Alternative Card */}
                           <View style={{
                             flex: 1,
-                            backgroundColor: isDark ? 'rgba(52,199,89,0.05)' : '#F2FBF4',
+                            backgroundColor: isDark ? colors.surfaceRaised : 'rgba(0,0,0,0.02)',
                             borderWidth: 1.5,
-                            borderColor: '#34C759',
+                            borderColor: colors.border,
                             borderRadius: 20,
                             padding: 12,
                             alignItems: 'center',
                             gap: 8,
                             minHeight: 180,
                           }}>
-                            <Text style={{ color: '#34C759', fontSize: 10, fontWeight: '900', textTransform: 'uppercase' }}>
+                            <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase' }}>
                               Better Swap
                             </Text>
                             <View style={{
@@ -1417,13 +1417,13 @@ export default function ScannerScreen() {
                               {alt.imageUrl ? (
                                 <Image source={{ uri: alt.imageUrl }} style={{ width: '100%', height: '100%', borderRadius: 8 }} contentFit="contain" />
                               ) : (
-                                <Leaf size={30} color="#34C759" />
+                                <Leaf size={30} color={colors.primary} />
                               )}
                             </View>
                             <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800', textAlign: 'center' }} numberOfLines={2}>
                               {alt.name}
                             </Text>
-                            <Text style={{ color: '#34C759', fontSize: 16, fontWeight: '900', marginTop: 'auto' }}>
+                            <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '900', marginTop: 'auto' }}>
                               {altTsp.toFixed(1).replace(/\.0$/, '')} tsp
                             </Text>
                           </View>
@@ -1432,7 +1432,7 @@ export default function ScannerScreen() {
                         {/* Teaspoon Savings Banner */}
                         {savings > 0 && (
                           <LinearGradient
-                            colors={['#34C759', '#00C7BE']}
+                            colors={[colors.primary, colors.primary]}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 0 }}
                             style={{
@@ -1441,7 +1441,7 @@ export default function ScannerScreen() {
                               paddingHorizontal: 16,
                               alignItems: 'center',
                               justifyContent: 'center',
-                              shadowColor: '#34C759',
+                              shadowColor: colors.primary,
                               shadowOffset: { width: 0, height: 4 },
                               shadowOpacity: 0.2,
                               shadowRadius: 8,
@@ -1494,12 +1494,12 @@ export default function ScannerScreen() {
                               setShowAlternatives(false);
                             }}
                             style={{
-                              backgroundColor: '#34C759',
+                              backgroundColor: colors.primary,
                               paddingVertical: 16,
                               borderRadius: 16,
                               alignItems: 'center',
                               justifyContent: 'center',
-                              shadowColor: '#34C759',
+                              shadowColor: colors.primary,
                               shadowOffset: { width: 0, height: 4 },
                               shadowOpacity: 0.2,
                               shadowRadius: 8,

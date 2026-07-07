@@ -595,10 +595,10 @@ export default function HomeScreen() {
             {/* Vertical Divider */}
             <View style={{ width: 1, height: 44, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }} />
 
-            {/* Scanned Stat */}
+             {/* Scanned Stat */}
             <View style={{ flex: 1, alignItems: 'center' }}>
-              <View style={{ backgroundColor: 'rgba(251, 255, 0, 1)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
-                <ScanBarcode size={18} color="#34C759" />
+              <View style={{ backgroundColor: colors.primary + '15', padding: 12, borderRadius: 16, marginBottom: 10 }}>
+                <ScanBarcode size={18} color={colors.primary} />
               </View>
               <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
                 Scanned
@@ -613,8 +613,8 @@ export default function HomeScreen() {
 
             {/* Jogging Stat */}
             <View style={{ flex: 1, alignItems: 'center' }}>
-              <View style={{ backgroundColor: 'rgba(0, 191, 255, 1)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
-                <Activity size={18} color="#000000ff" />
+              <View style={{ backgroundColor: colors.primary + '15', padding: 12, borderRadius: 16, marginBottom: 10 }}>
+                <Activity size={18} color={colors.primary} />
               </View>
               <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
                 Jogging

@@ -73,37 +73,30 @@ export default function ProductHeroCardDashboard({
   let ratingColor: string;
   let ratingDesc: string;
 
+
   if (isUnknown) {
-    cardBg = isDark ? ['#1C1C1E', '#111112'] : ['#F9F9FB', '#F2F2F7'];
+    cardBg = isDark ? [colors.surface, colors.surface] : [colors.surface, colors.surface];
     ledColor = '#8E8E93';
     ledLabel = 'Unknown';
-    ratingColor = colors.textMuted;
     ratingDesc = 'No sugar data available';
   } else if (currentTsp > 6) {
-    cardBg = isDark
-      ? ['rgba(255, 59, 48, 0.16)', 'rgba(28, 28, 30, 0.95)']
-      : ['#FFF5F5', '#FFF0F0'];
+    cardBg = isDark ? [colors.surface, colors.surface] : [colors.surface, colors.surface];
     ledColor = '#FF3B30';
     ledLabel = 'High Sugar';
-    ratingColor = '#FF3B30';
     ratingDesc = 'Exceeds daily recommendation';
   } else if (currentTsp > 3) {
-    cardBg = isDark
-      ? ['rgba(255, 149, 0, 0.16)', 'rgba(28, 28, 30, 0.95)']
-      : ['#FFF9F0', '#FFF4E0'];
+    cardBg = isDark ? [colors.surface, colors.surface] : [colors.surface, colors.surface];
     ledColor = '#FF9500';
     ledLabel = 'Moderate';
-    ratingColor = '#FF9500';
     ratingDesc = 'Approach with caution';
   } else {
-    cardBg = isDark
-      ? ['rgba(52, 199, 89, 0.16)', 'rgba(28, 28, 30, 0.95)']
-      : ['#F2FBF4', '#EAF7EC'];
+    cardBg = isDark ? [colors.surface, colors.surface] : [colors.surface, colors.surface];
     ledColor = '#34C759';
     ledLabel = 'Low Sugar';
-    ratingColor = '#34C759';
     ratingDesc = 'Safe to consume';
   }
+
+  ratingColor = isUnknown ? colors.textMuted : colors.primary;
 
   const cardContent = (
     <LinearGradient
@@ -111,8 +104,8 @@ export default function ProductHeroCardDashboard({
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={{
-        borderColor: ledColor + '30',
-        borderWidth: 2,
+        borderColor: colors.border,
+        borderWidth: 1.5,
         borderRadius: 30,
         padding: 22,
         width: (width as any) || '100%',
@@ -125,19 +118,6 @@ export default function ProductHeroCardDashboard({
         overflow: 'hidden',
       }}
     >
-      {/* Glowing decorative background blob */}
-      <View
-        style={{
-          position: 'absolute',
-          top: -40,
-          right: -40,
-          width: 140,
-          height: 140,
-          borderRadius: 70,
-          backgroundColor: ledColor + '12',
-        }}
-      />
-
       {/* Header Row: Product Image, Name, Brand */}
       <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center', zIndex: 2 }}>
         <View

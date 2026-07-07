@@ -422,15 +422,15 @@ export default function TrackerScreen() {
                           <Mascot size={20} state={cardMascotState} />
                         </View>
                         <View style={{
-                          backgroundColor: item.isDefaultServing ? (isDark ? '#3b2d00' : '#fef3c7') : (isDark ? '#063f24' : '#d1fae5'),
+                          backgroundColor: isDark ? 'rgba(255, 149, 0, 0.1)' : 'rgba(255, 149, 0, 0.08)',
                           paddingHorizontal: 6,
                           paddingVertical: 2.5,
                           borderRadius: 4,
                           borderWidth: 1,
-                          borderColor: item.isDefaultServing ? (isDark ? '#78350f' : '#f59e0b') : (isDark ? '#047857' : '#10b981')
+                          borderColor: isDark ? 'rgba(255, 149, 0, 0.2)' : 'rgba(255, 149, 0, 0.25)'
                         }}>
                           <Text style={{
-                            color: item.isDefaultServing ? (isDark ? '#fde68a' : '#b45309') : (isDark ? '#a7f3d0' : '#047857'),
+                            color: colors.primary,
                             fontSize: 7,
                             fontWeight: '800',
                             letterSpacing: 0.2
