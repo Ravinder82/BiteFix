@@ -33,18 +33,7 @@ import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { formatSugar, getConsistentNutritionalMetrics } from '../../utils/sugar';
 import { getSmartServingText, formatWeight } from '../../utils/format';
 
-const getFullProductCalories = (item: any): number => {
-  const metrics = getConsistentNutritionalMetrics(item);
-  if (metrics && metrics.totalCalories !== undefined && metrics.totalCalories > 0) {
-    return metrics.totalCalories;
-  }
-  return metrics?.servingCalories ?? (item?.calories ?? 0);
-};
 
-const calculateJoggingMinutes = (calories: number): number => {
-  if (!calories || isNaN(calories) || calories <= 0) return 0;
-  return Math.round(calories / 10);
-};
 
 
 
@@ -69,12 +58,6 @@ export default function TrackerScreen() {
   // Stats Calculations
   const totalSaved = collection.length;
   
-  const totalSugarTspAll = collection.reduce((sum, item) => {
-    const metrics = getConsistentNutritionalMetrics(item);
-    const tsp = metrics.totalTsp !== undefined ? metrics.totalTsp : metrics.servingTsp;
-    return sum + tsp;
-  }, 0);
-
   const totalServingSugarTspAll = collection.reduce((sum, item) => {
     const metrics = getConsistentNutritionalMetrics(item);
     return sum + metrics.servingTsp;
@@ -83,15 +66,9 @@ export default function TrackerScreen() {
   const basketHealthScore = useMemo(() => {
     if (collection.length === 0) return 100;
     const avgServing = totalServingSugarTspAll / collection.length;
-    const avgTotal = totalSugarTspAll / collection.length;
-    
-    // Scale: 6 tsp serving average drops servingScore to 28%
-    const servingScore = Math.max(0, 100 - (avgServing * 12));
-    // Scale: 12 tsp package average drops totalScore to 52%
-    const totalScore = Math.max(0, 100 - (avgTotal * 4));
-    
-    return Math.round((servingScore * 0.7) + (totalScore * 0.3));
-  }, [collection, totalSugarTspAll, totalServingSugarTspAll]);
+    // Scale: 12 tsp serving average drops score to 0
+    return Math.round(Math.max(0, 100 - (avgServing * (100 / 12))));
+  }, [collection, totalServingSugarTspAll]);
 
   const getScoreInfo = (score: number) => {
     if (score >= 80) return { label: 'Excellent', color: '#34C759', desc: 'Highly clean choice basket!' };
@@ -296,7 +273,7 @@ export default function TrackerScreen() {
               </Text>
             </View>
 
-            {/* Stat 2: Total Sugar */}
+            {/* Stat 2: Total Sugar Tracked */}
             <View style={{
               flexDirection: 'row',
               alignItems: 'center',
@@ -320,42 +297,10 @@ export default function TrackerScreen() {
                 </View>
                 <View style={{ flexShrink: 1 }}>
                   <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Total Sugar</Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '500' }} numberOfLines={1}>Across all items</Text>
-                </View>
-              </View>
-              <Text style={{ color: '#FF9500', fontSize: 14, fontWeight: '900' }}>
-                {totalSugarTspAll.toFixed(1).replace(/\.0$/, '')}<Text style={{ fontSize: 10, fontWeight: '700' }}> tsp</Text>
-              </Text>
-            </View>
-
-            {/* Stat 3: Servings Sugar */}
-            <View style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.02)',
-              borderRadius: 14,
-              padding: 10,
-              borderWidth: 1,
-              borderColor: colors.border,
-            }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 8,
-                  backgroundColor: 'rgba(255, 59, 48, 0.15)',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                  <Tag size={14} color="#FF3B30" />
-                </View>
-                <View style={{ flexShrink: 1 }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Servings Sugar</Text>
                   <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '500' }} numberOfLines={1}>Per serving sum</Text>
                 </View>
               </View>
-              <Text style={{ color: '#FF3B30', fontSize: 14, fontWeight: '900' }}>
+              <Text style={{ color: '#FF9500', fontSize: 14, fontWeight: '900' }}>
                 {totalServingSugarTspAll.toFixed(1).replace(/\.0$/, '')}<Text style={{ fontSize: 10, fontWeight: '700' }}> tsp</Text>
               </Text>
             </View>
@@ -410,10 +355,9 @@ export default function TrackerScreen() {
             </View>
           ) : (
             filteredCollection.map((item) => {
-              const metrics = getConsistentNutritionalMetrics(item);
-              const cardMascotState = metrics.servingTsp === 0 ? 'happy' : (metrics.servingTsp <= 2 ? 'idle' : (metrics.servingTsp <= 5 ? 'shocked' : 'dizzy'));
-              const productWeightStr = formatWeight(item.packageSize || item.servingSize, sugarUnit) || 'N/A';
-              const servingWeightStr = formatWeight(item.servingSize, sugarUnit) || '1 Serving';
+               const metrics = getConsistentNutritionalMetrics(item);
+               const cardMascotState = metrics.servingTsp === 0 ? 'happy' : (metrics.servingTsp <= 2 ? 'idle' : (metrics.servingTsp <= 5 ? 'shocked' : 'dizzy'));
+               const servingWeightStr = formatWeight(item.servingSize, sugarUnit) || '1 Serving';
 
 
               return (
@@ -533,36 +477,7 @@ export default function TrackerScreen() {
                       </View>
                     </View>
 
-                    {/* ─── SECTION 2: FULL PRODUCT SIZE / PACKAGE TOTAL ─── */}
-                    <View style={{
-                      backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
-                      padding: 8,
-                      borderRadius: 10,
-                      borderWidth: 1,
-                      borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
-                      marginBottom: 8
-                    }}>
-                      <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
-                        2. Full Product Size / Total Package
-                      </Text>
 
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3, borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }}>
-                        <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600' }}>Product Size</Text>
-                        <Text style={{ color: colors.text, fontSize: 11, fontWeight: '700' }}>{productWeightStr}</Text>
-                      </View>
-
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3, borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }}>
-                        <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600' }}>Total Energy</Text>
-                        <Text style={{ color: colors.text, fontSize: 11, fontWeight: '700' }}>{metrics.totalCalories !== undefined ? `${Math.round(metrics.totalCalories)} kcal` : '—'}</Text>
-                      </View>
-
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 }}>
-                        <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>Total Sugar in Package</Text>
-                        <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>
-                          {metrics.totalSugarG !== undefined ? `${formatSugar(metrics.totalSugarG, sugarUnit)} (${metrics.totalTsp} tsp)` : '—'}
-                        </Text>
-                      </View>
-                    </View>
 
                     {/* Actions Row (Favorite & Delete side-by-side) */}
                     <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>

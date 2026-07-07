@@ -16,13 +16,9 @@ export interface ProductHeroCardDashboardProps {
     brand?: string;
     imageUrl?: string;
     sugarTeaspoons?: number;
-    totalSugarTeaspoons?: number;
     calories?: number;
-    totalCalories?: number;
     sugarPer100g?: number;
     sugarGrams?: number;
-    totalSugarGrams?: number;
-    packageSize?: string;
     servingSize?: string;
     whoLimitServingPercent?: number;
     isDefaultServing?: boolean;
@@ -56,26 +52,20 @@ export default function ProductHeroCardDashboard({
 
   const isUnknown =
     scanResult.sugarTeaspoons === undefined &&
-    scanResult.totalSugarTeaspoons === undefined &&
     scanResult.sugarPer100g === undefined;
 
   const metrics = getConsistentNutritionalMetrics(scanResult);
-  const totalSugarG = metrics.totalSugarG;
   const servingSugarG = metrics.servingSugarG;
-  const totalSugarTsp = metrics.totalTsp;
   const servingSugarTsp = metrics.servingTsp;
   const servingCalories = metrics.servingCalories;
-  const totalCalories = metrics.totalCalories;
 
-  const currentTsp = totalSugarTsp !== undefined ? totalSugarTsp : (servingSugarTsp ?? 0);
+  const currentTsp = servingSugarTsp ?? 0;
   const servingTsp = servingSugarTsp ?? 0;
 
-  const displayLabel = 'TOTAL PACKAGE SUGAR';
-  const displaySubLabel = scanResult.packageSize
-    ? `(${formatWeight(scanResult.packageSize, sugarUnit)})`
-    : scanResult.servingSize
-      ? `(${formatWeight(scanResult.servingSize, sugarUnit)})`
-      : '';
+  const displayLabel = 'SUGAR PER SERVING';
+  const displaySubLabel = scanResult.servingSize
+    ? `(${formatWeight(scanResult.servingSize, sugarUnit)})`
+    : '';
 
   let cardBg: [string, string];
   let ledColor: string;
@@ -313,9 +303,8 @@ export default function ProductHeroCardDashboard({
         }}
       />
 
-      {/* 2 Vertically Stacked Premium Comparison Cards: Per Serving & Full Package */}
+      {/* Serving Breakdown Card */}
       <View style={{ flexDirection: 'column', gap: 14, marginBottom: 20, zIndex: 2 }}>
-        {/* CARD 1: PER SERVING BASIS */}
         <View
           style={{
             backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#FFFFFF',
@@ -343,7 +332,7 @@ export default function ProductHeroCardDashboard({
                   letterSpacing: 1.2,
                 }}
               >
-                1. Per Serving
+                Serving Details
               </Text>
             </View>
             <View
@@ -392,90 +381,6 @@ export default function ProductHeroCardDashboard({
               </Text>
               <Text style={{ color: colors.textMuted, fontSize: 18, fontWeight: '800' }}>
                 {servingCalories !== undefined ? `${Math.round(servingCalories)} kcal` : '— kcal'}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* CARD 2: FULL PACKAGE TOTAL */}
-        <View
-          style={{
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : '#F8FAFC',
-            borderRadius: 20,
-            padding: 18,
-            borderWidth: 1.5,
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: isDark ? 0.2 : 0.04,
-            shadowRadius: 14,
-            elevation: 2,
-          }}
-        >
-          {/* Top Header Row */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.textSecondary }} />
-              <Text
-                style={{
-                  color: colors.textSecondary,
-                  fontSize: 11,
-                  fontWeight: '900',
-                  textTransform: 'uppercase',
-                  letterSpacing: 1.2,
-                }}
-              >
-                2. Product Total
-              </Text>
-            </View>
-            <View
-              style={{
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
-                paddingHorizontal: 10,
-                paddingVertical: 4,
-                borderRadius: 8,
-                borderWidth: 1,
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)',
-              }}
-            >
-              <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>
-                {formatWeight(scanResult.packageSize, sugarUnit) || 'Size Not Listed'}
-              </Text>
-            </View>
-          </View>
-
-          {/* Divider */}
-          <View
-            style={{
-              height: 1,
-              backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-              marginBottom: 14,
-            }}
-          />
-
-          {/* Metrics Row */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-            <View>
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
-                Total Sugar
-              </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-                <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', letterSpacing: -0.8 }}>
-                  {totalSugarG !== undefined ? formatSugar(totalSugarG, sugarUnit) : '—'}
-                </Text>
-                {totalSugarTsp !== undefined && (
-                  <Text style={{ color: colors.textSecondary, fontSize: 16, fontWeight: '800' }}>
-                    ({totalSugarTsp} tsp)
-                  </Text>
-                )}
-              </View>
-            </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
-                Total Energy
-              </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 18, fontWeight: '800' }}>
-                {totalCalories !== undefined ? `${Math.round(totalCalories)} kcal` : '— kcal'}
               </Text>
             </View>
           </View>

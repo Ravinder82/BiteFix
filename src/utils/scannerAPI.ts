@@ -8,13 +8,6 @@ export interface ScanResultData {
   carbsGrams?: number;
   fatGrams?: number;
   proteinGrams?: number;
-  totalSugarGrams?: number;
-  totalSugarTeaspoons?: number;
-  packageSize?: string;
-  totalCalories?: number;
-  totalCarbsGrams?: number;
-  totalFatGrams?: number;
-  totalProteinGrams?: number;
   imageUrl?: string;
   sugarPer100g?: number;
   categoryTag?: string;
@@ -462,31 +455,6 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
     const finalSugarGrams = servingSugarGrams ?? sugarPer100g;
     const sugarTeaspoons = parseFloat((finalSugarGrams / 4.2).toFixed(1));
 
-    // ─── STEP 2: FULL PRODUCT SIZE / TOTAL PACKAGE CALCULATION ───
-    const packageWeight = extractNumberFromKeys(p, ['product_quantity']) ?? (parseQuantityString(p.quantity) ?? undefined);
-    
-    let totalSugarGrams: number | undefined = undefined;
-    let totalSugarTeaspoons: number | undefined = undefined;
-    let packageSize: string | undefined = undefined;
-    let totalCalories: number | undefined = undefined;
-    let totalCarbsGrams: number | undefined = undefined;
-    let totalFatGrams: number | undefined = undefined;
-    let totalProteinGrams: number | undefined = undefined;
-
-    if (packageWeight !== undefined && packageWeight > 0) {
-      const packageScale = packageWeight / 100;
-      totalSugarGrams = parseFloat((sugarPer100g * packageScale).toFixed(1));
-      totalSugarTeaspoons = parseFloat((totalSugarGrams / 4.2).toFixed(1));
-      packageSize = p.quantity ? String(p.quantity).trim() : `${packageWeight} ${defaultUnitLabel.split(' ')[1]}`;
-      
-      if (kcal100g !== undefined) totalCalories = Math.round(kcal100g * packageScale);
-      if (carbs100g !== undefined) totalCarbsGrams = parseFloat((carbs100g * packageScale).toFixed(1));
-      if (fat100g !== undefined) totalFatGrams = parseFloat((fat100g * packageScale).toFixed(1));
-      if (protein100g !== undefined) totalProteinGrams = parseFloat((protein100g * packageScale).toFixed(1));
-    } else if (p.quantity && typeof p.quantity === 'string' && p.quantity.trim() !== '') {
-      packageSize = p.quantity.trim();
-    }
-
     // ─── STEP 3: WHO DAILY LIMIT USAGE (Per Serving Method) ───
     // WHO adult upper daily limit = 50g (approx 12 tsp). Safe/ideal daily limit = 25g (approx 6 tsp).
     const whoLimitServingPercent = Math.min(500, Math.round((sugarTeaspoons / 12) * 100));
@@ -509,13 +477,6 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
       fatGrams,
       proteinGrams,
       categoryTag,
-      totalSugarGrams,
-      totalSugarTeaspoons,
-      packageSize,
-      totalCalories,
-      totalCarbsGrams,
-      totalFatGrams,
-      totalProteinGrams,
       isDefaultServing,
       whoLimitServingPercent,
       whoLimitIdealServingPercent,

@@ -36,12 +36,6 @@ interface AppState {
     proteinGrams?: number,
     sugarPer100g?: number,
     categoryTag?: string,
-    totalSugarGrams?: number,
-    packageSize?: string,
-    totalCalories?: number,
-    totalCarbsGrams?: number,
-    totalFatGrams?: number,
-    totalProteinGrams?: number,
     isDefaultServing?: boolean,
     whoLimitServingPercent?: number,
     whoLimitIdealServingPercent?: number
@@ -93,21 +87,12 @@ export const useAppStore = create<AppState>()(
         proteinGrams,
         sugarPer100g,
         categoryTag,
-        totalSugarGrams,
-        packageSize,
-        totalCalories,
-        totalCarbsGrams,
-        totalFatGrams,
-        totalProteinGrams,
         isDefaultServing,
         whoLimitServingPercent,
         whoLimitIdealServingPercent
       ) => set((state) => {
         const timestamp = Date.now();
         const sugarTeaspoons = sugarGrams / SUGAR_CONVERSION_GRAMS_PER_TEASPOON;
-        const totalSugarTeaspoons = totalSugarGrams !== undefined 
-          ? totalSugarGrams / SUGAR_CONVERSION_GRAMS_PER_TEASPOON
-          : undefined;
 
         const calculatedWhoServing = whoLimitServingPercent ?? Math.min(500, Math.round((sugarTeaspoons / 12) * 100));
         const calculatedWhoIdeal = whoLimitIdealServingPercent ?? Math.min(500, Math.round((sugarTeaspoons / 6) * 100));
@@ -128,13 +113,6 @@ export const useAppStore = create<AppState>()(
           proteinGrams,
           sugarPer100g,
           categoryTag,
-          totalSugarGrams,
-          totalSugarTeaspoons: totalSugarTeaspoons !== undefined ? parseFloat(totalSugarTeaspoons.toFixed(1)) : undefined,
-          packageSize,
-          totalCalories,
-          totalCarbsGrams,
-          totalFatGrams,
-          totalProteinGrams,
           isDefaultServing,
           whoLimitServingPercent: calculatedWhoServing,
           whoLimitIdealServingPercent: calculatedWhoIdeal,

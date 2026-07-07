@@ -33,13 +33,7 @@ const formatGroupDate = (timestamp: number) => {
   }
 };
 
-const getFullProductCalories = (item: any): number => {
-  const metrics = getConsistentNutritionalMetrics(item);
-  if (metrics && metrics.totalCalories !== undefined && metrics.totalCalories > 0) {
-    return metrics.totalCalories;
-  }
-  return metrics?.servingCalories ?? (item?.calories ?? 0);
-};
+
 
 const calculateJoggingMinutes = (calories: number): number => {
   if (!calories || isNaN(calories) || calories <= 0) return 0;
@@ -277,12 +271,18 @@ export default function HomeScreen() {
 
   const totalSugar = activeDayInfo.items.reduce((sum, item) => {
     const metrics = getConsistentNutritionalMetrics(item);
-    return sum + (metrics.totalSugarG ?? metrics.servingSugarG);
+    return sum + metrics.servingSugarG;
   }, 0);
 
-  // 1. Total Daily Intake (Full Product Size)
-  const sumTotalPackagesCalories = activeDayInfo.items.reduce((sum, item) => sum + getFullProductCalories(item), 0);
-  const totalJoggingMinutesToday = activeDayInfo.items.reduce((sum, item) => sum + calculateJoggingMinutes(getFullProductCalories(item)), 0);
+  // 1. Daily Intake (Per Serving basis)
+  const sumServingCalories = activeDayInfo.items.reduce((sum, item) => {
+    const metrics = getConsistentNutritionalMetrics(item);
+    return sum + (metrics.servingCalories ?? 0);
+  }, 0);
+  const totalJoggingMinutesToday = activeDayInfo.items.reduce((sum, item) => {
+    const metrics = getConsistentNutritionalMetrics(item);
+    return sum + calculateJoggingMinutes(metrics.servingCalories ?? 0);
+  }, 0);
 
 
 
@@ -491,7 +491,7 @@ export default function HomeScreen() {
               }}>
 
                 <Text style={{ color: colors.text, fontSize: 10.5, fontWeight: '600', flex: 1, lineHeight: 15 }}>
-                  Do you know How many Days it will take to consume today's Total Sugar as per WHO guidelines?
+                  Do you know How many Days it will take to consume today's sugar intake as per WHO guidelines?
                 </Text>
               </View>
 
@@ -572,7 +572,7 @@ export default function HomeScreen() {
             }}>
               <Info size={10} color={colors.textSecondary} />
               <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800' }}>
-                Total Energy Boost
+                Energy Intake
               </Text>
             </View>
           </View>
@@ -588,7 +588,7 @@ export default function HomeScreen() {
                 Energy
               </Text>
               <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
-                {activeDayInfo.isEmpty ? '0' : sumTotalPackagesCalories} <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textSecondary }}>kcal</Text>
+                {activeDayInfo.isEmpty ? '0' : sumServingCalories} <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textSecondary }}>kcal</Text>
               </Text>
             </View>
 
@@ -818,19 +818,15 @@ export default function HomeScreen() {
                   calories={selectedScan.calories}
                   servingSize={formatWeight(selectedScan.servingSize, sugarUnit) || '100 g / 100 ml'}
                   sugarPer100g={selectedScan.sugarPer100g}
-                  packageSize={selectedScan.packageSize}
-                  totalSugarGrams={selectedScan.totalSugarGrams}
-                  totalCalories={selectedScan.totalCalories}
                   whoLimitServingPercent={selectedScan.whoLimitServingPercent ?? (selectedScan.sugarTeaspoons !== undefined ? Math.round((selectedScan.sugarTeaspoons / 12) * 100) : undefined)}
                   isDefaultServing={selectedScan.isDefaultServing}
                 />
 
                 {/* 3. Extra Nutritional Data */}
                 {(() => {
-                  const currentCalories = getFullProductCalories(selectedScan);
+                  const currentCalories = selectedScan.calories ?? 0;
                   if (currentCalories > 0) {
                     const runMins = calculateJoggingMinutes(currentCalories);
-                    const hasPackageSize = selectedScan.totalCalories !== undefined && selectedScan.totalCalories > 0;
                     return (
                       <View style={{ marginBottom: 24, gap: 12 }}>
                         {/* Burn Down Tagline */}
@@ -843,7 +839,7 @@ export default function HomeScreen() {
                               The Burn Down
                             </Text>
                             <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', lineHeight: 18 }}>
-                              You would need to jog for <Text style={{ fontWeight: '900', color: '#F97316', fontSize: 15 }}>{formatJogTime(runMins)}</Text> straight to burn off this {hasPackageSize ? 'full product' : 'serving'}.
+                              You would need to jog for <Text style={{ fontWeight: '900', color: '#F97316', fontSize: 15 }}>{formatJogTime(runMins)}</Text> straight to burn off this serving.
                             </Text>
                           </View>
                         </View>

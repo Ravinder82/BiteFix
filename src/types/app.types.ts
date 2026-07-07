@@ -13,15 +13,6 @@ export interface ScanHistoryItem {
   fatGrams?: number;
   proteinGrams?: number;
 
-  // Package/Total-based values
-  totalSugarGrams?: number;
-  totalSugarTeaspoons?: number;
-  packageSize?: string;
-  totalCalories?: number;
-  totalCarbsGrams?: number;
-  totalFatGrams?: number;
-  totalProteinGrams?: number;
-
   timestamp: number;
   imageUrl?: string;
   sugarPer100g?: number;

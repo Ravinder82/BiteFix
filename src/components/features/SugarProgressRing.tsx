@@ -31,13 +31,9 @@ export function SugarProgressRing({
   colors,
 }: SugarProgressRingProps) {
   const { sugarUnit } = useAppStore();
-  // Convert total sugar to teaspoons (1 tsp = 4.2g) - Always represents cumulative daily total! Never resets when a circle completes.
+  // Convert total sugar to teaspoons (1 tsp = 4.2g) - Single circle mode, representing max 12 teaspoons per day.
   const totalTsp = totalSugar / 4.2;
-
-  // Each cycle represents 6 teaspoons of sugar. Used strictly for the visual progress ring bar animation and color zones.
-  const completedCycles = Math.floor(totalTsp / 6.0);
-  const currentCycleTsp = totalTsp - (completedCycles * 6.0);
-  const targetProgress = Math.min(1.0, currentCycleTsp / 6.0);
+  const targetProgress = Math.min(1.0, totalTsp / 12.0);
 
   // Shared values for animations
   const progressVal = useSharedValue(0);
@@ -85,22 +81,22 @@ export function SugarProgressRing({
     );
   }, []);
 
-  // Determine current health zone status and colors dynamically based on currentCycleTsp
+  // Determine current health zone status and colors dynamically based on totalTsp relative to the 12 tsp limit
   let zone: 'safe' | 'warning' | 'limit' | 'danger' = 'safe';
   let zoneColor = colors.success || '#22C55E';
   let glowColor = '#22C55E';
 
-  if (currentCycleTsp > 5.0) {
+  if (totalTsp > 12.0) {
     zone = 'danger';
-    zoneColor = '#A855F7'; // Deep purple for danger zone in current cycle
+    zoneColor = '#A855F7'; // Deep purple for danger zone (> 12 tsp)
     glowColor = '#A855F7';
-  } else if (currentCycleTsp > 3.5) {
+  } else if (totalTsp > 9.0) {
     zone = 'limit';
-    zoneColor = colors.error || '#DC2626'; // Red for exceeding cycle warning limit
+    zoneColor = colors.error || '#DC2626'; // Red for limit zone (> 9 tsp)
     glowColor = '#DC2626';
-  } else if (currentCycleTsp > 2.0) {
+  } else if (totalTsp > 6.0) {
     zone = 'warning';
-    zoneColor = colors.warning || '#F5A623'; // Amber/orange
+    zoneColor = colors.warning || '#F5A623'; // Amber/orange for warning zone (> 6 tsp)
     glowColor = '#F5A623';
   }
 
@@ -243,12 +239,12 @@ export function SugarProgressRing({
           const tx = cx + tickRadius * Math.cos(angle);
           const ty = cy + tickRadius * Math.sin(angle);
 
-          // Determine if this tick is active (sugar consumed reaches it in current cycle)
-          const isActive = currentCycleTsp >= (t * 0.5);
+          // Determine if this tick is active (sugar consumed reaches it)
+          const isActive = totalTsp >= t;
           const tickColor = isActive ? zoneColor : (isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)');
 
           if (t === 6) {
-            // Highlight halfway (3 tsp) with a prominent double ring
+            // Highlight halfway (6 tsp) with a prominent double ring
             return (
               <G key={`tick-${t}`}>
                 {/* Glowing ring under tick */}
@@ -265,7 +261,7 @@ export function SugarProgressRing({
           }
 
           if (t === 12) {
-            // Highlight Max limit (6 tsp / 100% of cycle)
+            // Highlight Max limit (12 tsp / 100% of cycle)
             return (
               <G key={`tick-${t}`}>
                 <Circle cx={tx} cy={ty} r={4.5} fill={isActive ? zoneColor : tickColor} />
@@ -298,7 +294,7 @@ export function SugarProgressRing({
               {/* WHO marker label */}
               <Path
                 d={`M ${cx + 80 * Math.cos(whoAngle)} ${cy + 80 * Math.sin(whoAngle)} L ${cx + 83 * Math.cos(whoAngle)} ${cy + 83 * Math.sin(whoAngle)}`}
-                stroke={currentCycleTsp >= 3.0 ? zoneColor : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)')}
+                stroke={totalTsp >= 6.0 ? zoneColor : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)')}
                 strokeWidth={1.5}
               />
             </G>
