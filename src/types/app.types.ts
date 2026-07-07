@@ -26,6 +26,9 @@ export interface ScanHistoryItem {
   imageUrl?: string;
   sugarPer100g?: number;
   categoryTag?: string;
+  isDefaultServing?: boolean;
+  whoLimitServingPercent?: number;
+  whoLimitIdealServingPercent?: number;
 }
 
 export type CleanBiteCategory = 

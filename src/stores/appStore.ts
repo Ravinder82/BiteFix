@@ -41,7 +41,10 @@ interface AppState {
     totalCalories?: number,
     totalCarbsGrams?: number,
     totalFatGrams?: number,
-    totalProteinGrams?: number
+    totalProteinGrams?: number,
+    isDefaultServing?: boolean,
+    whoLimitServingPercent?: number,
+    whoLimitIdealServingPercent?: number
   ) => void;
   deleteScan: (id: string) => void;
   clearScans: () => void;
@@ -95,13 +98,19 @@ export const useAppStore = create<AppState>()(
         totalCalories,
         totalCarbsGrams,
         totalFatGrams,
-        totalProteinGrams
+        totalProteinGrams,
+        isDefaultServing,
+        whoLimitServingPercent,
+        whoLimitIdealServingPercent
       ) => set((state) => {
         const timestamp = Date.now();
         const sugarTeaspoons = sugarGrams / SUGAR_CONVERSION_GRAMS_PER_TEASPOON;
         const totalSugarTeaspoons = totalSugarGrams !== undefined 
           ? totalSugarGrams / SUGAR_CONVERSION_GRAMS_PER_TEASPOON
           : undefined;
+
+        const calculatedWhoServing = whoLimitServingPercent ?? Math.min(500, Math.round((sugarTeaspoons / 12) * 100));
+        const calculatedWhoIdeal = whoLimitIdealServingPercent ?? Math.min(500, Math.round((sugarTeaspoons / 6) * 100));
 
         const newScan: ScanHistoryItem = {
           id: `${timestamp}-${Math.random().toString(36).substr(2, 9)}`,
@@ -126,6 +135,9 @@ export const useAppStore = create<AppState>()(
           totalCarbsGrams,
           totalFatGrams,
           totalProteinGrams,
+          isDefaultServing,
+          whoLimitServingPercent: calculatedWhoServing,
+          whoLimitIdealServingPercent: calculatedWhoIdeal,
         };
         const scans = [newScan, ...state.scans];
         return { scans };

@@ -30,14 +30,15 @@ import { useAppStore } from '../../stores/appStore';
 import { Text } from '../../components/Text';
 import { CleanBiteCategory, CollectionItem } from '../../types/app.types';
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
-import { formatSugar } from '../../utils/sugar';
+import { formatSugar, getConsistentNutritionalMetrics } from '../../utils/sugar';
 import { getSmartServingText, formatWeight } from '../../utils/format';
 
 const getFullProductCalories = (item: any): number => {
-  if (item && item.totalCalories !== undefined && item.totalCalories > 0) {
-    return item.totalCalories;
+  const metrics = getConsistentNutritionalMetrics(item);
+  if (metrics && metrics.totalCalories !== undefined && metrics.totalCalories > 0) {
+    return metrics.totalCalories;
   }
-  return item?.calories ?? 0;
+  return metrics?.servingCalories ?? (item?.calories ?? 0);
 };
 
 const calculateJoggingMinutes = (calories: number): number => {
@@ -45,15 +46,6 @@ const calculateJoggingMinutes = (calories: number): number => {
   return Math.round(calories / 10);
 };
 
-function getSugarColor(teaspoons: number, colors: any) {
-  if (teaspoons > 6) {
-    return colors.error || '#ff7d7dff';
-  }
-  if (teaspoons > 3) {
-    return colors.warning || '#ffe072ff';
-  }
-  return colors.success || '#3dffbeff';
-}
 
 
 
@@ -78,12 +70,14 @@ export default function TrackerScreen() {
   const totalSaved = collection.length;
   
   const totalSugarTspAll = collection.reduce((sum, item) => {
-    const tsp = item.totalSugarTeaspoons !== undefined ? item.totalSugarTeaspoons : (item.sugarTeaspoons ?? 0);
+    const metrics = getConsistentNutritionalMetrics(item);
+    const tsp = metrics.totalTsp !== undefined ? metrics.totalTsp : metrics.servingTsp;
     return sum + tsp;
   }, 0);
 
   const totalServingSugarTspAll = collection.reduce((sum, item) => {
-    return sum + (item.sugarTeaspoons ?? 0);
+    const metrics = getConsistentNutritionalMetrics(item);
+    return sum + metrics.servingTsp;
   }, 0);
 
   const basketHealthScore = useMemo(() => {
@@ -416,18 +410,11 @@ export default function TrackerScreen() {
             </View>
           ) : (
             filteredCollection.map((item) => {
-              const cardMascotState = item.sugarTeaspoons === 0 ? 'happy' : (item.sugarTeaspoons <= 2 ? 'idle' : (item.sugarTeaspoons <= 5 ? 'shocked' : 'dizzy'));
-              const sugarColor = getSugarColor(item.sugarTeaspoons, colors);
-              const itemCal = getFullProductCalories(item);
-              const calColor = itemCal > 250 ? '#FF3B30' : (itemCal > 100 ? '#FF9500' : '#34C759');
-              const sugColor = item.sugarGrams > 10 ? '#FF3B30' : (item.sugarGrams > 4 ? '#FF9500' : '#34C759');
-              const itemWhoPercent = Math.min(100, Math.round((item.sugarGrams / 25) * 100));
-              const whoBarColor = itemWhoPercent > 100 ? '#FF3B30' : (itemWhoPercent > 60 ? '#FF9500' : '#34C759');
-              const totalSugarTsp = item.totalSugarTeaspoons !== undefined ? item.totalSugarTeaspoons : (item.sugarTeaspoons ?? 0);
-              const servingSugarTsp = item.sugarTeaspoons ?? 0;
+              const metrics = getConsistentNutritionalMetrics(item);
+              const cardMascotState = metrics.servingTsp === 0 ? 'happy' : (metrics.servingTsp <= 2 ? 'idle' : (metrics.servingTsp <= 5 ? 'shocked' : 'dizzy'));
               const productWeightStr = formatWeight(item.packageSize || item.servingSize, sugarUnit) || 'N/A';
               const servingWeightStr = formatWeight(item.servingSize, sugarUnit) || '1 Serving';
-              const servingCal = item.calories ?? 0;
+
 
               return (
                 <View
@@ -439,9 +426,8 @@ export default function TrackerScreen() {
                     borderRadius: 24,
                     padding: 12,
                     width: '100%',
-                    height: 310,
                     flexDirection: 'row',
-                    alignItems: 'center',
+                    alignItems: 'stretch',
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 4 },
                     shadowOpacity: isDark ? 0.15 : 0.04,
@@ -452,8 +438,10 @@ export default function TrackerScreen() {
                 >
                   {/* Left Column: Product Image Full Height */}
                   <View style={{
-                    width: 110,
+                    width: 95,
                     alignSelf: 'stretch',
+                    minHeight: 230,
+                    position: 'relative',
                     borderRadius: 16,
                     overflow: 'hidden',
                     backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.06)',
@@ -461,171 +449,160 @@ export default function TrackerScreen() {
                     borderColor: colors.border,
                   }}>
                     {item.imageUrl ? (
-                      <Image source={{ uri: item.imageUrl }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={200} />
+                      <Image source={{ uri: item.imageUrl }} style={StyleSheet.absoluteFillObject} contentFit="cover" transition={200} />
                     ) : (
-                      <View style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
+                      <View style={[StyleSheet.absoluteFillObject, { alignItems: 'center', justifyContent: 'center' }]}>
                         <ScanBarcode size={36} color={colors.primary} />
                       </View>
                     )}
                   </View>
 
                   {/* Right Column */}
-                  <View style={{ flex: 1, paddingLeft: 16, height: '100%', justifyContent: 'space-between' }}>
-                    {/* Row 1: Title & Mascot Avatar */}
-                    <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                  <View style={{ flex: 1, paddingLeft: 12, justifyContent: 'flex-start' }}>
+                    {/* Header Row: Title & Badge */}
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10, gap: 8 }}>
                       <View style={{ flex: 1 }}>
-                        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900', lineHeight: 22 }}>
-                          {item.name}
+                        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900', letterSpacing: -0.3, lineHeight: 18 }} numberOfLines={2}>
+                          {item.brand && item.brand !== 'Generic Brand' ? `${item.brand} - ${item.name}` : item.name}
                         </Text>
                       </View>
-
-                      {/* Fixed circular container for mini mascot to prevent cut off */}
-                      <View style={{
-                        width: 50,
-                        height: 50,
-                        borderRadius: 25,
-                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.06)',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderWidth: 2,
-                        borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
-                      }}>
-                        <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
-                          <Mascot size={44} state={cardMascotState} />
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                        <View style={{
+                          width: 26,
+                          height: 26,
+                          borderRadius: 13,
+                          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.06)',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}>
+                          <Mascot size={20} state={cardMascotState} />
+                        </View>
+                        <View style={{
+                          backgroundColor: item.isDefaultServing ? (isDark ? '#3b2d00' : '#fef3c7') : (isDark ? '#063f24' : '#d1fae5'),
+                          paddingHorizontal: 6,
+                          paddingVertical: 2.5,
+                          borderRadius: 4,
+                          borderWidth: 1,
+                          borderColor: item.isDefaultServing ? (isDark ? '#78350f' : '#f59e0b') : (isDark ? '#047857' : '#10b981')
+                        }}>
+                          <Text style={{
+                            color: item.isDefaultServing ? (isDark ? '#fde68a' : '#b45309') : (isDark ? '#a7f3d0' : '#047857'),
+                            fontSize: 7,
+                            fontWeight: '800',
+                            letterSpacing: 0.2
+                          }}>
+                            {item.isDefaultServing ? '100G/ML' : 'SERVING'}
+                          </Text>
                         </View>
                       </View>
                     </View>
 
-                    {/* Row 2: Separate Containers for Product Weight/Sugar, Serving Weight/Sugar, Energy */}
-                    <View style={{ gap: 10, marginVertical: 7 }}>
-                      {/* Container 1: Product Weight & Total Sugar (tsp) */}
-                      <View style={{
-                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 185, 56, 0.04)',
-                        borderColor: colors.border,
-                        borderWidth: 1,
-                        borderRadius: 10,
-                        paddingHorizontal: 8,
-                        paddingVertical: 6,
-                        gap: 4
-                      }}>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Product Weight:</Text>
-                          <Text style={{ color: colors.text, fontSize: 11, fontWeight: '900' }}>{productWeightStr}</Text>
-                        </View>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Total Sugar:</Text>
-                          <Text style={{ color: sugColor, fontSize: 11, fontWeight: '900' }}>{totalSugarTsp.toFixed(1).replace(/\.0$/, '')} tsp</Text>
-                        </View>
+                    {/* ─── SECTION 1: PER SERVING BREAKDOWN ─── */}
+                    <View style={{
+                      backgroundColor: colors.primary + '08',
+                      padding: 8,
+                      borderRadius: 10,
+                      marginBottom: 8,
+                      borderWidth: 1,
+                      borderColor: colors.primary + '20'
+                    }}>
+                      <Text style={{ color: colors.primary, fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                        1. Per Serving Breakdown
+                      </Text>
+
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3, borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }}>
+                        <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600' }}>Serving Size</Text>
+                        <Text style={{ color: colors.text, fontSize: 11, fontWeight: '700' }}>{servingWeightStr}</Text>
                       </View>
 
-                      {/* Container 2: Per Serving Weight & Sugar (tsp) */}
-                      <View style={{
-                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 185, 56, 0.04)',
-                        borderColor: colors.border,
-                        borderWidth: 1,
-                        borderRadius: 10,
-                        paddingHorizontal: 8,
-                        paddingVertical: 5,
-                        gap: 4
-                      }}>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Per Serving Weight:</Text>
-                          <Text style={{ color: colors.text, fontSize: 11, fontWeight: '900' }}>{servingWeightStr}</Text>
-                        </View>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Per Serving Sugar:</Text>
-                          <Text style={{ color: sugColor, fontSize: 11, fontWeight: '900' }}>{servingSugarTsp.toFixed(1).replace(/\.0$/, '')} tsp</Text>
-                        </View>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3, borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }}>
+                        <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600' }}>Serving Energy</Text>
+                        <Text style={{ color: colors.text, fontSize: 11, fontWeight: '700' }}>{metrics.servingCalories !== undefined ? `${Math.round(metrics.servingCalories)} kcal` : '—'}</Text>
                       </View>
 
-                      {/* Container 3: Total Energy & Per Serving Energy */}
-                      <View style={{
-                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 185, 56, 0.04)',
-                        borderColor: colors.border,
-                        borderWidth: 1,
-                        borderRadius: 10,
-                        paddingHorizontal: 8,
-                        paddingVertical: 5,
-                        gap: 4
-                      }}>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Total Energy:</Text>
-                          <Text style={{ color: calColor, fontSize: 11, fontWeight: '900' }}>{itemCal} kcal</Text>
-                        </View>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Serving Energy:</Text>
-                          <Text style={{ color: colors.text, fontSize: 11, fontWeight: '900' }}>{servingCal} kcal</Text>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3, borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }}>
+                        <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '800' }}>Sugar per Serving</Text>
+                        <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '800' }}>{formatSugar(metrics.servingSugarG, sugarUnit)} ({metrics.servingTsp} tsp)</Text>
+                      </View>
+
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 4 }}>
+                        <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700' }}>WHO Daily Limit</Text>
+                        <View style={{ backgroundColor: metrics.whoLimitPercent > 100 ? colors.error : colors.primary, paddingHorizontal: 4, paddingVertical: 1, borderRadius: 3 }}>
+                          <Text style={{ color: '#fff', fontSize: 8, fontWeight: '900' }}>{metrics.whoLimitPercent}% of 12 tsp Max</Text>
                         </View>
                       </View>
                     </View>
 
-                    {/* Row 3: WHO Limit Bento & Save / Delete */}
-                    <View style={{ flexDirection: 'row', alignItems: 'stretch', justifyContent: 'space-between', gap: 8, marginTop: 'auto' }}>
-                      <View style={{
-                        flex: 1,
-                        backgroundColor: isDark ? 'rgba(0, 0, 0, 0.06)' : 'rgba(0, 0, 0, 0)',
-                        borderColor: colors.border,
-                        borderWidth: 2,
-                        borderRadius: 12,
-                        padding: 10,
-                        justifyContent: 'center',
-                        minHeight: 70,
-                        gap: 6
-                      }}>
-                        <View>
-                          <View style={{ alignSelf: 'flex-start', backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', paddingHorizontal: 5, paddingVertical: 1.5, borderRadius: 4, marginBottom: 4 }}>
-                            <Text style={{ color: colors.textSecondary, fontSize: 8, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.2 }}>Per serving</Text>
-                          </View>
-                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                            <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800' }}>WHO Limit</Text>
-                            <Text style={{ color: colors.text, fontSize: 11, fontWeight: '900' }}>{itemWhoPercent}%</Text>
-                          </View>
-                          <View style={{ height: 7, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', borderRadius: 3.5, overflow: 'hidden' }}>
-                            <View style={{ height: '100%', width: `${itemWhoPercent}%`, backgroundColor: whoBarColor }} />
-                          </View>
-                        </View>
+                    {/* ─── SECTION 2: FULL PRODUCT SIZE / PACKAGE TOTAL ─── */}
+                    <View style={{
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
+                      padding: 8,
+                      borderRadius: 10,
+                      borderWidth: 1,
+                      borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                      marginBottom: 8
+                    }}>
+                      <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                        2. Full Product Size / Total Package
+                      </Text>
+
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3, borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }}>
+                        <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600' }}>Product Size</Text>
+                        <Text style={{ color: colors.text, fontSize: 11, fontWeight: '700' }}>{productWeightStr}</Text>
                       </View>
 
-                      {/* Actions (Favorite & Delete) */}
-                      <View style={{ gap: 6, width: 40, justifyContent: 'space-between' }}>
-                        <TouchableOpacity
-                          activeOpacity={0.7}
-                          onPress={() => handleToggleFavorite(item.id)}
-                          style={{
-                            flex: 1,
-                            backgroundColor: item.isFavorite ? 'rgba(255, 82, 82, 0.12)' : isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0, 0, 0, 0.04)',
-                            borderColor: item.isFavorite ? '#FF5252' : colors.border,
-                            borderWidth: item.isFavorite ? 1.5 : 1,
-                            borderRadius: 12,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            height: 38,
-                          }}
-                        >
-                          <Heart
-                            size={18}
-                            color={item.isFavorite ? '#FF5252' : colors.textMuted}
-                            fill={item.isFavorite ? '#FF5252' : 'transparent'}
-                          />
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                          activeOpacity={0.7}
-                          onPress={() => handleRemove(item.id, item.name)}
-                          style={{
-                            flex: 1,
-                            backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0, 0, 0, 0.04)',
-                            borderColor: colors.border,
-                            borderWidth: 1,
-                            borderRadius: 12,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            height: 38,
-                          }}
-                        >
-                          <Trash2 size={18} color={colors.textMuted} />
-                        </TouchableOpacity>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3, borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }}>
+                        <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600' }}>Total Energy</Text>
+                        <Text style={{ color: colors.text, fontSize: 11, fontWeight: '700' }}>{metrics.totalCalories !== undefined ? `${Math.round(metrics.totalCalories)} kcal` : '—'}</Text>
                       </View>
+
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 }}>
+                        <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>Total Sugar in Package</Text>
+                        <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>
+                          {metrics.totalSugarG !== undefined ? `${formatSugar(metrics.totalSugarG, sugarUnit)} (${metrics.totalTsp} tsp)` : '—'}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Actions Row (Favorite & Delete side-by-side) */}
+                    <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => handleToggleFavorite(item.id)}
+                        style={{
+                          width: 44,
+                          height: 36,
+                          backgroundColor: item.isFavorite ? 'rgba(255, 82, 82, 0.12)' : isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0, 0, 0, 0.04)',
+                          borderColor: item.isFavorite ? '#FF5252' : colors.border,
+                          borderWidth: item.isFavorite ? 1.5 : 1,
+                          borderRadius: 10,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Heart
+                          size={16}
+                          color={item.isFavorite ? '#FF5252' : colors.textMuted}
+                          fill={item.isFavorite ? '#FF5252' : 'transparent'}
+                        />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => handleRemove(item.id, item.name)}
+                        style={{
+                          width: 44,
+                          height: 36,
+                          backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0, 0, 0, 0.04)',
+                          borderColor: colors.border,
+                          borderWidth: 1,
+                          borderRadius: 10,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Trash2 size={16} color={colors.textMuted} />
+                      </TouchableOpacity>
                     </View>
                   </View>
                 </View>

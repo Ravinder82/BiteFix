@@ -6,11 +6,8 @@ export function getSmartServingText(serving?: string, pack?: string): string | n
   // Regex to find metric weights or volumes
   const metricRegex = /([\d.,]+)\s*(g|gram|grams|ml|milliliter|milliliters|l|liter|liters|kg|oz|fl\s*oz)\b/i;
   
-  // Prefer values inside parentheses, e.g. "1 bottle (1000 ml)"
-  let match = rawText.match(/\(([\d.,]+)\s*(g|gram|grams|ml|milliliter|milliliters|l|liter|liters|kg|oz|fl\s*oz)\b.*?\)/i);
-  if (!match) {
-    match = rawText.match(metricRegex);
-  }
+  // Match the first valid quantity and unit
+  const match = rawText.match(metricRegex);
 
   let result = rawText;
 
@@ -59,11 +56,8 @@ export function formatWeight(valStr: string | undefined, targetUnit: 'g' | 'oz')
   const cleaned = String(valStr).trim();
   if (!cleaned) return '';
 
-  // Check if there is a match inside parentheses first, e.g. "1 serving (140 g)"
-  let match = cleaned.match(/\(([\d.,]+)\s*(g|gram|grams|kg|oz|ounce|ounces|lb|lbs|ml|milliliter|milliliters|l|liter|liters|cl|fl\s*oz|fl\.\s*oz|floz)\b.*?\)/i);
-  if (!match) {
-    match = cleaned.match(/([\d.,]+)\s*(g|gram|grams|kg|oz|ounce|ounces|lb|lbs|ml|milliliter|milliliters|l|liter|liters|cl|fl\s*oz|fl\.\s*oz|floz)\b/i);
-  }
+  // Match the first valid quantity and unit in the string
+  const match = cleaned.match(/([\d.,]+)\s*(g|gram|grams|kg|oz|ounce|ounces|lb|lbs|ml|milliliter|milliliters|l|liter|liters|cl|fl\s*oz|fl\.\s*oz|floz)\b/i);
   if (!match) return cleaned;
 
   let val = parseFloat(match[1].replace(/,/g, ''));

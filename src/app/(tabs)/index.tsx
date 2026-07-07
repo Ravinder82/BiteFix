@@ -12,7 +12,8 @@ import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
 import { SugarProgressRing } from '../../components/features/SugarProgressRing';
 import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle, Menu, HelpCircle, Flame, Zap, ArrowUpRight, TrendingUp, ChevronLeft, ChevronRight, Bookmark } from 'lucide-react-native';
-import { formatSugar } from '../../utils/sugar';
+import { formatSugar, getConsistentNutritionalMetrics } from '../../utils/sugar';
+import ProductHeroCardDashboard from '../../components/features/ProductHeroCardDashboard';
 import SettingsScreen from './settings';
 import * as Haptics from 'expo-haptics';
 import { ScanHistoryItem } from '../../types/app.types';
@@ -33,10 +34,11 @@ const formatGroupDate = (timestamp: number) => {
 };
 
 const getFullProductCalories = (item: any): number => {
-  if (item && item.totalCalories !== undefined && item.totalCalories > 0) {
-    return item.totalCalories;
+  const metrics = getConsistentNutritionalMetrics(item);
+  if (metrics && metrics.totalCalories !== undefined && metrics.totalCalories > 0) {
+    return metrics.totalCalories;
   }
-  return item?.calories ?? 0;
+  return metrics?.servingCalories ?? (item?.calories ?? 0);
 };
 
 const calculateJoggingMinutes = (calories: number): number => {
@@ -61,7 +63,7 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
   const scrollRef = useRef<ScrollView>(null);
   const [scrollX, setScrollX] = useState(0);
 
-  const cardWidth = 320;
+  const cardWidth = 330;
   const gap = 12;
   const snapInterval = cardWidth + gap;
 
@@ -145,239 +147,33 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
         scrollEventThrottle={16}
       >
         {group.items.map((item: any) => {
-          const cardMascotState = item.sugarTeaspoons === 0 ? 'happy' : (item.sugarTeaspoons <= 2 ? 'idle' : (item.sugarTeaspoons <= 5 ? 'shocked' : 'dizzy'));
-          const sugarColor = getSugarColor(item.sugarTeaspoons, colors);
-          const itemCal = getFullProductCalories(item);
-          const calColor = itemCal > 250 ? '#FF3B30' : (itemCal > 100 ? '#FF9500' : '#34C759');
-          const sugColor = item.sugarGrams > 10 ? '#FF3B30' : (item.sugarGrams > 4 ? '#FF9500' : '#34C759');
-          const itemRunMinutes = calculateJoggingMinutes(itemCal);
-          const itemWhoPercent = Math.min(100, Math.round((item.sugarGrams / 25) * 100));
-          const whoBarColor = itemWhoPercent > 100 ? '#FF3B30' : (itemWhoPercent > 60 ? '#FF9500' : '#34C759');
-          const totalSugarTsp = item.totalSugarTeaspoons !== undefined ? item.totalSugarTeaspoons : (item.sugarTeaspoons ?? 0);
-          const servingSugarTsp = item.sugarTeaspoons ?? 0;
-          const productWeightStr = formatWeight(item.packageSize || item.servingSize, sugarUnit) || 'N/A';
-          const servingWeightStr = formatWeight(item.servingSize, sugarUnit) || '1 Serving';
-          const servingCal = item.calories ?? 0;
+          const isAlreadySaved = collection.some(
+            (colItem: any) => colItem.name === item.name && colItem.brand === item.brand
+          );
 
           return (
-            <TouchableOpacity
+            <ProductHeroCardDashboard
               key={item.id}
+              scanResult={item}
+              colors={colors}
+              isDark={isDark}
+              width={cardWidth}
+              showActions={true}
+              isSaved={isAlreadySaved}
+              onSave={() => {
+                if (!isAlreadySaved) {
+                  addToCollection(item);
+                }
+              }}
+              onDelete={() => {
+                deleteScan(item.id);
+              }}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 panY.setValue(0);
                 setSelectedScan(item);
               }}
-              style={{
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : colors.background,
-                borderColor: colors.border,
-                borderWidth: 1.5,
-                borderRadius: 24,
-                padding: 12,
-                width: cardWidth,
-                height: 360,
-                flexDirection: 'row',
-                alignItems: 'center',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: isDark ? 0.15 : 0.04,
-                shadowRadius: 10,
-                elevation: 2
-              }}
-              activeOpacity={0.85}
-            >
-              {/* Left Column: Product Image Full Height */}
-              <View style={{
-                width: 110,
-                alignSelf: 'stretch',
-                borderRadius: 16,
-                overflow: 'hidden',
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.06)',
-                borderWidth: 1,
-                borderColor: colors.border,
-              }}>
-                {item.imageUrl ? (
-                  <Image source={{ uri: item.imageUrl }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={200} />
-                ) : (
-                  <View style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
-                    <ScanBarcode size={36} color={colors.primary} />
-                  </View>
-                )}
-              </View>
-
-              {/* Right Column */}
-              <View style={{ flex: 1, paddingLeft: 16, height: '100%', justifyContent: 'space-between' }}>
-
-                {/* Row 1: Title & Mascot Avatar */}
-                <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900', lineHeight: 22 }}>
-                      {item.name}
-                    </Text>
-                  </View>
-
-                  {/* Fixed circular container for mini mascot to prevent cut off */}
-                  <View style={{
-                    width: 50,
-                    height: 50,
-                    borderRadius: 25,
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.06)',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderWidth: 2,
-                    borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
-                  }}>
-                    <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
-                      <Mascot size={44} state={cardMascotState} />
-                    </View>
-                  </View>
-                </View>
-
-                {/* Row 2: Separate Containers for Product Weight/Sugar, Serving Weight/Sugar, Energy */}
-                <View style={{ gap: 10, marginVertical: 7 }}>
-                  {/* Container 1: Product Weight & Total Sugar (tsp) */}
-                  <View style={{
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 185, 56, 0.04)',
-                    borderColor: colors.border,
-                    borderWidth: 1,
-                    borderRadius: 10,
-                    paddingHorizontal: 8,
-                    paddingVertical: 6,
-                    gap: 4
-                  }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Product Weight:</Text>
-                      <Text style={{ color: colors.text, fontSize: 11, fontWeight: '900' }}>{productWeightStr}</Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Total Sugar:</Text>
-                      <Text style={{ color: sugColor, fontSize: 11, fontWeight: '900' }}>{totalSugarTsp.toFixed(1).replace(/\.0$/, '')} tsp</Text>
-                    </View>
-                  </View>
-
-                  {/* Container 2: Per Serving Weight & Sugar (tsp) */}
-                  <View style={{
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 185, 56, 0.04)',
-                    borderColor: colors.border,
-                    borderWidth: 1,
-                    borderRadius: 10,
-                    paddingHorizontal: 8,
-                    paddingVertical: 5,
-                    gap: 4
-                  }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Per Serving Weight:</Text>
-                      <Text style={{ color: colors.text, fontSize: 11, fontWeight: '900' }}>{servingWeightStr}</Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Per Serving Sugar:</Text>
-                      <Text style={{ color: sugColor, fontSize: 11, fontWeight: '900' }}>{servingSugarTsp.toFixed(1).replace(/\.0$/, '')} tsp</Text>
-                    </View>
-                  </View>
-
-                  {/* Container 3: Total Energy & Per Serving Energy */}
-                  <View style={{
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(245, 185, 56, 0.04)',
-                    borderColor: colors.border,
-                    borderWidth: 1,
-                    borderRadius: 10,
-                    paddingHorizontal: 8,
-                    paddingVertical: 5,
-                    gap: 4
-                  }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Total Energy:</Text>
-                      <Text style={{ color: calColor, fontSize: 11, fontWeight: '900' }}>{itemCal} kcal</Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Serving Energy:</Text>
-                      <Text style={{ color: colors.text, fontSize: 11, fontWeight: '900' }}>{servingCal} kcal</Text>
-                    </View>
-                  </View>
-                </View>
-
-                {/* Row 3: WHO Limit Bento & Save / Delete */}
-                <View style={{ flexDirection: 'row', alignItems: 'stretch', justifyContent: 'space-between', gap: 8, marginTop: 'auto' }}>
-                  <View style={{
-                    flex: 1,
-                    backgroundColor: isDark ? 'rgba(0, 0, 0, 0.06)' : 'rgba(0, 0, 0, 0)',
-                    borderColor: colors.border,
-                    borderWidth: 2,
-                    borderRadius: 12,
-                    padding: 10,
-                    justifyContent: 'center',
-                    minHeight: 70,
-                    gap: 6
-                  }}>
-
-                    <View>
-                      <View style={{ alignSelf: 'flex-start', backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', paddingHorizontal: 5, paddingVertical: 1.5, borderRadius: 4, marginBottom: 4 }}>
-                        <Text style={{ color: colors.textSecondary, fontSize: 8, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.2 }}>Per serving</Text>
-                      </View>
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                        <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '800' }}>WHO Limit</Text>
-                        <Text style={{ color: colors.text, fontSize: 11, fontWeight: '900' }}>{itemWhoPercent}%</Text>
-                      </View>
-                      <View style={{ height: 7, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', borderRadius: 3.5, overflow: 'hidden' }}>
-                        <View style={{ height: '100%', width: `${itemWhoPercent}%`, backgroundColor: whoBarColor }} />
-                      </View>
-                    </View>
-                  </View>
-
-                  <View style={{ gap: 6, width: 40, justifyContent: 'space-between' }}>
-                    {(() => {
-                      const isAlreadySaved = collection.some(
-                        (colItem) => colItem.name === item.name && colItem.brand === item.brand
-                      );
-                      return (
-                        <TouchableOpacity
-                          onPress={(e) => {
-                            e.stopPropagation?.();
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                            if (!isAlreadySaved) {
-                              addToCollection(item);
-                            }
-                          }}
-                          disabled={isAlreadySaved}
-                          style={{
-                            flex: 1,
-                            backgroundColor: isAlreadySaved ? `${colors.primary}25` : isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0, 0, 0, 0.04)',
-                            borderColor: isAlreadySaved ? colors.primary : colors.border,
-                            borderWidth: isAlreadySaved ? 1.5 : 1,
-                            borderRadius: 12,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            minHeight: 32,
-                          }}
-                          activeOpacity={0.8}
-                        >
-                          <Bookmark size={15} color={colors.primary} fill={isAlreadySaved ? colors.primary : 'transparent'} />
-                        </TouchableOpacity>
-                      );
-                    })()}
-
-                    <TouchableOpacity
-                      onPress={(e) => {
-                        e.stopPropagation?.();
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        deleteScan(item.id);
-                      }}
-                      style={{
-                        flex: 1,
-                        backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255, 205, 202, 0.54)',
-                        borderRadius: 12,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        minHeight: 32,
-                      }}
-                      activeOpacity={0.8}
-                    >
-                      <Trash2 size={15} color={colors.error} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
-              </View>
-            </TouchableOpacity>
+            />
           );
         })}
       </ScrollView>
@@ -479,7 +275,10 @@ export default function HomeScreen() {
 
   const activeDayInfo = getLatestActiveScans();
 
-  const totalSugar = activeDayInfo.items.reduce((sum, item) => sum + (item.totalSugarGrams ?? item.sugarGrams), 0);
+  const totalSugar = activeDayInfo.items.reduce((sum, item) => {
+    const metrics = getConsistentNutritionalMetrics(item);
+    return sum + (metrics.totalSugarG ?? metrics.servingSugarG);
+  }, 0);
 
   // 1. Total Daily Intake (Full Product Size)
   const sumTotalPackagesCalories = activeDayInfo.items.reduce((sum, item) => sum + getFullProductCalories(item), 0);
@@ -1002,154 +801,13 @@ export default function HomeScreen() {
             {selectedScan && (
               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
                 {/* 1. Hero Section: Product Card & Sugar Impact */}
-                <View style={{ backgroundColor: colors.background, borderColor: colors.border, borderWidth: 1, padding: 24, borderRadius: 28, alignItems: 'center', marginBottom: 24 }}>
-                  {selectedScan.imageUrl ? (
-                    <Image
-                      source={{ uri: selectedScan.imageUrl }}
-                      style={{ width: 112, height: 112, borderRadius: 16, marginBottom: 16 }}
-                      contentFit="contain"
-                      transition={200}
-                    />
-                  ) : (
-                    <View
-                      style={{ backgroundColor: colors.primary + '12' }}
-                      className="w-24 h-24 rounded-2xl items-center justify-center mb-4"
-                    >
-                      <ScanBarcode size={36} color={colors.primary} />
-                    </View>
-                  )}
-
-                  <Text style={{ color: colors.text, fontSize: 21, fontWeight: '900', textAlign: 'center', lineHeight: 26 }}>
-                    {selectedScan.name}
-                  </Text>
-                  <View style={{ backgroundColor: colors.surfaceRaised, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 99, marginTop: 6 }}>
-                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 }}>
-                      {selectedScan.brand || 'Generic Brand'}
-                    </Text>
-                  </View>
-                  {selectedScan.barcode && (
-                    <Text style={{ color: colors.textMuted }} className="text-[12px] font-mono mt-1.5">
-                      Barcode: {selectedScan.barcode}
-                    </Text>
-                  )}
-
-                  {/* Reactive Mascot based on full package sugar */}
-                  {(() => {
-                    const currentTsp = selectedScan.totalSugarTeaspoons !== undefined ? selectedScan.totalSugarTeaspoons : (selectedScan.sugarTeaspoons ?? 0);
-                    return (
-                      <View style={{ marginTop: 24, marginBottom: 16 }}>
-                        <Mascot
-                          state={
-                            currentTsp > 6
-                              ? 'shocked'
-                              : currentTsp > 3
-                                ? 'dizzy'
-                                : 'happy'
-                          }
-                          size={120}
-                        />
-                      </View>
-                    );
-                  })()}
-
-                  {/* Massive Impact Typography for Total Package Sugar */}
-                  {(() => {
-                    const isUnknown = selectedScan.totalSugarTeaspoons === undefined;
-                    const currentTsp = isUnknown ? '--' : selectedScan.totalSugarTeaspoons;
-                    const currentColor = isUnknown ? colors.textMuted : getSugarColor(selectedScan.totalSugarTeaspoons!, colors);
-
-                    return (
-                      <View style={{ alignItems: 'center', marginTop: 8 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-                          <Text style={{
-                            color: currentColor,
-                            fontSize: 54,
-                            fontWeight: '900',
-                            letterSpacing: -2,
-                            lineHeight: 72
-                          }}>
-                            {currentTsp}
-                          </Text>
-                          {!isUnknown && (
-                            <Text style={{
-                              color: currentColor,
-                              fontSize: 24,
-                              fontWeight: '800',
-                              marginLeft: 6
-                            }}>
-                              tsp
-                            </Text>
-                          )}
-                        </View>
-                        <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '700', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
-                          Total Sugars in Full Package
-                        </Text>
-                        <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', marginTop: 2 }}>
-                          {selectedScan.packageSize ? `(${formatWeight(selectedScan.packageSize, sugarUnit)})` : '(Package Size Unknown)'}
-                        </Text>
-                      </View>
-                    );
-                  })()}
-
-                  {/* Side-by-side summary cards */}
-                  <View style={{ flexDirection: 'row', gap: 12, width: '100%', marginTop: 28 }}>
-                    {/* Per Serving Card */}
-                    <View
-                      style={{
-                        flex: 1,
-                        backgroundColor: colors.surfaceRaised,
-                        padding: 16,
-                        borderRadius: 20,
-                        alignItems: 'center',
-                        borderWidth: 1,
-                        borderColor: colors.border
-                      }}
-                    >
-                      <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>Per Serving</Text>
-                      {selectedScan.servingSize && selectedScan.sugarTeaspoons !== undefined ? (
-                        <>
-                          <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800', marginTop: 2 }}>{formatWeight(selectedScan.servingSize, sugarUnit) || selectedScan.servingSize}</Text>
-                          <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', marginTop: 10 }}>
-                            {selectedScan.sugarTeaspoons} <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary }}>tsp</Text>
-                          </Text>
-                          <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 4 }}>({formatSugar(selectedScan.sugarGrams, sugarUnit)} sugar)</Text>
-                        </>
-                      ) : (
-                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 12 }}>
-                          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '700', textAlign: 'center' }}>No Serving Size found</Text>
-                        </View>
-                      )}
-                    </View>
-
-                    {/* Per 100g Card */}
-                    <View
-                      style={{
-                        flex: 1,
-                        backgroundColor: colors.surfaceRaised,
-                        padding: 16,
-                        borderRadius: 20,
-                        alignItems: 'center',
-                        borderWidth: 1,
-                        borderColor: colors.border
-                      }}
-                    >
-                      <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>Per 100g / 100ml</Text>
-                      <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800', marginTop: 2 }}>Standard</Text>
-
-                      {selectedScan.sugarPer100g !== undefined && selectedScan.sugarPer100g > 0 ? (
-                        <>
-                          <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', marginTop: 10 }}>
-                            {parseFloat((selectedScan.sugarPer100g / 4.2).toFixed(1))} <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary }}>tsp</Text>
-                          </Text>
-                          <Text style={{ color: colors.textSecondary, fontSize: 10, marginTop: 4 }}>({formatSugar(selectedScan.sugarPer100g, sugarUnit)} sugar)</Text>
-                        </>
-                      ) : (
-                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 12 }}>
-                          <Text style={{ color: colors.textMuted, fontSize: 26, fontWeight: '900', textAlign: 'center' }}>--</Text>
-                        </View>
-                      )}
-                    </View>
-                  </View>
+                {/* 1. Hero Section: Product Card & Sugar Impact */}
+                <View style={{ marginBottom: 24 }}>
+                  <ProductHeroCardDashboard
+                    scanResult={selectedScan}
+                    colors={colors}
+                    isDark={isDark}
+                  />
                 </View>
 
                 {/* 2. Dynamic Nutrition Facts */}
@@ -1158,7 +816,13 @@ export default function HomeScreen() {
                   productName={selectedScan.name}
                   sugarGrams={selectedScan.sugarGrams ?? selectedScan.sugarPer100g ?? 0}
                   calories={selectedScan.calories}
-                  servingSize={formatWeight(selectedScan.servingSize, sugarUnit) || '100 g'}
+                  servingSize={formatWeight(selectedScan.servingSize, sugarUnit) || '100 g / 100 ml'}
+                  sugarPer100g={selectedScan.sugarPer100g}
+                  packageSize={selectedScan.packageSize}
+                  totalSugarGrams={selectedScan.totalSugarGrams}
+                  totalCalories={selectedScan.totalCalories}
+                  whoLimitServingPercent={selectedScan.whoLimitServingPercent ?? (selectedScan.sugarTeaspoons !== undefined ? Math.round((selectedScan.sugarTeaspoons / 12) * 100) : undefined)}
+                  isDefaultServing={selectedScan.isDefaultServing}
                 />
 
                 {/* 3. Extra Nutritional Data */}
@@ -1199,7 +863,8 @@ export default function HomeScreen() {
                   </View>
 
                   {(() => {
-                    const currentTsp = selectedScan.sugarTeaspoons;
+                    const metrics = getConsistentNutritionalMetrics(selectedScan);
+                    const currentTsp = metrics.servingTsp;
                     if (currentTsp === undefined) {
                       return (
                         <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20 }}>

@@ -18,6 +18,9 @@ export interface ScanResultData {
   imageUrl?: string;
   sugarPer100g?: number;
   categoryTag?: string;
+  isDefaultServing?: boolean;
+  whoLimitServingPercent?: number;
+  whoLimitIdealServingPercent?: number;
 }
 
 export class RequestTimeoutError extends Error {
@@ -74,32 +77,48 @@ export async function fetchWithTimeout(url: string, timeoutMs: number, signal?: 
   }
 }
 
+/**
+ * Helper to safely extract a number from an object checking multiple keys.
+ */
+function extractNumberFromKeys(obj: any, keys: string[]): number | undefined {
+  if (!obj || typeof obj !== 'object') return undefined;
+  for (const k of keys) {
+    if (obj[k] !== undefined && obj[k] !== null && obj[k] !== '') {
+      const num = parseFloat(String(obj[k]));
+      if (!isNaN(num) && num >= 0) {
+        return num;
+      }
+    }
+  }
+  return undefined;
+}
+
 export function extractSugarFromNutriments(n: Record<string, any>): number {
   if (!n) return 0;
 
-  const toNum = (v: any): number | null => {
-    if (v === undefined || v === null || v === '') return null;
-    const num = parseFloat(String(v));
-    return isNaN(num) ? null : num;
-  };
+  // 1. Authoritative total sugars per 100g or total sugars value
+  const sugar100g = extractNumberFromKeys(n, [
+    'sugars_100g', 'sugars', 'sugars_value', 'sugars-total_100g', 'sugars-total'
+  ]);
+  if (sugar100g !== undefined && sugar100g > 0) return sugar100g;
 
-  const addedSugarServing = toNum(n['added-sugars_serving']);
-  if (addedSugarServing !== null) return addedSugarServing;
+  // 2. Serving sugars
+  const sugarServing = extractNumberFromKeys(n, [
+    'sugars_serving', 'sugars-total_serving'
+  ]);
+  if (sugarServing !== undefined && sugarServing > 0) return sugarServing;
 
-  const addedSugar100g = toNum(n['added-sugars_100g'] ?? n['added-sugars']);
-  if (addedSugar100g !== null) return addedSugar100g;
+  // 3. Added sugars (only fallback if total sugar was 0 or missing)
+  const addedSugar = extractNumberFromKeys(n, [
+    'added-sugars_100g', 'added-sugars', 'added-sugars_value', 'added-sugars_serving'
+  ]);
+  if (addedSugar !== undefined && addedSugar > 0) return addedSugar;
 
-  const sugarServing = toNum(n.sugars_serving);
-  if (sugarServing !== null && sugarServing > 0) return sugarServing;
-
-  const sugar100g = toNum(n.sugars_100g ?? n.sugars);
-  if (sugar100g !== null && sugar100g > 0) return sugar100g;
-
-  const carbs100g = toNum(n.carbohydrates_100g ?? n.carbohydrates);
-  const sugarFieldExistsAsZero = sugar100g === 0;
-  if (sugarFieldExistsAsZero && carbs100g !== null && carbs100g > 0) {
-    return carbs100g;
-  }
+  // 4. Carbs fallback if sugars explicitly listed as 0 or missing
+  const carbs = extractNumberFromKeys(n, [
+    'carbohydrates_100g', 'carbohydrates', 'carbohydrates_value'
+  ]);
+  if (sugar100g === 0 && carbs !== undefined && carbs > 0) return carbs;
 
   return sugar100g ?? 0;
 }
@@ -107,116 +126,344 @@ export function extractSugarFromNutriments(n: Record<string, any>): number {
 export function parseQuantityString(str: any): number | null {
   if (!str) return null;
   const cleaned = String(str).toLowerCase().replace(/,/g, '.');
-  const match = cleaned.match(/([\d\.]+)\s*(g|ml|kg|l|cl|fl\s*oz|fl\.\s*oz|oz|ounce|ounces)/);
-  if (!match) return null;
+
+  // Try matching multi-pack syntax common in imported Indian/US/European groceries e.g. "6 x 330 ml", "4 x 100g", "10 packs x 20 g"
+  const multiMatch = cleaned.match(/(\d+)\s*[xX*]\s*([\d\.]+)\s*(g|gm|gms|gram|grams|ml|kg|l|ltr|litre|litres|cl|fl\s*oz|fl\.\s*oz|oz|ounce|ounces)/);
+  if (multiMatch) {
+    const count = parseInt(multiMatch[1], 10);
+    const val = parseFloat(multiMatch[2]);
+    const unit = multiMatch[3];
+    if (!isNaN(count) && !isNaN(val)) {
+      let unitVal = val;
+      if (unit === 'kg' || unit === 'l' || unit === 'ltr' || unit === 'litre' || unit === 'litres') unitVal = val * 1000;
+      else if (unit === 'cl') unitVal = val * 10;
+      else if (unit.startsWith('fl') || unit.includes('fl')) unitVal = val * 29.5735;
+      else if (unit === 'oz' || unit === 'ounce' || unit === 'ounces') unitVal = val * 28.3495;
+      return count * unitVal;
+    }
+  }
+
+  // Regular single quantity match (handling indian terminology like gm, gms, ltr, litre)
+  const match = cleaned.match(/([\d\.]+)\s*(g|gm|gms|gram|grams|ml|kg|l|ltr|litre|litres|cl|fl\s*oz|fl\.\s*oz|oz|ounce|ounces)/);
+  if (!match) {
+    // Fallback for raw numbers without unit strings (e.g. "140", "140.0")
+    const numMatch = cleaned.match(/([\d\.]+)/);
+    if (numMatch) {
+      const val = parseFloat(numMatch[1]);
+      if (!isNaN(val) && val > 0) return val;
+    }
+    return null;
+  }
   const val = parseFloat(match[1]);
   const unit = match[2];
   if (isNaN(val)) return null;
-  if (unit === 'kg' || unit === 'l') return val * 1000;
+  if (unit === 'kg' || unit === 'l' || unit === 'ltr' || unit === 'litre' || unit === 'litres') return val * 1000;
   if (unit === 'cl') return val * 10;
   if (unit.startsWith('fl') || unit.includes('fl')) return val * 29.5735;
   if (unit === 'oz' || unit === 'ounce' || unit === 'ounces') return val * 28.3495;
   return val;
 }
 
+// In-memory session cache for lightning-fast rescan and alternative format matching
+const productCache = new Map<string, ScanResultData | null>();
+
+/**
+ * Converts an 8-digit UPC-E string to a standard 12-digit UPC-A string.
+ * Essential for small drink cans (e.g., Coca-Cola mini cans, snack packs in US).
+ */
+function convertUpceToUpca(upce: string): string | null {
+  if (!/^\d{8}$/.test(upce)) return null;
+  const sys = upce[0];
+  const mid = upce.substring(1, 7);
+  const checkDigit = upce[7];
+  const lastDigit = mid[5];
+  let upca = "";
+  if (['0', '1', '2'].includes(lastDigit)) {
+    upca = `${sys}${mid[0]}${mid[1]}${lastDigit}0000${mid[2]}${mid[3]}${mid[4]}${checkDigit}`;
+  } else if (lastDigit === '3') {
+    upca = `${sys}${mid[0]}${mid[1]}${mid[2]}00000${mid[3]}${mid[4]}${checkDigit}`;
+  } else if (lastDigit === '4') {
+    upca = `${sys}${mid[0]}${mid[1]}${mid[2]}${mid[3]}00000${mid[4]}${checkDigit}`;
+  } else {
+    upca = `${sys}${mid[0]}${mid[1]}${mid[2]}${mid[3]}${mid[4]}0000${lastDigit}${checkDigit}`;
+  }
+  return upca;
+}
+
+/**
+ * Generates all valid candidate representations of a scanned barcode for US/European databases.
+ * Handles UPC-E (8 digits), stripped UPC-A (11 digits), standard UPC-A (12 digits),
+ * EAN-13 (13 digits), and GTIN-14 (14 digits).
+ */
+export function generateBarcodeCandidates(rawBarcode: string): string[] {
+  const cleaned = rawBarcode.trim().replace(/[^0-9]/g, '');
+  if (!cleaned) return [rawBarcode.trim()];
+  const candidates: string[] = [cleaned];
+
+  if (cleaned.length === 8) {
+    const upca = convertUpceToUpca(cleaned);
+    if (upca) {
+      candidates.push(upca);
+      candidates.push(`0${upca}`);
+      candidates.push(`00${upca}`);
+    }
+  } else if (cleaned.length === 11) {
+    candidates.push(`0${cleaned}`);
+    candidates.push(`00${cleaned}`);
+  } else if (cleaned.length === 12) {
+    candidates.push(`0${cleaned}`);
+    candidates.push(`00${cleaned}`);
+  } else if (cleaned.length === 13) {
+    if (cleaned.startsWith('0')) {
+      candidates.push(cleaned.slice(1));
+    }
+    candidates.push(`0${cleaned}`);
+  } else if (cleaned.length === 14) {
+    if (cleaned.startsWith('00')) {
+      candidates.push(cleaned.slice(1));
+      candidates.push(cleaned.slice(2));
+    } else if (cleaned.startsWith('0')) {
+      candidates.push(cleaned.slice(1));
+    }
+  }
+
+  // Deduplicate preserving order
+  return Array.from(new Set(candidates));
+}
+
+/**
+ * Universally extracts a product name from ANY language or field in an OpenFoodFacts product object.
+ */
+function extractUniversalName(p: any): string {
+  if (!p || typeof p !== 'object') return 'Scanned Food Item';
+
+  // 1. Try common explicit English and default name fields first
+  const primaryNames = [
+    p.product_name, p.product_name_en, p.generic_name, p.generic_name_en,
+    p.abbreviated_product_name, p.abbreviated_product_name_en
+  ];
+  for (const val of primaryNames) {
+    if (typeof val === 'string' && val.trim() !== '' && val.trim().toLowerCase() !== 'unknown') {
+      return val.trim();
+    }
+  }
+
+  // 2. Scan all properties in the product object for any key containing 'product_name' or 'generic_name'
+  for (const key of Object.keys(p)) {
+    if ((key.includes('product_name') || key.includes('generic_name')) && typeof p[key] === 'string') {
+      const val = p[key].trim();
+      if (val !== '' && val.toLowerCase() !== 'unknown') {
+        return val;
+      }
+    }
+  }
+
+  // 3. Try fallback to brand + category if title is completely absent
+  const brandFallback = extractUniversalBrand(p);
+  let categoryFallback = '';
+  if (Array.isArray(p.categories_tags) && p.categories_tags.length > 0) {
+    categoryFallback = String(p.categories_tags[p.categories_tags.length - 1])
+      .replace(/^[a-z]+:/i, '')
+      .replace(/-/g, ' ')
+      .trim();
+  }
+  
+  if (brandFallback !== 'Generic Brand' && categoryFallback) {
+    return `${brandFallback} (${categoryFallback})`;
+  } else if (brandFallback !== 'Generic Brand') {
+    return `${brandFallback} Product`;
+  } else if (categoryFallback) {
+    return categoryFallback.charAt(0).toUpperCase() + categoryFallback.slice(1);
+  }
+
+  return 'Scanned Food Item';
+}
+
+/**
+ * Universally extracts a brand name from ANY field or tag in an OpenFoodFacts product object.
+ */
+function extractUniversalBrand(p: any): string {
+  if (!p || typeof p !== 'object') return 'Generic Brand';
+
+  const primaryBrands = [
+    p.brands, p.brand_owner, p.brand_owner_imported, p.brands_imported
+  ];
+  for (const val of primaryBrands) {
+    if (typeof val === 'string' && val.trim() !== '') {
+      return val.split(',')[0].trim();
+    }
+  }
+
+  if (Array.isArray(p.brands_tags) && p.brands_tags.length > 0) {
+    const raw = p.brands_tags[0];
+    if (typeof raw === 'string' && raw.trim() !== '') {
+      return raw.replace(/^[a-z]+:/i, '').replace(/-/g, ' ').trim();
+    }
+  }
+
+  return 'Generic Brand';
+}
+
 export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal): Promise<ScanResultData | null> {
+  const candidates = generateBarcodeCandidates(barcode);
+
+  // 1. Check in-memory session cache first for zero-latency rescan
+  for (const cand of candidates) {
+    if (productCache.has(cand)) {
+      return productCache.get(cand)!;
+    }
+  }
+
   let resData: any = null;
 
   try {
-    const response = await fetchWithTimeout(
-      `https://world.openfoodfacts.org/api/v3/product/${encodeURIComponent(barcode)}.json`,
-      API_TIMEOUT_MS,
-      signal
-    );
+    // ─── PASS 1: Strict OpenFoodFacts v3 Priority across ALL candidates ───
+    for (const cand of candidates) {
+      if (signal.aborted) return null;
 
-    if (signal.aborted) return null;
-
-    if (response.ok) {
       try {
-        resData = await response.json();
+        const responseV3 = await fetchWithTimeout(
+          `https://world.openfoodfacts.org/api/v3/product/${encodeURIComponent(cand)}.json`,
+          API_TIMEOUT_MS,
+          signal
+        );
+        if (signal.aborted) return null;
+        if (responseV3.ok) {
+          const data = await responseV3.json();
+          if (data?.product) {
+            resData = data;
+            break;
+          }
+        }
       } catch (e) {
-        console.warn('OpenFoodFacts v3 returned invalid JSON', e);
+        if (isAbortError(e)) return null;
+        console.warn(`OFF v3 query failed for candidate ${cand}`, e);
       }
     }
 
-    if (!resData?.product && !signal.aborted) {
-      const fallbackResponse = await fetchWithTimeout(
-        `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json`,
-        API_TIMEOUT_MS,
-        signal
-      );
-      if (signal.aborted) return null;
-      if (fallbackResponse.ok) {
+    // ─── PASS 2: Fallback to OpenFoodFacts v2 ONLY if v3 returned no data ───
+    if (!resData?.product) {
+      for (const cand of candidates) {
+        if (signal.aborted) return null;
+
         try {
-          resData = await fallbackResponse.json();
+          const responseV2 = await fetchWithTimeout(
+            `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(cand)}.json`,
+            API_TIMEOUT_MS,
+            signal
+          );
+          if (signal.aborted) return null;
+          if (responseV2.ok) {
+            const data = await responseV2.json();
+            if (data?.product) {
+              resData = data;
+              break;
+            }
+          }
         } catch (e) {
-          console.warn('OpenFoodFacts v2 returned invalid JSON', e);
+          if (isAbortError(e)) return null;
+          console.warn(`OFF v2 query failed for candidate ${cand}`, e);
         }
       }
     }
 
-    if (!resData?.product) return null;
+    if (!resData?.product) {
+      for (const cand of candidates) {
+        productCache.set(cand, null);
+      }
+      return null;
+    }
 
     const p = resData.product;
-    const name = (p.product_name || p.product_name_en || 'Unknown Product').trim();
-    if (name === 'Unknown Product') return null;
+    const name = extractUniversalName(p);
+    const brand = extractUniversalBrand(p);
+    const imageUrl = p.image_front_url || p.image_url || p.image_front_small_url || undefined;
 
-    const brand = (p.brands || 'Generic Brand').trim();
-    const imageUrl = p.image_front_url || p.image_url || undefined;
+    const n = p.nutriments ?? p.nutrition_grades ?? p.nutrition_data ?? {};
 
-    const toNum = (v: any): number | null => {
-      if (v === undefined || v === null || v === '') return null;
-      const num = parseFloat(String(v));
-      return isNaN(num) ? null : num;
-    };
+    // Authoritative total sugar per 100g
+    let sugarPer100g = extractNumberFromKeys(n, [
+      'sugars_100g', 'sugars', 'sugars_value', 'sugars-total_100g', 'sugars-total'
+    ]) ?? 0;
 
-    const n = p.nutriments ?? {};
-
-    const addedSugar100g = toNum(n['added-sugars_100g'] ?? n['added-sugars']);
-    const totalSugar100g = toNum(n.sugars_100g ?? n.sugars);
-    const rawCarbs100g = toNum(n.carbohydrates_100g ?? n.carbohydrates);
-    
-    let sugarPer100g = 0;
-    if (addedSugar100g !== null) {
-      sugarPer100g = addedSugar100g;
-    } else if (totalSugar100g !== null && totalSugar100g > 0) {
-      sugarPer100g = totalSugar100g;
-    } else if (totalSugar100g === 0 && rawCarbs100g !== null && rawCarbs100g > 0) {
-      sugarPer100g = rawCarbs100g;
+    // If total sugars is 0 or missing, check added sugars
+    if (sugarPer100g === 0) {
+      const added = extractNumberFromKeys(n, [
+        'added-sugars_100g', 'added-sugars', 'added-sugars_value'
+      ]);
+      if (added !== undefined && added > 0) sugarPer100g = added;
     }
 
-    const kcal100g = toNum(n['energy-kcal_100g']);
-    const carbs100g = toNum(n.carbohydrates_100g);
-    const fat100g = toNum(n.fat_100g);
-    const protein100g = toNum(n.proteins_100g);
-
-    const addedSugarServing = toNum(n['added-sugars_serving']);
-    const totalSugarServing = toNum(n.sugars_serving);
-    
-    let servingSugarGrams: number | undefined = undefined;
-    let servingSize: string | undefined = undefined;
-    
-    const explicitSugarServing = addedSugarServing !== null ? addedSugarServing : (totalSugarServing !== null && totalSugarServing > 0 ? totalSugarServing : null);
-
-    if (explicitSugarServing !== null) {
-      servingSugarGrams = explicitSugarServing;
-      servingSize = p.serving_size ? String(p.serving_size).trim() : '1 serving';
+    // If still 0 or missing, check carbohydrates
+    if (sugarPer100g === 0) {
+      const carbs = extractNumberFromKeys(n, [
+        'carbohydrates_100g', 'carbohydrates', 'carbohydrates_value'
+      ]);
+      if (carbs !== undefined && carbs > 0) sugarPer100g = carbs;
     }
 
-    const getServingMacro = (servingField: string): number | undefined => {
-      const sVal = toNum(n[servingField]);
-      if (sVal !== null) return sVal;
-      return undefined;
-    };
+    const kcal100g = extractNumberFromKeys(n, ['energy-kcal_100g', 'energy-kcal', 'energy-kcal_value', 'energy_100g']) ?? 
+                     (extractNumberFromKeys(n, ['energy-kj_100g', 'energy-kj', 'energy_100g']) ? Math.round((extractNumberFromKeys(n, ['energy-kj_100g', 'energy-kj', 'energy_100g']) as number) / 4.184) : undefined);
+    const carbs100g = extractNumberFromKeys(n, ['carbohydrates_100g', 'carbohydrates', 'carbohydrates_value']);
+    const fat100g = extractNumberFromKeys(n, ['fat_100g', 'fat', 'fat_value']);
+    const protein100g = extractNumberFromKeys(n, ['proteins_100g', 'proteins', 'proteins_value']);
 
-    const calories = getServingMacro('energy-kcal_serving');
-    const carbsGrams = getServingMacro('carbohydrates_serving');
-    const fatGrams = getServingMacro('fat_serving');
-    const proteinGrams = getServingMacro('proteins_serving');
+    // Determine if product is liquid or solid for accurate "100 g/ml" default serving label
+    const rawQuantityStr = String(p.quantity || '').toLowerCase();
+    const rawCategoryStr = String((Array.isArray(p.categories_tags) ? p.categories_tags.join(' ') : p.categories) || '').toLowerCase();
+    const isLiquid = rawQuantityStr.includes('ml') || rawQuantityStr.includes(' l') || rawQuantityStr.includes('cl') || rawQuantityStr.includes('fl oz') ||
+                     rawCategoryStr.includes('beverage') || rawCategoryStr.includes('drink') || rawCategoryStr.includes('juice') || rawCategoryStr.includes('soda') || rawCategoryStr.includes('water') || rawCategoryStr.includes('milk') || rawCategoryStr.includes('cola') || rawCategoryStr.includes('beer');
+    const defaultUnitLabel = isLiquid ? '100 ml' : '100 g';
 
-    const sugarTeaspoons = servingSugarGrams !== undefined ? parseFloat((servingSugarGrams / 4.2).toFixed(1)) : undefined;
+    // ─── STEP 1: PER SERVING CALCULATION (Per Serving if not then 100 g/ml must be considered Per serving size) ───
+    let servingSugarGrams = extractNumberFromKeys(n, [
+      'sugars_serving', 'sugars-total_serving', 'added-sugars_serving'
+    ]);
+    let calories = extractNumberFromKeys(n, ['energy-kcal_serving']);
+    let carbsGrams = extractNumberFromKeys(n, ['carbohydrates_serving']);
+    let fatGrams = extractNumberFromKeys(n, ['fat_serving']);
+    let proteinGrams = extractNumberFromKeys(n, ['proteins_serving']);
+    
+    let servingSize: string | undefined = typeof p.serving_size === 'string' && p.serving_size.trim() !== '' && p.serving_size.trim().toLowerCase() !== 'unknown'
+      ? p.serving_size.trim()
+      : (typeof p.serving_quantity === 'number' && p.serving_quantity > 0 ? `${p.serving_quantity} ${p.serving_quantity_unit || defaultUnitLabel.split(' ')[1]}` : undefined);
 
-    const packageWeight = toNum(p.product_quantity) ?? parseQuantityString(p.quantity);
+    let isDefaultServing = false;
+    const servingWeight = servingSize ? parseQuantityString(servingSize) : null;
+
+    if (servingSize && servingWeight !== null && servingWeight > 0) {
+      // Valid explicit serving size! Recalculate serving macros from 100g/ml baseline for 100% mathematical consistency
+      if (sugarPer100g !== undefined && sugarPer100g >= 0) {
+        servingSugarGrams = parseFloat(((sugarPer100g * servingWeight) / 100).toFixed(1));
+      }
+      if (kcal100g !== undefined) {
+        calories = Math.round((kcal100g * servingWeight) / 100);
+      }
+      if (carbs100g !== undefined) {
+        carbsGrams = parseFloat(((carbs100g * servingWeight) / 100).toFixed(1));
+      }
+      if (fat100g !== undefined) {
+        fatGrams = parseFloat(((fat100g * servingWeight) / 100).toFixed(1));
+      }
+      if (protein100g !== undefined) {
+        proteinGrams = parseFloat(((protein100g * servingWeight) / 100).toFixed(1));
+      }
+    } else {
+      // Per user rule: if not then 100 g/ml must be considered Per serving size, same with per serving sugar, total energy and serving energy!
+      isDefaultServing = true;
+      servingSize = `${defaultUnitLabel} (Standard)`;
+      servingSugarGrams = sugarPer100g;
+      calories = kcal100g;
+      carbsGrams = carbs100g;
+      fatGrams = fat100g;
+      proteinGrams = protein100g;
+    }
+
+    const finalSugarGrams = servingSugarGrams ?? sugarPer100g;
+    const sugarTeaspoons = parseFloat((finalSugarGrams / 4.2).toFixed(1));
+
+    // ─── STEP 2: FULL PRODUCT SIZE / TOTAL PACKAGE CALCULATION ───
+    const packageWeight = extractNumberFromKeys(p, ['product_quantity']) ?? (parseQuantityString(p.quantity) ?? undefined);
     
     let totalSugarGrams: number | undefined = undefined;
     let totalSugarTeaspoons: number | undefined = undefined;
@@ -226,26 +473,33 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
     let totalFatGrams: number | undefined = undefined;
     let totalProteinGrams: number | undefined = undefined;
 
-    if (packageWeight !== null && packageWeight > 0) {
+    if (packageWeight !== undefined && packageWeight > 0) {
       const packageScale = packageWeight / 100;
       totalSugarGrams = parseFloat((sugarPer100g * packageScale).toFixed(1));
       totalSugarTeaspoons = parseFloat((totalSugarGrams / 4.2).toFixed(1));
-      packageSize = p.quantity ? String(p.quantity).trim() : `${packageWeight} g`;
+      packageSize = p.quantity ? String(p.quantity).trim() : `${packageWeight} ${defaultUnitLabel.split(' ')[1]}`;
       
-      if (kcal100g !== null) totalCalories = parseFloat((kcal100g * packageScale).toFixed(1));
-      if (carbs100g !== null) totalCarbsGrams = parseFloat((carbs100g * packageScale).toFixed(1));
-      if (fat100g !== null) totalFatGrams = parseFloat((fat100g * packageScale).toFixed(1));
-      if (protein100g !== null) totalProteinGrams = parseFloat((protein100g * packageScale).toFixed(1));
+      if (kcal100g !== undefined) totalCalories = Math.round(kcal100g * packageScale);
+      if (carbs100g !== undefined) totalCarbsGrams = parseFloat((carbs100g * packageScale).toFixed(1));
+      if (fat100g !== undefined) totalFatGrams = parseFloat((fat100g * packageScale).toFixed(1));
+      if (protein100g !== undefined) totalProteinGrams = parseFloat((protein100g * packageScale).toFixed(1));
+    } else if (p.quantity && typeof p.quantity === 'string' && p.quantity.trim() !== '') {
+      packageSize = p.quantity.trim();
     }
+
+    // ─── STEP 3: WHO DAILY LIMIT USAGE (Per Serving Method) ───
+    // WHO adult upper daily limit = 50g (approx 12 tsp). Safe/ideal daily limit = 25g (approx 6 tsp).
+    const whoLimitServingPercent = Math.min(500, Math.round((sugarTeaspoons / 12) * 100));
+    const whoLimitIdealServingPercent = Math.min(500, Math.round((sugarTeaspoons / 6) * 100));
 
     const categoryTag = Array.isArray(p.categories_tags) && p.categories_tags.length > 0
         ? p.categories_tags[p.categories_tags.length - 1]
         : undefined;
 
-    return {
+    const resultData: ScanResultData = {
       name,
       brand,
-      sugarGrams: servingSugarGrams ?? sugarPer100g,
+      sugarGrams: finalSugarGrams,
       sugarTeaspoons,
       sugarPer100g,
       imageUrl,
@@ -262,54 +516,86 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
       totalCarbsGrams,
       totalFatGrams,
       totalProteinGrams,
+      isDefaultServing,
+      whoLimitServingPercent,
+      whoLimitIdealServingPercent,
     };
+
+    for (const cand of candidates) {
+      productCache.set(cand, resultData);
+    }
+
+    return resultData;
   } catch (err: any) {
     if (signal.aborted || isAbortError(err)) return null;
-    throw err; // Let caller handle timeout vs network error
+    throw err;
   }
 }
 
 export async function lookupAlternatives(categoryTag: string, maxSugarPer100g: number, signal: AbortSignal): Promise<ScanResultData[]> {
   try {
-    const response = await fetchWithTimeout(
-      `https://world.openfoodfacts.org/api/v2/search?categories_tags=${encodeURIComponent(categoryTag)}&sort_by=nutriments.sugars_value&page_size=24`,
-      API_TIMEOUT_MS,
-      signal
-    );
+    // ─── Try modern OpenAPI v3 search first ───
+    let data: any = null;
+    try {
+      const responseV3 = await fetchWithTimeout(
+        `https://world.openfoodfacts.org/api/v3/search?categories_tags=${encodeURIComponent(categoryTag)}&sort_by=nutriments.sugars_value&page_size=24`,
+        API_TIMEOUT_MS,
+        signal
+      );
+      if (!signal.aborted && responseV3.ok) {
+        const json = await responseV3.json();
+        if (json?.products && json.products.length > 0) {
+          data = json;
+        }
+      }
+    } catch (e) {
+      if (isAbortError(e)) return [];
+      console.warn('OFF v3 alternatives search failed, falling back to v2:', e);
+    }
 
-    if (signal.aborted || !response.ok) return [];
+    // ─── Fallback to legacy v2 search ONLY if v3 returned no alternatives ───
+    if (!data?.products || data.products.length === 0) {
+      const responseV2 = await fetchWithTimeout(
+        `https://world.openfoodfacts.org/api/v2/search?categories_tags=${encodeURIComponent(categoryTag)}&sort_by=nutriments.sugars_value&page_size=24`,
+        API_TIMEOUT_MS,
+        signal
+      );
+      if (signal.aborted || !responseV2.ok) return [];
+      data = await responseV2.json();
+    }
 
-    const data = await response.json();
     if (!data?.products || data.products.length === 0) return [];
 
     const results: ScanResultData[] = [];
     for (const p of data.products) {
-      if (p.product_name) {
-        const sugarPer100g = p.nutriments?.sugars_100g ?? p.nutriments?.sugars ?? 0;
+      const sugarPer100g = extractNumberFromKeys(p.nutriments ?? {}, [
+        'sugars_100g', 'sugars', 'sugars_value', 'sugars-total_100g', 'sugars-total'
+      ]) ?? 0;
+      
+      const name = extractUniversalName(p);
+      if (sugarPer100g < maxSugarPer100g && name !== 'Scanned Food Item') {
+        const brand = extractUniversalBrand(p);
+        const imageUrl = p.image_front_url || p.image_url || undefined;
         
-        // Only include alternatives with strictly lower sugar
-        if (sugarPer100g < maxSugarPer100g && p.product_name.trim() !== '') {
-          const name = (p.product_name || p.product_name_en || 'Unknown Product').trim();
-          const brand = (p.brands || 'Generic Brand').trim();
-          const imageUrl = p.image_front_url || p.image_url || undefined;
-          
-          const sugarGrams = p.nutriments?.sugars_serving ?? sugarPer100g;
-          const sugarTeaspoons = parseFloat((sugarGrams / 4.2).toFixed(1));
+        const sugarGrams = extractNumberFromKeys(p.nutriments ?? {}, [
+          'sugars_serving', 'sugars-total_serving'
+        ]) ?? sugarPer100g;
+        const sugarTeaspoons = parseFloat((sugarGrams / 4.2).toFixed(1));
 
-          results.push({
-            name,
-            brand,
-            sugarGrams,
-            sugarTeaspoons,
-            sugarPer100g,
-            imageUrl,
-            servingSize: p.serving_size,
-            calories: p.nutriments?.energy_value,
-            categoryTag,
-          });
-        }
+        results.push({
+          name,
+          brand,
+          sugarGrams,
+          sugarTeaspoons,
+          sugarPer100g,
+          imageUrl,
+          servingSize: p.serving_size,
+          calories: extractNumberFromKeys(p.nutriments ?? {}, ['energy-kcal_serving', 'energy-kcal', 'energy-kcal_value']),
+          categoryTag,
+        });
       }
-      if (results.length >= 3) break;
+      // Return top 1 healthiest alternative as requested
+      if (results.length >= 1) break;
     }
     return results;
   } catch (err) {
@@ -317,4 +603,3 @@ export async function lookupAlternatives(categoryTag: string, maxSugarPer100g: n
     return [];
   }
 }
-
