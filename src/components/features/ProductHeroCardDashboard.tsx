@@ -373,77 +373,81 @@ export default function ProductHeroCardDashboard({
       </View>
 
       {/* Stealth Sugar Detective Card */}
-      {scanResult.hasHiddenSugars !== undefined && (
-        <View
-          style={{
-            backgroundColor: scanResult.hasHiddenSugars 
-              ? (isDark ? 'rgba(255, 149, 0, 0.08)' : 'rgba(255, 149, 0, 0.04)')
-              : (isDark ? 'rgba(52, 199, 89, 0.08)' : 'rgba(52, 199, 89, 0.04)'),
-            borderColor: scanResult.hasHiddenSugars 
-              ? 'rgba(255, 149, 0, 0.25)' 
-              : 'rgba(52, 199, 89, 0.25)',
-            borderWidth: 1.2,
-            borderRadius: 24,
-            padding: 16,
-            marginBottom: 20,
-            zIndex: 2,
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-            <Text style={{ 
-              color: scanResult.hasHiddenSugars ? '#FF9500' : '#34C759', 
-              fontSize: 11, 
-              fontWeight: '900', 
-              textTransform: 'uppercase', 
-              letterSpacing: 0.8 
-            }}>
-              {scanResult.hasHiddenSugars ? '⚠️ Stealth Sugar Detective' : '🟢 Stealth Sugar Audit'}
-            </Text>
-            <View style={{ 
-              backgroundColor: scanResult.hasHiddenSugars ? 'rgba(255, 149, 0, 0.15)' : 'rgba(52, 199, 89, 0.15)',
-              paddingHorizontal: 8, 
-              paddingVertical: 3, 
-              borderRadius: 6 
-            }}>
+      {(() => {
+        const hasHidden = scanResult.hasHiddenSugars === true;
+        const count = scanResult.hiddenSugarCount ?? 0;
+        return (
+          <View
+            style={{
+              backgroundColor: hasHidden 
+                ? (isDark ? 'rgba(255, 149, 0, 0.08)' : 'rgba(255, 149, 0, 0.04)')
+                : (isDark ? 'rgba(52, 199, 89, 0.08)' : 'rgba(52, 199, 89, 0.04)'),
+              borderColor: hasHidden 
+                ? 'rgba(255, 149, 0, 0.25)' 
+                : 'rgba(52, 199, 89, 0.25)',
+              borderWidth: 1.2,
+              borderRadius: 24,
+              padding: 16,
+              marginBottom: 20,
+              zIndex: 2,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
               <Text style={{ 
-                color: scanResult.hasHiddenSugars ? '#FF9500' : '#34C759', 
-                fontSize: 9, 
-                fontWeight: '800' 
+                color: hasHidden ? '#FF9500' : '#34C759', 
+                fontSize: 11, 
+                fontWeight: '900', 
+                textTransform: 'uppercase', 
+                letterSpacing: 0.8 
               }}>
-                {scanResult.hasHiddenSugars ? `${scanResult.hiddenSugarCount} matched` : 'Clean'}
+                {hasHidden ? '⚠️ Stealth Sugar Detective' : '🟢 Stealth Sugar Audit'}
               </Text>
+              <View style={{ 
+                backgroundColor: hasHidden ? 'rgba(255, 149, 0, 0.15)' : 'rgba(52, 199, 89, 0.15)',
+                paddingHorizontal: 8, 
+                paddingVertical: 3, 
+                borderRadius: 6 
+              }}>
+                <Text style={{ 
+                  color: hasHidden ? '#FF9500' : '#34C759', 
+                  fontSize: 9, 
+                  fontWeight: '800' 
+                }}>
+                  {hasHidden ? `${count} matched` : 'Clean'}
+                </Text>
+              </View>
             </View>
-          </View>
-          
-          <Text style={{ color: colors.textSecondary, fontSize: 11, lineHeight: 16 }}>
-            {scanResult.hasHiddenSugars 
-              ? 'Synonyms matched in the parsed ingredients list:'
-              : 'No hidden or stealth sugars found in this product.'}
-          </Text>
+            
+            <Text style={{ color: colors.textSecondary, fontSize: 11, lineHeight: 16 }}>
+              {hasHidden 
+                ? 'Synonyms matched in the parsed ingredients list:'
+                : 'No hidden or stealth sugars found in this product.'}
+            </Text>
 
-          {scanResult.hasHiddenSugars && scanResult.hiddenSugars && scanResult.hiddenSugars.length > 0 && (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-              {scanResult.hiddenSugars.map((sugar: string, idx: number) => (
-                <View 
-                  key={idx} 
-                  style={{ 
-                    backgroundColor: isDark ? 'rgba(255, 149, 0, 0.15)' : 'rgba(255, 149, 0, 0.08)', 
-                    borderColor: 'rgba(255, 149, 0, 0.2)',
-                    borderWidth: 1,
-                    paddingHorizontal: 8, 
-                    paddingVertical: 4, 
-                    borderRadius: 8 
-                  }}
-                >
-                  <Text style={{ color: '#FF9500', fontSize: 10, fontWeight: '800' }}>
-                    {sugar}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
-      )}
+            {hasHidden && scanResult.hiddenSugars && scanResult.hiddenSugars.length > 0 && (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                {scanResult.hiddenSugars.map((sugar: string, idx: number) => (
+                  <View 
+                    key={idx} 
+                    style={{ 
+                      backgroundColor: isDark ? 'rgba(255, 149, 0, 0.15)' : 'rgba(255, 149, 0, 0.08)', 
+                      borderColor: 'rgba(255, 149, 0, 0.2)',
+                      borderWidth: 1,
+                      paddingHorizontal: 8, 
+                      paddingVertical: 4, 
+                      borderRadius: 8 
+                    }}
+                  >
+                    <Text style={{ color: '#FF9500', fontSize: 10, fontWeight: '800' }}>
+                      {sugar}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        );
+      })()}
 
       {/* Measuring Progress Bar (WHO Guidelines - Per Serving Method) */}
       <View style={{ gap: 8, zIndex: 2 }}>
