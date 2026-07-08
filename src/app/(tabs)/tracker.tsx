@@ -50,19 +50,12 @@ export default function TrackerScreen() {
 
   const { collection, removeFromCollection, toggleFavoriteCollectionItem, sugarUnit } = useAppStore();
 
-  const [filterFavoritesOnly, setFilterFavoritesOnly] = useState(false);
-
-  // Filtered collection
-  const filteredCollection = useMemo(() => {
-    return collection.filter((item) => {
-      if (filterFavoritesOnly && !item.isFavorite) return false;
-      return true;
-    });
-  }, [collection, filterFavoritesOnly]);
+  // Filtered collection (returns full collection since My Collections only keeps liked items)
+  const filteredCollection = collection;
 
   // Stats Calculations
   const totalSaved = collection.length;
-  
+
   const totalServingSugarTspAll = collection.reduce((sum, item) => {
     const metrics = getConsistentNutritionalMetrics(item);
     return sum + metrics.servingTsp;
@@ -91,7 +84,7 @@ export default function TrackerScreen() {
   }).length, [collection]);
   const highCount = useMemo(() => collection.filter((item) => getConsistentNutritionalMetrics(item).servingTsp > 9).length, [collection]);
   const avgServingTsp = collection.length > 0 ? totalServingSugarTspAll / collection.length : 0;
-  
+
   // Estimate Yearly Sugar Avoided (compared to typical supermarket processed products ~3.5 tsp per serving)
   const yearlySavedTsp = Math.round(Math.max(0, 3.5 - avgServingTsp) * 365);
   const yearlySavedKg = ((yearlySavedTsp * 4.2) / 1000).toFixed(1);
@@ -129,41 +122,14 @@ export default function TrackerScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <View style={{ flex: 1, paddingRight: 12 }}>
-              <Text style={[styles.title, { color: colors.text }]}>My Collections</Text>
-              <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                Your curated list of Favorite Products
-              </Text>
-            </View>
-            
-            {/* Filter Favorites Toggle */}
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setFilterFavoritesOnly(!filterFavoritesOnly);
-              }}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-                backgroundColor: filterFavoritesOnly ? 'rgba(255, 82, 82, 0.12)' : isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                borderRadius: 16,
-                borderWidth: 1,
-                borderColor: filterFavoritesOnly ? '#FF5252' : colors.border,
-              }}
-            >
-              <Heart size={14} color={filterFavoritesOnly ? '#FF5252' : colors.textMuted} fill={filterFavoritesOnly ? '#FF5252' : 'transparent'} />
-              <Text style={{ color: filterFavoritesOnly ? '#FF5252' : colors.text, fontSize: 11, fontWeight: '700' }}>
-                {filterFavoritesOnly ? 'Favorites' : 'All Items'}
-              </Text>
-            </TouchableOpacity>
-          </View>
+        {/* Refined Premium Header */}
+        <View style={{ marginBottom: 22, marginTop: 4 }}>
+          <Text style={{ color: colors.text, fontSize: 32, fontWeight: '900', letterSpacing: -1.0 }}>
+            My Collection
+          </Text>
+          <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600', marginTop: 4, letterSpacing: -0.1 }}>
+            Your premium catalog of healthy choices
+          </Text>
         </View>
 
         {/* Sleek Apple Fitness Style Executive Dashboard */}
@@ -206,7 +172,7 @@ export default function TrackerScreen() {
                   const tipAngle = -Math.PI / 2 + progress * 2 * Math.PI;
                   const tipX = 55 + r * Math.cos(tipAngle);
                   const tipY = 55 + r * Math.sin(tipAngle);
-                  
+
                   return (
                     <Svg width="110" height="110" viewBox="0 0 110 110">
                       <Defs>
@@ -216,20 +182,20 @@ export default function TrackerScreen() {
                           <Stop offset="70%" stopColor={scoreInfo.color} stopOpacity="0.05" />
                           <Stop offset="100%" stopColor={scoreInfo.color} stopOpacity="0" />
                         </RadialGradient>
-                        
+
                         {/* Glass center shading */}
                         <RadialGradient id="glassBack" cx="35%" cy="35%" rx="65%" ry="65%">
                           <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.1" />
                           <Stop offset="100%" stopColor="#000000" stopOpacity="0.25" />
                         </RadialGradient>
-                        
+
                         {/* Apple Fitness style vibrant gradient */}
                         <SvgLinearGradient id="ringGrad" x1="0%" y1="100%" x2="100%" y2="0%">
                           <Stop offset="0%" stopColor={scoreInfo.color} />
                           <Stop offset="60%" stopColor={basketHealthScore >= 80 ? '#34D399' : basketHealthScore >= 50 ? '#F5A623' : '#EF4444'} />
                           <Stop offset="100%" stopColor={basketHealthScore >= 80 ? '#6EE7B7' : basketHealthScore >= 50 ? '#F8E71C' : '#F87171'} />
                         </SvgLinearGradient>
-                        
+
                         {/* Glass cylinder refraction */}
                         <SvgLinearGradient id="glassRefract" x1="0%" y1="0%" x2="100%" y2="100%">
                           <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.4" />
@@ -237,15 +203,15 @@ export default function TrackerScreen() {
                           <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.3" />
                         </SvgLinearGradient>
                       </Defs>
-                      
+
                       {/* Ambient Glow */}
                       <Circle cx="55" cy="55" r="52" fill="url(#ringGlow)" />
-                      
+
                       {/* Glass Cylinder Track Body */}
                       <Circle cx="55" cy="55" r={r} fill="none" stroke={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'} strokeWidth="11" />
                       <Circle cx="55" cy="55" r={r - 5.5} fill="none" stroke="url(#glassRefract)" strokeWidth="0.8" />
                       <Circle cx="55" cy="55" r={r + 5.5} fill="none" stroke="url(#glassRefract)" strokeWidth="0.8" />
-                      
+
                       {/* Active Progress Arc */}
                       <Circle
                         cx="55"
@@ -259,7 +225,7 @@ export default function TrackerScreen() {
                         strokeLinecap="round"
                         transform="rotate(-90 55 55)"
                       />
-                      
+
                       {/* Inner 3D Specular Highlight */}
                       <Circle
                         cx="55"
@@ -274,7 +240,7 @@ export default function TrackerScreen() {
                         transform="rotate(-90 55 55)"
                         opacity={0.35}
                       />
-                      
+
                       {/* Glowing Droplet Tip Bulb */}
                       {progress > 0.02 && (
                         <G>
@@ -286,7 +252,7 @@ export default function TrackerScreen() {
                     </Svg>
                   );
                 })()}
-                
+
                 {/* Center Score Display */}
                 <View style={{
                   position: 'absolute',
@@ -301,7 +267,7 @@ export default function TrackerScreen() {
                   </Text>
                 </View>
               </View>
-              
+
               {/* Score Label Badge */}
               <View style={{
                 backgroundColor: scoreInfo.color + '15',
@@ -439,7 +405,7 @@ export default function TrackerScreen() {
                   {collection.length > 0 ? `${Math.round((cleanCount / collection.length) * 100)}% Clean` : '0% Clean'}
                 </Text>
               </View>
-              
+
               {/* Multi-color Horizontal Progress Bar */}
               <View style={{
                 height: 8,
@@ -514,7 +480,7 @@ export default function TrackerScreen() {
                   </Text>
                 </View>
               </View>
-              
+
               <View style={{
                 backgroundColor: 'rgba(52, 199, 89, 0.15)',
                 paddingHorizontal: 8,
@@ -549,14 +515,10 @@ export default function TrackerScreen() {
                 <ShoppingBag size={36} color={colors.primary} />
               </View>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>
-                {filterFavoritesOnly
-                  ? 'No Favorites Yet'
-                  : 'Your Collection is Empty'}
+                Your Collection is Empty
               </Text>
               <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-                {filterFavoritesOnly
-                  ? 'Tap the heart icon on any saved item to add it to your favorites.'
-                  : 'Scan groceries and bookmark your favorite cleaner choices to build your personal pantry dashboard.'}
+                Scan groceries and bookmark your favorite cleaner choices to build your personal pantry dashboard.
               </Text>
               <TouchableOpacity
                 activeOpacity={0.85}
@@ -635,34 +597,7 @@ export default function TrackerScreen() {
                         <ScanBarcode size={26} color={colors.primary} />
                       )}
 
-                      {/* Absolute Heart Toggle Overlay */}
-                      <TouchableOpacity
-                        activeOpacity={0.75}
-                        onPress={() => handleToggleFavorite(item.id)}
-                        style={{
-                          position: 'absolute',
-                          top: 8,
-                          right: 8,
-                          width: 30,
-                          height: 30,
-                          borderRadius: 15,
-                          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          shadowColor: '#000',
-                          shadowOffset: { width: 0, height: 2 },
-                          shadowOpacity: 0.15,
-                          shadowRadius: 4,
-                          elevation: 3,
-                          zIndex: 10,
-                        }}
-                      >
-                        <Heart
-                          size={14}
-                          color={item.isFavorite ? '#FF5252' : colors.textMuted}
-                          fill={item.isFavorite ? '#FF5252' : 'transparent'}
-                        />
-                      </TouchableOpacity>
+
 
                       {/* Absolute Safety LED Overlay */}
                       <View style={{
@@ -737,7 +672,7 @@ export default function TrackerScreen() {
                           {servingWeightStr}
                         </Text>
                       </View>
-                      
+
                       <TouchableOpacity
                         activeOpacity={0.7}
                         onPress={() => handleRemove(item.id, item.name)}
