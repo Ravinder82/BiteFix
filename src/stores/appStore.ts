@@ -38,7 +38,11 @@ interface AppState {
     categoryTag?: string,
     isDefaultServing?: boolean,
     whoLimitServingPercent?: number,
-    whoLimitIdealServingPercent?: number
+    whoLimitIdealServingPercent?: number,
+    ingredientsText?: string,
+    hasHiddenSugars?: boolean,
+    hiddenSugars?: string[],
+    hiddenSugarCount?: number
   ) => void;
   deleteScan: (id: string) => void;
   clearScans: () => void;
@@ -89,7 +93,11 @@ export const useAppStore = create<AppState>()(
         categoryTag,
         isDefaultServing,
         whoLimitServingPercent,
-        whoLimitIdealServingPercent
+        whoLimitIdealServingPercent,
+        ingredientsText,
+        hasHiddenSugars,
+        hiddenSugars,
+        hiddenSugarCount
       ) => set((state) => {
         const timestamp = Date.now();
         const sugarTeaspoons = sugarGrams / SUGAR_CONVERSION_GRAMS_PER_TEASPOON;
@@ -116,6 +124,10 @@ export const useAppStore = create<AppState>()(
           isDefaultServing,
           whoLimitServingPercent: calculatedWhoServing,
           whoLimitIdealServingPercent: calculatedWhoIdeal,
+          ingredientsText,
+          hasHiddenSugars,
+          hiddenSugars,
+          hiddenSugarCount,
         };
         const scans = [newScan, ...state.scans];
         return { scans };

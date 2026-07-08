@@ -14,7 +14,13 @@ export interface ScanResultData {
   isDefaultServing?: boolean;
   whoLimitServingPercent?: number;
   whoLimitIdealServingPercent?: number;
+  ingredientsText?: string;
+  hasHiddenSugars?: boolean;
+  hiddenSugars?: string[];
+  hiddenSugarCount?: number;
 }
+
+import { detectStealthSugars } from './stealthSugarDetector';
 
 export class RequestTimeoutError extends Error {
   constructor(timeoutMs: number) {
@@ -464,6 +470,9 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
         ? p.categories_tags[p.categories_tags.length - 1]
         : undefined;
 
+    const ingredientsText = p.ingredients_text_en || p.ingredients_text || undefined;
+    const stealthAnalysis = detectStealthSugars(ingredientsText);
+
     const resultData: ScanResultData = {
       name,
       brand,
@@ -480,6 +489,10 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
       isDefaultServing,
       whoLimitServingPercent,
       whoLimitIdealServingPercent,
+      ingredientsText,
+      hasHiddenSugars: stealthAnalysis.hasHiddenSugars,
+      hiddenSugars: stealthAnalysis.matches,
+      hiddenSugarCount: stealthAnalysis.hiddenSugarCount,
     };
 
     for (const cand of candidates) {
@@ -543,6 +556,9 @@ export async function lookupAlternatives(categoryTag: string, maxSugarPer100g: n
         ]) ?? sugarPer100g;
         const sugarTeaspoons = parseFloat((sugarGrams / 4.2).toFixed(1));
 
+        const ingredientsText = p.ingredients_text_en || p.ingredients_text || undefined;
+        const stealthAnalysis = detectStealthSugars(ingredientsText);
+
         results.push({
           name,
           brand,
@@ -553,11 +569,26 @@ export async function lookupAlternatives(categoryTag: string, maxSugarPer100g: n
           servingSize: p.serving_size,
           calories: extractNumberFromKeys(p.nutriments ?? {}, ['energy-kcal_serving', 'energy-kcal', 'energy-kcal_value']),
           categoryTag,
+          ingredientsText,
+          hasHiddenSugars: stealthAnalysis.hasHiddenSugars,
+          hiddenSugars: stealthAnalysis.matches,
+          hiddenSugarCount: stealthAnalysis.hiddenSugarCount,
         });
       }
-      // Return top 1 healthiest alternative as requested
-      if (results.length >= 1) break;
     }
+
+    // Sort to prioritize products with zero stealth sugars first, then by sugar content ascending
+    results.sort((a, b) => {
+      const aCount = a.hiddenSugarCount ?? 0;
+      const bCount = b.hiddenSugarCount ?? 0;
+      
+      if (aCount === 0 && bCount > 0) return -1;
+      if (aCount > 0 && bCount === 0) return 1;
+      
+      // If both have/don't have stealth sugars, sort by sugar content per 100g
+      return (a.sugarPer100g ?? 0) - (b.sugarPer100g ?? 0);
+    });
+
     return results;
   } catch (err) {
     console.warn('Error fetching alternatives:', err);

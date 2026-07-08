@@ -13,6 +13,9 @@ interface NutritionFactsProps {
   sugarPer100g?: number;
   whoLimitServingPercent?: number;
   isDefaultServing?: boolean;
+  hasHiddenSugars?: boolean;
+  hiddenSugars?: string[];
+  hiddenSugarCount?: number;
 }
 
 export function NutritionFacts({
@@ -24,6 +27,9 @@ export function NutritionFacts({
   sugarPer100g,
   whoLimitServingPercent,
   isDefaultServing,
+  hasHiddenSugars,
+  hiddenSugars,
+  hiddenSugarCount,
 }: NutritionFactsProps) {
   const { sugarUnit } = useAppStore();
   const isDarkMode = colors.background === '#000000';
@@ -155,6 +161,78 @@ export function NutritionFacts({
             </View>
           )}
         </View>
+
+        {/* Stealth Sugar Detective Card */}
+        {hasHiddenSugars !== undefined && (
+          <View
+            style={{
+              backgroundColor: hasHiddenSugars 
+                ? (isDarkMode ? 'rgba(255, 149, 0, 0.08)' : 'rgba(255, 149, 0, 0.04)')
+                : (isDarkMode ? 'rgba(52, 199, 89, 0.08)' : 'rgba(52, 199, 89, 0.04)'),
+              borderColor: hasHiddenSugars 
+                ? 'rgba(255, 149, 0, 0.3)' 
+                : 'rgba(52, 199, 89, 0.3)',
+              borderWidth: 1.5,
+              borderRadius: 18,
+              padding: 16,
+              marginTop: 14,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <Text style={{ 
+                color: hasHiddenSugars ? '#FF9500' : '#34C759', 
+                fontSize: 12, 
+                fontWeight: '900', 
+                textTransform: 'uppercase', 
+                letterSpacing: 0.8 
+              }}>
+                {hasHiddenSugars ? '⚠️ Stealth Sugar Detective' : '🟢 Stealth Sugar Audit'}
+              </Text>
+              <View style={{ 
+                backgroundColor: hasHiddenSugars ? 'rgba(255, 149, 0, 0.15)' : 'rgba(52, 199, 89, 0.15)',
+                paddingHorizontal: 8, 
+                paddingVertical: 3, 
+                borderRadius: 6 
+              }}>
+                <Text style={{ 
+                  color: hasHiddenSugars ? '#FF9500' : '#34C759', 
+                  fontSize: 9, 
+                  fontWeight: '800' 
+                }}>
+                  {hasHiddenSugars ? `${hiddenSugarCount} matched` : 'Clean'}
+                </Text>
+              </View>
+            </View>
+            
+            <Text style={{ color: colors.textSecondary, fontSize: 11, lineHeight: 16 }}>
+              {hasHiddenSugars 
+                ? 'Added sugars disguised under chemical synonyms bypass basic checks. Detected stealth sweeteners:'
+                : 'No hidden chemical sweeteners or stealth sugars matched in the parsed ingredients list.'}
+            </Text>
+
+            {hasHiddenSugars && hiddenSugars && hiddenSugars.length > 0 && (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+                {hiddenSugars.map((sugar, idx) => (
+                  <View 
+                    key={idx} 
+                    style={{ 
+                      backgroundColor: isDarkMode ? 'rgba(255, 149, 0, 0.15)' : 'rgba(255, 149, 0, 0.1)', 
+                      borderColor: 'rgba(255, 149, 0, 0.25)',
+                      borderWidth: 1,
+                      paddingHorizontal: 8, 
+                      paddingVertical: 4, 
+                      borderRadius: 8 
+                    }}
+                  >
+                    <Text style={{ color: '#FF9500', fontSize: 10, fontWeight: '800' }}>
+                      {sugar}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
       </View>
     </View>
   );

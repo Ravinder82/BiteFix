@@ -125,7 +125,7 @@ export default function TrackerScreen() {
         {/* Refined Premium Header */}
         <View style={{ marginBottom: 22, marginTop: 4 }}>
           <Text style={{ color: colors.text, fontSize: 32, fontWeight: '900', letterSpacing: -1.0 }}>
-            My Collection
+            My Pantry
           </Text>
           <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '600', marginTop: 4, letterSpacing: -0.1 }}>
             Your premium catalog of healthy choices

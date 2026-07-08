@@ -20,6 +20,10 @@ export interface ScanHistoryItem {
   isDefaultServing?: boolean;
   whoLimitServingPercent?: number;
   whoLimitIdealServingPercent?: number;
+  ingredientsText?: string;
+  hasHiddenSugars?: boolean;
+  hiddenSugars?: string[];
+  hiddenSugarCount?: number;
 }
 
 export type CleanBiteCategory = 

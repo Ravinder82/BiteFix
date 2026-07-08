@@ -226,28 +226,7 @@ export default function ScannerScreen() {
   const [saveStatus, setSaveStatus] = useState<'typing' | 'saving' | 'saved'>('typing');
 
   // Scan Result State
-  const [scanResult, setScanResult] = useState<{
-    name: string;
-    brand: string;
-
-    // Serving-based
-    sugarGrams?: number;
-    sugarTeaspoons?: number;
-    servingSize?: string;
-    calories?: number;
-    carbsGrams?: number;
-    fatGrams?: number;
-    proteinGrams?: number;
-
-
-
-    imageUrl?: string;
-    sugarPer100g?: number;     // Used for accurate normalized comparisons
-    categoryTag?: string;      // e.g. 'en:breakfast-cereals'
-    whoLimitServingPercent?: number;
-    whoLimitIdealServingPercent?: number;
-    isDefaultServing?: boolean;
-  } | null>(null);
+  const [scanResult, setScanResult] = useState<ScanResultData | null>(null);
 
   // Alternatives State
   const [alternatives, setAlternatives] = useState<ScanResultData[]>([]);
@@ -409,7 +388,14 @@ export default function ScannerScreen() {
           result.fatGrams,
           result.proteinGrams,
           result.sugarPer100g,
-          result.categoryTag
+          result.categoryTag,
+          result.isDefaultServing,
+          result.whoLimitServingPercent,
+          result.whoLimitIdealServingPercent,
+          result.ingredientsText,
+          result.hasHiddenSugars,
+          result.hiddenSugars,
+          result.hiddenSugarCount
         );
 
         if (isCurrentLookup()) {
@@ -1374,6 +1360,13 @@ export default function ScannerScreen() {
                             <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '900', marginTop: 'auto' }}>
                               {originalTsp.toFixed(1).replace(/\.0$/, '')} tsp
                             </Text>
+                            {scanResult.hasHiddenSugars && (
+                              <View style={{ backgroundColor: 'rgba(255, 149, 0, 0.12)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginTop: 2 }}>
+                                <Text style={{ color: '#FF9500', fontSize: 8, fontWeight: '900' }}>
+                                  ⚠️ {scanResult.hiddenSugarCount} Stealth Sugars
+                                </Text>
+                              </View>
+                            )}
                           </View>
 
                           {/* Vs Indicator */}
@@ -1426,6 +1419,21 @@ export default function ScannerScreen() {
                             <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '900', marginTop: 'auto' }}>
                               {altTsp.toFixed(1).replace(/\.0$/, '')} tsp
                             </Text>
+                            <View style={{ 
+                              backgroundColor: alt.hasHiddenSugars ? 'rgba(255, 149, 0, 0.12)' : 'rgba(52, 199, 89, 0.12)', 
+                              paddingHorizontal: 6, 
+                              paddingVertical: 2, 
+                              borderRadius: 6, 
+                              marginTop: 2 
+                            }}>
+                              <Text style={{ 
+                                color: alt.hasHiddenSugars ? '#FF9500' : '#34C759', 
+                                fontSize: 8, 
+                                fontWeight: '900' 
+                              }}>
+                                {alt.hasHiddenSugars ? `⚠️ ${alt.hiddenSugarCount} Stealth` : '🌿 Clean Swap'}
+                              </Text>
+                            </View>
                           </View>
                         </View>
 
@@ -1541,6 +1549,9 @@ export default function ScannerScreen() {
               sugarPer100g={scanResult.sugarPer100g}
               whoLimitServingPercent={scanResult.whoLimitServingPercent ?? (scanResult.sugarTeaspoons !== undefined ? Math.round((scanResult.sugarTeaspoons / 12) * 100) : undefined)}
               isDefaultServing={scanResult.isDefaultServing}
+              hasHiddenSugars={scanResult.hasHiddenSugars}
+              hiddenSugars={scanResult.hiddenSugars}
+              hiddenSugarCount={scanResult.hiddenSugarCount}
             />
 
             {/* Scan Again Button */}
