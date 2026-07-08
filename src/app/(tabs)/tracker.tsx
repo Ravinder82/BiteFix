@@ -24,6 +24,8 @@ import {
   Share2,
   ShoppingBag,
   CheckCircle2,
+  Package,
+  Gauge,
 } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { useAppStore } from '../../stores/appStore';
@@ -238,35 +240,35 @@ export default function TrackerScreen() {
           <View style={{ width: 1, alignSelf: 'stretch', backgroundColor: colors.border }} />
 
           {/* Right Side: Bento Stats Capsules */}
-          <View style={{ flex: 1, gap: 8, justifyContent: 'center' }}>
+          <View style={{ flex: 1, gap: 10, justifyContent: 'center' }}>
             {/* Stat 1: Total Items Saved */}
             <View style={{
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.02)',
-              borderRadius: 14,
-              padding: 8,
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.015)',
+              borderRadius: 16,
+              padding: 10,
               borderWidth: 1,
               borderColor: colors.border,
             }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: 8,
+                  width: 30,
+                  height: 30,
+                  borderRadius: 10,
                   backgroundColor: colors.primary + '12',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}>
-                  <Bookmark size={12} color={colors.primary} />
+                  <Package size={14} color={colors.primary} />
                 </View>
                 <View style={{ flexShrink: 1 }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>Items Saved</Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 7, fontWeight: '500' }} numberOfLines={1}>In your pantry</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.2 }}>Items Saved</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '500', marginTop: 1 }} numberOfLines={1}>In your pantry</Text>
                 </View>
               </View>
-              <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900' }}>
+              <Text style={{ color: colors.text, fontSize: 15, fontWeight: '900' }}>
                 {totalSaved}
               </Text>
             </View>
@@ -276,30 +278,30 @@ export default function TrackerScreen() {
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.02)',
-              borderRadius: 14,
-              padding: 8,
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.015)',
+              borderRadius: 16,
+              padding: 10,
               borderWidth: 1,
               borderColor: colors.border,
             }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: 8,
+                  width: 30,
+                  height: 30,
+                  borderRadius: 10,
                   backgroundColor: 'rgba(255, 149, 0, 0.12)',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}>
-                  <Sparkles size={12} color="#FF9500" />
+                  <Gauge size={14} color="#FF9500" />
                 </View>
                 <View style={{ flexShrink: 1 }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>Total Sugar</Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 7, fontWeight: '500' }} numberOfLines={1}>Per serving sum</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.2 }}>Total Sugar</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '500', marginTop: 1 }} numberOfLines={1}>Per serving sum</Text>
                 </View>
               </View>
-              <Text style={{ color: '#FF9500', fontSize: 13, fontWeight: '900' }}>
-                {totalServingSugarTspAll.toFixed(1).replace(/\.0$/, '')}<Text style={{ fontSize: 9, fontWeight: '700' }}> tsp</Text>
+              <Text style={{ color: '#FF9500', fontSize: 15, fontWeight: '900' }}>
+                {totalServingSugarTspAll.toFixed(1).replace(/\.0$/, '')}<Text style={{ fontSize: 10, fontWeight: '700' }}> tsp</Text>
               </Text>
             </View>
           </View>
