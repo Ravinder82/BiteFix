@@ -651,6 +651,28 @@ export default function TrackerScreen() {
                       <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.2, marginTop: 1 }}>
                         {formatSugar(metrics.servingSugarG, sugarUnit)} sugar
                       </Text>
+                      {item.hasHiddenSugars !== undefined && (
+                        <View style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 4,
+                          backgroundColor: item.hasHiddenSugars ? 'rgba(255, 149, 0, 0.12)' : 'rgba(52, 199, 89, 0.12)',
+                          paddingHorizontal: 6,
+                          paddingVertical: 2,
+                          borderRadius: 6,
+                          marginTop: 4,
+                        }}>
+                          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: item.hasHiddenSugars ? '#FF9500' : '#34C759' }} />
+                          <Text style={{
+                            color: item.hasHiddenSugars ? '#FF9500' : '#34C759',
+                            fontSize: 7.5,
+                            fontWeight: '800',
+                            textTransform: 'uppercase',
+                          }}>
+                            {item.hasHiddenSugars ? `${item.hiddenSugarCount} Stealth` : 'Clean'}
+                          </Text>
+                        </View>
+                      )}
                     </View>
 
                     {/* Footer Stats: Serving & Delete Button */}

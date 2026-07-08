@@ -125,9 +125,23 @@ function ScanHistoryItemRow({ item, colors, isDark, onPress, onDelete }: any) {
         >
           {item.name}
         </Text>
-        <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600', marginTop: 2 }}>
-          {formatWeight(item.servingSize, sugarUnit) || '1 serving'} per serving
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4, marginTop: 2 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600' }}>
+            {formatWeight(item.servingSize, sugarUnit) || '1 serving'} per serving
+          </Text>
+          {item.hasHiddenSugars !== undefined && (
+            <>
+              <Text style={{ color: colors.textMuted, fontSize: 8 }}>•</Text>
+              <Text style={{
+                color: item.hasHiddenSugars ? '#FF9500' : '#34C759',
+                fontSize: 8,
+                fontWeight: '900',
+              }}>
+                {item.hasHiddenSugars ? `⚠️ ${item.hiddenSugarCount} Stealth` : '🌿 Clean'}
+              </Text>
+            </>
+          )}
+        </View>
       </View>
 
       {/* Right Column: Mini LED + Teaspoons */}
