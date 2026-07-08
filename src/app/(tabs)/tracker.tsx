@@ -410,6 +410,7 @@ export default function TrackerScreen() {
                         }}>
                           <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>
                             {item.isDefaultServing ? '100g Standard' : `Serving: ${servingWeightStr}`}
+                            {metrics.servingCalories !== undefined ? ` • ${Math.round(metrics.servingCalories)} kcal` : ''}
                           </Text>
                         </View>
                       </View>
@@ -419,29 +420,35 @@ export default function TrackerScreen() {
                   {/* Divider */}
                   <View style={{ height: 1, backgroundColor: colors.border, marginBottom: 12 }} />
 
-                  {/* Bottom Section: Nutritional Specs and Actions */}
+                  {/* Bottom Section: Sugar Teaspoons Focus and Actions */}
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <View style={{ flexDirection: 'row', gap: 16 }}>
-                      {/* Sugar specs */}
+                      {/* Teaspoons count */}
                       <View style={{ gap: 2 }}>
                         <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4 }}>
-                          Sugar Content
+                          Teaspoons
                         </Text>
-                        <Text style={{ color: colors.primary, fontSize: 15, fontWeight: '900' }}>
-                          {formatSugar(metrics.servingSugarG, sugarUnit)} <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textSecondary }}>({metrics.servingTsp.toFixed(1).replace(/\.0$/, '')} tsp)</Text>
+                        <Text style={{ color: colors.primary, fontSize: 18, fontWeight: '900', letterSpacing: -0.5 }}>
+                          {metrics.servingTsp.toFixed(1).replace(/\.0$/, '')} <Text style={{ fontSize: 10, fontWeight: '800', color: colors.textSecondary }}>tsp</Text>
+                        </Text>
+                        <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600' }}>
+                          ({formatSugar(metrics.servingSugarG, sugarUnit)})
                         </Text>
                       </View>
 
                       {/* Tiny vertical divider */}
-                      <View style={{ width: 1, backgroundColor: colors.border, marginVertical: 2 }} />
+                      <View style={{ width: 1, backgroundColor: colors.border, marginVertical: 4 }} />
 
-                      {/* Energy specs */}
+                      {/* Daily Limit Used */}
                       <View style={{ gap: 2 }}>
                         <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4 }}>
-                          Energy
+                          Daily Limit
                         </Text>
-                        <Text style={{ color: colors.text, fontSize: 15, fontWeight: '900' }}>
-                          {metrics.servingCalories !== undefined ? `${Math.round(metrics.servingCalories)} kcal` : '—'}
+                        <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900', letterSpacing: -0.5 }}>
+                          {metrics.whoLimitPercent}%
+                        </Text>
+                        <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600' }}>
+                          of 12 tsp Max
                         </Text>
                       </View>
                     </View>
