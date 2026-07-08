@@ -7,7 +7,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop, G, Path } from 'react-native-svg';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -26,6 +26,9 @@ import {
   CheckCircle2,
   Package,
   Gauge,
+  Award,
+  ShieldCheck,
+  Flame,
 } from 'lucide-react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { useAppStore } from '../../stores/appStore';
@@ -79,6 +82,19 @@ export default function TrackerScreen() {
   };
 
   const scoreInfo = getScoreInfo(basketHealthScore);
+
+  // Pantry Composition & Annual Impact Calculations
+  const cleanCount = useMemo(() => collection.filter((item) => getConsistentNutritionalMetrics(item).servingTsp <= 2).length, [collection]);
+  const modCount = useMemo(() => collection.filter((item) => {
+    const tsp = getConsistentNutritionalMetrics(item).servingTsp;
+    return tsp > 2 && tsp <= 9;
+  }).length, [collection]);
+  const highCount = useMemo(() => collection.filter((item) => getConsistentNutritionalMetrics(item).servingTsp > 9).length, [collection]);
+  const avgServingTsp = collection.length > 0 ? totalServingSugarTspAll / collection.length : 0;
+  
+  // Estimate Yearly Sugar Avoided (compared to typical supermarket processed products ~3.5 tsp per serving)
+  const yearlySavedTsp = Math.round(Math.max(0, 3.5 - avgServingTsp) * 365);
+  const yearlySavedKg = ((yearlySavedTsp * 4.2) / 1000).toFixed(1);
 
   const handleRemove = (id: string, name: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -150,159 +166,334 @@ export default function TrackerScreen() {
           </View>
         </View>
 
-        {/* Sleek and Clean Single Dashboard */}
+        {/* Sleek Apple Fitness Style Executive Dashboard */}
         <View
           style={{
             backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : colors.background,
             borderColor: colors.border,
             borderWidth: 1.2,
-            borderRadius: 24,
-            padding: 16,
+            borderRadius: 28,
+            padding: 18,
             marginBottom: 24,
-            flexDirection: 'row',
-            alignItems: 'center',
             gap: 16,
             shadowColor: '#000',
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: isDark ? 0.15 : 0.02,
-            shadowRadius: 12,
-            elevation: 3,
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: isDark ? 0.2 : 0.03,
+            shadowRadius: 16,
+            elevation: 4,
           }}
         >
-          {/* Left Side: Circular Basket Health Score */}
-          <View style={{
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 100,
-          }}>
+          {/* Top Section: Apple Fitness Ring + Key Bento Stats */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+            {/* Left Side: Apple Fitness Style Radial Progress Ring */}
             <View style={{
-              width: 80,
-              height: 80,
               alignItems: 'center',
               justifyContent: 'center',
-              position: 'relative',
+              width: 110,
             }}>
-              <Svg width="80" height="80" viewBox="0 0 80 80">
-                {/* Background Track Circle */}
-                <Circle
-                  cx="40"
-                  cy="40"
-                  r="33"
-                  stroke={scoreInfo.color + '15'}
-                  strokeWidth="6"
-                  fill="transparent"
-                />
-                {/* Active Progress Circle */}
-                <Circle
-                  cx="40"
-                  cy="40"
-                  r="33"
-                  stroke={scoreInfo.color}
-                  strokeWidth="6"
-                  fill="transparent"
-                  strokeDasharray="207.3"
-                  strokeDashoffset={207.3 - (207.3 * basketHealthScore) / 100}
-                  strokeLinecap="round"
-                  transform="rotate(-90 40 40)"
-                />
-              </Svg>
-              
-              {/* Score Value Overlay */}
               <View style={{
-                position: 'absolute',
+                width: 110,
+                height: 110,
                 alignItems: 'center',
                 justifyContent: 'center',
+                position: 'relative',
               }}>
-                <Text style={{ color: colors.text, fontSize: 22, fontWeight: '900', letterSpacing: -0.5 }}>
-                  {basketHealthScore}
-                </Text>
-                <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '800', marginTop: -2, textTransform: 'uppercase' }}>
-                  Score
+                {(() => {
+                  const r = 43;
+                  const circ = 2 * Math.PI * r;
+                  const progress = Math.min(100, basketHealthScore) / 100;
+                  const offset = circ - circ * progress;
+                  const tipAngle = -Math.PI / 2 + progress * 2 * Math.PI;
+                  const tipX = 55 + r * Math.cos(tipAngle);
+                  const tipY = 55 + r * Math.sin(tipAngle);
+                  
+                  return (
+                    <Svg width="110" height="110" viewBox="0 0 110 110">
+                      <Defs>
+                        {/* Ambient glow halo */}
+                        <RadialGradient id="ringGlow" cx="50%" cy="50%" rx="50%" ry="50%">
+                          <Stop offset="0%" stopColor={scoreInfo.color} stopOpacity="0.28" />
+                          <Stop offset="70%" stopColor={scoreInfo.color} stopOpacity="0.05" />
+                          <Stop offset="100%" stopColor={scoreInfo.color} stopOpacity="0" />
+                        </RadialGradient>
+                        
+                        {/* Glass center shading */}
+                        <RadialGradient id="glassBack" cx="35%" cy="35%" rx="65%" ry="65%">
+                          <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.1" />
+                          <Stop offset="100%" stopColor="#000000" stopOpacity="0.25" />
+                        </RadialGradient>
+                        
+                        {/* Apple Fitness style vibrant gradient */}
+                        <SvgLinearGradient id="ringGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                          <Stop offset="0%" stopColor={scoreInfo.color} />
+                          <Stop offset="60%" stopColor={basketHealthScore >= 80 ? '#34D399' : basketHealthScore >= 50 ? '#F5A623' : '#EF4444'} />
+                          <Stop offset="100%" stopColor={basketHealthScore >= 80 ? '#6EE7B7' : basketHealthScore >= 50 ? '#F8E71C' : '#F87171'} />
+                        </SvgLinearGradient>
+                        
+                        {/* Glass cylinder refraction */}
+                        <SvgLinearGradient id="glassRefract" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.4" />
+                          <Stop offset="50%" stopColor={scoreInfo.color} stopOpacity="0.1" />
+                          <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.3" />
+                        </SvgLinearGradient>
+                      </Defs>
+                      
+                      {/* Ambient Glow */}
+                      <Circle cx="55" cy="55" r="52" fill="url(#ringGlow)" />
+                      
+                      {/* Glass Cylinder Track Body */}
+                      <Circle cx="55" cy="55" r={r} fill="none" stroke={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'} strokeWidth="11" />
+                      <Circle cx="55" cy="55" r={r - 5.5} fill="none" stroke="url(#glassRefract)" strokeWidth="0.8" />
+                      <Circle cx="55" cy="55" r={r + 5.5} fill="none" stroke="url(#glassRefract)" strokeWidth="0.8" />
+                      
+                      {/* Active Progress Arc */}
+                      <Circle
+                        cx="55"
+                        cy="55"
+                        r={r}
+                        fill="none"
+                        stroke="url(#ringGrad)"
+                        strokeWidth="11"
+                        strokeDasharray={circ}
+                        strokeDashoffset={offset}
+                        strokeLinecap="round"
+                        transform="rotate(-90 55 55)"
+                      />
+                      
+                      {/* Inner 3D Specular Highlight */}
+                      <Circle
+                        cx="55"
+                        cy="55"
+                        r={r}
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="2"
+                        strokeDasharray={circ}
+                        strokeDashoffset={offset}
+                        strokeLinecap="round"
+                        transform="rotate(-90 55 55)"
+                        opacity={0.35}
+                      />
+                      
+                      {/* Glowing Droplet Tip Bulb */}
+                      {progress > 0.02 && (
+                        <G>
+                          <Circle cx={tipX} cy={tipY} r="10" fill="url(#ringGrad)" opacity={0.3} />
+                          <Circle cx={tipX} cy={tipY} r="7" fill="url(#ringGrad)" />
+                          <Circle cx={tipX} cy={tipY} r="2" fill="white" opacity={0.85} />
+                        </G>
+                      )}
+                    </Svg>
+                  );
+                })()}
+                
+                {/* Center Score Display */}
+                <View style={{
+                  position: 'absolute',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', letterSpacing: -0.8 }}>
+                    {basketHealthScore}
+                  </Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '800', marginTop: -3, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    Grade
+                  </Text>
+                </View>
+              </View>
+              
+              {/* Score Label Badge */}
+              <View style={{
+                backgroundColor: scoreInfo.color + '15',
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: 10,
+                marginTop: 6,
+                borderWidth: 0.8,
+                borderColor: scoreInfo.color + '35',
+              }}>
+                <Text style={{ color: scoreInfo.color, fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+                  {scoreInfo.label}
                 </Text>
               </View>
             </View>
-            <View style={{
-              backgroundColor: scoreInfo.color + '12',
-              paddingHorizontal: 8,
-              paddingVertical: 3,
-              borderRadius: 8,
-              marginTop: 8,
-              borderWidth: 0.5,
-              borderColor: scoreInfo.color + '25',
-            }}>
-              <Text style={{ color: scoreInfo.color, fontSize: 8, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.2 }}>
-                {scoreInfo.label}
-              </Text>
+
+            {/* Vertical Divider */}
+            <View style={{ width: 1, alignSelf: 'stretch', backgroundColor: colors.border }} />
+
+            {/* Right Side: Bento Stats Capsules */}
+            <View style={{ flex: 1, gap: 10, justifyContent: 'center' }}>
+              {/* Stat 1: Total Items Saved */}
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.015)',
+                borderRadius: 16,
+                padding: 10,
+                borderWidth: 1,
+                borderColor: colors.border,
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <View style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 10,
+                    backgroundColor: colors.primary + '15',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <Package size={15} color={colors.primary} />
+                  </View>
+                  <View style={{ flexShrink: 1 }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.3 }}>Items Saved</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '500', marginTop: 1 }} numberOfLines={1}>In your pantry</Text>
+                  </View>
+                </View>
+                <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900' }}>
+                  {totalSaved}
+                </Text>
+              </View>
+
+              {/* Stat 2: Avg Sugar per Serving */}
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.015)',
+                borderRadius: 16,
+                padding: 10,
+                borderWidth: 1,
+                borderColor: colors.border,
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <View style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 10,
+                    backgroundColor: 'rgba(255, 149, 0, 0.15)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <Gauge size={15} color="#FF9500" />
+                  </View>
+                  <View style={{ flexShrink: 1 }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.3 }}>Avg Sugar</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '500', marginTop: 1 }} numberOfLines={1}>Per serving mean</Text>
+                  </View>
+                </View>
+                <Text style={{ color: '#FF9500', fontSize: 16, fontWeight: '900' }}>
+                  {avgServingTsp.toFixed(1).replace(/\.0$/, '')}<Text style={{ fontSize: 10, fontWeight: '700' }}> tsp</Text>
+                </Text>
+              </View>
             </View>
           </View>
 
-          {/* Vertical Divider */}
-          <View style={{ width: 1, alignSelf: 'stretch', backgroundColor: colors.border }} />
+          {/* Horizontal Divider */}
+          <View style={{ height: 1, backgroundColor: colors.border }} />
 
-          {/* Right Side: Bento Stats Capsules */}
-          <View style={{ flex: 1, gap: 10, justifyContent: 'center' }}>
-            {/* Stat 1: Total Items Saved */}
-            <View style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.015)',
-              borderRadius: 16,
-              padding: 10,
-              borderWidth: 1,
-              borderColor: colors.border,
-            }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <View style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 10,
-                  backgroundColor: colors.primary + '12',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                  <Package size={14} color={colors.primary} />
+          {/* Bottom Section: Pantry Health Composition & Annual Impact Selling Point */}
+          <View style={{ gap: 12 }}>
+            {/* Pantry Composition Distribution Bar */}
+            <View style={{ gap: 6 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+                  Pantry Composition
+                </Text>
+                <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700' }}>
+                  {collection.length > 0 ? `${Math.round((cleanCount / collection.length) * 100)}% Clean` : '0% Clean'}
+                </Text>
+              </View>
+              
+              {/* Multi-color Horizontal Progress Bar */}
+              <View style={{
+                height: 8,
+                borderRadius: 4,
+                backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                flexDirection: 'row',
+                overflow: 'hidden',
+                gap: 2,
+              }}>
+                {cleanCount > 0 && (
+                  <View style={{ flex: cleanCount, backgroundColor: '#34C759', borderRadius: 4 }} />
+                )}
+                {modCount > 0 && (
+                  <View style={{ flex: modCount, backgroundColor: '#FF9500', borderRadius: 4 }} />
+                )}
+                {highCount > 0 && (
+                  <View style={{ flex: highCount, backgroundColor: '#FF3B30', borderRadius: 4 }} />
+                )}
+                {collection.length === 0 && (
+                  <View style={{ flex: 1, backgroundColor: colors.border }} />
+                )}
+              </View>
+
+              {/* Legend Mini Pills */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#34C759' }} />
+                  <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>Clean ({cleanCount})</Text>
                 </View>
-                <View style={{ flexShrink: 1 }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.2 }}>Items Saved</Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '500', marginTop: 1 }} numberOfLines={1}>In your pantry</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#FF9500' }} />
+                  <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>Moderate ({modCount})</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#FF3B30' }} />
+                  <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>High ({highCount})</Text>
                 </View>
               </View>
-              <Text style={{ color: colors.text, fontSize: 15, fontWeight: '900' }}>
-                {totalSaved}
-              </Text>
             </View>
 
-            {/* Stat 2: Total Sugar Tracked */}
+            {/* Ultimate Selling Point: Annual Health Impact Banner */}
             <View style={{
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.015)',
+              backgroundColor: isDark ? 'rgba(52, 199, 89, 0.08)' : 'rgba(52, 199, 89, 0.06)',
               borderRadius: 16,
-              padding: 10,
+              padding: 12,
               borderWidth: 1,
-              borderColor: colors.border,
+              borderColor: 'rgba(52, 199, 89, 0.28)',
             }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
                 <View style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 10,
-                  backgroundColor: 'rgba(255, 149, 0, 0.12)',
+                  width: 36,
+                  height: 36,
+                  borderRadius: 12,
+                  backgroundColor: 'rgba(52, 199, 89, 0.18)',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}>
-                  <Gauge size={14} color="#FF9500" />
+                  <Award size={18} color="#34C759" />
                 </View>
                 <View style={{ flexShrink: 1 }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.2 }}>Total Sugar</Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '500', marginTop: 1 }} numberOfLines={1}>Per serving sum</Text>
+                  <Text style={{ color: '#34C759', fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    Annual Health Impact
+                  </Text>
+                  <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800', marginTop: 1 }} numberOfLines={1}>
+                    ~{yearlySavedKg} kg Sugar Avoided / Year
+                  </Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '500', marginTop: 1 }} numberOfLines={1}>
+                    By replacing typical sugary brands with your collection
+                  </Text>
                 </View>
               </View>
-              <Text style={{ color: '#FF9500', fontSize: 15, fontWeight: '900' }}>
-                {totalServingSugarTspAll.toFixed(1).replace(/\.0$/, '')}<Text style={{ fontSize: 10, fontWeight: '700' }}> tsp</Text>
-              </Text>
+              
+              <View style={{
+                backgroundColor: 'rgba(52, 199, 89, 0.15)',
+                paddingHorizontal: 8,
+                paddingVertical: 6,
+                borderRadius: 10,
+                alignItems: 'center',
+              }}>
+                <Text style={{ color: '#34C759', fontSize: 11, fontWeight: '900' }}>
+                  {yearlySavedTsp}
+                </Text>
+                <Text style={{ color: '#34C759', fontSize: 7, fontWeight: '800', textTransform: 'uppercase' }}>
+                  tsp saved
+                </Text>
+              </View>
             </View>
           </View>
         </View>
