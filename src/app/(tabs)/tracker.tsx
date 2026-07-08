@@ -149,14 +149,12 @@ export default function TrackerScreen() {
         </View>
 
         {/* Sleek and Clean Single Dashboard */}
-        <LinearGradient
-          colors={isDark ? ['rgba(255, 255, 255, 0.04)', 'rgba(255, 255, 255, 0.01)'] : ['#FFFDF9', '#FAF5EC']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+        <View
           style={{
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : colors.background,
             borderColor: colors.border,
-            borderWidth: 1.5,
-            borderRadius: 28,
+            borderWidth: 1.2,
+            borderRadius: 24,
             padding: 16,
             marginBottom: 24,
             flexDirection: 'row',
@@ -164,46 +162,46 @@ export default function TrackerScreen() {
             gap: 16,
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: isDark ? 0.15 : 0.05,
-            shadowRadius: 16,
-            elevation: 4,
+            shadowOpacity: isDark ? 0.15 : 0.02,
+            shadowRadius: 12,
+            elevation: 3,
           }}
         >
-          {/* Left Side: Giant Circular Basket Health Score using Svg Circular Progress */}
+          {/* Left Side: Circular Basket Health Score */}
           <View style={{
             alignItems: 'center',
             justifyContent: 'center',
-            width: 110,
+            width: 100,
           }}>
             <View style={{
-              width: 84,
-              height: 84,
+              width: 80,
+              height: 80,
               alignItems: 'center',
               justifyContent: 'center',
               position: 'relative',
             }}>
-              <Svg width="84" height="84" viewBox="0 0 84 84">
+              <Svg width="80" height="80" viewBox="0 0 80 80">
                 {/* Background Track Circle */}
                 <Circle
-                  cx="42"
-                  cy="42"
-                  r="34"
-                  stroke={scoreInfo.color + '20'}
-                  strokeWidth="6"
+                  cx="40"
+                  cy="40"
+                  r="33"
+                  stroke={scoreInfo.color + '15'}
+                  strokeWidth="5"
                   fill="transparent"
                 />
                 {/* Active Progress Circle */}
                 <Circle
-                  cx="42"
-                  cy="42"
-                  r="34"
+                  cx="40"
+                  cy="40"
+                  r="33"
                   stroke={scoreInfo.color}
-                  strokeWidth="6"
+                  strokeWidth="5"
                   fill="transparent"
-                  strokeDasharray="213.6"
-                  strokeDashoffset={213.6 - (213.6 * basketHealthScore) / 100}
+                  strokeDasharray="207.3"
+                  strokeDashoffset={207.3 - (207.3 * basketHealthScore) / 100}
                   strokeLinecap="round"
-                  transform="rotate(-90 42 42)"
+                  transform="rotate(-90 40 40)"
                 />
               </Svg>
               
@@ -213,7 +211,7 @@ export default function TrackerScreen() {
                 alignItems: 'center',
                 justifyContent: 'center',
               }}>
-                <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>
+                <Text style={{ color: colors.text, fontSize: 22, fontWeight: '900', letterSpacing: -0.5 }}>
                   {basketHealthScore}
                 </Text>
                 <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '800', marginTop: -2, textTransform: 'uppercase' }}>
@@ -222,15 +220,15 @@ export default function TrackerScreen() {
               </View>
             </View>
             <View style={{
-              backgroundColor: scoreInfo.color + '15',
+              backgroundColor: scoreInfo.color + '12',
               paddingHorizontal: 8,
               paddingVertical: 3,
               borderRadius: 8,
-              marginTop: 10,
+              marginTop: 8,
               borderWidth: 0.5,
-              borderColor: scoreInfo.color + '30',
+              borderColor: scoreInfo.color + '25',
             }}>
-              <Text style={{ color: scoreInfo.color, fontSize: 9, fontWeight: '900', textTransform: 'uppercase' }}>
+              <Text style={{ color: scoreInfo.color, fontSize: 8, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.2 }}>
                 {scoreInfo.label}
               </Text>
             </View>
@@ -248,27 +246,27 @@ export default function TrackerScreen() {
               justifyContent: 'space-between',
               backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.02)',
               borderRadius: 14,
-              padding: 10,
+              padding: 8,
               borderWidth: 1,
               borderColor: colors.border,
             }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={{
-                  width: 28,
-                  height: 28,
+                  width: 26,
+                  height: 26,
                   borderRadius: 8,
-                  backgroundColor: colors.primary + '15',
+                  backgroundColor: colors.primary + '12',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}>
-                  <Bookmark size={14} color={colors.primary} />
+                  <Bookmark size={12} color={colors.primary} />
                 </View>
                 <View style={{ flexShrink: 1 }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Items Saved</Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '500' }} numberOfLines={1}>In your pantry</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>Items Saved</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 7, fontWeight: '500' }} numberOfLines={1}>In your pantry</Text>
                 </View>
               </View>
-              <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900' }}>
+              <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900' }}>
                 {totalSaved}
               </Text>
             </View>
@@ -280,34 +278,32 @@ export default function TrackerScreen() {
               justifyContent: 'space-between',
               backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.02)',
               borderRadius: 14,
-              padding: 10,
+              padding: 8,
               borderWidth: 1,
               borderColor: colors.border,
             }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={{
-                  width: 28,
-                  height: 28,
+                  width: 26,
+                  height: 26,
                   borderRadius: 8,
-                  backgroundColor: 'rgba(255, 149, 0, 0.15)',
+                  backgroundColor: 'rgba(255, 149, 0, 0.12)',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}>
-                  <Sparkles size={14} color="#FF9500" />
+                  <Sparkles size={12} color="#FF9500" />
                 </View>
                 <View style={{ flexShrink: 1 }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Total Sugar</Text>
-                  <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '500' }} numberOfLines={1}>Per serving sum</Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>Total Sugar</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 7, fontWeight: '500' }} numberOfLines={1}>Per serving sum</Text>
                 </View>
               </View>
-              <Text style={{ color: '#FF9500', fontSize: 14, fontWeight: '900' }}>
-                {totalServingSugarTspAll.toFixed(1).replace(/\.0$/, '')}<Text style={{ fontSize: 10, fontWeight: '700' }}> tsp</Text>
+              <Text style={{ color: '#FF9500', fontSize: 13, fontWeight: '900' }}>
+                {totalServingSugarTspAll.toFixed(1).replace(/\.0$/, '')}<Text style={{ fontSize: 9, fontWeight: '700' }}> tsp</Text>
               </Text>
             </View>
           </View>
-        </LinearGradient>
-
-
+        </View>
 
         {/* Collection Grid / List */}
         <View style={styles.listSection}>
@@ -355,170 +351,106 @@ export default function TrackerScreen() {
             </View>
           ) : (
             filteredCollection.map((item) => {
-               const metrics = getConsistentNutritionalMetrics(item);
-               const cardMascotState = metrics.servingTsp === 0 ? 'happy' : (metrics.servingTsp <= 2 ? 'idle' : (metrics.servingTsp <= 5 ? 'shocked' : 'dizzy'));
-               const servingWeightStr = formatWeight(item.servingSize, sugarUnit) || '1 Serving';
-
+              const metrics = getConsistentNutritionalMetrics(item);
+              const servingWeightStr = formatWeight(item.servingSize, sugarUnit) || '1 serving';
 
               return (
                 <View
                   key={item.id}
                   style={{
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : colors.surface,
+                    backgroundColor: colors.background,
                     borderColor: colors.border,
-                    borderWidth: 1.5,
-                    borderRadius: 24,
+                    borderWidth: 1.2,
+                    borderRadius: 20,
                     padding: 12,
-                    width: '100%',
                     flexDirection: 'row',
-                    alignItems: 'stretch',
+                    alignItems: 'center',
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: isDark ? 0.15 : 0.04,
-                    shadowRadius: 10,
+                    shadowOpacity: isDark ? 0.1 : 0.02,
+                    shadowRadius: 8,
                     elevation: 2,
                     marginBottom: 12,
                   }}
                 >
-                  {/* Left Column: Product Image Full Height */}
+                  {/* Left Column: Product Thumbnail */}
                   <View style={{
-                    width: 95,
-                    alignSelf: 'stretch',
-                    minHeight: 230,
-                    position: 'relative',
-                    borderRadius: 16,
+                    width: 76,
+                    height: 76,
+                    borderRadius: 14,
                     overflow: 'hidden',
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.06)',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : '#F9F9F9',
                     borderWidth: 1,
                     borderColor: colors.border,
+                    justifyContent: 'center',
+                    alignItems: 'center',
                   }}>
                     {item.imageUrl ? (
-                      <Image source={{ uri: item.imageUrl }} style={StyleSheet.absoluteFillObject} contentFit="cover" transition={200} />
+                      <Image source={{ uri: item.imageUrl }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={200} />
                     ) : (
-                      <View style={[StyleSheet.absoluteFillObject, { alignItems: 'center', justifyContent: 'center' }]}>
-                        <ScanBarcode size={36} color={colors.primary} />
-                      </View>
+                      <ScanBarcode size={22} color={colors.primary} />
                     )}
                   </View>
 
-                  {/* Right Column */}
-                  <View style={{ flex: 1, paddingLeft: 12, justifyContent: 'flex-start' }}>
-                    {/* Header Row: Title & Badge */}
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10, gap: 8 }}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900', letterSpacing: -0.3, lineHeight: 18 }} numberOfLines={2}>
-                          {item.brand && item.brand !== 'Generic Brand' ? `${item.brand} - ${item.name}` : item.name}
+                  {/* Center Details */}
+                  <View style={{ flex: 1, marginLeft: 14, paddingRight: 6 }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 }} numberOfLines={1}>
+                      {item.brand && item.brand !== 'Generic Brand' ? item.brand : 'Generic Brand'}
+                    </Text>
+                    <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800', marginBottom: 3 }} numberOfLines={1}>
+                      {item.name}
+                    </Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '600', marginBottom: 6 }}>
+                      {servingWeightStr} per serving
+                    </Text>
+
+                    {/* Compact Sugar Indicators */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <View style={{ backgroundColor: colors.primary + '12', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+                        <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '900' }}>
+                          {formatSugar(metrics.servingSugarG, sugarUnit)} ({metrics.servingTsp.toFixed(1).replace(/\.0$/, '')} tsp)
                         </Text>
                       </View>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                        <View style={{
-                          width: 26,
-                          height: 26,
-                          borderRadius: 13,
-                          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.06)',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}>
-                          <Mascot size={20} state={cardMascotState} />
-                        </View>
-                        <View style={{
-                          backgroundColor: isDark ? 'rgba(255, 149, 0, 0.1)' : 'rgba(255, 149, 0, 0.08)',
-                          paddingHorizontal: 6,
-                          paddingVertical: 2.5,
-                          borderRadius: 4,
-                          borderWidth: 1,
-                          borderColor: isDark ? 'rgba(255, 149, 0, 0.2)' : 'rgba(255, 149, 0, 0.25)'
-                        }}>
-                          <Text style={{
-                            color: colors.primary,
-                            fontSize: 7,
-                            fontWeight: '800',
-                            letterSpacing: 0.2
-                          }}>
-                            {item.isDefaultServing ? '100G/ML' : 'SERVING'}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-
-                    {/* ─── SECTION 1: PER SERVING BREAKDOWN ─── */}
-                    <View style={{
-                      backgroundColor: colors.primary + '08',
-                      padding: 8,
-                      borderRadius: 10,
-                      marginBottom: 8,
-                      borderWidth: 1,
-                      borderColor: colors.primary + '20'
-                    }}>
-                      <Text style={{ color: colors.primary, fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
-                        1. Per Serving Breakdown
+                      <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700' }}>
+                        {metrics.whoLimitPercent}% limit
                       </Text>
-
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3, borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }}>
-                        <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600' }}>Serving Size</Text>
-                        <Text style={{ color: colors.text, fontSize: 11, fontWeight: '700' }}>{servingWeightStr}</Text>
-                      </View>
-
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3, borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }}>
-                        <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600' }}>Serving Energy</Text>
-                        <Text style={{ color: colors.text, fontSize: 11, fontWeight: '700' }}>{metrics.servingCalories !== undefined ? `${Math.round(metrics.servingCalories)} kcal` : '—'}</Text>
-                      </View>
-
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3, borderBottomWidth: 1, borderBottomColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }}>
-                        <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '800' }}>Sugar per Serving</Text>
-                        <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '800' }}>{formatSugar(metrics.servingSugarG, sugarUnit)} ({metrics.servingTsp} tsp)</Text>
-                      </View>
-
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 4 }}>
-                        <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700' }}>WHO Daily Limit</Text>
-                        <View style={{ backgroundColor: metrics.whoLimitPercent > 100 ? colors.error : colors.primary, paddingHorizontal: 4, paddingVertical: 1, borderRadius: 3 }}>
-                          <Text style={{ color: '#fff', fontSize: 8, fontWeight: '900' }}>{metrics.whoLimitPercent}% of 12 tsp Max</Text>
-                        </View>
-                      </View>
                     </View>
+                  </View>
 
+                  {/* Right Column: Actions (Heart and Trash) */}
+                  <View style={{ flexDirection: 'column', gap: 8, marginLeft: 6 }}>
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => handleToggleFavorite(item.id)}
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 10,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: item.isFavorite ? 'rgba(255, 82, 82, 0.08)' : 'transparent',
+                      }}
+                    >
+                      <Heart
+                        size={15}
+                        color={item.isFavorite ? '#FF5252' : colors.textMuted}
+                        fill={item.isFavorite ? '#FF5252' : 'transparent'}
+                      />
+                    </TouchableOpacity>
 
-
-                    {/* Actions Row (Favorite & Delete side-by-side) */}
-                    <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
-                      <TouchableOpacity
-                        activeOpacity={0.7}
-                        onPress={() => handleToggleFavorite(item.id)}
-                        style={{
-                          width: 44,
-                          height: 36,
-                          backgroundColor: item.isFavorite ? 'rgba(255, 82, 82, 0.12)' : isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0, 0, 0, 0.04)',
-                          borderColor: item.isFavorite ? '#FF5252' : colors.border,
-                          borderWidth: item.isFavorite ? 1.5 : 1,
-                          borderRadius: 10,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Heart
-                          size={16}
-                          color={item.isFavorite ? '#FF5252' : colors.textMuted}
-                          fill={item.isFavorite ? '#FF5252' : 'transparent'}
-                        />
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        activeOpacity={0.7}
-                        onPress={() => handleRemove(item.id, item.name)}
-                        style={{
-                          width: 44,
-                          height: 36,
-                          backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0, 0, 0, 0.04)',
-                          borderColor: colors.border,
-                          borderWidth: 1,
-                          borderRadius: 10,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Trash2 size={16} color={colors.textMuted} />
-                      </TouchableOpacity>
-                    </View>
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => handleRemove(item.id, item.name)}
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 10,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Trash2 size={15} color={colors.textMuted} />
+                    </TouchableOpacity>
                   </View>
                 </View>
               );
