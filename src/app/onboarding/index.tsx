@@ -936,6 +936,27 @@ const SLIDES: SlideData[] = [
 ];
 
 // ─────────────────────────────────────────────────────────
+// Pagination Dot Component (Prevents hook inside .map loop)
+// ─────────────────────────────────────────────────────────
+function DotIndicator({ active, C }: { active: boolean; C: any }) {
+  const dotAnimStyle = useAnimatedStyle(() => {
+    return {
+      width: withSpring(active ? 22 : 6, { damping: 15, stiffness: 150 }),
+      backgroundColor: withTiming(active ? C.amber : C.cardBorder, { duration: 200 }),
+    };
+  }, [active, C]);
+
+  return (
+    <Animated.View
+      style={[{
+        height: 6,
+        borderRadius: 3,
+      }, dotAnimStyle]}
+    />
+  );
+}
+
+// ─────────────────────────────────────────────────────────
 // Main Onboarding Screen
 // ─────────────────────────────────────────────────────────
 export default function OnboardingScreen() {
@@ -1359,25 +1380,9 @@ export default function OnboardingScreen() {
                 gap: 7,
               }}
             >
-              {SLIDES.map((_, idx) => {
-                const dotAnimStyle = useAnimatedStyle(() => {
-                  const active = currentSlide === idx;
-                  return {
-                    width: withSpring(active ? 22 : 6, { damping: 15, stiffness: 150 }),
-                    backgroundColor: withTiming(active ? C.amber : C.cardBorder, { duration: 200 }),
-                  };
-                }, [currentSlide]);
-
-                return (
-                  <Animated.View
-                    key={idx}
-                    style={[{
-                      height: 6,
-                      borderRadius: 3,
-                    }, dotAnimStyle]}
-                  />
-                );
-              })}
+              {SLIDES.map((_, idx) => (
+                <DotIndicator key={idx} active={currentSlide === idx} C={C} />
+              ))}
             </View>
 
             {/* CTA Button with pulse and moving shiny bar */}
