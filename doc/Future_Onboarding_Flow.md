@@ -90,20 +90,9 @@ This document outlines the UX layout and copywriting assets for the next-generat
 
 ---
 
-## 📱 Screen 8: Visual UI Showcase (Advertising Banner Style)
-*   **Visual asset suggestion:** Mockup of the mobile app screen displaying the main results dashboard with the WHO progress ring and Mascot эмоционального биофидбека (biofeedback emotions).
-*   **Headline:** 
-    > ## Visual. Immediate. Bulletproof.
-*   **Subheadline:** 
-    > **See exact teaspoons per serving, check your WHO daily limit allowance bar, and watch your mascot react to sugar density in real-time.**
-*   **Direct & Punchy Callout:**
-    > **"A stunning, responsive health companion right in your pocket. Tap to begin."**
-
----
-
 ## 🔑 Post-Onboarding: Authentication
 *   **Visuals:** Glassmorphic card overlay with minimal brand logo.
 *   **UI Elements:**
     *   `[ Continue with Apple ]` (Mandatory App Store guidelines requirement)
     *   `[ Continue with Google ]`
-    *   `[ Skip & Use Locally ]` (Allows local storage fallback)
+    *   `[ Continue with Email ]`

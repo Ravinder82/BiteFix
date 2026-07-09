@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Camera } from 'expo-camera';
@@ -504,26 +505,140 @@ function CollectionsDemoCard({ cardW, C }: { cardW: number; C: any }) {
 }
 
 // ─────────────────────────────────────────────────────────
-// Slide Helper Card: Dashboard Progress Ring Demo
+// Slide Helper Card: Food Swap Demo Card
 // ─────────────────────────────────────────────────────────
-function DashboardDemoCard({ size, C, isDark }: { size: number; C: any; isDark: boolean }) {
-  const [demoSugar, setDemoSugar] = useState(0);
+function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
+  const pulse = useSharedValue(1);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setDemoSugar((prev) => {
-        if (prev >= 19) return 0;
-        return prev + 1.5;
-      });
-    }, 450);
-
-    return () => clearInterval(interval);
+    pulse.value = withRepeat(
+      withSequence(
+        withTiming(1.06, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1.0, { duration: 1000, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
   }, []);
+
+  const arrowStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulse.value }],
+  }));
 
   return (
     <View style={{
-      width: size + 70,
-      alignSelf: 'center',
+      width: cardW,
+      backgroundColor: C.card,
+      borderRadius: 24,
+      borderWidth: 1,
+      borderColor: C.cardBorder,
+      padding: 16,
+      shadowColor: '#FF9500',
+      shadowOffset: { width: 0, height: 12 },
+      shadowOpacity: 0.15,
+      shadowRadius: 20,
+      elevation: 6,
+      height: 220,
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 12,
+    }}>
+      <Text style={{ color: C.text, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8, alignSelf: 'flex-start', borderBottomWidth: 1, borderBottomColor: C.cardBorder, width: '100%', paddingBottom: 6 }}>
+        Smart Food Swap
+      </Text>
+      
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', flex: 1 }}>
+        <View style={{
+          flex: 1,
+          backgroundColor: C.cardInner,
+          borderRadius: 16,
+          padding: 8,
+          borderWidth: 1.5,
+          borderColor: C.red + '35',
+          alignItems: 'center',
+          gap: 4,
+          height: 135,
+          justifyContent: 'center',
+        }}>
+          <Text style={{ color: C.red, fontSize: 7, fontWeight: '900', letterSpacing: 0.3 }}>HIGH SUGAR</Text>
+          <View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.cardBorder }}>
+            <Text style={{ fontSize: 24 }}>🥫</Text>
+          </View>
+          <Text style={{ color: C.text, fontSize: 10, fontWeight: '800', textAlign: 'center', marginTop: 2 }} numberOfLines={1}>
+            Sweet Ketchup
+          </Text>
+          <Text style={{ color: C.red, fontSize: 12, fontWeight: '900' }}>6.4 tsp</Text>
+          <Text style={{ color: C.textMuted, fontSize: 7, fontWeight: '600' }}>(27g per 100g)</Text>
+        </View>
+
+        <Animated.View style={[{ marginHorizontal: 6, alignItems: 'center' }, arrowStyle]}>
+          <Svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <Path d="M4 12H20M20 12L14 6M20 12L14 18" stroke={C.amber} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+          </Svg>
+        </Animated.View>
+
+        <View style={{
+          flex: 1,
+          backgroundColor: C.cardInner,
+          borderRadius: 16,
+          padding: 8,
+          borderWidth: 1.5,
+          borderColor: C.green + '35',
+          alignItems: 'center',
+          gap: 4,
+          height: 135,
+          justifyContent: 'center',
+        }}>
+          <Text style={{ color: C.green, fontSize: 7, fontWeight: '900', letterSpacing: 0.3 }}>SWAP TO</Text>
+          <View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.cardBorder }}>
+            <Text style={{ fontSize: 24 }}>🍅</Text>
+          </View>
+          <Text style={{ color: C.text, fontSize: 10, fontWeight: '800', textAlign: 'center', marginTop: 2 }} numberOfLines={1}>
+            Tomato Purée
+          </Text>
+          <Text style={{ color: C.green, fontSize: 12, fontWeight: '900' }}>0.5 tsp</Text>
+          <Text style={{ color: C.textMuted, fontSize: 7, fontWeight: '600' }}>(2g per 100g)</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// Slide Helper Card: Hidden Sugar Finder Card
+// ─────────────────────────────────────────────────────────
+function HiddenSugarFinderCard({ cardW, C }: { cardW: number; C: any }) {
+  const listOpacity1 = useSharedValue(0.15);
+  const listOpacity2 = useSharedValue(0.15);
+  const listOpacity3 = useSharedValue(0.15);
+
+  useEffect(() => {
+    const runAnim = () => {
+      listOpacity1.value = withSequence(
+        withTiming(1, { duration: 350 }),
+        withDelay(2200, withTiming(0.15, { duration: 350 }))
+      );
+      listOpacity2.value = withSequence(
+        withDelay(600, withTiming(1, { duration: 350 })),
+        withDelay(1600, withTiming(0.15, { duration: 350 }))
+      );
+      listOpacity3.value = withSequence(
+        withDelay(1200, withTiming(1, { duration: 350 })),
+        withDelay(1000, withTiming(0.15, { duration: 350 }))
+      );
+    };
+    runAnim();
+    const interval = setInterval(runAnim, 3600);
+    return () => clearInterval(interval);
+  }, []);
+
+  const style1 = useAnimatedStyle(() => ({ opacity: listOpacity1.value }));
+  const style2 = useAnimatedStyle(() => ({ opacity: listOpacity2.value }));
+  const style3 = useAnimatedStyle(() => ({ opacity: listOpacity3.value }));
+
+  return (
+    <View style={{
+      width: cardW,
       backgroundColor: C.card,
       borderRadius: 24,
       borderWidth: 1,
@@ -534,28 +649,65 @@ function DashboardDemoCard({ size, C, isDark }: { size: number; C: any; isDark: 
       shadowOpacity: 0.15,
       shadowRadius: 20,
       elevation: 6,
-      alignItems: 'center',
       height: 220,
       justifyContent: 'space-between',
     }}>
-      <View style={{ marginTop: -15 }}>
-        <SugarProgressRing totalSugar={demoSugar} size={size - 10} isDark={isDark} colors={C} />
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: C.cardBorder, paddingBottom: 6, marginBottom: 2 }}>
+        <Text style={{ color: C.text, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+          Stealth Sugar Audit
+        </Text>
+        <View style={{ backgroundColor: C.redLight, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+          <Text style={{ color: C.red, fontSize: 7, fontWeight: '900' }}>3 MATCHED</Text>
+        </View>
       </View>
 
-      <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-around', borderTopWidth: 1, borderTopColor: C.cardBorder, paddingTop: 6 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.green }} />
-          <Text style={{ color: C.textSub, fontSize: 8, fontWeight: '800' }}>Safe Zone</Text>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.warning }} />
-          <Text style={{ color: C.textSub, fontSize: 8, fontWeight: '800' }}>Warning</Text>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.red }} />
-          <Text style={{ color: C.textSub, fontSize: 8, fontWeight: '800' }}>Danger</Text>
-        </View>
+      <View style={{ gap: 8, flex: 1, justifyContent: 'center' }}>
+        <Animated.View style={[{
+          backgroundColor: C.cardInner,
+          borderRadius: 12,
+          padding: 8,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderWidth: 1.2,
+          borderColor: C.red + '30',
+        }, style1]}>
+          <Text style={{ color: C.text, fontSize: 10, fontWeight: '800' }}>🔍 Maltodextrin</Text>
+          <Text style={{ color: C.red, fontSize: 7.5, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.2 }}>Disguised Sugar</Text>
+        </Animated.View>
+
+        <Animated.View style={[{
+          backgroundColor: C.cardInner,
+          borderRadius: 12,
+          padding: 8,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderWidth: 1.2,
+          borderColor: C.red + '30',
+        }, style2]}>
+          <Text style={{ color: C.text, fontSize: 10, fontWeight: '800' }}>🔍 Dextrose</Text>
+          <Text style={{ color: C.red, fontSize: 7.5, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.2 }}>High Glycemic</Text>
+        </Animated.View>
+
+        <Animated.View style={[{
+          backgroundColor: C.cardInner,
+          borderRadius: 12,
+          padding: 8,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderWidth: 1.2,
+          borderColor: C.red + '30',
+        }, style3]}>
+          <Text style={{ color: C.text, fontSize: 10, fontWeight: '800' }}>🔍 Barley Malt Extract</Text>
+          <Text style={{ color: C.red, fontSize: 7.5, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.2 }}>Hidden Sweetener</Text>
+        </Animated.View>
       </View>
+      
+      <Text style={{ color: C.textMuted, fontSize: 8.5, textAlign: 'center', fontStyle: 'italic', marginTop: 2 }}>
+        Exposing hidden sugars disguised under healthy-sounding aliases.
+      </Text>
     </View>
   );
 }
@@ -634,13 +786,14 @@ function GoalCard({
 }: {
   cardW: number;
   C: any;
-  selected: GoalOption;
+  selected: GoalOption | null;
   onSelect: (val: GoalOption) => void;
 }) {
-  const options: { label: string; value: GoalOption }[] = [
-    { label: "Boost daily Energy", value: 'energy' },
-    { label: "Lose Weight", value: 'weight' },
-    { label: "Build Healthy Eating Habits", value: 'mental' },
+  const options: { label: string; desc: string; value: GoalOption }[] = [
+    { label: "⚡ Boost Energy & Alertness", desc: "Prevent insulin spikes and beat the afternoon crash.", value: 'energy' },
+    { label: "⚖️ Manage Weight & Cravings", desc: "Break the sugar loop and regain control of your appetite.", value: 'weight' },
+    { label: "🧠 Sharpen Mental Focus", desc: "Clear the brain fog and maintain sustained mental clarity.", value: 'mental' },
+    { label: "🛡️ Protect Long-Term Health", desc: "Align with WHO limits to protect cardiovascular and metabolic health.", value: 'none' },
   ];
 
   return (
@@ -650,7 +803,7 @@ function GoalCard({
       borderRadius: 20,
       borderWidth: 1,
       borderColor: C.cardBorder,
-      padding: 16,
+      padding: 14,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.12,
@@ -669,31 +822,35 @@ function GoalCard({
               }}
               activeOpacity={0.8}
               style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
+                flexDirection: 'column',
                 backgroundColor: isSelected ? C.amberLight : C.cardInner,
                 borderColor: isSelected ? C.amber : C.cardBorder,
                 borderWidth: 1.5,
                 borderRadius: 12,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
+                paddingHorizontal: 12,
+                paddingVertical: 10,
+                gap: 2,
               }}
             >
-              <Text style={{ color: C.text, fontSize: 13, fontWeight: '700' }}>
-                {opt.label}
-              </Text>
-              <View style={{
-                width: 16,
-                height: 16,
-                borderRadius: 8,
-                borderWidth: 1.5,
-                borderColor: isSelected ? C.amber : C.textMuted,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                {isSelected && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: C.amber }} />}
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <Text style={{ color: C.text, fontSize: 13, fontWeight: '800' }}>
+                  {opt.label}
+                </Text>
+                <View style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: 8,
+                  borderWidth: 1.5,
+                  borderColor: isSelected ? C.amber : C.textMuted,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  {isSelected && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: C.amber }} />}
+                </View>
               </View>
+              <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '500', paddingRight: 20 }}>
+                {opt.desc}
+              </Text>
             </TouchableOpacity>
           );
         })}
@@ -702,114 +859,6 @@ function GoalCard({
   );
 }
 
-// ─────────────────────────────────────────────────────────
-// Slide 5: Setup Complete Payoff Screen
-// ─────────────────────────────────────────────────────────
-function SetupCompleteCard({
-  cardW,
-  C,
-  userName,
-  userGoal,
-}: {
-  cardW: number;
-  C: any;
-  userName: string;
-  userGoal: string;
-}) {
-  const goalLabels = {
-    energy: 'Boost Daily Energy',
-    weight: 'Lose Weight',
-    mental: 'Healthy Eating Habits',
-    none: 'Sugar-Free Lifestyle',
-  };
-
-  const selectedGoalLabel = goalLabels[userGoal as keyof typeof goalLabels] || 'Sugar-Free Lifestyle';
-
-  return (
-    <LinearGradient
-      colors={['#E8820C', '#FF9500']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{
-        width: cardW,
-        borderRadius: 24,
-        padding: 24,
-        shadowColor: '#E8820C',
-        shadowOffset: { width: 0, height: 16 },
-        shadowOpacity: 0.35,
-        shadowRadius: 24,
-        elevation: 10,
-        alignItems: 'center',
-        justifyContent: 'center',
-        aspectRatio: 1.25,
-        overflow: 'hidden',
-        position: 'relative',
-      }}
-    >
-      {/* Decorative stars and sparkles */}
-      <Svg style={{ position: 'absolute' }} width="100%" height="100%" viewBox="0 0 200 200">
-        <Path d="M20,40 L24,40 L24,44 L20,44 Z M160,50 L163,50 L163,53 L160,53 Z M170,140 L174,140 L174,144 L170,144 Z M40,150 L42,150 L42,152 L40,152 Z" fill="#FFFFFF" opacity="0.4" />
-        <Path d="M90,20 Q100,30 110,20 Q100,10 90,20 Z" fill="#FFFFFF" opacity="0.3" />
-        <Path d="M30,110 Q35,115 40,110 Q35,105 30,110 Z" fill="#FFFFFF" opacity="0.3" />
-      </Svg>
-
-      {/* Gold badge or trophy icon */}
-      <View style={{
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 2,
-        borderColor: '#FFFFFF',
-        marginBottom: 16,
-      }}>
-        <Svg width="36" height="36" viewBox="0 0 24 24">
-          <Path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#FFD54F" stroke="#FFFFFF" strokeWidth="1" />
-        </Svg>
-      </View>
-
-      <Text style={{
-        color: '#FFFFFF',
-        fontSize: 18,
-        fontWeight: '900',
-        textAlign: 'center',
-        letterSpacing: -0.5,
-        textShadowColor: 'rgba(0, 0, 0, 0.15)',
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 4,
-      }}>
-        Welcome to CutSugar, {userName || 'Friend'}!
-      </Text>
-
-      <View style={{
-        backgroundColor: 'rgba(255, 255, 255, 0.15)',
-        borderRadius: 14,
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        marginTop: 12,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.25)',
-      }}>
-        <Text style={{
-          color: '#FFFFFF',
-          fontSize: 11,
-          fontWeight: '800',
-          textTransform: 'uppercase',
-          letterSpacing: 0.8,
-          textAlign: 'center',
-        }}>
-          Goal Locked: {selectedGoalLabel}
-        </Text>
-      </View>
-    </LinearGradient>
-  );
-}
-
-// ─────────────────────────────────────────────────────────
-// Slide Definitions
-// ─────────────────────────────────────────────────────────
 interface SlideData {
   step: number;
   title: string;
@@ -823,17 +872,17 @@ interface SlideData {
 const SLIDES: SlideData[] = [
   {
     step: 1,
-    title: "Welcome to CutSugar!",
-    highlight: "CutSugar!",
-    subtitle: "Let's personalize your path to a sugar-free lifestyle.",
+    title: "What should we call you?",
+    highlight: "call you?",
+    subtitle: "Please enter your name to personalize your health dashboard.",
     buttonLabel: 'Continue',
     isLast: false,
     mascotState: 'happy',
   },
   {
     step: 2,
-    title: "Describe Your Goals",
-    highlight: "Goals",
+    title: "What is your primary health goal?",
+    highlight: "health goal?",
     subtitle: "Choose what brings you to CutSugar.",
     buttonLabel: 'Continue',
     isLast: false,
@@ -841,48 +890,48 @@ const SLIDES: SlideData[] = [
   },
   {
     step: 3,
-    title: "Unmask Hidden Sugar",
-    highlight: "Hidden Sugar",
-    subtitle: "See abstract grams of sugar instantly converted into real, physical teaspoons.",
-    buttonLabel: 'Continue',
+    title: "Your Personal Sweet-Safe Haven.",
+    highlight: "Sweet-Safe Haven.",
+    subtitle: "Build a curated pantry of low and no-sugar favorites. Scan, collect, and keep track of clean-label items.",
+    buttonLabel: 'Next',
     isLast: false,
-    mascotState: 'shocked',
+    mascotState: 'happy',
   },
   {
     step: 4,
-    title: "Smart Barcode Scanner",
-    highlight: "Barcode Scanner",
-    subtitle: "Scan barcodes instantly to track total sugar.",
+    title: "Meet Your Healthy Upgrades.",
+    highlight: "Healthy Upgrades.",
+    subtitle: "Food Swap is here. Instantly discover cleaner, lower-sugar alternatives to high-sugar foods.",
     buttonLabel: 'Next',
     isLast: false,
     mascotState: 'happy',
   },
   {
     step: 5,
-    title: "Curate your own Pantry",
-    highlight: "Pantry",
-    subtitle: "Save products to your pantry for healthy food choices.",
+    title: "Sugar. Measured in Teaspoons.",
+    highlight: "Teaspoons.",
+    subtitle: "We translate complex laboratory metrics into clear, visual teaspoons—fully aligned with the WHO guidelines.",
     buttonLabel: 'Next',
     isLast: false,
-    mascotState: 'happy',
+    mascotState: 'shocked',
   },
   {
     step: 6,
-    title: "Track Sugar in Teaspoons",
-    highlight: "Teaspoons",
-    subtitle: "Monitor cumulative sugar intake with our dynamic home screen progress ring.",
+    title: "Grocery Shopping, Cleaned Up.",
+    highlight: "Cleaned Up.",
+    subtitle: "Scan barcodes, build your low-sugar pantry, and use Food Swap to bypass sugary traps on the fly.",
     buttonLabel: 'Next',
     isLast: false,
-    mascotState: 'idle',
+    mascotState: 'happy',
   },
   {
     step: 7,
-    title: "Ready to Change Your Life?",
-    highlight: "Change Your Life?",
-    subtitle: "We're ready to start this life-changing journey together with CutSugar.",
+    title: "Expose the Stealth Sugars.",
+    highlight: "Stealth Sugars.",
+    subtitle: "Brands hide sugar under 60+ chemical aliases. Our Stealth Sugar Audit exposes hidden sweeteners instantly.",
     buttonLabel: 'Get Started',
     isLast: true,
-    mascotState: 'happy',
+    mascotState: 'dizzy',
   },
 ];
 
@@ -892,9 +941,24 @@ const SLIDES: SlideData[] = [
 export default function OnboardingScreen() {
   const [currentSlide, setCurrentSlide] = useState(0);
 
+  // Splash Screen loading state
+  const [isSplashLoading, setIsSplashLoading] = useState(true);
+  const splashOpacity = useSharedValue(0);
+
+  // Handle Splash Screen fade and timeout
+  useEffect(() => {
+    splashOpacity.value = withTiming(1, { duration: 800 });
+    const timer = setTimeout(() => {
+      splashOpacity.value = withTiming(0, { duration: 400 }, () => {
+        runOnJS(setIsSplashLoading)(false);
+      });
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Questionnaire states
   const [userName, setUserName] = useState('');
-  const [userGoal, setUserGoal] = useState<GoalOption>('none');
+  const [userGoal, setUserGoal] = useState<GoalOption | null>(null);
 
   const { setOnboardingComplete, setProfile } = useAppStore();
   const { width, height } = useWindowDimensions();
@@ -1035,14 +1099,14 @@ export default function OnboardingScreen() {
       }
     }
     if (currentSlide === 1) {
-      if (userGoal === 'none') {
+      if (userGoal === null) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         return;
       }
     }
 
-    // Camera permission request during feature showcase
-    if (currentSlide === 2) {
+    // Camera permission request during feature showcase (on slide 5, Clean Grocery Shopping)
+    if (currentSlide === 5) {
       try {
         await Camera.requestCameraPermissionsAsync();
       } catch (_) { }
@@ -1056,16 +1120,16 @@ export default function OnboardingScreen() {
       // Save profile config
       setProfile({
         userName: userName.trim(),
-        userGoal,
+        userGoal: userGoal || 'none',
       });
       setOnboardingComplete(true);
-      router.replace('/(tabs)');
+      router.replace('/auth');
     }
   };
 
   const isNextDisabled = () => {
     if (currentSlide === 0 && !userName.trim()) return true;
-    if (currentSlide === 1 && userGoal === 'none') return true;
+    if (currentSlide === 1 && userGoal === null) return true;
     return false;
   };
 
@@ -1144,6 +1208,35 @@ export default function OnboardingScreen() {
     };
   });
 
+  const splashStyle = useAnimatedStyle(() => ({
+    opacity: splashOpacity.value,
+  }));
+
+  if (isSplashLoading) {
+    return (
+      <Animated.View style={[{ flex: 1, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' }, splashStyle]}>
+        <MagicalBackground />
+        <View style={{ alignItems: 'center', gap: 20 }}>
+          <Animated.View style={mascotAnimStyle}>
+            <OrbMascot state="happy" size={orbSize * 1.2} />
+          </Animated.View>
+          <MascotShadow size={orbSize * 0.9} scaleStyle={shadowScaleStyle} />
+          
+          <View style={{ alignItems: 'center', marginTop: 20, gap: 8 }}>
+            <Text style={{ color: C.text, fontSize: 32, fontWeight: '900', letterSpacing: -1 }}>
+              CutSugar
+            </Text>
+            <Text style={{ color: C.textSub, fontSize: 14, fontWeight: '600', textAlign: 'center' }}>
+              Goodbye Sugar. Hello Health.
+            </Text>
+          </View>
+          
+          <ActivityIndicator size="large" color={C.amber} style={{ marginTop: 24 }} />
+        </View>
+      </Animated.View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -1176,11 +1269,11 @@ export default function OnboardingScreen() {
                   text={[
                     "Hi there! Let's get to know each other first!",
                     "Awesome! Having a clear motive is key to success.",
+                    "Save your go-to clean products in your personal pantry!",
+                    "Instantly discover cleaner, lower-sugar alternatives!",
                     "WHO Standard:\n1 Teaspoon = 4.2g.\nLet's visualize it!",
                     "Scan any product barcode to instantly see what's inside.",
-                    "Add healthy products to your collections!",
-                    "Keep your progress ring updated with just a scan!",
-                    "Woohoo! We are fully set up. Let's do this!"
+                    "Let's expose hidden sugars disguised as additives!"
                   ][currentSlide] || ""}
                 />
               </Animated.View>
@@ -1205,36 +1298,33 @@ export default function OnboardingScreen() {
                 />
               )}
               {currentCardIndex === 2 && (
-                <CuriosityCard
-                  cardW={cardW}
-                  C={C}
-                />
-              )}
-              {currentCardIndex === 3 && (
-                <ScannerDemoCard
-                  cardW={cardW}
-                  C={C}
-                />
-              )}
-              {currentCardIndex === 4 && (
                 <CollectionsDemoCard
                   cardW={cardW}
                   C={C}
                 />
               )}
-              {currentCardIndex === 5 && (
-                <DashboardDemoCard
-                  size={cardW * 0.55}
+              {currentCardIndex === 3 && (
+                <FoodSwapDemoCard
+                  cardW={cardW}
                   C={C}
-                  isDark={isDark}
+                />
+              )}
+              {currentCardIndex === 4 && (
+                <CuriosityCard
+                  cardW={cardW}
+                  C={C}
+                />
+              )}
+              {currentCardIndex === 5 && (
+                <ScannerDemoCard
+                  cardW={cardW}
+                  C={C}
                 />
               )}
               {currentCardIndex === 6 && (
-                <SetupCompleteCard
+                <HiddenSugarFinderCard
                   cardW={cardW}
                   C={C}
-                  userName={userName}
-                  userGoal={userGoal}
                 />
               )}
             </Animated.View>
