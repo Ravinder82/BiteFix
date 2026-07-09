@@ -127,7 +127,7 @@ export function parseQuantityString(str: any): number | null {
   const cleaned = String(str).toLowerCase().replace(/,/g, '.');
 
   // Try matching multi-pack syntax common in imported Indian/US/European groceries e.g. "6 x 330 ml", "4 x 100g", "10 packs x 20 g"
-  const multiMatch = cleaned.match(/(\d+)\s*[xX*]\s*([\d\.]+)\s*(g|gm|gms|gram|grams|ml|kg|l|ltr|litre|litres|cl|fl\s*oz|fl\.\s*oz|oz|ounce|ounces)/);
+  const multiMatch = cleaned.match(/(\d+)\s*[xX*]\s*([\d\.]+)\s*(g|gm|gms|gram|grams|ml|kg|ltr|litre|litres|cl|fl\s*oz|fl\.\s*oz|oz|ounce|ounces|lb|lbs|l)/);
   if (multiMatch) {
     const count = parseInt(multiMatch[1], 10);
     const val = parseFloat(multiMatch[2]);
@@ -138,12 +138,13 @@ export function parseQuantityString(str: any): number | null {
       else if (unit === 'cl') unitVal = val * 10;
       else if (unit.startsWith('fl') || unit.includes('fl')) unitVal = val * 29.5735;
       else if (unit === 'oz' || unit === 'ounce' || unit === 'ounces') unitVal = val * 28.3495;
+      else if (unit === 'lb' || unit === 'lbs') unitVal = val * 453.59237;
       return count * unitVal;
     }
   }
 
   // Regular single quantity match (handling indian terminology like gm, gms, ltr, litre)
-  const match = cleaned.match(/([\d\.]+)\s*(g|gm|gms|gram|grams|ml|kg|l|ltr|litre|litres|cl|fl\s*oz|fl\.\s*oz|oz|ounce|ounces)/);
+  const match = cleaned.match(/([\d\.]+)\s*(g|gm|gms|gram|grams|ml|kg|ltr|litre|litres|cl|fl\s*oz|fl\.\s*oz|oz|ounce|ounces|lb|lbs|l)/);
   if (!match) {
     // Fallback for raw numbers without unit strings (e.g. "140", "140.0")
     const numMatch = cleaned.match(/([\d\.]+)/);
@@ -160,6 +161,7 @@ export function parseQuantityString(str: any): number | null {
   if (unit === 'cl') return val * 10;
   if (unit.startsWith('fl') || unit.includes('fl')) return val * 29.5735;
   if (unit === 'oz' || unit === 'ounce' || unit === 'ounces') return val * 28.3495;
+  if (unit === 'lb' || unit === 'lbs') return val * 453.59237;
   return val;
 }
 

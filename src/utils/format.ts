@@ -88,9 +88,20 @@ export function formatWeight(valStr: string | undefined, targetUnit: 'g' | 'oz')
     const formattedVal = displayVal >= 10 ? Math.round(displayVal).toString() : parseFloat(displayVal.toFixed(1)).toString();
     return `${formattedVal} ${outUnit}`;
   } else {
-    const outUnit = isVolume ? 'fl oz' : 'oz';
-    const baseImperial = isVolume ? baseMetric / 29.5735 : baseMetric / 28.349523125;
-    const formattedVal = parseFloat(baseImperial.toFixed(2)).toString();
-    return `${formattedVal} ${outUnit}`;
+    if (isVolume) {
+      const baseImperial = baseMetric / 29.5735;
+      const formattedVal = parseFloat(baseImperial.toFixed(2)).toString();
+      return `${formattedVal} fl oz`;
+    } else {
+      const baseImperial = baseMetric / 28.349523125;
+      if (baseImperial >= 16) {
+        const lbs = baseImperial / 16;
+        const formattedLbs = parseFloat(lbs.toFixed(2)).toString();
+        return `${formattedLbs} lb`;
+      } else {
+        const formattedVal = parseFloat(baseImperial.toFixed(2)).toString();
+        return `${formattedVal} oz`;
+      }
+    }
   }
 }
