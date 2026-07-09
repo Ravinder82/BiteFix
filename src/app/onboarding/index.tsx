@@ -43,8 +43,11 @@ import Svg, {
   Stop,
   Ellipse,
   G,
+  Polygon,
 } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
+
+const AnimatedG = Animated.createAnimatedComponent(G);
 
 // ─────────────────────────────────────────────────────────
 // Custom Animated Shadow Component for Floating Mascot
@@ -149,36 +152,51 @@ function CuriosityCard({ cardW, C }: { cardW: number; C: any }) {
   }));
 
   const sugarPileStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: 0.85 + pourProgress.value * 0.15 }],
+    transform: [{ scale: 0.95 + pourProgress.value * 0.05 }],
   }));
 
-  // Falling sugar particles path calculations
+  // Falling sugar particles path calculations (using quadratic bezier curve)
   const p1Style = useAnimatedStyle(() => {
-    const p = (pourProgress.value * 1.4) % 1.0;
-    const x = 32 + p * 22;
-    const y = 30 + p * 42;
+    const p = (pourProgress.value * 1.3) % 1.0;
+    const x = (1 - p) * (1 - p) * 120 + 2 * p * (1 - p) * 164 + p * p * 208;
+    const y = (1 - p) * (1 - p) * 27 + 2 * p * (1 - p) * 40 + p * p * 77;
     return {
-      transform: [{ translateX: x }, { translateY: y }],
+      transform: [
+        { translateX: x },
+        { translateY: y },
+        { rotate: `${p * 360}deg` },
+        { scale: 0.7 + (1 - p) * 0.3 }
+      ],
       opacity: pourProgress.value > 0.05 && pourProgress.value < 0.95 ? 1 : 0,
     };
   });
 
   const p2Style = useAnimatedStyle(() => {
-    const p = ((pourProgress.value + 0.33) * 1.4) % 1.0;
-    const x = 32 + p * 22;
-    const y = 30 + p * 42;
+    const p = ((pourProgress.value + 0.33) * 1.3) % 1.0;
+    const x = (1 - p) * (1 - p) * 120 + 2 * p * (1 - p) * 164 + p * p * 208;
+    const y = (1 - p) * (1 - p) * 27 + 2 * p * (1 - p) * 40 + p * p * 77;
     return {
-      transform: [{ translateX: x }, { translateY: y }],
+      transform: [
+        { translateX: x },
+        { translateY: y },
+        { rotate: `${p * 360}deg` },
+        { scale: 0.6 + (1 - p) * 0.4 }
+      ],
       opacity: pourProgress.value > 0.05 && pourProgress.value < 0.95 ? 1 : 0,
     };
   });
 
   const p3Style = useAnimatedStyle(() => {
-    const p = ((pourProgress.value + 0.66) * 1.4) % 1.0;
-    const x = 32 + p * 22;
-    const y = 30 + p * 42;
+    const p = ((pourProgress.value + 0.66) * 1.3) % 1.0;
+    const x = (1 - p) * (1 - p) * 120 + 2 * p * (1 - p) * 164 + p * p * 208;
+    const y = (1 - p) * (1 - p) * 27 + 2 * p * (1 - p) * 40 + p * p * 77;
     return {
-      transform: [{ translateX: x }, { translateY: y }],
+      transform: [
+        { translateX: x },
+        { translateY: y },
+        { rotate: `${p * 360}deg` },
+        { scale: 0.8 + (1 - p) * 0.2 }
+      ],
       opacity: pourProgress.value > 0.05 && pourProgress.value < 0.95 ? 1 : 0,
     };
   });
@@ -200,55 +218,134 @@ function CuriosityCard({ cardW, C }: { cardW: number; C: any }) {
       gap: 12,
     }}>
       {/* Visual comparison container */}
-      <View style={{ flexDirection: 'row', width: '100%', height: 110, alignItems: 'center', justifyContent: 'space-around', backgroundColor: C.cardInner, borderRadius: 16, padding: 8, overflow: 'hidden' }}>
-        {/* Left: Realistic glass soda bottle */}
-        <View style={{ alignItems: 'center' }}>
-          <Svg width="65" height="95" viewBox="0 0 65 95">
-            <G transform="rotate(35 30 45)">
-              {/* Bottle Cap */}
-              <Path d="M23,12 L37,12 L35,6 L25,6 Z" fill="#D3D3D3" stroke="#8E8E93" strokeWidth="0.5" />
-              <Path d="M23,10 L37,10" stroke="#FF3B30" strokeWidth="1.5" />
-              {/* Neck */}
-              <Path d="M24,12 L36,12 L34,25 L26,25 Z" fill="rgba(255, 255, 255, 0.25)" stroke="rgba(255, 255, 255, 0.35)" />
-              <Path d="M24.5,15 L35.5,15 L34,25 L26,25 Z" fill="#201103" />
-              {/* Contour Glass Body */}
-              <Path d="M26,25 C26,25 20,35 20,45 C20,55 22.5,60 20.5,70 C18.5,80 22.5,88 30,88 C37.5,88 41.5,80 39.5,70 C37.5,60 40,55 40,45 C40,35 34,25 34,25 Z" fill="rgba(255, 255, 255, 0.15)" stroke="rgba(255, 255, 255, 0.3)" strokeWidth="1" />
-              <Path d="M26.2,25.2 C26.2,25.2 20.5,35 20.5,45 C20.5,55 22.8,60 20.8,70 C19,80 22.8,86.5 30,86.5 C37.2,86.5 41,80 39.2,70 C37.2,60 39.5,55 39.5,45 C39.5,35 33.8,25.2 33.8,25.2 Z" fill="#180B02" />
-              {/* Red Label */}
-              <Path d="M20.5,42 C20.5,42 24.5,44 30,44 C35.5,44 39.5,42 39.5,42 L39.2,54 C39.2,54 35.5,52 30,52 C24.5,52 20.8,54 20.8,54 Z" fill="#FF3B30" />
-              <SvgText x="30" y="49" fill="#FFFFFF" fontSize="6.5" fontWeight="900" textAnchor="middle" letterSpacing="0.2">COLA</SvgText>
-              <SvgText x="30" y="59" fill="#FFD54F" fontSize="5.5" fontWeight="800" textAnchor="middle">39g</SvgText>
-              {/* Highlights */}
-              <Path d="M22,30 C22,30 24,38 24,46" fill="none" stroke="#FFFFFF" strokeWidth="1" opacity="0.25" strokeLinecap="round" />
-            </G>
-          </Svg>
-        </View>
+      <View style={{ width: '100%', height: 145, backgroundColor: C.cardInner, borderRadius: 16, padding: 8, overflow: 'hidden', justifyContent: 'center' }}>
+        {/* Main SVG containing Bottle, Spoon, and static Sugar Stream */}
+        <Svg width="100%" height="100%" viewBox="0 0 280 130">
+          <Defs>
+            <SvgLinearGradient id="liquid" x1="0%" y1="0%" x2="100%" y2="0%">
+              <Stop offset="0%" stopColor="#0d0603" />
+              <Stop offset="30%" stopColor="#1e0c05" />
+              <Stop offset="50%" stopColor="#3d1808" />
+              <Stop offset="70%" stopColor="#1e0c05" />
+              <Stop offset="100%" stopColor="#0d0603" />
+            </SvgLinearGradient>
+            
+            <SvgLinearGradient id="label" x1="0%" y1="0%" x2="100%" y2="0%">
+              <Stop offset="0%" stopColor="#8a0c0c" />
+              <Stop offset="25%" stopColor="#d61818" />
+              <Stop offset="50%" stopColor="#ff4d4d" />
+              <Stop offset="75%" stopColor="#d61818" />
+              <Stop offset="100%" stopColor="#8a0c0c" />
+            </SvgLinearGradient>
+
+            <SvgLinearGradient id="bottleGlass" x1="0%" y1="0%" x2="100%" y2="0%">
+              <Stop offset="0%" stopColor="#ffffff" stopOpacity="0.35" />
+              <Stop offset="15%" stopColor="#ffffff" stopOpacity="0.1" />
+              <Stop offset="45%" stopColor="#ffffff" stopOpacity="0.7" />
+              <Stop offset="55%" stopColor="#ffffff" stopOpacity="0.15" />
+              <Stop offset="85%" stopColor="#000000" stopOpacity="0.25" />
+              <Stop offset="100%" stopColor="#ffffff" stopOpacity="0.3" />
+            </SvgLinearGradient>
+
+            <SvgLinearGradient id="chrome" x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor="#c7c7cc" />
+              <Stop offset="20%" stopColor="#ffffff" />
+              <Stop offset="40%" stopColor="#8e8e93" />
+              <Stop offset="45%" stopColor="#48484a" />
+              <Stop offset="50%" stopColor="#ffffff" />
+              <Stop offset="70%" stopColor="#aeaeb2" />
+              <Stop offset="90%" stopColor="#8e8e93" />
+              <Stop offset="100%" stopColor="#3a3a3c" />
+            </SvgLinearGradient>
+
+            <SvgRadialGradient id="innerSpoon" cx="35%" cy="35%" r="65%">
+              <Stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
+              <Stop offset="40%" stopColor="#d1d1d6" stopOpacity="0.75" />
+              <Stop offset="80%" stopColor="#8e8e93" stopOpacity="0.5" />
+              <Stop offset="100%" stopColor="#1c1c1e" stopOpacity="0.85" />
+            </SvgRadialGradient>
+
+            <SvgRadialGradient id="sugar" cx="50%" cy="30%" r="50%">
+              <Stop offset="0%" stopColor="#ffffff" />
+              <Stop offset="55%" stopColor="#f2f2f7" />
+              <Stop offset="80%" stopColor="#e5e5ea" />
+              <Stop offset="100%" stopColor="#c7c7cc" />
+            </SvgRadialGradient>
+
+            <SvgLinearGradient id="cap" x1="0%" y1="0%" x2="100%" y2="0%">
+              <Stop offset="0%" stopColor="#8e8e93" />
+              <Stop offset="25%" stopColor="#e5e5ea" />
+              <Stop offset="50%" stopColor="#ffffff" />
+              <Stop offset="75%" stopColor="#b3b3b3" />
+              <Stop offset="100%" stopColor="#8e8e93" />
+            </SvgLinearGradient>
+          </Defs>
+
+          {/* Left Side: Cola Bottle */}
+          <G transform="translate(45, -5) rotate(42 45 65)">
+            <Ellipse cx="45" cy="122" rx="16" ry="4" fill="rgba(0,0,0,0.2)" />
+            <Path d="M 32,118 C 32,118 30,121 45,121 C 60,121 58,118 58,118 Z" fill="rgba(255,255,255,0.4)" stroke="rgba(255,255,255,0.5)" strokeWidth="0.5" />
+            <Path d="M 35,45 C 35,45 28,58 28,75 C 28,92 30,102 28,115 C 27.5,120 32,120 45,120 C 58,120 62.5,120 62,115 C 60,102 62,92 62,75 C 62,58 55,45 55,45 Z" fill="url(#liquid)" />
+            <Path d="M 28.2,74 C 32,76 38,77 45,77 C 52,77 58,76 61.8,74 L 61,90 C 57.2,92 51.5,93 45,93 C 38.5,93 32.8,92 29,90 Z" fill="url(#label)" stroke="#ffb300" strokeWidth="0.4" />
+            <SvgText x="45" y="82" fill="#ffffff" fontSize="7.5" fontWeight="900" textAnchor="middle" letterSpacing="0.4">COLA</SvgText>
+            <SvgText x="45" y="89.5" fill="#ffb300" fontSize="6.5" fontWeight="800" textAnchor="middle">39g</SvgText>
+            <Path d="M 35,45 C 35,45 28,58 28,75 C 28,92 30,102 28,115 C 27.5,120 32,120 45,120 C 58,120 62.5,120 62,115 C 60,102 62,92 62,75 C 62,58 55,45 55,45 Z" fill="url(#bottleGlass)" />
+            <Path d="M 31,52 C 30,68 31.5,84 30.5,112" fill="none" stroke="#ffffff" strokeWidth="1.6" opacity="0.4" strokeLinecap="round" />
+            <Ellipse cx="34" cy="51" rx="2.5" ry="1.2" fill="#ffffff" opacity="0.6" transform="rotate(-15 34 51)" />
+            <Path d="M 37,28 L 53,28 L 51,45 L 39,45 Z" fill="url(#liquid)" />
+            <Path d="M 37,28 L 53,28 L 51,45 L 39,45 Z" fill="url(#bottleGlass)" />
+            <Path d="M 36,20 L 54,20 L 53,22 L 37,22 Z" fill="#8e8e93" />
+            <Path d="M 36,22 L 54,22 L 54,28 L 36,28 Z" fill="url(#cap)" />
+            <Line x1="39" y1="22" x2="39" y2="28" stroke="#3a3a3c" strokeWidth="0.4" />
+            <Line x1="42" y1="22" x2="42" y2="28" stroke="#3a3a3c" strokeWidth="0.4" />
+            <Line x1="45" y1="22" x2="45" y2="28" stroke="#3a3a3c" strokeWidth="0.4" />
+            <Line x1="48" y1="22" x2="48" y2="28" stroke="#3a3a3c" strokeWidth="0.4" />
+            <Line x1="51" y1="22" x2="51" y2="28" stroke="#3a3a3c" strokeWidth="0.4" />
+          </G>
+
+          {/* Right Side: Chrome Teaspoon and Sugar Crystals */}
+          <G transform="translate(160, 45) rotate(-10 50 45)">
+            <Ellipse cx="50" cy="58" rx="22" ry="5" fill="rgba(0,0,0,0.12)" />
+            <Path d="M 66,45 L 110,50 C 112,50.3 113,49.2 111,48.5 L 66,42 Z" fill="url(#chrome)" />
+            <Path d="M 68,43.5 L 108,49" stroke="#ffffff" strokeWidth="0.5" opacity="0.6" />
+            <Ellipse cx="50" cy="45" rx="18" ry="10" fill="url(#chrome)" />
+            <Ellipse cx="49.5" cy="45" rx="16.5" ry="8.8" fill="url(#innerSpoon)" />
+            <Path d="M 33.5,43 C 35,51 44,54 53,52" fill="none" stroke="#ffffff" strokeWidth="0.8" opacity="0.75" />
+            <Path d="M 28,44 Q 49.5,12 71,44 Z" fill="url(#sugar)" />
+            <Path d="M 34,42 Q 49.5,20 65,42 Z" fill="rgba(255, 255, 255, 0.95)" />
+            <Polygon points="45,28 47,25 49,28 47,31" fill="#ffffff" />
+            <Polygon points="38,36 40,33 42,36 40,39" fill="#ffffff" />
+            <Polygon points="53,32 55,29 57,32 55,35" fill="#ffffff" />
+            <Polygon points="60,39 62,36 64,39 62,42" fill="#ffffff" />
+            <Polygon points="43,40 44.5,38 46,40 44.5,42" fill="#ffffff" />
+            <Polygon points="51,39 52.5,37 54,39 52.5,41" fill="#ffffff" />
+            <Polygon points="57,25 58.5,23 60,25 58.5,27" fill="#ffffff" opacity="0.9" />
+            <Polygon points="35,27 36.5,25 38,27 36.5,29" fill="#ffffff" opacity="0.8" />
+          </G>
+
+          {/* Glowing Stream Path (Static Ribbon underneath) */}
+          <Path d="M 120,27 Q 164,40 208,77" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="4" />
+          <Path d="M 120,27 Q 164,40 208,77" fill="none" stroke="#ffffff" strokeWidth="2.5" />
+        </Svg>
 
         {/* Falling sugar particles container */}
         <View style={StyleSheet.absoluteFill} pointerEvents="none">
-          <Animated.View style={[{ position: 'absolute', width: 6, height: 6, borderRadius: 3, backgroundColor: '#FFFFFF', borderWidth: 0.5, borderColor: '#E5E5EA' }, p1Style]} />
-          <Animated.View style={[{ position: 'absolute', width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#FFEAA7', borderWidth: 0.5, borderColor: '#E5E5EA' }, p2Style]} />
-          <Animated.View style={[{ position: 'absolute', width: 6, height: 6, borderRadius: 3, backgroundColor: '#FFFFFF', borderWidth: 0.5, borderColor: '#E5E5EA' }, p3Style]} />
+          <Animated.View style={[{ position: 'absolute', width: 6, height: 6 }, p1Style]}>
+            <Svg width="6" height="6" viewBox="0 0 6 6">
+              <Polygon points="3,0 6,3 3,6 0,3" fill="#ffffff" stroke="#e5e5ea" strokeWidth="0.3" />
+            </Svg>
+          </Animated.View>
+          <Animated.View style={[{ position: 'absolute', width: 5, height: 5 }, p2Style]}>
+            <Svg width="5" height="5" viewBox="0 0 5 5">
+              <Polygon points="2.5,0 5,2.5 2.5,5 0,2.5" fill="#ffffff" stroke="#e5e5ea" strokeWidth="0.3" />
+            </Svg>
+          </Animated.View>
+          <Animated.View style={[{ position: 'absolute', width: 6, height: 6 }, p3Style]}>
+            <Svg width="6" height="6" viewBox="0 0 6 6">
+              <Polygon points="3,0 6,3 3,6 0,3" fill="#ffffff" stroke="#e5e5ea" strokeWidth="0.3" />
+            </Svg>
+          </Animated.View>
         </View>
-
-        {/* Pouring stream overlay */}
-        <Animated.View style={[{ position: 'absolute', top: 35, left: '38%', width: 22, height: 40 }, pourStyle]}>
-          <Svg width="100%" height="100%" viewBox="0 0 22 40" preserveAspectRatio="none">
-            <Line x1="2" y1="0" x2="20" y2="40" stroke="#FFFFFF" strokeWidth="3" strokeDasharray="3,3" opacity="0.6" />
-          </Svg>
-        </Animated.View>
-
-        {/* Right: Teaspoon and Sugar Pile */}
-        <Animated.View style={[{ alignItems: 'center' }, sugarPileStyle]}>
-          <Svg width="70" height="95" viewBox="0 0 70 95">
-            <Path d="M 5,80 Q 35,30 65,80 Z" fill="#FFFFFF" stroke="#EFEFEC" strokeWidth="0.5" />
-            <Path d="M 50,45 L 30,65 C 28,67 25,67 23,65 L 10,52 C 8,50 8,47 10,45 L 23,32" fill="none" stroke="#D3D3D3" strokeWidth="2.5" strokeLinecap="round" />
-            <Ellipse cx="14" cy="48" rx="8" ry="6" fill="#E5E5EA" stroke="#8E8E93" strokeWidth="1" transform="rotate(-45 14 48)" />
-            <Path d="M22,76 L34,76 L34,84 L22,84 Z" fill="#F2F2F7" opacity="0.9" />
-            <Path d="M32,70 L42,70 L42,78 L32,78 Z" fill="#FFFFFF" stroke="#E5E5EA" strokeWidth="0.5" />
-            <SvgText x="35" y="85" fill="#E8820C" fontSize="11" fontWeight="900" textAnchor="middle">9.3 tsp</SvgText>
-          </Svg>
-        </Animated.View>
       </View>
 
       {/* Dynamic stats */}
@@ -790,10 +887,10 @@ function GoalCard({
   onSelect: (val: GoalOption) => void;
 }) {
   const options: { label: string; desc: string; value: GoalOption }[] = [
-    { label: "⚡ Boost Energy & Alertness", desc: "Prevent insulin spikes and beat the afternoon crash.", value: 'energy' },
-    { label: "⚖️ Manage Weight & Cravings", desc: "Break the sugar loop and regain control of your appetite.", value: 'weight' },
-    { label: "🧠 Sharpen Mental Focus", desc: "Clear the brain fog and maintain sustained mental clarity.", value: 'mental' },
-    { label: "🛡️ Protect Long-Term Health", desc: "Align with WHO limits to protect cardiovascular and metabolic health.", value: 'none' },
+    { label: "Boost Energy & Alertness", desc: "Prevent insulin spikes and beat the afternoon crash.", value: 'energy' },
+    { label: "Manage Weight & Cravings", desc: "Break the sugar loop and regain control of your appetite.", value: 'weight' },
+    { label: "Sharpen Mental Focus", desc: "Clear the brain fog and maintain sustained mental clarity.", value: 'mental' },
+    { label: "Protect Long-Term Health", desc: "Align with WHO limits to protect cardiovascular and metabolic health.", value: 'none' },
   ];
 
   return (
