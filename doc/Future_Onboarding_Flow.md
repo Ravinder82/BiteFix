@@ -40,7 +40,7 @@ This document outlines the UX layout and copywriting assets for the next-generat
 *   **Headline:** 
     > ## Your Personal Sweet-Safe Haven.
 *   **Subheadline:** 
-    > **Build a curated pantry of low and no-sugar favorites. Scan, collect, and keep track of clean-label items that treat your body right.**
+    > **Scan, collect, and save low-sugar favorites. Your clean-label shortcut at the shelf.**
 *   **Direct & Punchy Callout:**
     > **"No more guessing at the shelf. Save your go-to clean products in your personal pantry for effortless shopping."**
 
@@ -51,7 +51,7 @@ This document outlines the UX layout and copywriting assets for the next-generat
 *   **Headline:** 
     > ## Meet Your Healthy Upgrades.
 *   **Subheadline:** 
-    > **Food Swap is here. Instantly discover cleaner, lower-sugar alternatives to high-sugar foods the moment you scan them.**
+    > **Don't just scan it—swap it. Instantly discover delicious, lower-sugar alternatives.**
 *   **Direct & Punchy Callout:**
     > **"Don't just scan it—swap it. Make better choices instantly with smart, delicious replacements."**
 
@@ -62,7 +62,7 @@ This document outlines the UX layout and copywriting assets for the next-generat
 *   **Headline:** 
     > ## Sugar. Measured in Teaspoons.
 *   **Subheadline:** 
-    > **Grams and ounces are confusing on purpose. We translate complex laboratory metrics into clear, visual teaspoons—fully aligned with the World Health Organization guidelines.**
+    > **We translate confusing laboratory grams into clear teaspoons. See exactly what you're eating.**
 *   **Direct & Punchy Callout:**
     > **"Because you don't eat in laboratory units. See your daily limit in real spoons."**
 
@@ -73,7 +73,7 @@ This document outlines the UX layout and copywriting assets for the next-generat
 *   **Headline:** 
     > ## Grocery Shopping, Cleaned Up.
 *   **Subheadline:** 
-    > **Scan barcodes, build your low-sugar pantry, and use Food Swap to bypass sugary traps on the fly. Smarter choices made simple.**
+    > **Your ultimate companion. Scan, swap, and bypass sugary supermarket traps on the fly.**
 *   **Direct & Punchy Callout:**
     > **"Your ultimate companion for sugar-free grocery trips. Point, scan, and shop clean."**
 
@@ -84,7 +84,7 @@ This document outlines the UX layout and copywriting assets for the next-generat
 *   **Headline:** 
     > ## Expose the Stealth Sugars.
 *   **Subheadline:** 
-    > **Brands hide sugar under 60+ chemical aliases. Our Stealth Sugar Audit exposes hidden sweeteners instantly, even in products claiming to be 'Sugar-Free'.**
+    > **Expose 60+ chemical sugar aliases instantly. Unmask hidden sweeteners in 'healthy' foods.**
 *   **Direct & Punchy Callout:**
     > **"No stealth ingredients. Expose hidden sweeteners disguised as healthy additives."**
 
