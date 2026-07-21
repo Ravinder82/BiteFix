@@ -1,13 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Bookmark, Trash2 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { OrbMascot as Mascot } from './OrbMascot';
 import { useAppStore } from '../../stores/appStore';
-import { formatWeight } from '../../utils/format';
-import { formatSugar, getConsistentNutritionalMetrics } from '../../utils/sugar';
+import { getNovaColor, getNovaShortLabel, getBiteFixScoreColor } from '../../utils/format';
+import { AdditiveDetail } from '../../types/app.types';
 
 export interface ProductHeroCardDashboardProps {
   scanResult: {
@@ -48,135 +47,148 @@ export default function ProductHeroCardDashboard({
   onDelete,
   onPress,
 }: ProductHeroCardDashboardProps) {
-  const { sugarUnit } = useAppStore();
+  const [imageError, setImageError] = React.useState(false);
+
+  React.useEffect(() => {
+    setImageError(false);
+  }, [scanResult.imageUrl]);
 
   const isUnknown =
     scanResult.sugarTeaspoons === undefined &&
     scanResult.sugarPer100g === undefined;
 
-  const metrics = getConsistentNutritionalMetrics(scanResult);
-  const servingSugarG = metrics.servingSugarG;
-  const servingSugarTsp = metrics.servingTsp;
-  const servingCalories = metrics.servingCalories;
+  const biteFixScore = scanResult.biteFixScore ?? 50;
+  const novaClass = scanResult.novaClass;
+  const additiveCount = scanResult.additiveCount ?? 0;
+  const additives: AdditiveDetail[] = scanResult.additives ?? [];
 
-  const currentTsp = servingSugarTsp ?? 0;
-  const servingTsp = servingSugarTsp ?? 0;
-
-  const displayLabel = 'SUGAR PER SERVING';
-  const displaySubLabel = scanResult.servingSize
-    ? `(${formatWeight(scanResult.servingSize, sugarUnit)})`
-    : '';
-
-  let cardBg: [string, string];
   let ledColor: string;
   let ledLabel: string;
-  let ratingColor: string;
   let ratingDesc: string;
 
-
-  if (isUnknown) {
-    cardBg = isDark ? [colors.surface, colors.surface] : [colors.surface, colors.surface];
+  if (isUnknown && scanResult.biteFixScore === undefined) {
     ledColor = '#8E8E93';
     ledLabel = 'Unknown';
-    ratingDesc = 'No sugar data available';
-  } else if (currentTsp > 6) {
-    cardBg = isDark ? [colors.surface, colors.surface] : [colors.surface, colors.surface];
-    ledColor = '#FF3B30';
-    ledLabel = 'High Sugar';
-    ratingDesc = 'Exceeds daily recommendation';
-  } else if (currentTsp > 3) {
-    cardBg = isDark ? [colors.surface, colors.surface] : [colors.surface, colors.surface];
-    ledColor = '#FF9500';
+    ratingDesc = 'No processing data available';
+  } else if (biteFixScore >= 76) {
+    ledColor = '#22C55E';
+    ledLabel = 'Clean Choice';
+    ratingDesc = 'Minimal processing & whole ingredients';
+  } else if (biteFixScore >= 51) {
+    ledColor = '#3BB5A0';
     ledLabel = 'Moderate';
-    ratingDesc = 'Approach with caution';
+    ratingDesc = 'Approach with awareness';
+  } else if (biteFixScore >= 26) {
+    ledColor = '#F5A623';
+    ledLabel = 'Processed';
+    ratingDesc = 'Contains industrial refinement';
   } else {
-    cardBg = isDark ? [colors.surface, colors.surface] : [colors.surface, colors.surface];
-    ledColor = '#34C759';
-    ledLabel = 'Low Sugar';
-    ratingDesc = 'Safe to consume';
+    ledColor = '#EF4444';
+    ledLabel = 'Highly Refined';
+    ratingDesc = 'Ultra-processed formulation';
   }
 
-  ratingColor = isUnknown ? colors.textMuted : colors.primary;
+  const ratingColor = (isUnknown && scanResult.biteFixScore === undefined)
+    ? colors.textMuted
+    : getBiteFixScoreColor(biteFixScore);
+
+  const borderDivider = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+  const bentoBg = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)';
 
   const cardContent = (
-    <LinearGradient
-      colors={cardBg}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+    <View
       style={{
-        borderColor: colors.border,
-        borderWidth: 1.5,
-        borderRadius: 30,
-        padding: 22,
+        backgroundColor: colors.surface,
+        borderColor: borderDivider,
+        borderWidth: 1,
+        borderRadius: 24,
+        padding: 20,
         width: (width as any) || '100%',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 12 },
-        shadowOpacity: isDark ? 0.25 : 0.08,
-        shadowRadius: 24,
-        elevation: 8,
-        position: 'relative',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: isDark ? 0.35 : 0.04,
+        shadowRadius: 18,
+        elevation: 5,
         overflow: 'hidden',
       }}
     >
-      {/* Header Row: Product Image, Name, Brand */}
-      <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center', zIndex: 2 }}>
+      {/* ── Header: Identity Panel ── */}
+      <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
         <View
           style={{
-            width: 86,
-            height: 86,
-            borderRadius: 18,
-            backgroundColor: '#FFFFFF',
-            padding: 6,
+            width: 68,
+            height: 68,
+            borderRadius: 16,
+            backgroundColor: isDark ? '#1C1C1E' : '#F9F9FB',
+            padding: 4,
             borderWidth: 1,
-            borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+            borderColor: borderDivider,
             alignItems: 'center',
             justifyContent: 'center',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.08,
-            shadowRadius: 8,
           }}
         >
-          {scanResult.imageUrl ? (
+            {scanResult.imageUrl && !imageError ? (
             <Image
               source={{ uri: scanResult.imageUrl }}
               style={{ width: '100%', height: '100%', borderRadius: 12 }}
               contentFit="contain"
-              transition={200}
+              transition={150}
+              onError={() => setImageError(true)}
             />
           ) : (
             <Mascot
-              state={currentTsp > 6 ? 'shocked' : currentTsp > 3 ? 'dizzy' : 'happy'}
-              size={56}
+              state={biteFixScore >= 76 ? 'happy' : biteFixScore >= 41 ? 'idle' : 'shocked'}
+              size={40}
             />
           )}
         </View>
-
+ 
         <View style={{ flex: 1, gap: 4 }}>
-          <View
-            style={{
-              alignSelf: 'flex-start',
-              backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-              paddingHorizontal: 10,
-              paddingVertical: 4,
-              borderRadius: 99,
-            }}
-          >
-            <Text
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', width: '100%' }}>
+            <View
               style={{
-                color: colors.textSecondary,
-                fontSize: 10,
-                fontWeight: '800',
-                textTransform: 'uppercase',
-                letterSpacing: 0.5,
+                alignSelf: 'flex-start',
+                backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                paddingHorizontal: 8,
+                paddingVertical: 3,
+                borderRadius: 99,
+                maxWidth: '65%',
               }}
-              numberOfLines={1}
             >
-              {scanResult.brand || 'Generic Brand'}
-            </Text>
+              <Text
+                style={{
+                  color: colors.textSecondary,
+                  fontSize: 10,
+                  fontWeight: '800',
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.8,
+                }}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {scanResult.brand || 'Generic Brand'}
+              </Text>
+            </View>
+            {novaClass && (
+              <View
+                style={{
+                  alignSelf: 'flex-start',
+                  backgroundColor: getNovaColor(novaClass) + '15',
+                  borderColor: getNovaColor(novaClass) + '30',
+                  borderWidth: 1,
+                  paddingHorizontal: 8,
+                  paddingVertical: 3,
+                  borderRadius: 99,
+                }}
+              >
+                <Text style={{ color: getNovaColor(novaClass), fontSize: 10, fontWeight: '800', letterSpacing: 0.5 }}>
+                  NOVA {novaClass}
+                </Text>
+              </View>
+            )}
           </View>
           <Text
-            style={{ color: colors.text, fontSize: 18, fontWeight: '900', lineHeight: 23 }}
+            style={{ color: colors.text, fontSize: 18, fontWeight: '900', lineHeight: 22, letterSpacing: -0.3 }}
             numberOfLines={2}
           >
             {scanResult.name}
@@ -184,444 +196,270 @@ export default function ProductHeroCardDashboard({
         </View>
       </View>
 
-      <View
-        style={{
-          height: 1.5,
-          backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-          marginVertical: 18,
-          zIndex: 2,
-        }}
-      />
+      <View style={{ height: 1, backgroundColor: borderDivider, marginVertical: 18 }} />
 
-      {/* Body Section: The Teaspoon Display and Safety LED Indicator */}
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          zIndex: 2,
-        }}
-      >
-        <View>
+      {/* ── BiteFix Telemetry Gauge ── */}
+      <View style={{ gap: 12 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-            <Text
-              style={{ color: ratingColor, fontSize: 56, fontWeight: '900', letterSpacing: -1 }}
-            >
-              {isUnknown ? '--' : currentTsp.toFixed(1).replace(/\.0$/, '')}
+            <Text style={{ color: ratingColor, fontSize: 44, fontWeight: '900', letterSpacing: -1.5 }}>
+              {biteFixScore}
             </Text>
-            {!isUnknown && (
-              <Text
-                style={{ color: colors.textSecondary, fontSize: 18, fontWeight: '800', marginLeft: 4 }}
-              >
-                tsp
-              </Text>
-            )}
-          </View>
-          <Text
-            style={{
-              color: colors.textMuted,
-              fontSize: 11,
-              fontWeight: '700',
-              textTransform: 'uppercase',
-              letterSpacing: 0.5,
-            }}
-          >
-            {displayLabel}
-          </Text>
-          <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600' }}>
-            {displaySubLabel}
-          </Text>
-        </View>
-
-        {/* Safety LED Indicator Bulb */}
-        <View style={{ alignItems: 'flex-end', gap: 6 }}>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 8,
-              backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-              borderRadius: 16,
-              borderWidth: 1,
-              borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
-            }}
-          >
-            {/* Glowing LED Circle */}
-            <View
-              style={{
-                width: 12,
-                height: 12,
-                borderRadius: 6,
-                backgroundColor: ledColor,
-                shadowColor: ledColor,
-                shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 0.8,
-                shadowRadius: 6,
-                elevation: 4,
-              }}
-            />
-            <Text
-              style={{ color: colors.text, fontSize: 12, fontWeight: '900', textTransform: 'uppercase' }}
-            >
-              {ledLabel}
+            <Text style={{ color: colors.textSecondary, fontSize: 15, fontWeight: '800', marginLeft: 2 }}>
+              /100
             </Text>
           </View>
-          <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '600', textAlign: 'right' }}>
-            {ratingDesc}
-          </Text>
-        </View>
-      </View>
 
-      <View
-        style={{
-          height: 1.5,
-          backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-          marginVertical: 16,
-          zIndex: 2,
-        }}
-      />
-
-      {/* Serving Breakdown Card */}
-      <View style={{ flexDirection: 'column', gap: 14, marginBottom: 20, zIndex: 2 }}>
-        <View
-          style={{
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.01)',
-            borderRadius: 24,
-            padding: 16,
-            borderWidth: 1.2,
-            borderColor: colors.border,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: isDark ? 0.15 : 0.03,
-            shadowRadius: 12,
-            elevation: 2,
-          }}
-        >
-          {/* Top Header Row */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primary }} />
-              <Text
-                style={{
-                  color: colors.textSecondary,
-                  fontSize: 10,
-                  fontWeight: '800',
-                  textTransform: 'uppercase',
-                  letterSpacing: 1.0,
-                }}
-              >
-                Serving Details
-              </Text>
-            </View>
+          <View style={{ alignItems: 'flex-end', gap: 3 }}>
             <View
               style={{
-                backgroundColor: colors.primary + '15',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                backgroundColor: ledColor + '15',
                 paddingHorizontal: 12,
-                paddingVertical: 5,
+                paddingVertical: 6,
                 borderRadius: 99,
                 borderWidth: 1,
-                borderColor: colors.primary + '25',
+                borderColor: ledColor + '30',
               }}
             >
-              <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '900' }}>
-                {formatWeight(scanResult.servingSize, sugarUnit) || '100g Standard'}
+              <View
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: 3.5,
+                  backgroundColor: ledColor,
+                }}
+              />
+              <Text
+                style={{ color: colors.text, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}
+              >
+                {ledLabel}
               </Text>
             </View>
           </View>
-
-          {/* Metrics Columns with Vertical Divider */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 }}>
-            {/* Left Column: Sugar Content (USP Highlighted) */}
-            <View style={{ flex: 1.3, alignItems: 'center' }}>
-              <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>
-                Sugar Content
-              </Text>
-              <Text style={{ color: colors.primary, fontSize: 26, fontWeight: '900', letterSpacing: -0.5 }}>
-                {servingSugarTsp.toFixed(1).replace(/\.0$/, '')} <Text style={{ fontSize: 14, fontWeight: '900' }}>tsp</Text>
-              </Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', marginTop: 1 }}>
-                ({formatSugar(servingSugarG ?? 0, sugarUnit)})
-              </Text>
-            </View>
-
-            {/* Vertical Divider */}
-            <View
-              style={{
-                width: 1.2,
-                height: 48,
-                backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-                marginHorizontal: 8,
-              }}
-            />
-
-            {/* Right Column: Energy (Downplayed) */}
-            <View style={{ flex: 0.7, alignItems: 'center' }}>
-              <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 6 }}>
-                Energy
-              </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 16, fontWeight: '800', letterSpacing: -0.2 }}>
-                {servingCalories !== undefined ? Math.round(servingCalories) : '—'} <Text style={{ fontSize: 11, fontWeight: '700' }}>kcal</Text>
-              </Text>
-            </View>
-          </View>
-        </View>
-      </View>
-
-      {/* Stealth Sugar Detective Card */}
-      {(() => {
-        const hasHidden = scanResult.hasHiddenSugars === true;
-        const count = scanResult.hiddenSugarCount ?? 0;
-        return (
-          <View
-            style={{
-              backgroundColor: hasHidden 
-                ? (isDark ? 'rgba(255, 149, 0, 0.08)' : 'rgba(255, 149, 0, 0.04)')
-                : (isDark ? 'rgba(52, 199, 89, 0.08)' : 'rgba(52, 199, 89, 0.04)'),
-              borderColor: hasHidden 
-                ? 'rgba(255, 149, 0, 0.25)' 
-                : 'rgba(52, 199, 89, 0.25)',
-              borderWidth: 1.2,
-              borderRadius: 24,
-              padding: 16,
-              marginBottom: 20,
-              zIndex: 2,
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-              <Text style={{ 
-                color: hasHidden ? '#FF9500' : '#34C759', 
-                fontSize: 11, 
-                fontWeight: '900', 
-                textTransform: 'uppercase', 
-                letterSpacing: 0.8 
-              }}>
-                {hasHidden ? '⚠️ Stealth Sugar Detective' : '🟢 Stealth Sugar Audit'}
-              </Text>
-              <View style={{ 
-                backgroundColor: hasHidden ? 'rgba(255, 149, 0, 0.15)' : 'rgba(52, 199, 89, 0.15)',
-                paddingHorizontal: 8, 
-                paddingVertical: 3, 
-                borderRadius: 6 
-              }}>
-                <Text style={{ 
-                  color: hasHidden ? '#FF9500' : '#34C759', 
-                  fontSize: 9, 
-                  fontWeight: '800' 
-                }}>
-                  {hasHidden ? `${count} matched` : 'Clean'}
-                </Text>
-              </View>
-            </View>
-            
-            <Text style={{ color: colors.textSecondary, fontSize: 11, lineHeight: 16 }}>
-              {hasHidden 
-                ? 'Synonyms matched in the parsed ingredients list:'
-                : 'No hidden or stealth sugars found in this product.'}
-            </Text>
-
-            {hasHidden && scanResult.hiddenSugars && scanResult.hiddenSugars.length > 0 && (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                {scanResult.hiddenSugars.map((sugar: string, idx: number) => (
-                  <View 
-                    key={idx} 
-                    style={{ 
-                      backgroundColor: isDark ? 'rgba(255, 149, 0, 0.15)' : 'rgba(255, 149, 0, 0.08)', 
-                      borderColor: 'rgba(255, 149, 0, 0.2)',
-                      borderWidth: 1,
-                      paddingHorizontal: 8, 
-                      paddingVertical: 4, 
-                      borderRadius: 8 
-                    }}
-                  >
-                    <Text style={{ color: '#FF9500', fontSize: 10, fontWeight: '800' }}>
-                      {sugar}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
-        );
-      })()}
-
-      {/* Measuring Progress Bar (WHO Guidelines - Per Serving Method) */}
-      <View style={{ gap: 8, zIndex: 2 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text
-            style={{
-              color: colors.textSecondary,
-              fontSize: 10,
-              fontWeight: '900',
-              textTransform: 'uppercase',
-              letterSpacing: 1.0,
-            }}
-          >
-            WHO Daily Limit (Per Serving)
-          </Text>
-          <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '900' }}>
-            {isUnknown
-              ? '0%'
-              : `${scanResult.whoLimitServingPercent ?? Math.round((servingTsp / 12) * 100)}%`}
-          </Text>
         </View>
 
         {/* Progress Bar Track */}
         <View
           style={{
-            height: 12,
-            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-            borderRadius: 6,
+            height: 6,
+            backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+            borderRadius: 3,
             overflow: 'hidden',
             position: 'relative',
-            borderWidth: 1,
-            borderColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
           }}
         >
-          {/* Active Fill */}
           <View
             style={{
-              width: isUnknown
-                ? '0%'
-                : `${Math.min(
-                  100,
-                  scanResult.whoLimitServingPercent ?? Math.round((servingTsp / 12) * 100)
-                )}%`,
+              width: `${Math.min(100, Math.max(0, biteFixScore))}%`,
               height: '100%',
-              backgroundColor: ledColor,
-              borderRadius: 6,
+              backgroundColor: ratingColor,
+              borderRadius: 3,
             }}
           />
-
-          {/* Halfway indicator tick line (6 tsp mark / 50%) */}
+          {/* Halfway indicator mark (50 points) */}
           <View
             style={{
               position: 'absolute',
               left: '50%',
               top: 0,
               bottom: 0,
-              width: 1.5,
-              backgroundColor: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.25)',
-              zIndex: 10,
+              width: 1,
+              backgroundColor: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.15)',
             }}
           />
         </View>
 
-        {/* Gauge labels below progress bar */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4, paddingHorizontal: 2 }}>
-          {/* 0 tsp tick */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#34C759' }} />
-            <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '800' }}>0 tsp</Text>
-          </View>
-
-          {/* 6 tsp Recommended limit tick */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#FF9500' }} />
-            <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900' }}>6 tsp limit</Text>
-          </View>
-
-          {/* 12 tsp Max limit tick */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#FF3B30' }} />
-            <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '800' }}>12 tsp max</Text>
-          </View>
+        {/* Gauge Ticks */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 2 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700', textTransform: 'uppercase' }}>0 Refined</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase' }}>50 Moderate</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700', textTransform: 'uppercase' }}>100 Pure</Text>
         </View>
       </View>
 
-      {/* Watermark & Optional Action Buttons for History Cards */}
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginTop: 18,
-          paddingTop: 12,
-          borderTopWidth: 0.5,
-          borderTopColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-          zIndex: 2,
-        }}
-      >
-        <View>
-          <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '800', letterSpacing: 0.5 }}>
-            CUT SUGAR APP
-          </Text>
-          <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600' }}>
-            Scan & Discover Hidden Sugars
-          </Text>
-        </View>
+      <View style={{ height: 1, backgroundColor: borderDivider, marginVertical: 18 }} />
 
-        {showActions && (
-          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-            {onSave && (
-              <TouchableOpacity
-                onPress={(e) => {
-                  e.stopPropagation?.();
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  onSave();
-                }}
-                disabled={isSaved}
-                style={{
-                  backgroundColor: isSaved
-                    ? `${colors.primary}25`
-                    : isDark
-                      ? 'rgba(255,255,255,0.08)'
-                      : 'rgba(0, 0, 0, 0.05)',
-                  borderColor: isSaved ? colors.primary : colors.border,
-                  borderWidth: isSaved ? 1.5 : 1,
-                  borderRadius: 12,
-                  paddingHorizontal: 12,
-                  paddingVertical: 8,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 4,
-                }}
-                activeOpacity={0.8}
-              >
-                <Bookmark
-                  size={15}
-                  color={colors.primary}
-                  fill={isSaved ? colors.primary : 'transparent'}
-                />
-                <Text
+      {(() => {
+        const hasAdditives = additives.length > 0;
+        const elevatedAdditives = additives.filter(a => a.riskLevel === 'elevated');
+        const isAlert = elevatedAdditives.length > 0;
+
+        if (!hasAdditives) {
+          return (
+            <View
+              style={{
+                backgroundColor: bentoBg,
+                borderColor: borderDivider,
+                borderWidth: 1,
+                borderRadius: 16,
+                padding: 16,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View
                   style={{
-                    color: isSaved ? colors.primary : colors.text,
-                    fontSize: 11,
-                    fontWeight: '800',
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: '#22C55E',
+                    shadowColor: '#22C55E',
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: 0.6,
+                    shadowRadius: 4,
                   }}
-                >
-                  {isSaved ? 'Saved' : 'Save'}
+                />
+                <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.6 }}>
+                  NO ADDITIVES
                 </Text>
-              </TouchableOpacity>
-            )}
+              </View>
+            </View>
+          );
+        }
 
-            {onDelete && (
-              <TouchableOpacity
-                onPress={(e) => {
-                  e.stopPropagation?.();
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  onDelete();
-                }}
+        return (
+          <View
+            style={{
+              backgroundColor: bentoBg,
+              borderColor: borderDivider,
+              borderWidth: 1,
+              borderRadius: 16,
+              padding: 16,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <Text
                 style={{
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255, 59, 48, 0.1)',
-                  borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255, 59, 48, 0.2)',
-                  borderWidth: 1,
-                  borderRadius: 12,
-                  paddingHorizontal: 10,
-                  paddingVertical: 8,
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  color: colors.textSecondary,
+                  fontSize: 10,
+                  fontWeight: '800',
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.8,
                 }}
-                activeOpacity={0.8}
               >
-                <Trash2 size={15} color={colors.error} />
-              </TouchableOpacity>
-            )}
+                ADDITIVES
+              </Text>
+              <Text style={{ color: isAlert ? '#EF4444' : '#F5A623', fontSize: 11, fontWeight: '800' }}>
+                {additives.length} Found
+              </Text>
+            </View>
+
+            <View style={{ gap: 8 }}>
+              {additives.map((item, idx) => {
+                const ledColor = item.riskLevel === 'elevated' ? '#EF4444' : item.riskLevel === 'moderate' ? '#F5A623' : '#22C55E';
+                return (
+                  <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <View
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: 4,
+                        backgroundColor: ledColor,
+                        shadowColor: ledColor,
+                        shadowOffset: { width: 0, height: 0 },
+                        shadowOpacity: 0.6,
+                        shadowRadius: 4,
+                      }}
+                    />
+                    <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700' }}>
+                      {item.displayName}{' '}
+                      <Text style={{ color: colors.textSecondary, fontWeight: '600', fontSize: 12 }}>
+                        ({item.functionLabel})
+                      </Text>
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
           </View>
-        )}
-      </View>
-    </LinearGradient>
+        );
+      })()}
+
+      {/* ── Action Bar ── */}
+      {showActions && (
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+            marginTop: 18,
+            paddingTop: 12,
+            borderTopWidth: 1,
+            borderTopColor: borderDivider,
+            gap: 8,
+          }}
+        >
+          {onSave && (
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation?.();
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                onSave();
+              }}
+              disabled={isSaved}
+              style={{
+                backgroundColor: isSaved
+                  ? `${colors.primary}20`
+                  : isDark
+                    ? 'rgba(255,255,255,0.08)'
+                    : 'rgba(0, 0, 0, 0.05)',
+                borderColor: isSaved ? colors.primary : borderDivider,
+                borderWidth: 1,
+                borderRadius: 12,
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+              }}
+              activeOpacity={0.8}
+            >
+              <Bookmark
+                size={14}
+                color={colors.primary}
+                fill={isSaved ? colors.primary : 'transparent'}
+              />
+              <Text
+                style={{
+                  color: isSaved ? colors.primary : colors.text,
+                  fontSize: 11,
+                  fontWeight: '800',
+                }}
+              >
+                {isSaved ? 'Saved' : 'Save'}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {onDelete && (
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation?.();
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                onDelete();
+              }}
+              style={{
+                backgroundColor: isDark ? 'rgba(255,59,48,0.12)' : 'rgba(255,59,48,0.08)',
+                borderColor: 'rgba(255,59,48,0.2)',
+                borderWidth: 1,
+                borderRadius: 12,
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+              }}
+              activeOpacity={0.8}
+            >
+              <Trash2 size={14} color="#FF3B30" />
+              <Text style={{ color: '#FF3B30', fontSize: 11, fontWeight: '800' }}>Delete</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+    </View>
   );
 
   if (onPress) {

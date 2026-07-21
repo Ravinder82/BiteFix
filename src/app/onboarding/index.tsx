@@ -751,7 +751,7 @@ function HiddenSugarFinderCard({ cardW, C }: { cardW: number; C: any }) {
     }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: C.cardBorder, paddingBottom: 6, marginBottom: 2 }}>
         <Text style={{ color: C.text, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 }}>
-          Stealth Sugar Audit
+          Hidden Sugars Check
         </Text>
         <View style={{ backgroundColor: C.redLight, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
           <Text style={{ color: C.red, fontSize: 7, fontWeight: '900' }}>3 MATCHED</Text>
@@ -1023,9 +1023,9 @@ const SLIDES: SlideData[] = [
   },
   {
     step: 7,
-    title: "Expose the Stealth Sugars.",
-    highlight: "Stealth Sugars.",
-    subtitle: "Expose 60+ chemical sugar aliases instantly. Unmask hidden sweeteners in 'healthy' foods.",
+    title: "Expose Hidden Sugars.",
+    highlight: "Hidden Sugars.",
+    subtitle: "We detect over 60 different chemical names used by manufacturers to disguise sugar in packaged foods.",
     buttonLabel: 'Get Started',
     isLast: true,
     mascotState: 'dizzy',

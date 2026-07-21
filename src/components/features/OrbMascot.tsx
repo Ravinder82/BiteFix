@@ -24,7 +24,7 @@ const AnimatedEllipse = Animated.createAnimatedComponent(Ellipse);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const AnimatedG = Animated.createAnimatedComponent(G);
 
-export function OrbMascot({ state = 'idle', size = 120 }: OrbMascotProps) {
+export function OrbMascot({ state = 'idle', size = 180 }: OrbMascotProps) {
   const bounce = useSharedValue(0);
   const scaleY = useSharedValue(1);
   const rotation = useSharedValue(0);
@@ -213,48 +213,75 @@ export function OrbMascot({ state = 'idle', size = 120 }: OrbMascotProps) {
   const cy = 55;
   const r = 46;
 
+  const getColors = () => {
+    if (state === 'happy') {
+      return {
+        primary: '#10B981',
+        secondary: '#059669',
+        glow: '#10B981',
+        shadow: '#064E3B'
+      };
+    } else if (state === 'shocked' || state === 'dizzy') {
+      return {
+        primary: '#EF4444',
+        secondary: '#DC2626',
+        glow: '#EF4444',
+        shadow: '#7F1D1D'
+      };
+    } else {
+      return {
+        primary: '#E8820C',
+        secondary: '#AC4E00',
+        glow: '#FF9500',
+        shadow: '#9C4B00'
+      };
+    }
+  };
+
+  const currentColors = getColors();
+
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <Animated.View style={[{ width: size, height: size * 0.95 }, animStyle]}>
         <Svg width="100%" height="100%" viewBox="0 0 110 110">
           <Defs>
-            {/* Ambient amber glow ring */}
+            {/* Ambient dynamic glow ring */}
             <RadialGradient id="glowRing" cx="50%" cy="50%" rx="50%" ry="50%">
-              <Stop offset="0%" stopColor="#FF9500" stopOpacity="0.28" />
-              <Stop offset="65%" stopColor="#E8820C" stopOpacity="0.08" />
-              <Stop offset="100%" stopColor="#E8820C" stopOpacity="0" />
+              <Stop offset="0%" stopColor={currentColors.glow} stopOpacity="0.28" />
+              <Stop offset="65%" stopColor={currentColors.primary} stopOpacity="0.08" />
+              <Stop offset="100%" stopColor={currentColors.primary} stopOpacity="0" />
             </RadialGradient>
 
             {/* Glass back shading */}
             <RadialGradient id="glassBackGrad" cx="35%" cy="35%" rx="65%" ry="65%">
               <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.12" />
-              <Stop offset="75%" stopColor="#E8820C" stopOpacity="0.05" />
+              <Stop offset="75%" stopColor={currentColors.primary} stopOpacity="0.05" />
               <Stop offset="100%" stopColor="#000000" stopOpacity="0.2" />
             </RadialGradient>
 
             {/* Deep background nectar highlight */}
             <RadialGradient id="potionBaseGrad" cx="50%" cy="80%" rx="60%" ry="60%">
-              <Stop offset="0%" stopColor="#E8820C" stopOpacity="0.25" />
-              <Stop offset="100%" stopColor="#E8820C" stopOpacity="0" />
+              <Stop offset="0%" stopColor={currentColors.primary} stopOpacity="0.25" />
+              <Stop offset="100%" stopColor={currentColors.primary} stopOpacity="0" />
             </RadialGradient>
 
-            {/* Front wave: light brown main system color */}
+            {/* Front wave: main system color */}
             <LinearGradient id="potionLiquidGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <Stop offset="0%" stopColor="#E8820C" />
-              <Stop offset="100%" stopColor="#E8820C" />
+              <Stop offset="0%" stopColor={currentColors.primary} />
+              <Stop offset="100%" stopColor={currentColors.primary} />
             </LinearGradient>
 
             {/* Back wave: same system color but with opacity controlled on path */}
             <LinearGradient id="potionLiquidBackGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <Stop offset="0%" stopColor="#E8820C" />
-              <Stop offset="100%" stopColor="#E8820C" />
+              <Stop offset="0%" stopColor={currentColors.primary} />
+              <Stop offset="100%" stopColor={currentColors.primary} />
             </LinearGradient>
 
             {/* Glass shell rim highlight refraction */}
             <LinearGradient id="glassRefractionGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.85" />
               <Stop offset="30%" stopColor="#FFFFFF" stopOpacity="0.15" />
-              <Stop offset="70%" stopColor="#E8820C" stopOpacity="0.25" />
+              <Stop offset="70%" stopColor={currentColors.primary} stopOpacity="0.25" />
               <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.65" />
             </LinearGradient>
 
@@ -266,8 +293,8 @@ export function OrbMascot({ state = 'idle', size = 120 }: OrbMascotProps) {
 
             {/* Dynamic Shadow Grad */}
             <RadialGradient id="shadowGrad" cx="50%" cy="50%" rx="50%" ry="50%">
-              <Stop offset="0%" stopColor="#9C4B00" stopOpacity="0.25" />
-              <Stop offset="100%" stopColor="#9C4B00" stopOpacity="0" />
+              <Stop offset="0%" stopColor={currentColors.shadow} stopOpacity="0.25" />
+              <Stop offset="100%" stopColor={currentColors.shadow} stopOpacity="0" />
             </RadialGradient>
 
             {/* Liquid clipping mask to fit perfectly in the glass orb */}

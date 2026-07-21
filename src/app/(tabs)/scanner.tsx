@@ -22,7 +22,7 @@ import { router } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
 import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
 
-import * as ImagePicker from 'expo-image-picker';
+
 import AnimatedReanimated, {
   useSharedValue,
   useAnimatedStyle,
@@ -35,7 +35,7 @@ import AnimatedReanimated, {
 import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
 import { formatSugar } from '../../utils/sugar';
-import { formatWeight } from '../../utils/format';
+import { formatWeight, getNovaShortLabel, getNovaColor, getNovaLabel } from '../../utils/format';
 
 import {
   ScanResultData,
@@ -63,11 +63,14 @@ import {
   CheckCircle,
   RotateCcw,
   X,
-  Leaf,
   Bookmark,
   Search,
   Share2,
   Plus,
+  Award,
+  RefreshCw,
+  ChevronRight,
+  ChevronLeft,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { BlurView } from 'expo-blur';
@@ -75,7 +78,7 @@ import { BlurView } from 'expo-blur';
 // ─────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────
-type ScanMode = 'camera' | 'manual' | 'result' | 'not-found';
+type ScanMode = 'camera' | 'result' | 'not-found';
 
 // Minimum delay before next scan can fire (prevents double-scans)
 const SCAN_COOLDOWN_MS = 2_500;
@@ -207,38 +210,17 @@ export default function ScannerScreen() {
   const captureScale = useSharedValue(1);
   const captureStyle = useAnimatedStyle(() => ({ transform: [{ scale: captureScale.value }] }));
 
-  // Manual Input State
-  const [manualName, setManualName] = useState('');
-  const [focusName, setFocusName] = useState(false);
 
-  const [manualImageUri, setManualImageUri] = useState<string | null>(null);
-  const [calculationMode, setCalculationMode] = useState<'total' | 'per100'>('total');
-
-  const [manualSugarGrams, setManualSugarGrams] = useState('');
-  const [focusSugar, setFocusSugar] = useState(false);
-
-  const [manualSugarPer100, setManualSugarPer100] = useState('');
-  const [manualProductSize, setManualProductSize] = useState('');
-  const [focusPer100, setFocusPer100] = useState(false);
-  const [focusSize, setFocusSize] = useState(false);
-
-  const lastSavedRef = useRef<{ name: string, sugarVal: number } | null>(null);
-  const [saveStatus, setSaveStatus] = useState<'typing' | 'saving' | 'saved'>('typing');
 
   // Scan Result State
   const [scanResult, setScanResult] = useState<ScanResultData | null>(null);
 
-  // Alternatives State
   const [alternatives, setAlternatives] = useState<ScanResultData[]>([]);
+  const [selectedAltIndex, setSelectedAltIndex] = useState(0);
   const [loadingAlternatives, setLoadingAlternatives] = useState(false);
   const [showAlternatives, setShowAlternatives] = useState(false);
 
-  // Auto-switch to manual if camera permission is denied
-  useEffect(() => {
-    if (permission && !permission.granted && mode === 'camera') {
-      setMode('manual');
-    }
-  }, [mode, permission]);
+
 
   // Stop camera-owned side effects whenever the scanner is not the active screen.
   useEffect(() => {
@@ -271,76 +253,7 @@ export default function ScannerScreen() {
     }
   }, [mode, scannerIsVisible]);
 
-  // Auto-Save Manual Entry
-  useEffect(() => {
-    if (mode !== 'manual') return;
 
-    let sugarVal = 0;
-    if (calculationMode === 'total') {
-      sugarVal = parseFloat(manualSugarGrams);
-    } else {
-      const per100 = parseFloat(manualSugarPer100);
-      const size = parseFloat(manualProductSize);
-      if (!isNaN(per100) && !isNaN(size) && per100 >= 0 && size > 0) {
-        sugarVal = parseFloat(((per100 * size) / 100).toFixed(1));
-      }
-    }
-
-    if (sugarVal > 0 && manualName.trim().length > 0) {
-      if (lastSavedRef.current?.name === manualName.trim() && lastSavedRef.current?.sugarVal === sugarVal) {
-        setSaveStatus('saved');
-        return;
-      }
-
-      setSaveStatus('saving');
-      const timer = setTimeout(() => {
-        if (calculationMode === 'total') {
-          addScan(
-            manualName.trim(),
-            sugarVal,
-            'Custom Entry',
-            manualImageUri || undefined,
-            undefined,
-            '1 serving'
-          );
-        } else {
-          addScan(
-            manualName.trim(),
-            sugarVal,
-            'Custom Entry',
-            manualImageUri || undefined,
-            undefined,
-            `${manualProductSize} g`,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            parseFloat(manualSugarPer100),
-            'Custom Entry'
-          );
-        }
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        lastSavedRef.current = { name: manualName.trim(), sugarVal };
-        setSaveStatus('saved');
-      }, 1500);
-
-      return () => {
-        clearTimeout(timer);
-        setSaveStatus('typing');
-      };
-    } else {
-      setSaveStatus('typing');
-    }
-  }, [
-    mode,
-    manualName,
-    manualSugarGrams,
-    manualSugarPer100,
-    manualProductSize,
-    calculationMode,
-    manualImageUri,
-    addScan
-  ]);
 
   // ─── Core barcode scan handler (Waterfall Lookup) ───────────────────────────
   const handleBarcodeScanned = useCallback(async ({ data }: BarcodeScanningResult) => {
@@ -395,7 +308,13 @@ export default function ScannerScreen() {
           result.ingredientsText,
           result.hasHiddenSugars,
           result.hiddenSugars,
-          result.hiddenSugarCount
+          result.hiddenSugarCount,
+          result.novaClass,
+          result.additives,
+          result.additiveCount,
+          result.allergens,
+          result.nutriScore,
+          result.biteFixScore
         );
 
         if (isCurrentLookup()) {
@@ -424,8 +343,8 @@ export default function ScannerScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        setErrorMsg(localErrorMsg || 'Product not found. Entering manual mode.');
-        setMode('manual');
+        setErrorMsg(localErrorMsg || 'Product not found.');
+        setMode('not-found');
       }
 
       // Release scan lock after cooldown so user can try again
@@ -439,23 +358,7 @@ export default function ScannerScreen() {
     }
   }, [addScan]);
 
-  const handlePickImage = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    try {
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.7,
-      });
 
-      if (!result.canceled && result.assets[0]) {
-        setManualImageUri(result.assets[0].uri);
-      }
-    } catch (err) {
-      console.log('Image picker error', err);
-    }
-  };
 
 
 
@@ -467,12 +370,7 @@ export default function ScannerScreen() {
     setLoading(false);
     setLoadingText('Analyzing...');
     setTorchOn(false);
-    setManualName('');
-    setManualSugarGrams('');
-    setManualSugarPer100('');
-    setManualProductSize('');
-    setManualImageUri(null);
-    setCalculationMode('total');
+
     setAlternatives([]);
     setLoadingAlternatives(false);
     setShowAlternatives(false);
@@ -481,30 +379,22 @@ export default function ScannerScreen() {
 
   const handleFindAlternatives = async () => {
     if (!scanResult) return;
-    const category = scanResult.categoryTag;
-    if (!category) {
-      Alert.alert(
-        'Alternatives Search',
-        'We couldn\'t find a specific category for this product in the database to search for alternatives.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
+    const category = scanResult.categoryTag || 'unknown';
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setLoadingAlternatives(true);
 
     try {
-      const currentSugar = scanResult.sugarPer100g ?? (scanResult.sugarGrams ?? 0);
       const controller = new AbortController();
-      const list = await lookupAlternatives(category, currentSugar, controller.signal);
+      const list = await lookupAlternatives(category, scanResult, controller.signal);
       setAlternatives(list);
+      setSelectedAltIndex(0);
       setShowAlternatives(true);
 
       if (list.length === 0) {
         Alert.alert(
           'Top Choice!',
-          'Great news! This product is already one of the lowest-sugar choices in its category.',
+          'Great news! This product is already one of the cleanest choices in its category.',
           [{ text: 'Awesome' }]
         );
       }
@@ -666,41 +556,7 @@ export default function ScannerScreen() {
             </View>
           </SafeAreaView>
 
-          {/* ─── Bottom Controls Row: Manual Entry & Torch ─── */}
-          <View
-            style={{ position: 'absolute', bottom: 130, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
-            pointerEvents="box-none"
-          >
-            {/* Manual Entry Button */}
-            <TouchableOpacity
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                setMode('manual');
-              }}
-              style={{ borderRadius: 99, overflow: 'hidden' }}
-              activeOpacity={0.8}
-            >
-              <BlurView
-                intensity={60}
-                tint="dark"
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 6,
-                  paddingVertical: 10,
-                  paddingHorizontal: 18,
-                  borderWidth: 1.5,
-                  borderColor: colors.primary + '40',
-                  borderRadius: 99,
-                }}
-              >
-                <Keyboard size={14} color={colors.primary} />
-                <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 }}>
-                  Manual Entry
-                </Text>
-              </BlurView>
-            </TouchableOpacity>
-          </View>
+
 
           {/* Torch toggle bottom right - Extra large for 1-hand thumb reach */}
           <AnimatedReanimated.View
@@ -747,367 +603,41 @@ export default function ScannerScreen() {
         </View>
       )}
 
-      {/* ════════════════════════════════════════════════════
-          2. MANUAL INPUT FALLBACK MODE
-          ════════════════════════════════════════════════════ */}
-      {mode === 'manual' && (
-        <SafeAreaView style={{ flex: 1 }}>
-          {/* Header */}
-          <View
-            style={{
-              borderColor: colors.border,
-              borderWidth: 1.5,
-              backgroundColor: colors.surface,
-              borderRadius: 24,
-              marginHorizontal: 16,
-              marginTop: 12,
-              marginBottom: 8,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 6 },
-              shadowOpacity: isDark ? 0.35 : 0.04,
-              shadowRadius: 12,
-              elevation: 4,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingHorizontal: 20,
-              paddingVertical: 14,
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <TouchableOpacity
-                onPress={resetScanner}
-                style={{ backgroundColor: colors.surfaceRaised, padding: 8, borderRadius: 99 }}
-              >
-                <ArrowLeft size={18} color={colors.text} />
-              </TouchableOpacity>
-              <Mascot state="idle" size={30} />
-              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900' }}>Manual Sugar Log</Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                setMode('camera');
-              }}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 12, borderRadius: 99, backgroundColor: colors.primary + '18' }}
-            >
-              <CameraIcon size={12} color={colors.primary} />
-              <Text style={{ color: colors.primary, fontWeight: '800', fontSize: 10 }}>Scan Mode</Text>
-            </TouchableOpacity>
-          </View>
 
-          <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          >
-            <ScrollView
-              contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
-
-
-              {/* Error/Success Banner */}
-              {errorMsg && (
-                <View style={{
-                  backgroundColor: errorMsg.includes('Found') ? colors.success + '10' : colors.error + '10',
-                  borderColor: errorMsg.includes('Found') ? colors.success + '30' : colors.error + '30',
-                  borderWidth: 1,
-                  padding: 16,
-                  borderRadius: 16,
-                  marginBottom: 16,
-                  flexDirection: 'row',
-                  gap: 12,
-                }}>
-                  {errorMsg.includes('Found')
-                    ? <CheckCircle size={18} color={colors.success} />
-                    : <AlertCircle size={18} color={colors.error} />
-                  }
-                  <Text style={{
-                    color: errorMsg.includes('Found') ? colors.success : colors.error,
-                    fontSize: 12,
-                    fontWeight: '700',
-                    flex: 1,
-                  }}>{errorMsg}</Text>
-                </View>
-              )}
-
-              {/* Image Picker Container */}
-              <View style={{ marginBottom: 20 }}>
-                <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8, paddingHorizontal: 4 }}>
-                  Product Image (Optional)
-                </Text>
-                <TouchableOpacity
-                  onPress={handlePickImage}
-                  style={{
-                    backgroundColor: colors.surface,
-                    borderColor: manualImageUri ? colors.border : colors.primary + '40',
-                    borderWidth: 1.5,
-                    borderRadius: 20,
-                    height: 120,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderStyle: manualImageUri ? 'solid' : 'dashed',
-                    overflow: 'hidden'
-                  }}
-                  activeOpacity={0.8}
-                >
-                  {manualImageUri ? (
-                    <View style={{ width: '100%', height: '100%' }}>
-                      <Image source={{ uri: manualImageUri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
-                      <View style={{ position: 'absolute', bottom: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.6)', padding: 6, borderRadius: 12 }}>
-                        <RotateCcw size={14} color="#fff" />
-                      </View>
-                    </View>
-                  ) : (
-                    <View style={{ alignItems: 'center', gap: 8 }}>
-                      <View style={{ backgroundColor: colors.primary + '15', padding: 12, borderRadius: 99 }}>
-                        <CameraIcon size={24} color={colors.primary} />
-                      </View>
-                      <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '700' }}>Tap to take photo</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              </View>
-
-              {/* Product Name */}
-              <View style={{ marginBottom: 20 }}>
-                <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8, paddingHorizontal: 4 }}>
-                  Product Name
-                </Text>
-                <TextInput
-                  value={manualName}
-                  onChangeText={setManualName}
-                  onFocus={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setFocusName(true); }}
-                  onBlur={() => setFocusName(false)}
-                  placeholder="e.g. Cola, Yogurt, Ketchup"
-                  placeholderTextColor={colors.textMuted}
-                  style={{
-                    backgroundColor: colors.surface,
-                    borderColor: focusName ? colors.primary : colors.border,
-                    borderWidth: 1.5,
-                    shadowColor: colors.primary,
-                    shadowOffset: { width: 0, height: 0 },
-                    shadowOpacity: focusName ? 0.12 : 0,
-                    shadowRadius: 8,
-                    color: colors.text,
-                    padding: 16,
-                    borderRadius: 16,
-                    fontSize: 14,
-                    fontWeight: '700',
-                  }}
-                />
-              </View>
-
-              {/* Calculation Mode Switcher */}
-              <View style={{ marginBottom: 16 }}>
-                <View style={{ flexDirection: 'row', backgroundColor: colors.surfaceRaised, padding: 4, borderRadius: 12, borderWidth: 1, borderColor: colors.border }}>
-                  <TouchableOpacity
-                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setCalculationMode('total'); setErrorMsg(null); }}
-                    style={{ flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 8, backgroundColor: calculationMode === 'total' ? colors.primary : 'transparent' }}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={{ color: calculationMode === 'total' ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>Enter per Serving</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setCalculationMode('per100'); setErrorMsg(null); }}
-                    style={{ flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 8, backgroundColor: calculationMode === 'per100' ? colors.primary : 'transparent' }}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={{ color: calculationMode === 'per100' ? '#fff' : colors.textSecondary, fontSize: 12, fontWeight: '800' }}>Calculate (Per 100g/ml)</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {calculationMode === 'total' ? (
-                <View style={{ marginBottom: 24 }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8, paddingHorizontal: 4 }}>
-                    Sugar per Serving (g)
-                  </Text>
-                  <TextInput
-                    value={manualSugarGrams}
-                    onChangeText={(val) => { setManualSugarGrams(val); setErrorMsg(null); }}
-                    onFocus={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setFocusSugar(true); }}
-                    onBlur={() => setFocusSugar(false)}
-                    keyboardType="decimal-pad"
-                    placeholder="e.g. 12.8"
-                    placeholderTextColor={colors.textMuted}
-                    style={{
-                      backgroundColor: colors.surface,
-                      borderColor: focusSugar ? colors.primary : colors.border,
-                      borderWidth: 1.5,
-                      shadowColor: colors.primary,
-                      shadowOffset: { width: 0, height: 0 },
-                      shadowOpacity: focusSugar ? 0.12 : 0,
-                      shadowRadius: 8,
-                      color: colors.text,
-                      padding: 16,
-                      borderRadius: 16,
-                      fontSize: 16,
-                      fontWeight: '900',
-                    }}
-                  />
-                </View>
-              ) : (
-                <View style={{ marginBottom: 24, flexDirection: 'row', gap: 12 }}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8, paddingHorizontal: 4 }}>
-                      Sugar per 100g/ml
-                    </Text>
-                    <TextInput
-                      value={manualSugarPer100}
-                      onChangeText={(val) => { setManualSugarPer100(val); setErrorMsg(null); }}
-                      onFocus={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setFocusPer100(true); }}
-                      onBlur={() => setFocusPer100(false)}
-                      keyboardType="decimal-pad"
-                      placeholder="e.g. 10.5"
-                      placeholderTextColor={colors.textMuted}
-                      style={{
-                        backgroundColor: colors.surface,
-                        borderColor: focusPer100 ? colors.primary : colors.border,
-                        borderWidth: 1.5,
-                        shadowColor: colors.primary,
-                        shadowOffset: { width: 0, height: 0 },
-                        shadowOpacity: focusPer100 ? 0.12 : 0,
-                        shadowRadius: 8,
-                        color: colors.text,
-                        padding: 16,
-                        borderRadius: 16,
-                        fontSize: 16,
-                        fontWeight: '900',
-                      }}
-                    />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8, paddingHorizontal: 4 }}>
-                      Serving Size (g/ml)
-                    </Text>
-                    <TextInput
-                      value={manualProductSize}
-                      onChangeText={(val) => { setManualProductSize(val); setErrorMsg(null); }}
-                      onFocus={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setFocusSize(true); }}
-                      onBlur={() => setFocusSize(false)}
-                      keyboardType="decimal-pad"
-                      placeholder="e.g. 250"
-                      placeholderTextColor={colors.textMuted}
-                      style={{
-                        backgroundColor: colors.surface,
-                        borderColor: focusSize ? colors.primary : colors.border,
-                        borderWidth: 1.5,
-                        shadowColor: colors.primary,
-                        shadowOffset: { width: 0, height: 0 },
-                        shadowOpacity: focusSize ? 0.12 : 0,
-                        shadowRadius: 8,
-                        color: colors.text,
-                        padding: 16,
-                        borderRadius: 16,
-                        fontSize: 16,
-                        fontWeight: '900',
-                      }}
-                    />
-                  </View>
-                </View>
-              )}
-
-              {/* Live Preview */}
-              {(() => {
-                let liveSugarVal = 0;
-                if (calculationMode === 'total') {
-                  liveSugarVal = parseFloat(manualSugarGrams);
-                } else {
-                  const per100 = parseFloat(manualSugarPer100);
-                  const size = parseFloat(manualProductSize);
-                  if (!isNaN(per100) && !isNaN(size) && per100 >= 0 && size > 0) {
-                    liveSugarVal = parseFloat(((per100 * size) / 100).toFixed(1));
-                  }
-                }
-
-                if (liveSugarVal > 0) {
-                  return (
-                    <View style={{ backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: 24, padding: 24, marginBottom: 24, alignItems: 'center' }}>
-                      <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
-                        Live Conversion Preview
-                      </Text>
-                      {calculationMode === 'per100' && (
-                        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800', marginBottom: 4 }}>
-                          Calculated Total: {liveSugarVal}g
-                        </Text>
-                      )}
-                      <Text style={{ color: colors.primary, fontSize: 36, fontWeight: '900', marginTop: 8 }}>
-                        {(liveSugarVal / 4.2).toFixed(1)} <Text style={{ fontSize: 16, color: colors.textSecondary }}>Teaspoons</Text>
-                      </Text>
-                    </View>
-                  );
-                }
-                return null;
-              })()}
-
-              {manualName.trim().length > 0 && (() => {
-                let liveSugarVal = 0;
-                if (calculationMode === 'total') {
-                  liveSugarVal = parseFloat(manualSugarGrams);
-                } else {
-                  const per100 = parseFloat(manualSugarPer100);
-                  const size = parseFloat(manualProductSize);
-                  if (!isNaN(per100) && !isNaN(size) && per100 >= 0 && size > 0) {
-                    liveSugarVal = parseFloat(((per100 * size) / 100).toFixed(1));
-                  }
-                }
-                if (liveSugarVal > 0) {
-                  return (
-                    <View style={{ alignItems: 'center', paddingVertical: 8 }}>
-                      {saveStatus === 'saving' && (
-                        <>
-                          <ActivityIndicator size="small" color={colors.textSecondary} />
-                          <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700', marginTop: 8 }}>
-                            Auto-saving...
-                          </Text>
-                        </>
-                      )}
-                      {saveStatus === 'saved' && (
-                        <Text style={{ color: '#4CAF50', fontSize: 14, fontWeight: '800', marginTop: 8 }}>
-                          ✓ Saved to History!
-                        </Text>
-                      )}
-                    </View>
-                  );
-                }
-                return null;
-              })()}
-            </ScrollView>
-          </KeyboardAvoidingView>
-        </SafeAreaView>
-      )}
 
       {/* ════════════════════════════════════════════════════
           4. NOT FOUND FALLBACK MODE
           ════════════════════════════════════════════════════ */}
       {mode === 'not-found' && (
         <SafeAreaView style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
-          <View style={{ alignItems: 'center', marginBottom: 40 }}>
+          <View style={{ alignItems: 'center', marginBottom: 32 }}>
             <Mascot state="dizzy" size={140} />
             <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', marginTop: 24, textAlign: 'center' }}>
               Product Not Found!
             </Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginTop: 12, lineHeight: 22, paddingHorizontal: 16 }}>
-              We couldn't find this barcode in our database. Enter the sugar value manually.
+            <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginTop: 12, lineHeight: 22, paddingHorizontal: 24 }}>
+              We couldn't find this barcode in our database. Please try scanning a different food product.
             </Text>
           </View>
 
           <TouchableOpacity
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setMode('manual'); }}
-            style={{ backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border, width: '100%', paddingVertical: 18, borderRadius: 20, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10 }}
-            activeOpacity={0.8}
-          >
-            <Keyboard color={colors.text} size={20} />
-            <Text style={{ color: colors.text, fontWeight: '800', fontSize: 15 }}>Enter Manually</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
             onPress={resetScanner}
-            style={{ marginTop: 32, paddingVertical: 12 }}
+            style={{
+              backgroundColor: colors.primary,
+              width: '100%',
+              paddingVertical: 18,
+              borderRadius: 20,
+              alignItems: 'center',
+              justifyContent: 'center',
+              shadowColor: colors.primary,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.2,
+              shadowRadius: 8,
+              elevation: 4,
+            }}
+            activeOpacity={0.9}
           >
-            <Text style={{ color: colors.textSecondary, fontWeight: '700', fontSize: 14 }}>Back to Barcode Scanner</Text>
+            <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 15 }}>Back to Scanner</Text>
           </TouchableOpacity>
         </SafeAreaView>
       )}
@@ -1148,15 +678,15 @@ export default function ScannerScreen() {
             >
               <ArrowLeft size={18} color={colors.text} />
             </TouchableOpacity>
-            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', marginLeft: 16 }}>Sugar Scan Result</Text>
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', marginLeft: 16 }}>Scan Result</Text>
           </View>
 
           <ScrollView
             contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }}
             showsVerticalScrollIndicator={false}
           >
-            {/* 1. Unified Hero Section: Screenshot-Ready Report Card */}
-            <View style={{ marginBottom: 24 }}>
+            {/* 1. Executive Telemetry: Purity & Additives Audit */}
+            <View style={{ marginBottom: 4 }}>
               <ProductHeroCardDashboard
                 scanResult={scanResult}
                 colors={colors}
@@ -1164,8 +694,23 @@ export default function ScannerScreen() {
               />
             </View>
 
-            {/* Action Buttons Row */}
-            <View style={{ flexDirection: 'row', gap: 12, width: '100%', marginBottom: 16 }}>
+            {/* 2. Sugar & Energy Telemetry (Includes integrated WHO & Burn Down metrics) */}
+            <NutritionFacts
+              colors={colors}
+              productName={scanResult.name}
+              sugarGrams={scanResult.sugarGrams ?? scanResult.sugarPer100g ?? 0}
+              calories={scanResult.calories}
+              servingSize={formatWeight(scanResult.servingSize, sugarUnit) || '100 g / 100 ml'}
+              sugarPer100g={scanResult.sugarPer100g}
+              whoLimitServingPercent={scanResult.whoLimitServingPercent ?? (scanResult.sugarTeaspoons !== undefined ? Math.round((scanResult.sugarTeaspoons / 12) * 100) : undefined)}
+              isDefaultServing={scanResult.isDefaultServing}
+              hasHiddenSugars={scanResult.hasHiddenSugars}
+              hiddenSugars={scanResult.hiddenSugars}
+              hiddenSugarCount={scanResult.hiddenSugarCount}
+            />
+
+            {/* 3. Action Dock: Save, Alternatives & Scan Another */}
+            <View style={{ flexDirection: 'row', gap: 12, width: '100%', marginTop: 12, marginBottom: 12 }}>
               {/* Save to Collections Button */}
               {(() => {
                 const isAlreadySaved = collection.some(
@@ -1177,17 +722,13 @@ export default function ScannerScreen() {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                       if (!isAlreadySaved) {
                         addToCollection({
+                          ...scanResult,
                           id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                           name: scanResult.name,
                           brand: scanResult.brand,
                           sugarGrams: scanResult.sugarGrams ?? scanResult.sugarPer100g ?? 0,
                           sugarTeaspoons: scanResult.sugarTeaspoons ?? 0,
                           timestamp: Date.now(),
-                          imageUrl: scanResult.imageUrl,
-                          calories: scanResult.calories,
-                          servingSize: scanResult.servingSize,
-                          sugarPer100g: scanResult.sugarPer100g,
-                          categoryTag: scanResult.categoryTag,
                         });
                       }
                     }}
@@ -1213,7 +754,7 @@ export default function ScannerScreen() {
                   >
                     <Bookmark size={16} color={colors.primary} fill={isAlreadySaved ? colors.primary : 'transparent'} />
                     <Text style={{ color: colors.primary, fontWeight: '800', fontSize: 13 }}>
-                      {isAlreadySaved ? 'Saved' : 'Save to Pantry'}
+                      {isAlreadySaved ? 'Saved' : 'Save'}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -1243,25 +784,55 @@ export default function ScannerScreen() {
                 {loadingAlternatives ? (
                   <ActivityIndicator size="small" color="#ffffff" />
                 ) : (
-                  <>
-                    <Search size={16} color="#ffffff" />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#ffffff' }} />
                     <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 13 }}>
-                      Alternatives
+                      Find Clean Swap
                     </Text>
-                  </>
+                  </View>
                 )}
               </TouchableOpacity>
             </View>
 
-            {/* 1-Alternative Healthy Swap Modal */}
+            {/* Scan Again Button */}
+            <TouchableOpacity
+              onPress={resetScanner}
+              style={{
+                backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                width: '100%',
+                paddingVertical: 15,
+                borderRadius: 16,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderWidth: 1,
+                borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+              }}
+              activeOpacity={0.85}
+            >
+              <Text style={{ color: colors.text, fontWeight: '800', fontSize: 14 }}>Scan Another Item</Text>
+            </TouchableOpacity>
+
+            {/* Comprehensive Healthy Swap Modal */}
             {showAlternatives && alternatives.length > 0 && (() => {
-              const alt = alternatives[0];
-              const originalTsp = scanResult.sugarTeaspoons ?? 0;
-              const altTsp = alt.sugarTeaspoons ?? 0;
-              const savings = Math.max(0, originalTsp - altTsp);
+              const alt = alternatives[selectedAltIndex || 0] || alternatives[0];
+              const originalNova = scanResult.novaClass;
+              const altNova = alt.novaClass;
+              const originalAdditives = scanResult.additiveCount ?? (scanResult.additives?.length || 0);
+              const altAdditives = alt.additiveCount ?? (alt.additives?.length || 0);
+              const originalElevated = (scanResult.additives || []).filter(a => a.riskLevel === 'elevated').length;
+              const altElevated = (alt.additives || []).filter(a => a.riskLevel === 'elevated').length;
+              const originalScore = scanResult.biteFixScore ?? 50;
+              const altScore = alt.biteFixScore ?? 85;
+              const scoreDiff = altScore - originalScore;
+              const originalSugar = scanResult.sugarPer100g ?? scanResult.sugarGrams ?? 0;
+              const altSugar = alt.sugarPer100g ?? alt.sugarGrams ?? 0;
+
               const isAltSaved = collection.some(
                 (item) => item.name === alt.name && item.brand === alt.brand
               );
+
+              const borderDivider = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+              const bentoBg = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)';
 
               return (
                 <Modal
@@ -1272,263 +843,313 @@ export default function ScannerScreen() {
                 >
                   <View style={{
                     flex: 1,
-                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    backgroundColor: 'rgba(0,0,0,0.6)',
                     justifyContent: 'flex-end',
                   }}>
-                    {/* Blur Backdrop */}
-                    <BlurView
-                      intensity={60}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                      }}
-                      tint={isDark ? 'dark' : 'light'}
+                    <TouchableOpacity
+                      style={{ flex: 1 }}
+                      activeOpacity={1}
+                      onPress={() => setShowAlternatives(false)}
                     />
 
-                    {/* Modal Content Card */}
+                    {/* Modal Content Card (Styled matching index.tsx Details Modal) */}
                     <View style={{
-                      backgroundColor: isDark ? colors.surface : '#FFFFFF',
+                      backgroundColor: colors.surface,
                       borderTopLeftRadius: 32,
                       borderTopRightRadius: 32,
-                      padding: 24,
-                      paddingBottom: Platform.OS === 'ios' ? 44 : 24,
-                      maxHeight: '90%',
-                      borderWidth: 1.5,
-                      borderColor: colors.border,
+                      maxHeight: '85%',
+                      padding: 28,
                       shadowColor: '#000',
-                      shadowOffset: { width: 0, height: -10 },
-                      shadowOpacity: 0.15,
-                      shadowRadius: 20,
-                      elevation: 10,
+                      shadowOffset: { width: 0, height: -4 },
+                      shadowOpacity: 0.1,
+                      shadowRadius: 32,
+                      elevation: 16,
+                      borderTopWidth: 1,
+                      borderColor: borderDivider,
                     }}>
-                      {/* Close Header */}
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                        <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
-                          💡 Healthy Swap
-                        </Text>
-                        <TouchableOpacity
-                          onPress={() => setShowAlternatives(false)}
-                          style={{
-                            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                            padding: 8,
-                            borderRadius: 99,
-                          }}
-                        >
-                          <X size={18} color={colors.text} />
-                        </TouchableOpacity>
+                      {/* Drag Handle & Header */}
+                      <View style={{ width: '100%', alignItems: 'center', paddingBottom: 12 }}>
+                        <View style={{ width: 48, height: 5, backgroundColor: isDark ? '#444' : '#ccc', borderRadius: 3, marginBottom: 8 }} />
+                        
+                        <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+                          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
+                            Healthy Substitute
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() => setShowAlternatives(false)}
+                            style={{ backgroundColor: colors.background, padding: 8, borderRadius: 20 }}
+                          >
+                            <X size={18} color={colors.text} />
+                          </TouchableOpacity>
+                        </View>
                       </View>
 
-                      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 20 }}>
-                        {/* Comparison Row */}
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'space-between' }}>
-                          {/* Original Scanned Card */}
-                          <View style={{
-                            flex: 1,
-                            backgroundColor: isDark ? colors.surfaceRaised : 'rgba(0,0,0,0.02)',
-                            borderWidth: 1.5,
-                            borderColor: colors.border,
-                            borderRadius: 20,
-                            padding: 12,
-                            alignItems: 'center',
-                            gap: 8,
-                            minHeight: 180,
-                          }}>
-                            <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase' }}>
-                              Current Item
-                            </Text>
-                            <View style={{
-                              width: 60,
-                              height: 60,
-                              borderRadius: 12,
-                              backgroundColor: '#FFFFFF',
-                              padding: 4,
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}>
-                              {scanResult.imageUrl ? (
-                                <Image source={{ uri: scanResult.imageUrl }} style={{ width: '100%', height: '100%', borderRadius: 8 }} contentFit="contain" />
-                              ) : (
-                                <Mascot state="shocked" size={40} />
-                              )}
-                            </View>
-                            <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800', textAlign: 'center' }} numberOfLines={2}>
-                              {scanResult.name}
-                            </Text>
-                            <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '900', marginTop: 'auto' }}>
-                              {originalTsp.toFixed(1).replace(/\.0$/, '')} tsp
-                            </Text>
-                            {scanResult.hasHiddenSugars && (
-                              <View style={{ backgroundColor: 'rgba(255, 149, 0, 0.12)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginTop: 2 }}>
-                                <Text style={{ color: '#FF9500', fontSize: 8, fontWeight: '900' }}>
-                                  ⚠️ {scanResult.hiddenSugarCount} Stealth Sugars
-                                </Text>
-                              </View>
-                            )}
-                          </View>
-
-                          {/* Vs Indicator */}
-                          <View style={{
-                            backgroundColor: colors.border,
-                            width: 28,
-                            height: 28,
-                            borderRadius: 14,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderWidth: 1.5,
-                            borderColor: colors.textMuted,
-                          }}>
-                            <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900' }}>VS</Text>
-                          </View>
-
-                          {/* Healthiest Alternative Card */}
-                          <View style={{
-                            flex: 1,
-                            backgroundColor: isDark ? colors.surfaceRaised : 'rgba(0,0,0,0.02)',
-                            borderWidth: 1.5,
-                            borderColor: colors.border,
-                            borderRadius: 20,
-                            padding: 12,
-                            alignItems: 'center',
-                            gap: 8,
-                            minHeight: 180,
-                          }}>
-                            <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase' }}>
-                              Better Swap
-                            </Text>
-                            <View style={{
-                              width: 60,
-                              height: 60,
-                              borderRadius: 12,
-                              backgroundColor: '#FFFFFF',
-                              padding: 4,
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}>
-                              {alt.imageUrl ? (
-                                <Image source={{ uri: alt.imageUrl }} style={{ width: '100%', height: '100%', borderRadius: 8 }} contentFit="contain" />
-                              ) : (
-                                <Leaf size={30} color={colors.primary} />
-                              )}
-                            </View>
-                            <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800', textAlign: 'center' }} numberOfLines={2}>
-                              {alt.name}
-                            </Text>
-                            <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '900', marginTop: 'auto' }}>
-                              {altTsp.toFixed(1).replace(/\.0$/, '')} tsp
-                            </Text>
-                            <View style={{ 
-                              backgroundColor: alt.hasHiddenSugars ? 'rgba(255, 149, 0, 0.12)' : 'rgba(52, 199, 89, 0.12)', 
-                              paddingHorizontal: 6, 
-                              paddingVertical: 2, 
-                              borderRadius: 6, 
-                              marginTop: 2 
-                            }}>
-                              <Text style={{ 
-                                color: alt.hasHiddenSugars ? '#FF9500' : '#34C759', 
-                                fontSize: 8, 
-                                fontWeight: '900' 
-                              }}>
-                                {alt.hasHiddenSugars ? `⚠️ ${alt.hiddenSugarCount} Stealth` : '🌿 Clean Swap'}
+                      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40, gap: 16 }}>
+                        {/* Recommended Swap Telemetry Banner */}
+                        <View style={{
+                          backgroundColor: isDark ? 'rgba(52, 199, 89, 0.08)' : 'rgba(52, 199, 89, 0.05)',
+                          borderRadius: 16,
+                          paddingVertical: 12,
+                          paddingHorizontal: 16,
+                          borderWidth: 1,
+                          borderColor: isDark ? 'rgba(52, 199, 89, 0.2)' : 'rgba(52, 199, 89, 0.15)',
+                          gap: 4
+                        }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#22C55E' }} />
+                              <Text style={{ color: '#22C55E', fontSize: 11, fontWeight: '900', letterSpacing: 0.5 }}>
+                                RECOMMENDED SWAP
                               </Text>
                             </View>
+                            <Text style={{ color: '#22C55E', fontSize: 11, fontWeight: '800' }}>
+                              +{scoreDiff > 0 ? scoreDiff : 15} pts BiteFix Boost
+                            </Text>
+                          </View>
+                          <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '600' }} numberOfLines={1}>
+                            Replaces: <Text style={{ color: colors.text, fontWeight: '700' }}>{scanResult.brand ? `${scanResult.brand} - ` : ''}{scanResult.name}</Text>
+                          </Text>
+                        </View>
+
+                        {/* Substitute Hero Details Card (ProductHeroCardDashboard layout theme) */}
+                        <ProductHeroCardDashboard
+                          scanResult={alt}
+                          colors={colors}
+                          isDark={isDark}
+                        />
+
+                        {/* Side-by-Side Health Audit Compare Card (Highly Visual Premium Theme) */}
+                        <View style={{
+                          backgroundColor: colors.surface,
+                          borderColor: borderDivider,
+                          borderWidth: 1,
+                          borderRadius: 24,
+                          padding: 20,
+                          shadowColor: '#000',
+                          shadowOffset: { width: 0, height: 8 },
+                          shadowOpacity: isDark ? 0.35 : 0.04,
+                          shadowRadius: 18,
+                          elevation: 5,
+                          gap: 16
+                        }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary }} />
+                            <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                              Side-by-Side Comparison
+                            </Text>
+                          </View>
+
+                          <View style={{ height: 1, backgroundColor: borderDivider }} />
+
+                          {/* 1. NOVA Classification */}
+                          <View style={{ gap: 8 }}>
+                            <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                              NOVA Processing Level
+                            </Text>
+                            <View style={{ flexDirection: 'row', gap: 12 }}>
+                              {/* Scanned */}
+                              {(() => {
+                                const origNovaColor = getNovaColor(originalNova);
+                                const isUltraProcessed = originalNova === 4;
+                                return (
+                                  <View style={{ flex: 1, backgroundColor: bentoBg, borderColor: isUltraProcessed ? 'rgba(239, 68, 68, 0.15)' : borderDivider, borderWidth: 1, padding: 12, borderRadius: 16, gap: 6 }}>
+                                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase' }}>Scanned</Text>
+                                    <Text style={{ color: origNovaColor, fontSize: 15, fontWeight: '900' }}>NOVA {originalNova || '?'}</Text>
+                                    
+                                    <View style={{ flexDirection: 'row', gap: 4, height: 4, width: '100%' }}>
+                                      {[1, 2, 3, 4].map((step) => {
+                                        const active = (originalNova || 4) >= step;
+                                        return (
+                                          <View
+                                            key={step}
+                                            style={{
+                                              flex: 1,
+                                              height: '100%',
+                                              borderRadius: 2,
+                                              backgroundColor: active ? origNovaColor : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
+                                            }}
+                                          />
+                                        );
+                                      })}
+                                    </View>
+                                    <Text style={{ color: origNovaColor, fontSize: 10, fontWeight: '700' }}>{getNovaShortLabel(originalNova)}</Text>
+                                  </View>
+                                );
+                              })()}
+
+                              {/* Healthy Swap */}
+                              {(() => {
+                                const swapNovaColor = getNovaColor(altNova || 1);
+                                const isClean = (altNova || 1) <= 2;
+                                return (
+                                  <View style={{ flex: 1, backgroundColor: bentoBg, borderColor: isClean ? 'rgba(34, 197, 94, 0.15)' : borderDivider, borderWidth: 1, padding: 12, borderRadius: 16, gap: 6 }}>
+                                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase' }}>Healthy Swap</Text>
+                                    <Text style={{ color: swapNovaColor, fontSize: 15, fontWeight: '900' }}>NOVA {altNova || '?'}</Text>
+                                    
+                                    <View style={{ flexDirection: 'row', gap: 4, height: 4, width: '100%' }}>
+                                      {[1, 2, 3, 4].map((step) => {
+                                        const active = (altNova || 1) >= step;
+                                        return (
+                                          <View
+                                            key={step}
+                                            style={{
+                                              flex: 1,
+                                              height: '100%',
+                                              borderRadius: 2,
+                                              backgroundColor: active ? swapNovaColor : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'),
+                                            }}
+                                          />
+                                        );
+                                      })}
+                                    </View>
+                                    <Text style={{ color: swapNovaColor, fontSize: 10, fontWeight: '700' }}>{getNovaShortLabel(altNova)}</Text>
+                                  </View>
+                                );
+                              })()}
+                            </View>
+                          </View>
+
+                          <View style={{ height: 1, backgroundColor: borderDivider }} />
+
+                          {/* 2. Additive Count */}
+                          <View style={{ gap: 8 }}>
+                            <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                              Additives Exposure
+                            </Text>
+                            <View style={{ flexDirection: 'row', gap: 12 }}>
+                              <View style={{ flex: 1, backgroundColor: bentoBg, borderColor: originalElevated > 0 ? 'rgba(239, 68, 68, 0.15)' : borderDivider, borderWidth: 1, padding: 12, borderRadius: 16, gap: 4 }}>
+                                <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase' }}>Scanned</Text>
+                                <Text style={{ color: originalElevated > 0 ? '#EF4444' : colors.text, fontSize: 15, fontWeight: '900' }}>{originalAdditives} Additives</Text>
+                                <Text style={{ color: originalElevated > 0 ? '#EF4444' : colors.textSecondary, fontSize: 10, fontWeight: '700' }}>
+                                  {originalElevated > 0 ? `${originalElevated} elevated risk` : '0 elevated risk'}
+                                </Text>
+                              </View>
+                              <View style={{ flex: 1, backgroundColor: bentoBg, borderColor: altAdditives === 0 ? 'rgba(34, 197, 94, 0.15)' : borderDivider, borderWidth: 1, padding: 12, borderRadius: 16, gap: 4 }}>
+                                <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase' }}>Healthy Swap</Text>
+                                <Text style={{ color: altAdditives === 0 ? '#22C55E' : colors.text, fontSize: 15, fontWeight: '900' }}>{altAdditives} Additives</Text>
+                                <Text style={{ color: altAdditives === 0 ? '#22C55E' : (altElevated > 0 ? '#EF4444' : colors.textSecondary), fontSize: 10, fontWeight: '700' }}>
+                                  {altElevated > 0 ? `${altElevated} elevated risk` : '0 elevated risk'}
+                                </Text>
+                              </View>
+                            </View>
+                          </View>
+
+                          <View style={{ height: 1, backgroundColor: borderDivider }} />
+
+                          {/* 3. Sugar Density Compare */}
+                          <View style={{ gap: 8 }}>
+                            <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                              Sugar Density (per 100g)
+                            </Text>
+                            <View style={{ flexDirection: 'row', gap: 12 }}>
+                              <View style={{ flex: 1, backgroundColor: bentoBg, borderColor: originalSugar > 15 ? 'rgba(239, 68, 68, 0.15)' : borderDivider, borderWidth: 1, padding: 12, borderRadius: 16, gap: 4 }}>
+                                <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase' }}>Scanned</Text>
+                                <Text style={{ color: '#EF4444', fontSize: 15, fontWeight: '900', textDecorationLine: 'line-through' }}>{originalSugar}g</Text>
+                              </View>
+                              {(() => {
+                                const sugarRedux = originalSugar > 0 ? Math.round(((originalSugar - altSugar) / originalSugar) * 100) : 0;
+                                return (
+                                  <View style={{ flex: 1, backgroundColor: bentoBg, borderColor: 'rgba(34, 197, 94, 0.15)', borderWidth: 1, padding: 12, borderRadius: 16, gap: 4 }}>
+                                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase' }}>Healthy Swap</Text>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                                      <Text style={{ color: '#22C55E', fontSize: 15, fontWeight: '900' }}>{altSugar}g</Text>
+                                      {sugarRedux > 0 && (
+                                        <View style={{ backgroundColor: 'rgba(34, 197, 94, 0.12)', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6 }}>
+                                          <Text style={{ color: '#22C55E', fontSize: 9, fontWeight: '800' }}>-{sugarRedux}%</Text>
+                                        </View>
+                                      )}
+                                    </View>
+                                  </View>
+                                );
+                              })()}
+                            </View>
                           </View>
                         </View>
 
-                        {/* Teaspoon Savings Banner */}
-                        {savings > 0 && (
-                          <LinearGradient
-                            colors={[colors.primary, colors.primary]}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
-                            style={{
-                              borderRadius: 16,
-                              paddingVertical: 14,
-                              paddingHorizontal: 16,
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              shadowColor: colors.primary,
-                              shadowOffset: { width: 0, height: 4 },
-                              shadowOpacity: 0.2,
-                              shadowRadius: 8,
-                            }}
-                          >
-                            <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '900', textAlign: 'center' }}>
-                              📉 Save {savings.toFixed(1).replace(/\.0$/, '')} Teaspoons of Sugar!
-                            </Text>
-                          </LinearGradient>
-                        )}
-
-                        {/* Health Benefit Explanation */}
+                        {/* Why Swapping Transforms Your Health Card */}
                         <View style={{
-                          backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-                          padding: 16,
-                          borderRadius: 20,
+                          backgroundColor: colors.surface,
+                          borderColor: borderDivider,
                           borderWidth: 1,
-                          borderColor: colors.border,
-                          gap: 8,
+                          borderRadius: 24,
+                          padding: 20,
+                          shadowColor: '#000',
+                          shadowOffset: { width: 0, height: 8 },
+                          shadowOpacity: isDark ? 0.35 : 0.04,
+                          shadowRadius: 18,
+                          elevation: 5,
+                          gap: 10
                         }}>
-                          <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900' }}>
-                            Why Swapping Benefits You
-                          </Text>
-                          <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 18 }}>
-                            Choosing {alt.name} cuts down your added sugar intake by {savings.toFixed(1).replace(/\.0$/, '')} teaspoons.
-                            This reduces the workload on your pancreas, prevents immediate blood insulin spikes, and eliminates the fatigue crash often experienced 30–60 minutes after consuming processed sugars.
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary }} />
+                            <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                              Why Swapping Transforms Your Health
+                            </Text>
+                          </View>
+                          <View style={{ height: 1, backgroundColor: borderDivider }} />
+                          <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20 }}>
+                            By substituting with <Text style={{ color: colors.text, fontWeight: '800' }}>{alt.name}</Text>, you transition from {getNovaLabel(originalNova)} (NOVA {originalNova || '?'}) to a significantly cleaner food matrix ({getNovaLabel(altNova)} NOVA {altNova || '?'}) while reducing chemical additive exposure.
                           </Text>
                         </View>
 
-                        {/* Action Buttons */}
-                        <View style={{ gap: 12, marginTop: 10 }}>
+                        {/* Action Dock (Saved Product Details styling) */}
+                        <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                          <TouchableOpacity
+                            onPress={() => setShowAlternatives(false)}
+                            style={{
+                              flex: 1,
+                              paddingVertical: 15,
+                              borderRadius: 16,
+                              borderWidth: 1,
+                              borderColor: borderDivider,
+                              backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                            activeOpacity={0.8}
+                          >
+                            <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13 }}>Keep Scanned</Text>
+                          </TouchableOpacity>
+
                           <TouchableOpacity
                             onPress={() => {
                               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                               if (!isAltSaved) {
                                 addToCollection({
+                                  ...alt,
                                   id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                                   name: alt.name,
                                   brand: alt.brand,
                                   sugarGrams: alt.sugarGrams ?? alt.sugarPer100g ?? 0,
                                   sugarTeaspoons: alt.sugarTeaspoons ?? 0,
                                   timestamp: Date.now(),
-                                  imageUrl: alt.imageUrl,
-                                  calories: alt.calories,
-                                  servingSize: alt.servingSize,
-                                  sugarPer100g: alt.sugarPer100g,
-                                  categoryTag: alt.categoryTag,
+                                  isSwapped: true,
+                                  swappedForOriginalName: scanResult.name,
+                                  originalNovaClass: scanResult.novaClass,
+                                  originalBiteFixScore: scanResult.biteFixScore,
+                                  originalAdditiveCount: scanResult.additiveCount,
+                                  originalSugarGrams: scanResult.sugarGrams ?? scanResult.sugarPer100g,
                                 });
                               }
                               setShowAlternatives(false);
                             }}
                             style={{
-                              backgroundColor: colors.primary,
-                              paddingVertical: 16,
+                              flex: 1.3,
+                              paddingVertical: 15,
                               borderRadius: 16,
+                              backgroundColor: colors.primary,
                               alignItems: 'center',
                               justifyContent: 'center',
                               shadowColor: colors.primary,
                               shadowOffset: { width: 0, height: 4 },
-                              shadowOpacity: 0.2,
-                              shadowRadius: 8,
-                              elevation: 3,
+                              shadowOpacity: 0.25,
+                              shadowRadius: 10,
+                              elevation: 4,
                             }}
+                            activeOpacity={0.85}
                           >
-                            <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 14 }}>
-                              {isAltSaved ? 'Already Saved in Pantry' : 'Save Alternative to Pantry'}
-                            </Text>
-                          </TouchableOpacity>
-
-                          <TouchableOpacity
-                            onPress={() => setShowAlternatives(false)}
-                            style={{
-                              paddingVertical: 12,
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <Text style={{ color: colors.textSecondary, fontWeight: '700', fontSize: 13 }}>
-                              Keep Scanned Product
+                            <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 13, letterSpacing: 0.3 }}>
+                              {isAltSaved ? 'Already Saved' : 'Save Swapped Choice'}
                             </Text>
                           </TouchableOpacity>
                         </View>
@@ -1538,30 +1159,6 @@ export default function ScannerScreen() {
                 </Modal>
               );
             })()}
-
-            {/* Collapsible/Clean Nutrition Facts */}
-            <NutritionFacts
-              colors={colors}
-              productName={scanResult.name}
-              sugarGrams={scanResult.sugarGrams ?? scanResult.sugarPer100g ?? 0}
-              calories={scanResult.calories}
-              servingSize={formatWeight(scanResult.servingSize, sugarUnit) || '100 g / 100 ml'}
-              sugarPer100g={scanResult.sugarPer100g}
-              whoLimitServingPercent={scanResult.whoLimitServingPercent ?? (scanResult.sugarTeaspoons !== undefined ? Math.round((scanResult.sugarTeaspoons / 12) * 100) : undefined)}
-              isDefaultServing={scanResult.isDefaultServing}
-              hasHiddenSugars={scanResult.hasHiddenSugars}
-              hiddenSugars={scanResult.hiddenSugars}
-              hiddenSugarCount={scanResult.hiddenSugarCount}
-            />
-
-            {/* Scan Again Button */}
-            <TouchableOpacity
-              onPress={resetScanner}
-              style={{ backgroundColor: colors.primary, width: '100%', paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 20 }}
-              activeOpacity={0.9}
-            >
-              <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 14 }}>Scan Another Item</Text>
-            </TouchableOpacity>
           </ScrollView>
         </SafeAreaView>
       )}

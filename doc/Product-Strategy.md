@@ -2,7 +2,7 @@
 
 This report evaluates the product strategy of splitting the codebase into two distinct, hyper-focused products:
 1. **CutSugar:** Retaining its dedicated metabolic focus (sugar, teaspoons, blood glucose logs).
-2. **CleanBite (Working Name):** A new, gamified product focused on NOVA scoring, additives, alternatives, RDA % nutrition, and a mascot-driven health score.
+2. **BiteFix (Working Name):** A new, gamified product focused on NOVA scoring, additives, alternatives, RDA % nutrition, and a mascot-driven health score.
 
 ---
 
@@ -39,7 +39,7 @@ By splitting the app, we prevent feature creep, create a highly focused user acq
 |  - Core Metrics: Teaspoons of Sugar, Blood Glucose.   |
 |  - Brand Tone: Clinical, clean, empowering, scientific.|
 +-------------------------------------------------------+
-|  CLEANBITE (Additive & Processing Focus)              |
+|  BITEFIX (Additive & Processing Focus)              |
 |  - Target: Wellness enthusiasts, parents, biohackers,  |
 |    clean-eating advocates.                            |
 |  - Core Value: "Am I poisoning my body with chemicals?"|
@@ -50,9 +50,9 @@ By splitting the app, we prevent feature creep, create a highly focused user acq
 
 ---
 
-## 4. App 2 Concept: "CleanBite" & The Evolving Mascot Loop
+## 4. App 2 Concept: "BiteFix" & The Evolving Mascot Loop
 
-The core differentiator of **CleanBite** will be its mascot-driven **Overall Health Score**. This gamification loop is heavily inspired by successful apps like *Duolingo* and *Plant Nanny*.
+The core differentiator of **BiteFix** will be its mascot-driven **Overall Health Score**. This gamification loop is heavily inspired by successful apps like *Duolingo* and *Plant Nanny*.
 
 ### The Mascot Evolution Loop (Visual Progression)
 Instead of a static illustration, the mascot becomes a digital health pet that reflects the user's weekly grocery cart:
@@ -69,11 +69,11 @@ $$\text{Score} = (0.4 \times \text{NOVA Cleanliness}) + (0.3 \times \text{Additi
 
 ---
 
-## 5. Tactical "Do Not Do" Guide for CleanBite
+## 5. Tactical "Do Not Do" Guide for BiteFix
 
 To make this app competitive against giants like Yuka and Trash Panda, we must avoid these common pitfalls:
 * > [!CAUTION]
-  > **Do Not Force Daily Calorie Logging:** Let Yuka be a scanner; let MyFitnessPal be a diary. CleanBite should be a **"Grocery Shield"**. The primary interaction should be *scanning while shopping*, not recording every single gram consumed at home.
+  > **Do Not Force Daily Calorie Logging:** Let Yuka be a scanner; let MyFitnessPal be a diary. BiteFix should be a **"Grocery Shield"**. The primary interaction should be *scanning while shopping*, not recording every single gram consumed at home.
 * > [!WARNING]
   > **Do Not Lecture the User:** Never show text that feels judgmental. Frame the mascot's reaction around "helping the pet grow strong" rather than "you ate something bad."
 * > [!IMPORTANT]
@@ -88,7 +88,7 @@ We evaluate this product strategy using four core metrics:
 | Metric | Score | Rationale |
 | :--- | :---: | :--- |
 | **Market Demand** | **95/100** | Ultra-processed food awareness is at an all-time high (spurred by books like *Ultra-Processed People* and research on gut health). Consumers are looking specifically for additive/NOVA checkers. |
-| **Brand Focus** | **96/100** | CutSugar remains clean and medically helpful for glucose tracking. CleanBite is free to be playful, gamified, and wellness-focused. |
+| **Brand Focus** | **96/100** | CutSugar remains clean and medically helpful for glucose tracking. BiteFix is free to be playful, gamified, and wellness-focused. |
 | **Growth Potential** | **90/100** | The evolving mascot provides a powerful retention loop. Users will keep scanning simply to "keep their pet glowing." |
 | **Development Feasibility**| **92/100** | Since we already have the OpenFoodFacts API parser, USDA databases, and Zustand state structures, 70% of the backend/data layer for App 2 is already written. |
 | **OVERALL RATING** | **93 / 100** | **Highly Recommended.** This spin-off creates two sharp needles instead of one blunt hammer. |
@@ -103,12 +103,12 @@ If you decide to proceed with this spin-off strategy, here is how we will orches
    - Complete the Home Screen Bento Redesign strictly utilizing sugar and glucose logs.
    - Lock this codebase as the dedicated metabolic/diabetes tracker.
 2. **Step 2: Spin Off the Codebase**
-   - We will duplicate the project folder to a new directory (e.g., `CleanBite`).
+   - We will duplicate the project folder to a new directory (e.g., `BiteFix`).
    - Remove all glucose-logging specific code, clinical ADA guidelines, and teaspoon-centric helpers.
-3. **Step 3: Build the Mascot Health Engine in CleanBite**
+3. **Step 3: Build the Mascot Health Engine in BiteFix**
    - Create the state store for `mascotHealth` (0 to 100).
    - Integrate full RDA % visual panels inside the product detail sheets (restoring and expanding the `NutritionFacts` components).
    - Implement the mascot animation controller that switches sprites/states based on the health score.
 4. **Step 4: Launch Both on the App Store**
    - Position **CutSugar** under *Medical / Health & Fitness* (keywords: glucose log, sugar tracker, pre-diabetes).
-   - Position **CleanBite** under *Food & Drink / Health & Fitness* (keywords: additive scanner, ultra-processed food, healthy shopping).
+   - Position **BiteFix** under *Food & Drink / Health & Fitness* (keywords: additive scanner, ultra-processed food, healthy shopping).

@@ -1,13 +1,13 @@
-import { CleanBiteCategory } from '../types/app.types';
+import { BiteFixCategory } from '../types/app.types';
 
 /**
- * Automatically categorizes a product into a CleanBite category based on its name, brand, and categoryTag.
+ * Automatically categorizes a product into a BiteFix category based on its name, brand, and categoryTag.
  */
-export function mapToCleanBiteCategory(
+export function mapToBiteFixCategory(
   name: string = '',
   brand: string = '',
   categoryTag: string = ''
-): CleanBiteCategory {
+): BiteFixCategory {
   const combinedText = `${name} ${brand} ${categoryTag}`.toLowerCase();
 
   // Beverages
@@ -68,3 +68,26 @@ export function mapToCleanBiteCategory(
   // Default fallback
   return 'Pantry & Other';
 }
+
+export type ProcessingLevelCategory =
+  | 'Whole & Unprocessed (NOVA 1)'
+  | 'Minimally Processed (NOVA 2)'
+  | 'Processed Foods (NOVA 3)'
+  | 'Ultra-Processed (NOVA 4)'
+  | 'Unclassified';
+
+export function mapToProcessingCategory(novaClass?: number): ProcessingLevelCategory {
+  switch (novaClass) {
+    case 1:
+      return 'Whole & Unprocessed (NOVA 1)';
+    case 2:
+      return 'Minimally Processed (NOVA 2)';
+    case 3:
+      return 'Processed Foods (NOVA 3)';
+    case 4:
+      return 'Ultra-Processed (NOVA 4)';
+    default:
+      return 'Unclassified';
+  }
+}
+

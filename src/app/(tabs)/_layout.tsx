@@ -3,7 +3,7 @@ import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
 import { Tabs, Redirect } from 'expo-router';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuthStore } from '../../stores/authStore';
-import { Home, ScanBarcode, Heart } from 'lucide-react-native';
+import { Home, ScanBarcode, Settings, Clock } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -52,7 +52,7 @@ function FloatingScannerButton({ onPress, accessibilityState }: any) {
       >
         <Animated.View style={[{ width: '100%', height: '100%', borderRadius: 26, overflow: 'hidden' }, animatedStyle]}>
           <LinearGradient
-            colors={[colors.primary, '#FF9500']}
+            colors={[colors.primary, '#3BB5A0']}
             style={{
               flex: 1,
               justifyContent: 'center',
@@ -169,15 +169,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="tracker"
+        name="history"
         options={{
           title: '',
           tabBarIcon: ({ color, focused }) => (
-            <Heart
+            <Clock
               size={30}
               color={color}
               strokeWidth={focused ? 2.5 : 2}
-              fill={focused ? color : 'transparent'}
+              fill={focused ? `${color}15` : 'transparent'}
             />
           ),
         }}

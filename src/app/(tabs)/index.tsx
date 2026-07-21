@@ -1,72 +1,41 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, ScrollView, TouchableOpacity, SafeAreaView, Alert, Modal, PanResponder, Animated, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, ScrollView, TouchableOpacity, SafeAreaView, Animated, StyleSheet, Modal, PanResponder, Alert } from 'react-native';
 import { Text } from '@/components/Text';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
-import AnimatedReanimated, { FadeInDown, useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence, withDelay, Easing } from 'react-native-reanimated';
+import AnimatedReanimated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence, withDelay, Easing } from 'react-native-reanimated';
 import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
-import { SugarProgressRing } from '../../components/features/SugarProgressRing';
-import { ScanBarcode, Activity, ArrowRight, Info, Sparkles, Trash2, Clock, X, AlertTriangle, Menu, HelpCircle, Flame, Zap, ArrowUpRight, TrendingUp, ChevronLeft, ChevronRight, Bookmark } from 'lucide-react-native';
-import { formatSugar, getConsistentNutritionalMetrics } from '../../utils/sugar';
 import ProductHeroCardDashboard from '../../components/features/ProductHeroCardDashboard';
-import SettingsScreen from './settings';
+import { ScanBarcode, ArrowRight, Settings, Bookmark, ArrowUpRight, Trash2, X, Sparkles, RefreshCw } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { ScanHistoryItem } from '../../types/app.types';
-import { getSmartServingText, formatWeight } from '../../utils/format';
-const formatGroupDate = (timestamp: number) => {
-  const date = new Date(timestamp);
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
+import { getBiteFixScoreColor, formatWeight, getNovaColor } from '../../utils/format';
+import Svg, { Circle, Path, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop, G } from 'react-native-svg';
+import { CollectionItem } from '../../types/app.types';
+import { mapToBiteFixCategory } from '../../utils/categoryMapper';
 
-  if (date.toDateString() === today.toDateString()) {
-    return 'Today';
-  } else if (date.toDateString() === yesterday.toDateString()) {
-    return 'Yesterday';
-  } else {
-    return date.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
-  }
-};
-
-
-
-const calculateJoggingMinutes = (calories: number): number => {
-  if (!calories || isNaN(calories) || calories <= 0) return 0;
-  // Standard rule: ~10 kcal burned per minute of jogging
-  return Math.round(calories / 10);
-};
-
-const formatJogTime = (totalMinutes: number): string => {
-  if (!totalMinutes || isNaN(totalMinutes) || totalMinutes <= 0) return '0m';
-  const hours = Math.floor(totalMinutes / 60);
-  const mins = totalMinutes % 60;
-  if (hours > 0) {
-    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-  }
-  return `${mins}m`;
-};
-
-
-function ScanHistoryItemRow({ item, colors, isDark, onPress, onDelete }: any) {
+function SavedItemRow({ item, colors, isDark, onPress, onDelete }: { item: CollectionItem; colors: any; isDark: boolean; onPress: () => void; onDelete: () => void }) {
   const { sugarUnit } = useAppStore();
-  const metrics = getConsistentNutritionalMetrics(item);
-  const servingTsp = metrics.servingTsp ?? 0;
+  const [imageError, setImageError] = useState(false);
 
+  useEffect(() => {
+    setImageError(false);
+  }, [item.imageUrl]);
+
+  const cbScore = item.biteFixScore ?? 50;
   let ledColor = '#8E8E93';
-  if (servingTsp > 6) {
-    ledColor = '#FF3B30';
-  } else if (servingTsp > 3) {
-    ledColor = '#FF9500';
-  } else if (servingTsp > 0) {
-    ledColor = '#34C759';
+  if (cbScore >= 76) {
+    ledColor = '#22C55E';
+  } else if (cbScore >= 51) {
+    ledColor = '#3BB5A0';
+  } else if (cbScore >= 26) {
+    ledColor = '#F5A623';
+  } else {
+    ledColor = '#EF4444';
   }
-
-  const isUnknown = servingTsp === undefined || item.sugarGrams === undefined;
 
   return (
     <TouchableOpacity
@@ -80,7 +49,9 @@ function ScanHistoryItemRow({ item, colors, isDark, onPress, onDelete }: any) {
         borderWidth: 1,
         borderRadius: 20,
         padding: 12,
+        paddingTop: 16,
         marginBottom: 8,
+        position: 'relative',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: isDark ? 0.1 : 0.03,
@@ -88,6 +59,23 @@ function ScanHistoryItemRow({ item, colors, isDark, onPress, onDelete }: any) {
         elevation: 1,
       }}
     >
+      {/* Top-Right "Open" Link */}
+      <View
+        style={{
+          position: 'absolute',
+          top: 10,
+          right: 12,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 2,
+        }}
+      >
+        <Text style={{ color: colors.primary, fontSize: 9, fontWeight: '900', letterSpacing: 0.6 }}>
+          OPEN
+        </Text>
+        <ArrowUpRight size={10} color={colors.primary} />
+      </View>
+
       {/* Product Image Thumbnail */}
       <View style={{
         width: 46,
@@ -100,25 +88,46 @@ function ScanHistoryItemRow({ item, colors, isDark, onPress, onDelete }: any) {
         justifyContent: 'center',
         overflow: 'hidden',
       }}>
-        {item.imageUrl ? (
+        {item.imageUrl && !imageError ? (
           <Image
             source={{ uri: item.imageUrl }}
             style={{ width: '100%', height: '100%' }}
             contentFit="cover"
+            onError={() => setImageError(true)}
           />
         ) : (
           <ScanBarcode size={20} color={colors.primary} />
         )}
       </View>
 
-      {/* Center Details */}
-      <View style={{ flex: 1, marginLeft: 12, paddingRight: 8 }}>
-        <Text
-          style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 1 }}
-          numberOfLines={1}
-        >
-          {item.brand || 'Generic Brand'}
-        </Text>
+      {/* Center Details - NO DATE OR TIMESTAMP */}
+      <View style={{ flex: 1, marginLeft: 12, paddingRight: 44 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 1 }}>
+          <Text
+            style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, flexShrink: 1 }}
+            numberOfLines={1}
+          >
+            {item.brand || 'Generic Brand'}
+          </Text>
+          {item.isSwapped && (
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+              backgroundColor: 'rgba(52, 199, 89, 0.15)',
+              paddingHorizontal: 6,
+              paddingVertical: 2,
+              borderRadius: 6,
+              borderWidth: 1,
+              borderColor: 'rgba(52, 199, 89, 0.3)',
+            }}>
+              <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#34C759' }} />
+              <Text style={{ color: '#34C759', fontSize: 8, fontWeight: '900', textTransform: 'uppercase' }}>
+                SWAPPED
+              </Text>
+            </View>
+          )}
+        </View>
         <Text
           style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}
           numberOfLines={1}
@@ -129,29 +138,37 @@ function ScanHistoryItemRow({ item, colors, isDark, onPress, onDelete }: any) {
           <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600' }}>
             {formatWeight(item.servingSize, sugarUnit) || '1 serving'} per serving
           </Text>
-          <>
-            <Text style={{ color: colors.textMuted, fontSize: 8 }}>•</Text>
-            <Text style={{
-              color: item.hasHiddenSugars === true ? '#FF9500' : '#34C759',
-              fontSize: 8,
-              fontWeight: '900',
-            }}>
-              {item.hasHiddenSugars === true ? `⚠️ ${item.hiddenSugarCount ?? 0} Stealth` : '🌿 Clean'}
-            </Text>
-          </>
+          <Text style={{ color: colors.textMuted, fontSize: 8 }}>•</Text>
+          <Text style={{
+            color: getNovaColor(item.novaClass),
+            fontSize: 8,
+            fontWeight: '900',
+          }}>
+            {item.novaClass ? `NOVA ${item.novaClass}` : 'Unclassified'}
+          </Text>
+          {(item.additiveCount ?? 0) > 0 && (
+            <>
+              <Text style={{ color: colors.textMuted, fontSize: 8 }}>•</Text>
+              <Text style={{
+                color: (item.additiveCount ?? 0) > 4 ? '#F5A623' : '#22C55E',
+                fontSize: 8,
+                fontWeight: '900',
+              }}>
+                {item.additiveCount} {(item.additiveCount ?? 0) === 1 ? 'additive' : 'additives'}
+              </Text>
+            </>
+          )}
         </View>
       </View>
 
-      {/* Right Column: Mini LED + Teaspoons */}
+      {/* Right Column: BiteFix Score + NOVA LED + Delete Button */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-        {/* Teaspoon highlight */}
         <View style={{ alignItems: 'flex-end' }}>
-          <Text style={{ color: colors.primary, fontSize: 14, fontWeight: '900' }}>
-            {isUnknown ? '--' : servingTsp.toFixed(1).replace(/\.0$/, '')} <Text style={{ fontSize: 9, color: colors.textSecondary, fontWeight: '700' }}>tsp</Text>
+          <Text style={{ color: getBiteFixScoreColor(item.biteFixScore), fontSize: 14, fontWeight: '900' }}>
+            {item.biteFixScore ?? '--'} <Text style={{ fontSize: 9, color: colors.textSecondary, fontWeight: '700' }}>/100</Text>
           </Text>
         </View>
 
-        {/* Mini LED */}
         <View
           style={{
             width: 10,
@@ -166,108 +183,62 @@ function ScanHistoryItemRow({ item, colors, isDark, onPress, onDelete }: any) {
           }}
         />
 
-        {/* Delete button (small trash icon) */}
         <TouchableOpacity
           onPress={(e) => {
             e.stopPropagation();
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             onDelete();
           }}
           style={{
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
             padding: 6,
-            borderRadius: 8,
-            marginLeft: 2,
+            borderRadius: 10,
+            backgroundColor: isDark ? 'rgba(239, 68, 68, 0.12)' : 'rgba(239, 68, 68, 0.08)',
           }}
         >
-          <Trash2 size={12} color={colors.textMuted} />
+          <Trash2 size={14} color={colors.error} />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
 }
 
-function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelectedScan, deleteScan }: any) {
-  const firstItemDate = new Date(group.items[0].timestamp);
-  const displayTitle = firstItemDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
-
-  return (
-    <AnimatedReanimated.View
-      entering={FadeInDown.delay(Math.min(groupIndex * 100, 400)).duration(300)}
-      style={{
-        backgroundColor: isDark ? colors.surface : '#F7F8FA',
-        borderColor: isDark ? colors.border : 'rgba(220, 220, 220, 1)',
-        borderWidth: isDark ? 1.5 : 1,
-        borderRadius: 28,
-        padding: 16,
-        marginBottom: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: isDark ? 0.15 : 0.12,
-        shadowRadius: 28,
-        elevation: 10
-      }}
-    >
-      {/* Top Bar */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-          <Text style={{
-            color: colors.text,
-            fontSize: 16,
-            fontWeight: '900',
-            textTransform: 'uppercase',
-            letterSpacing: 1.0,
-            flexShrink: 1
-          }} numberOfLines={1}>
-            {displayTitle}
-          </Text>
-
-          <View style={{
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.06)',
-            paddingHorizontal: 12,
-            paddingVertical: 6,
-            borderRadius: 16,
-            borderWidth: 1,
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0,0,0,0.06)',
-            flexDirection: 'row',
-            alignItems: 'center',
-          }}>
-            <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '800' }}>
-              {group.items.length} {group.items.length === 1 ? 'Product' : 'Products'}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      <View style={{ gap: 4 }}>
-        {group.items.map((item: any) => {
-          return (
-            <ScanHistoryItemRow
-              key={item.id}
-              item={item}
-              colors={colors}
-              isDark={isDark}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                panY.setValue(0);
-                setSelectedScan(item);
-              }}
-              onDelete={() => {
-                deleteScan(item.id);
-              }}
-            />
-          );
-        })}
-      </View>
-    </AnimatedReanimated.View>
-  );
-}
-
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
-  const { scans, deleteScan, clearScans, userName, sugarUnit, addToCollection, collection } = useAppStore();
-  const [selectedScan, setSelectedScan] = useState<ScanHistoryItem | null>(null);
-  const [settingsVisible, setSettingsVisible] = useState(false);
+  const { scans, collection, removeFromCollection, userName, sugarUnit } = useAppStore();
+  const [selectedSavedItem, setSelectedSavedItem] = useState<CollectionItem | null>(null);
+  const panY = useRef(new Animated.Value(0)).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return gestureState.dy > 5;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy > 0) {
+          panY.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 120) {
+          Animated.timing(panY, {
+            toValue: 600,
+            duration: 200,
+            useNativeDriver: true,
+          }).start(() => {
+            setSelectedSavedItem(null);
+            panY.setValue(0);
+          });
+        } else {
+          Animated.spring(panY, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 40,
+            friction: 8,
+          }).start();
+        }
+      },
+    })
+  ).current;
 
   // Animated shine coordinate for the CTA button
   const shineAnim = useRef(new Animated.Value(0)).current;
@@ -279,6 +250,31 @@ export default function HomeScreen() {
   const latestScan = scans[0];
   const shineX = useSharedValue(-220);
 
+  // Animated rotation for the Food Alchemist Card orbital ring
+  const orbitRotation1 = useSharedValue(0);
+  const orbitRotation2 = useSharedValue(0);
+
+  useEffect(() => {
+    orbitRotation1.value = withRepeat(
+      withTiming(360, { duration: 12000, easing: Easing.linear }),
+      -1,
+      false
+    );
+    orbitRotation2.value = withRepeat(
+      withTiming(-360, { duration: 20000, easing: Easing.linear }),
+      -1,
+      false
+    );
+  }, []);
+
+  const rotateStyle1 = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${orbitRotation1.value}deg` }],
+  }));
+
+  const rotateStyle2 = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${orbitRotation2.value}deg` }],
+  }));
+
   useEffect(() => {
     shineX.value = withRepeat(
       withSequence(
@@ -289,45 +285,6 @@ export default function HomeScreen() {
       false
     );
   }, []);
-
-  // Animated value and PanResponder for drag/swipe down to close gesture
-  const panY = useRef(new Animated.Value(0)).current;
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Active gesture only on downward vertical drag
-        return gestureState.dy > 5;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        if (gestureState.dy > 0) {
-          panY.setValue(gestureState.dy);
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dy > 120) {
-          // Slide down completely and close modal
-          Animated.timing(panY, {
-            toValue: 600,
-            duration: 200,
-            useNativeDriver: true,
-          }).start(() => {
-            setSelectedScan(null);
-            panY.setValue(0);
-          });
-        } else {
-          // Bounce back to top position
-          Animated.spring(panY, {
-            toValue: 0,
-            useNativeDriver: true,
-            tension: 40,
-            friction: 8,
-          }).start();
-        }
-      },
-    })
-  ).current;
 
 
 
@@ -357,33 +314,68 @@ export default function HomeScreen() {
 
   const activeDayInfo = getLatestActiveScans();
 
-  const totalSugar = activeDayInfo.items.reduce((sum, item) => {
-    const metrics = getConsistentNutritionalMetrics(item);
-    return sum + metrics.servingSugarG;
-  }, 0);
+  const avgBiteFixScore = activeDayInfo.items.length > 0
+    ? Math.round(activeDayInfo.items.reduce((sum, item) => sum + (item.biteFixScore ?? 50), 0) / activeDayInfo.items.length)
+    : 0;
 
-  // 1. Daily Intake (Per Serving basis)
-  const sumServingCalories = activeDayInfo.items.reduce((sum, item) => {
-    const metrics = getConsistentNutritionalMetrics(item);
-    return sum + (metrics.servingCalories ?? 0);
-  }, 0);
-  const totalJoggingMinutesToday = activeDayInfo.items.reduce((sum, item) => {
-    const metrics = getConsistentNutritionalMetrics(item);
-    return sum + calculateJoggingMinutes(metrics.servingCalories ?? 0);
-  }, 0);
+  const scoreColor = getBiteFixScoreColor(avgBiteFixScore);
+  const getLighterScoreColor = () => {
+    if (avgBiteFixScore >= 76) return '#4ADE80';
+    if (avgBiteFixScore >= 51) return '#2DD4BF';
+    if (avgBiteFixScore >= 26) return '#FBBF24';
+    return '#F87171';
+  };
+  const lighterScoreColor = getLighterScoreColor();
 
+  const getSmartSwapSuggestion = () => {
+    if (scans.length === 0 || collection.length === 0) {
+      return null;
+    }
 
+    const sortedScans = [...scans].sort((a, b) => b.timestamp - a.timestamp);
+    
+    for (const scan of sortedScans) {
+      const scanScore = scan.biteFixScore ?? 50;
+      if (scanScore < 60) {
+        const scanCategory = mapToBiteFixCategory(scan.name, scan.brand, scan.categoryTag);
+        
+        const matchingCollectionItem = collection.find(item => {
+          const itemCategory = item.biteFixCategory || mapToBiteFixCategory(item.name, item.brand, item.categoryTag);
+          return itemCategory === scanCategory && (item.biteFixScore ?? 50) >= 75;
+        });
 
-  const sortedBySugar = [...activeDayInfo.items].sort((a, b) => {
-    const aVal = a.sugarPer100g ?? a.sugarGrams;
-    const bVal = b.sugarPer100g ?? b.sugarGrams;
-    return aVal - bVal;
-  });
-  const cleanChoice = sortedBySugar[0];
-  const sugarSpiker = sortedBySugar[sortedBySugar.length - 1];
+        if (matchingCollectionItem) {
+          return {
+            unhealthy: scan,
+            healthy: matchingCollectionItem,
+            type: 'category-match' as const
+          };
+        }
+      }
+    }
 
-  const totalScansForActiveDay = activeDayInfo.items.length;
-  // --- End Bento Grid Logic ---
+    const sortedCollection = [...collection].sort((a, b) => (b.biteFixScore ?? 0) - (a.biteFixScore ?? 0));
+    if (sortedCollection.length > 0 && (sortedCollection[0].biteFixScore ?? 0) >= 75) {
+      return {
+        healthy: sortedCollection[0],
+        type: 'general-recommendation' as const
+      };
+    }
+
+    return null;
+  };
+
+  const swapSuggestion = getSmartSwapSuggestion();
+
+  const mascotState = avgBiteFixScore >= 76 ? 'happy' : avgBiteFixScore >= 41 ? 'idle' : (avgBiteFixScore > 0 ? 'shocked' : 'idle');
+
+  const getMascotThought = () => {
+    if (activeDayInfo.isEmpty) return "Scan any packaged food to see its health score and processing level!";
+    if (avgBiteFixScore >= 76) return "Awesome choices today! Mostly clean, whole foods with minimal processing.";
+    if (avgBiteFixScore >= 51) return "Good balance today. Swapping a few packaged items for whole foods will boost your score!";
+    return "Heavily processed foods detected. Let's look for cleaner, simpler alternatives next time!";
+  };
+  // --- End BiteFix Aggregate Stats ---
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -412,27 +404,33 @@ export default function HomeScreen() {
             <Text
               style={{ color: colors.text, fontSize: 20, fontWeight: '900', letterSpacing: -0.6 }}
             >
-              CutSugar
+              BiteFix
             </Text>
             <Text
               style={{ color: colors.primary, fontSize: 9.5, fontWeight: '800', letterSpacing: 1.6 }}
             >
-              Sugar Teaspoons Scanner
+              Food Scanner & Swap
             </Text>
           </View>
         </View>
-        <View className="flex-row items-center gap-2">
-          <TouchableOpacity
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              setSettingsVisible(true);
-            }}
-            style={{ backgroundColor: colors.surfaceRaised }}
-            className="p-2 active:opacity-80 rounded-full"
-          >
-            <Menu size={18} color={colors.primary} />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push('/settings');
+          }}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+            borderWidth: 1,
+            borderColor: colors.border,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Settings size={20} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -440,278 +438,365 @@ export default function HomeScreen() {
         contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Welcome Card (Premium Liquid Glass) */}
+        {/* Card A: Daily Clean Score Card */}
         <View
           style={{
-            borderRadius: 40,
+            borderRadius: 32,
             overflow: 'hidden',
-            marginBottom: 24,
-            borderWidth: 2,
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(253, 252, 252, 0.06)',
+            marginBottom: 20,
+            borderWidth: 1.5,
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+            backgroundColor: isDark ? '#111827' : '#FFFFFF',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: isDark ? 0.25 : 0.06,
+            shadowRadius: 18,
+            elevation: 6,
           }}
         >
-          {/* Base Background for depth */}
+          {/* Card Ambient Glow Header */}
           <LinearGradient
-            colors={isDark ? ['#000000ff', '#000000ff'] : ['rgba(255, 255, 255, 0.06)', 'rgba(255, 255, 255, 0.06)']}
-            style={StyleSheet.absoluteFill}
-          />
-
-          <BlurView
-            intensity={isDark ? 30 : 60}
-            tint={isDark ? "dark" : "light"}
-            style={{
-              padding: 24,
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            colors={
+              avgBiteFixScore >= 76
+                ? (isDark ? ['#064e3b20', '#022c2240'] : ['#d1fae560', '#f0fdf480'])
+                : avgBiteFixScore >= 41
+                  ? (isDark ? ['#1e1b4b10', '#0f172a20'] : ['#eff6ff60', '#f8fafc80'])
+                  : (isDark ? ['#451a0320', '#1c191740'] : ['#fee2e260', '#fef2f280'])
+            }
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{ padding: 24 }}
           >
-            {/* Top: Welcome Text & Mascot */}
-            <View className="flex-row w-full mb-4">
-              <View style={{ flex: 1, paddingRight: 16 }}>
-                <Text
-                  style={{ color: colors.primary, fontSize: 11, fontWeight: '800', letterSpacing: 1.5, marginBottom: 12 }}
-                >
-                  {userName ? `WELCOME, ${userName.toUpperCase()}` : 'WELCOME BACK'}
-                </Text>
-
-                {/* Info Display Card */}
-                <View style={{
-                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.03)',
-                  padding: 12,
-                  borderRadius: 14,
-                  borderWidth: 1,
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
-                }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 11, lineHeight: 16 }}>
-                    <Text style={{ fontWeight: '700', color: colors.text }}>Why teaspoons?</Text> Teaspoons provides a clear, visual way to understand Daily Sugar Intake.
-                  </Text>
-                </View>
+            {/* Top Row: Title Badge */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               </View>
-              <AnimatedReanimated.View
-                entering={FadeInDown.duration(600).springify()}
-                style={{ alignItems: 'center', zIndex: 10, paddingTop: 4 }}
-              >
-                <Mascot state={totalSugar > 25 ? 'shocked' : 'happy'} size={100} />
-              </AnimatedReanimated.View>
-            </View>
-
-            {/* Central Visual: Mascot-styled Sugar Ring */}
-            <View style={{ width: '100%', alignItems: 'center', marginVertical: 16 }}>
-
-              {/* Scan Date Pill just above Progress Ring */}
               <View style={{
                 backgroundColor: colors.primary + '15',
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 12,
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 8,
                 borderWidth: 1,
                 borderColor: colors.primary + '30',
-                marginBottom: 16,
-                alignSelf: 'center',
               }}>
-                <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                  {activeDayInfo.dateStr === 'Today' ? "Today's Scans" : `Last Scan on ${activeDayInfo.dateStr}`}
-                </Text>
-              </View>
-
-              <SugarProgressRing totalSugar={totalSugar} size={260} isDark={isDark} colors={colors} />
-            </View>
-
-            {/* Sleek WHO Standard Pill */}
-            <View style={{ width: '100%', alignItems: 'center', marginTop: 10, marginBottom: 14 }}>
-              <View style={{
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
-                borderRadius: 20,
-                paddingHorizontal: 16,
-                paddingVertical: 6,
-                borderWidth: 1,
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-              }}>
-                <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700', textAlign: 'center' }}>
-                  WHO Standard
-                </Text>
-                <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700', textAlign: 'center' }}>
-                  1 Teaspoon = {formatSugar(4.2, sugarUnit)} of Sugar
+                <Text style={{ color: colors.primary, fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  {activeDayInfo.dateStr === 'Today' ? "Today" : activeDayInfo.dateStr}
                 </Text>
               </View>
             </View>
 
-            {/* Total Days to Consume Container */}
-            <View style={{
-              width: '100%',
-              backgroundColor: isDark ? 'rgba(251, 248, 248, 0.06)' : 'rgba(255, 255, 255, 0.7)',
-              borderRadius: 24,
-              borderWidth: 1,
-              borderColor: colors.border,
-              padding: 16,
-            }}>
-              {/* Title & Date Pill */}
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <Text style={{ color: colors.text, fontSize: 12, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase' }}>
-                  Sugar Consumption
-                </Text>
+            {/* Center Info Panel */}
+            <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 20, width: '100%' }}>
+              {/* Animated Mascot Orb Container */}
+              <View style={{ width: 220, height: 220, alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                {/* 1. Static track and progress arc */}
+                <Svg width={220} height={220} viewBox="0 0 120 120" style={{ position: 'absolute' }}>
+                  <Defs>
+                    <RadialGradient id="ringGlow" cx="50%" cy="50%" rx="50%" ry="50%">
+                      <Stop offset="0%" stopColor={scoreColor} stopOpacity="0.25" />
+                      <Stop offset="70%" stopColor={scoreColor} stopOpacity="0.05" />
+                      <Stop offset="100%" stopColor={scoreColor} stopOpacity="0" />
+                    </RadialGradient>
+                    <SvgLinearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <Stop offset="0%" stopColor={scoreColor} />
+                      <Stop offset="100%" stopColor={lighterScoreColor} />
+                    </SvgLinearGradient>
+                  </Defs>
+                  {/* Ambient halo glow */}
+                  <Circle cx="60" cy="60" r="54" fill="url(#ringGlow)" />
+                  {/* Background progress track */}
+                  <Circle cx="60" cy="60" r="48" fill="none" stroke={isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)'} strokeWidth="3.5" />
+                  {/* Inner glow progress arc */}
+                  <Circle
+                     cx="60"
+                     cy="60"
+                     r="48"
+                     fill="none"
+                     stroke={scoreColor}
+                     strokeWidth="6"
+                     strokeLinecap="round"
+                     strokeDasharray="301.6"
+                     strokeDashoffset={301.6 * (1 - Math.max(5, avgBiteFixScore) / 100)}
+                     transform="rotate(-90 60 60)"
+                     opacity="0.2"
+                  />
+                  {/* Main progress arc */}
+                  <Circle
+                    cx="60"
+                    cy="60"
+                    r="48"
+                    fill="none"
+                    stroke="url(#progressGrad)"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    strokeDasharray="301.6"
+                    strokeDashoffset={301.6 * (1 - Math.max(5, avgBiteFixScore) / 100)}
+                    transform="rotate(-90 60 60)"
+                  />
+                </Svg>
+
+                {/* 2. Outer dashed ring rotating counter-clockwise */}
+                <AnimatedReanimated.View style={[{ position: 'absolute', width: 220, height: 220 }, rotateStyle2]} pointerEvents="none">
+                  <Svg width="100%" height="100%" viewBox="0 0 120 120">
+                    <Circle
+                      cx="60"
+                      cy="60"
+                      r="54"
+                      fill="none"
+                      stroke={scoreColor}
+                      strokeWidth="0.8"
+                      strokeDasharray="6, 12"
+                      opacity="0.18"
+                    />
+                  </Svg>
+                </AnimatedReanimated.View>
+
+                {/* 3. Inner dashed ring rotating clockwise */}
+                <AnimatedReanimated.View style={[{ position: 'absolute', width: 220, height: 220 }, rotateStyle1]} pointerEvents="none">
+                  <Svg width="100%" height="100%" viewBox="0 0 120 120">
+                    <Circle
+                      cx="60"
+                      cy="60"
+                      r="42"
+                      fill="none"
+                      stroke={scoreColor}
+                      strokeWidth="0.6"
+                      strokeDasharray="3, 8"
+                      opacity="0.25"
+                    />
+                  </Svg>
+                </AnimatedReanimated.View>
+
+                {/* 4. Glowing orbiting particle trailing system (Clockwise) */}
+                <AnimatedReanimated.View style={[{ position: 'absolute', width: 220, height: 220 }, rotateStyle1]} pointerEvents="none">
+                  <Svg width="100%" height="100%" viewBox="0 0 120 120">
+                    {/* Lead particle */}
+                    <Circle cx="60" cy="12" r="3.5" fill={scoreColor} />
+                    <Circle cx="60" cy="12" r="7.5" fill={scoreColor} opacity={0.25} />
+                    {/* Tail particle 1 */}
+                    <Circle cx="55" cy="12.2" r="2.5" fill={scoreColor} opacity={0.65} />
+                    {/* Tail particle 2 */}
+                    <Circle cx="50.2" cy="13.1" r="1.8" fill={scoreColor} opacity={0.4} />
+                    {/* Tail particle 3 */}
+                    <Circle cx="45.6" cy="14.8" r="1.2" fill={scoreColor} opacity={0.2} />
+                  </Svg>
+                </AnimatedReanimated.View>
+
+                {/* 5. Mascot */}
+                <Mascot state={mascotState} size={148} />
+
+                {/* 6. Score pill badge */}
                 <View style={{
-                  backgroundColor: colors.primary + '15',
-                  paddingHorizontal: 8,
+                  position: 'absolute',
+                  bottom: -8,
+                  backgroundColor: isDark ? 'rgba(31, 41, 55, 0.92)' : 'rgba(255, 255, 255, 0.95)',
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+                  borderWidth: 1.5,
+                  borderRadius: 14,
+                  paddingHorizontal: 12,
                   paddingVertical: 4,
-                  borderRadius: 8,
-                  borderWidth: 1,
-                  borderColor: colors.primary + '30',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 5,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 6,
+                  elevation: 4,
                 }}>
-                  <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '800' }}>
-                    {activeDayInfo.dateStr === 'Today' ? "Today's Scans" : `Scans on ${activeDayInfo.dateStr}`}
+                  <View style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: 3,
+                    backgroundColor: scoreColor,
+                  }} />
+                  <Text style={{
+                    color: colors.text,
+                    fontSize: 10,
+                    fontWeight: '900',
+                    letterSpacing: 0.4,
+                  }}>
+                    {activeDayInfo.isEmpty ? 'NO SCANS' : `SCORE: ${avgBiteFixScore}`}
                   </Text>
                 </View>
               </View>
+            </View>
 
-              {/* Cute Floating Mini Info Container */}
-              <View style={{
-                backgroundColor: isDark ? 'rgba(255, 149, 0, 0.1)' : 'rgba(255, 149, 0, 0.08)',
-                borderColor: isDark ? 'rgba(255, 149, 0, 0.25)' : 'rgba(255, 149, 0, 0.3)',
-                borderWidth: 1,
-                borderRadius: 14,
-                padding: 10,
-                marginBottom: 12,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 8,
-              }}>
+            {/* Bubble thought */}
+            <View style={{
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+              borderRadius: 18,
+              padding: 14,
+              borderWidth: 1,
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+            }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textAlign: 'center', lineHeight: 17 }}>
+                "{getMascotThought()}"
+              </Text>
+            </View>
 
-                <Text style={{ color: colors.text, fontSize: 10.5, fontWeight: '600', flex: 1, lineHeight: 15 }}>
-                  Do you know How many Days it will take to consume today's sugar intake as per WHO guidelines?
-                </Text>
-              </View>
+            {/* Smart Swap Recommendation Widget */}
+            <View
+              style={{
+                marginTop: 16,
+                paddingTop: 16,
+                borderTopWidth: 1.5,
+                borderTopColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+              }}
+            >
+              {swapSuggestion ? (
+                swapSuggestion.type === 'category-match' ? (
+                  <TouchableOpacity
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      panY.setValue(0);
+                      setSelectedSavedItem(swapSuggestion.healthy);
+                    }}
+                    activeOpacity={0.8}
+                    style={{
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : '#FFFFFF',
+                      borderRadius: 20,
+                      borderWidth: 1,
+                      borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+                      padding: 14,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: isDark ? 0.15 : 0.02,
+                      shadowRadius: 6,
+                      elevation: 2,
+                    }}
+                  >
+                    {/* Header */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                      <RefreshCw size={12} color="#34C759" />
+                      <Text style={{ color: '#34C759', fontSize: 10, fontWeight: '900', letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                        Smart Swap Found
+                      </Text>
+                    </View>
 
-              {/* Consumption Pace Rows */}
-              <View style={{ gap: 10 }}>
-                {/* 6 tsp Pace */}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <View style={{ gap: 2, flex: 1 }}>
-                    <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700' }}>Recommended</Text>
-                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '500' }}>WHO: Safe 6 teaspoons/day</Text>
-                  </View>
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={{ color: colors.success || '#22C55E', fontSize: 18, fontWeight: '900' }}>
-                      {activeDayInfo.isEmpty ? '0.0' : (totalSugar / 4.2 / 6.0).toFixed(1)} <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textSecondary }}>Days</Text>
+                    {/* Side-by-Side Comparison */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                      {/* Left: Unhealthy scanned product */}
+                      <View style={{ flex: 1, marginRight: 8 }}>
+                        <Text style={{ color: '#EF4444', fontSize: 8, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 2 }}>
+                          Recent Scan
+                        </Text>
+                        <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }} numberOfLines={1}>
+                          {swapSuggestion.unhealthy.brand || 'Generic Brand'}
+                        </Text>
+                        <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }} numberOfLines={1}>
+                          {swapSuggestion.unhealthy.name}
+                        </Text>
+                        <Text style={{ color: '#EF4444', fontSize: 11, fontWeight: '900', marginTop: 3 }}>
+                          Score: {swapSuggestion.unhealthy.biteFixScore ?? '--'}
+                        </Text>
+                      </View>
+
+                      {/* Middle Arrow */}
+                      <View style={{ paddingHorizontal: 10 }}>
+                        <ArrowRight size={16} color="#34C759" />
+                      </View>
+
+                      {/* Right: Healthy saved product */}
+                      <View style={{ flex: 1, marginLeft: 8 }}>
+                        <Text style={{ color: '#22C55E', fontSize: 8, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 2 }}>
+                          Saved Upgrade
+                        </Text>
+                        <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }} numberOfLines={1}>
+                          {swapSuggestion.healthy.brand || 'Generic Brand'}
+                        </Text>
+                        <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }} numberOfLines={1}>
+                          {swapSuggestion.healthy.name}
+                        </Text>
+                        <Text style={{ color: '#22C55E', fontSize: 11, fontWeight: '900', marginTop: 3 }}>
+                          Score: {swapSuggestion.healthy.biteFixScore ?? '--'}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Footer suggestion caption */}
+                    <Text style={{ color: colors.textMuted, fontSize: 8.5, fontWeight: '600', marginTop: 10, textAlign: 'center' }}>
+                      Tap to view details for your saved clean alternative
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      panY.setValue(0);
+                      setSelectedSavedItem(swapSuggestion.healthy);
+                    }}
+                    activeOpacity={0.8}
+                    style={{
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : '#FFFFFF',
+                      borderRadius: 20,
+                      borderWidth: 1,
+                      borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+                      padding: 14,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: isDark ? 0.15 : 0.02,
+                      shadowRadius: 6,
+                      elevation: 2,
+                    }}
+                  >
+                    {/* Header */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                      <Sparkles size={12} color={colors.primary} />
+                      <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '900', letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                        Pantry Showcase
+                      </Text>
+                    </View>
+
+                    {/* Layout for single item */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <View style={{ flex: 1, paddingRight: 12 }}>
+                        <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>
+                          {swapSuggestion.healthy.brand || 'Generic Brand'}
+                        </Text>
+                        <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }} numberOfLines={1}>
+                          {swapSuggestion.healthy.name}
+                        </Text>
+                        <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600', marginTop: 2 }}>
+                          Your highest-rated saved clean product. Keep it stocked!
+                        </Text>
+                      </View>
+                      
+                      <View style={{ alignItems: 'flex-end', backgroundColor: isDark ? 'rgba(34, 197, 94, 0.15)' : 'rgba(34, 197, 94, 0.08)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(34, 197, 94, 0.25)' }}>
+                        <Text style={{ color: '#22C55E', fontSize: 15, fontWeight: '900' }}>
+                          {swapSuggestion.healthy.biteFixScore ?? '--'}
+                        </Text>
+                        <Text style={{ color: '#22C55E', fontSize: 7, fontWeight: '800', textTransform: 'uppercase', marginTop: 1 }}>
+                          Score
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                )
+              ) : (
+                <View
+                  style={{
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0,0,0,0.02)',
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+                    padding: 14,
+                    alignItems: 'center',
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 4 }}>
+                    <Bookmark size={11} color={colors.textMuted} />
+                    <Text style={{ color: colors.textSecondary, fontSize: 9.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      Smart Pantry Swaps
                     </Text>
                   </View>
+                  <Text style={{ color: colors.textMuted, fontSize: 9.5, fontWeight: '600', textAlign: 'center', lineHeight: 14, maxWidth: 260 }}>
+                    Save clean products to your list. We'll suggest upgrades here when you scan higher-sugar items in the same category!
+                  </Text>
                 </View>
-
-                {/* Separator line */}
-                <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 2 }} />
-
-                {/* 12 tsp Pace */}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <View style={{ gap: 2, flex: 1 }}>
-                    <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700' }}>Maximum</Text>
-                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '500' }}>WHO: Max 12 teaspoons/day</Text>
-                  </View>
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={{ color: colors.primary, fontSize: 18, fontWeight: '900' }}>
-                      {activeDayInfo.isEmpty ? '0.0' : (totalSugar / 4.2 / 12.0).toFixed(1)} <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textSecondary }}>Days</Text>
-                    </Text>
-                  </View>
-                </View>
-              </View>
+              )}
             </View>
-          </BlurView>
-        </View>
-
-        {/* Burn System Section (Extracted) */}
-        <View style={{
-          backgroundColor: isDark ? colors.surface : '#F7F8FA',
-          borderColor: isDark ? colors.border : 'rgba(220, 220, 220, 1)',
-          borderWidth: isDark ? 1.5 : 1,
-          borderRadius: 28,
-          padding: 20,
-          marginBottom: 24,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: isDark ? 0.15 : 0.08,
-          shadowRadius: 20,
-          elevation: 5
-        }}>
-          {/* Header Area */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-            <View style={{
-              backgroundColor: 'rgba(255, 140, 0, 0.12)',
-              paddingHorizontal: 10,
-              paddingVertical: 5,
-              borderRadius: 8,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 5
-            }}>
-              <Flame size={12} color="#FF8C00" />
-              <Text style={{ color: '#FF8C00', fontSize: 9, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase' }}>
-                Calories Counter
-              </Text>
-            </View>
-
-            <View style={{
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
-              paddingHorizontal: 10,
-              paddingVertical: 5,
-              borderRadius: 8,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 4
-            }}>
-              <Info size={10} color={colors.textSecondary} />
-              <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800' }}>
-                Energy Intake
-              </Text>
-            </View>
-          </View>
-
-          {/* 3-Column Floating Stats Row */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            {/* Energy Stat */}
-            <View style={{ flex: 1, alignItems: 'center' }}>
-              <View style={{ backgroundColor: 'rgba(212, 255, 0, 1)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
-                <Zap size={18} color="#FF3B30" />
-              </View>
-              <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
-                Energy
-              </Text>
-              <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
-                {activeDayInfo.isEmpty ? '0' : sumServingCalories} <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textSecondary }}>kcal</Text>
-              </Text>
-            </View>
-
-            {/* Vertical Divider */}
-            <View style={{ width: 1, height: 44, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }} />
-
-            {/* Scanned Stat */}
-            <View style={{ flex: 1, alignItems: 'center' }}>
-              <View style={{ backgroundColor: 'rgba(251, 255, 0, 1)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
-                <ScanBarcode size={18} color="#34C759" />
-              </View>
-              <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
-                Scanned
-              </Text>
-              <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
-                {activeDayInfo.isEmpty ? '0' : totalScansForActiveDay} <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textSecondary }}>{totalScansForActiveDay === 1 ? 'item' : 'items'}</Text>
-              </Text>
-            </View>
-
-            {/* Vertical Divider */}
-            <View style={{ width: 1, height: 44, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }} />
-
-            {/* Jogging Stat */}
-            <View style={{ flex: 1, alignItems: 'center' }}>
-              <View style={{ backgroundColor: 'rgba(0, 191, 255, 1)', padding: 12, borderRadius: 16, marginBottom: 10 }}>
-                <Activity size={18} color="#000000ff" />
-              </View>
-              <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 3 }}>
-                Jogging
-              </Text>
-              <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
-                {activeDayInfo.isEmpty ? '0m' : formatJogTime(totalJoggingMinutesToday)}
-              </Text>
-            </View>
-          </View>
+          </LinearGradient>
         </View>
 
         {/* Premium Call To Action Button with Loop-Reflection Shine */}
@@ -731,7 +816,7 @@ export default function HomeScreen() {
               </View>
               <View>
                 <Text className="text-white text-base font-black leading-tight">Scan Packaged Food</Text>
-                <Text className="text-white/70 text-xs mt-1">Get Sugar amount in teaspoons</Text>
+                <Text className="text-white/70 text-xs mt-1">Reveal ingredients & processing level</Text>
               </View>
             </View>
             <View className="p-2 bg-white/10 rounded-full">
@@ -764,90 +849,98 @@ export default function HomeScreen() {
           </AnimatedReanimated.View>
         </View>
 
-
-
-        {/* Scan History Section */}
-        <View className="mb-12">
-          <View className="flex-row items-center justify-between mb-4 px-1">
-            <Text style={{ color: colors.text }} className="font-black text-sm">
-              Scan History
+        {/* Saved Products Section - No dates, matching History cards & modal */}
+        <View className="mb-8">
+          <View className="flex-row items-center justify-between px-1 mb-3">
+            <View className="flex-row items-center gap-2">
+              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', letterSpacing: -0.3 }}>
+                Saved Products
+              </Text>
+            </View>
+            <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700' }}>
+              {collection.length} {collection.length === 1 ? 'item' : 'items'}
             </Text>
-            {scans.length > 0 && (
-              <TouchableOpacity
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  Alert.alert(
-                    'Clear History',
-                    'Are you sure you want to clear your scanned food history?',
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      { text: 'Clear All', style: 'destructive', onPress: () => clearScans() }
-                    ]
-                  );
-                }}
-              >
-                <Text style={{ color: colors.primary }} className="text-xs font-black">
-                  Clear All
-                </Text>
-              </TouchableOpacity>
-            )}
           </View>
 
-          {scans.length === 0 ? (
+          {collection.length === 0 ? (
             <View
-              style={{ backgroundColor: colors.surface, borderColor: colors.border }}
-              className="border p-6 rounded-[24px] items-center justify-center shadow-sm"
+              style={{
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                borderWidth: 1,
+                borderRadius: 20,
+                padding: 24,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginTop: 4,
+              }}
             >
-              <ScanBarcode size={24} color={colors.textMuted} />
-              <Text style={{ color: colors.textSecondary }} className="text-xs font-bold mt-2">
-                No items scanned yet
+              <View style={{
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+                borderWidth: 1,
+                borderColor: colors.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 12,
+              }}>
+                <Bookmark size={22} color={colors.textMuted} />
+              </View>
+              <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800', textAlign: 'center' }}>
+                No Saved Products Yet
               </Text>
-              <Text style={{ color: colors.textMuted }} className="text-[10px] mt-1 text-center">
-                Tap 'Scan Packaged Food' to scan your first product.
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 4, textAlign: 'center', lineHeight: 16, maxWidth: 240 }}>
+                Tap "Save" on any scan result to bookmark clean choices and alternatives to your dashboard.
               </Text>
             </View>
           ) : (
-            (() => {
-              const groupedScans = scans.reduce((acc, scan) => {
-                const dateStr = formatGroupDate(scan.timestamp);
-                const group = acc.find(g => g.title === dateStr);
-                if (group) {
-                  group.items.push(scan);
-                } else {
-                  acc.push({ title: dateStr, items: [scan] });
-                }
-                return acc;
-              }, [] as { title: string, items: typeof scans }[]);
-
-              return groupedScans.map((group, groupIndex) => (
-                <ScanHistoryGroup
-                  key={`group-${group.title}`}
-                  group={group}
-                  groupIndex={groupIndex}
+            <View style={{ gap: 4 }}>
+              {collection.map((item) => (
+                <SavedItemRow
+                  key={item.id}
+                  item={item}
                   colors={colors}
                   isDark={isDark}
-                  panY={panY}
-                  setSelectedScan={setSelectedScan}
-                  deleteScan={deleteScan}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    panY.setValue(0);
+                    setSelectedSavedItem(item);
+                  }}
+                  onDelete={() => {
+                    Alert.alert(
+                      'Remove Saved Item',
+                      'Remove this product from your saved list?',
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        {
+                          text: 'Remove',
+                          style: 'destructive',
+                          onPress: () => removeFromCollection(item.id),
+                        },
+                      ]
+                    );
+                  }}
                 />
-              ));
-            })()
+              ))}
+            </View>
           )}
         </View>
       </ScrollView>
 
-      {/* Scan Details Modal */}
+      {/* Saved Product Details Modal */}
       <Modal
-        visible={selectedScan !== null}
+        visible={selectedSavedItem !== null}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setSelectedScan(null)}
+        onRequestClose={() => setSelectedSavedItem(null)}
       >
         <View className="flex-1 justify-end bg-black/60">
           <TouchableOpacity
             className="flex-1"
             activeOpacity={1}
-            onPress={() => setSelectedScan(null)}
+            onPress={() => setSelectedSavedItem(null)}
           />
           <Animated.View
             style={{
@@ -869,16 +962,14 @@ export default function HomeScreen() {
               {...panResponder.panHandlers}
               style={{ width: '100%', alignItems: 'center', paddingBottom: 12 }}
             >
-              {/* Modal Pull Bar */}
               <View style={{ width: 48, height: 5, backgroundColor: isDark ? '#444' : '#ccc', borderRadius: 3, marginBottom: 8 }} />
 
-              {/* Modal Header */}
               <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
                 <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>
                   Product Details
                 </Text>
                 <TouchableOpacity
-                  onPress={() => setSelectedScan(null)}
+                  onPress={() => setSelectedSavedItem(null)}
                   style={{ backgroundColor: colors.background, padding: 8, borderRadius: 20 }}
                 >
                   <X size={18} color={colors.text} />
@@ -886,103 +977,119 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            {selectedScan && (
+            {selectedSavedItem && (
               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-                {/* 1. Hero Section: Product Card & Sugar Impact */}
-                {/* 1. Hero Section: Product Card & Sugar Impact */}
-                <View style={{ marginBottom: 24 }}>
+                {/* Swap Telemetry Banner if Saved as Swap */}
+                {selectedSavedItem.isSwapped && (
+                  <View style={{
+                    backgroundColor: isDark ? 'rgba(52, 199, 89, 0.1)' : 'rgba(52, 199, 89, 0.08)',
+                    borderRadius: 20,
+                    padding: 16,
+                    marginBottom: 12,
+                    borderWidth: 1,
+                    borderColor: 'rgba(52, 199, 89, 0.3)',
+                    gap: 6
+                  }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#34C759' }} />
+                        <Text style={{ color: '#34C759', fontSize: 12, fontWeight: '900', textTransform: 'uppercase' }}>
+                          SWAPPED
+                        </Text>
+                      </View>
+                    </View>
+                    {selectedSavedItem.originalNovaClass && selectedSavedItem.novaClass && (
+                      <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700' }}>
+                        Processing improved from NOVA {selectedSavedItem.originalNovaClass} to NOVA {selectedSavedItem.novaClass}.
+                      </Text>
+                    )}
+                  </View>
+                )}
+
+                {/* 1. Executive Telemetry: Purity & Additives Audit */}
+                <View style={{ marginBottom: 4 }}>
                   <ProductHeroCardDashboard
-                    scanResult={selectedScan}
+                    scanResult={selectedSavedItem}
                     colors={colors}
                     isDark={isDark}
                   />
                 </View>
 
+                {/* 2. Sugar & Energy Telemetry */}
+                <NutritionFacts
+                  colors={colors}
+                  productName={selectedSavedItem.name}
+                  sugarGrams={selectedSavedItem.sugarGrams ?? selectedSavedItem.sugarPer100g ?? 0}
+                  calories={selectedSavedItem.calories}
+                  servingSize={formatWeight(selectedSavedItem.servingSize, sugarUnit) || '100 g / 100 ml'}
+                  sugarPer100g={selectedSavedItem.sugarPer100g}
+                  whoLimitServingPercent={selectedSavedItem.whoLimitServingPercent ?? (selectedSavedItem.sugarTeaspoons !== undefined ? Math.round((selectedSavedItem.sugarTeaspoons / 12) * 100) : undefined)}
+                  isDefaultServing={selectedSavedItem.isDefaultServing}
+                  hasHiddenSugars={selectedSavedItem.hasHiddenSugars}
+                  hiddenSugars={selectedSavedItem.hiddenSugars}
+                  hiddenSugarCount={selectedSavedItem.hiddenSugarCount}
+                />
 
-
-                {/* 3. Extra Nutritional Data */}
-                {(() => {
-                  const currentCalories = selectedScan.calories ?? 0;
-                  if (currentCalories > 0) {
-                    const runMins = calculateJoggingMinutes(currentCalories);
-                    return (
-                      <View style={{ marginBottom: 24, gap: 12 }}>
-                        {/* Burn Down Tagline */}
-                        <LinearGradient
-                          colors={['#F97316', '#ef4444db']}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                          style={{
-                            borderRadius: 24,
-                            padding: 20,
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            gap: 16,
-                            shadowColor: '#EF4444',
-                            shadowOffset: { width: 0, height: 6 },
-                            shadowOpacity: 0.2,
-                            shadowRadius: 16,
-                            elevation: 5,
-                          }}
-                        >
-                          <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.22)', padding: 12, borderRadius: 16 }}>
-                            <Flame size={24} color="#FFFFFF" />
-                          </View>
-                          <View style={{ flex: 1 }}>
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                              <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.5 }}>
-                                The Burn Down
-                              </Text>
-                              <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.25)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
-                                <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '900' }}>{Math.round(currentCalories)} kcal</Text>
-                              </View>
-                            </View>
-                            <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '700', lineHeight: 18 }}>
-                              You need to jog for <Text style={{ fontWeight: '900', fontSize: 16, textDecorationLine: 'underline' }}>{formatJogTime(runMins)}</Text> straight to torch this serving! Stay motivated!
-                            </Text>
-                          </View>
-                        </LinearGradient>
-                      </View>
-                    );
-                  }
-                  return null;
-                })()}
-
-
-                {/* Delete and Close scan option from details */}
-                <View className="flex-row gap-3">
+                {/* 3. Action Dock */}
+                <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
                   <TouchableOpacity
                     onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                       Alert.alert(
-                        'Delete Scan',
-                        'Remove this item from your scan history?',
+                        'Remove Saved Item',
+                        'Remove this product from your saved list?',
                         [
                           { text: 'Cancel', style: 'cancel' },
                           {
-                            text: 'Delete',
+                            text: 'Remove',
                             style: 'destructive',
                             onPress: () => {
-                              deleteScan(selectedScan.id);
-                              setSelectedScan(null);
+                              removeFromCollection(selectedSavedItem.id);
+                              setSelectedSavedItem(null);
                             }
                           }
                         ]
                       );
                     }}
-                    style={{ borderColor: colors.error }}
-                    className="flex-1 py-3.5 border rounded-2xl flex-row items-center justify-center gap-2 active:opacity-90"
+                    style={{
+                      flex: 1,
+                      paddingVertical: 15,
+                      borderRadius: 16,
+                      borderWidth: 1,
+                      borderColor: isDark ? 'rgba(239, 68, 68, 0.3)' : 'rgba(239, 68, 68, 0.25)',
+                      backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6,
+                    }}
+                    activeOpacity={0.8}
                   >
                     <Trash2 size={16} color={colors.error} />
-                    <Text style={{ color: colors.error }} className="font-bold text-xs">Delete From History</Text>
+                    <Text style={{ color: colors.error, fontWeight: '800', fontSize: 13 }}>Remove</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    onPress={() => setSelectedScan(null)}
-                    style={{ backgroundColor: colors.primary }}
-                    className="flex-1 py-3.5 rounded-2xl items-center justify-center active:opacity-95"
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setSelectedSavedItem(null);
+                    }}
+                    style={{
+                      flex: 1.3,
+                      paddingVertical: 15,
+                      borderRadius: 16,
+                      backgroundColor: colors.primary,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      shadowColor: colors.primary,
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.25,
+                      shadowRadius: 10,
+                      elevation: 4,
+                    }}
+                    activeOpacity={0.85}
                   >
-                    <Text className="text-white font-bold text-xs">Close Details</Text>
+                    <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 13, letterSpacing: 0.3 }}>Close</Text>
                   </TouchableOpacity>
                 </View>
               </ScrollView>
@@ -990,29 +1097,6 @@ export default function HomeScreen() {
           </Animated.View>
         </View>
       </Modal>
-
-
-
-      {/* App Settings Modal */}
-      <Modal
-        visible={settingsVisible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setSettingsVisible(false)}
-      >
-        <SettingsScreen onClose={() => setSettingsVisible(false)} />
-      </Modal>
     </SafeAreaView>
   );
-}
-
-// Helpers
-function getSugarColor(teaspoons: number, colors: any) {
-  if (teaspoons > 6) {
-    return colors.error || '#ff7d7dff';
-  }
-  if (teaspoons > 3) {
-    return colors.warning || '#ffe072ff';
-  }
-  return colors.success || '#3dffbeff';
 }

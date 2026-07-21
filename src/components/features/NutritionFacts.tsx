@@ -1,8 +1,10 @@
 import React from 'react';
 import { View } from 'react-native';
+import { Flame } from 'lucide-react-native';
 import { Text } from '@/components/Text';
 import { useAppStore } from '../../stores/appStore';
 import { formatSugar, getConsistentNutritionalMetrics } from '../../utils/sugar';
+import { calculateJoggingMinutes, formatJogTime } from '../../utils/format';
 
 interface NutritionFactsProps {
   colors: any;
@@ -32,10 +34,9 @@ export function NutritionFacts({
   hiddenSugarCount,
 }: NutritionFactsProps) {
   const { sugarUnit } = useAppStore();
-  const isDarkMode = colors.background === '#000000';
-  const labelColor = colors.text;
-  const labelBorderColor = isDarkMode ? 'rgba(255, 255, 255, 0.15)' : colors.text;
-  const rowDividerColor = isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)';
+  const isDarkMode = colors.background === '#000000' || colors.isDark;
+  const borderDivider = isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+  const bentoBg = isDarkMode ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)';
 
   const metrics = getConsistentNutritionalMetrics({
     sugarPer100g,
@@ -48,192 +49,220 @@ export function NutritionFacts({
   const tspServing = metrics.servingTsp;
   const displayCalories = metrics.servingCalories;
   const displayWhoPercent = whoLimitServingPercent ?? metrics.whoLimitPercent;
+  const joggingMins = calculateJoggingMinutes(displayCalories ?? 0);
 
   return (
     <View
       style={{
         backgroundColor: colors.surface,
-        borderColor: labelBorderColor,
-        borderWidth: 1.5,
-        padding: 18,
-        borderRadius: 20,
-        marginVertical: 14,
+        borderColor: borderDivider,
+        borderWidth: 1,
+        padding: 20,
+        borderRadius: 24,
+        marginVertical: 12,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: isDarkMode ? 0.4 : 0.04,
-        shadowRadius: 12,
-        elevation: 2,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: isDarkMode ? 0.35 : 0.04,
+        shadowRadius: 18,
+        elevation: 5,
       }}
     >
-      {/* Title & Badge */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 6 }}>
-        <Text style={{ color: labelColor, fontSize: 24, fontWeight: '900', letterSpacing: -0.6 }}>
-          Sugar Facts
-        </Text>
-        <View style={{
-          backgroundColor: isDefaultServing ? (isDarkMode ? '#3b2d00' : '#fef3c7') : (isDarkMode ? '#063f24' : '#d1fae5'),
-          paddingHorizontal: 8,
-          paddingVertical: 3,
-          borderRadius: 6,
-          borderWidth: 1,
-          borderColor: isDefaultServing ? (isDarkMode ? '#78350f' : '#f59e0b') : (isDarkMode ? '#047857' : '#10b981')
-        }}>
-          <Text style={{
-            color: isDefaultServing ? (isDarkMode ? '#fde68a' : '#b45309') : (isDarkMode ? '#a7f3d0' : '#047857'),
-            fontSize: 9,
-            fontWeight: '800',
-            letterSpacing: 0.3
-          }}>
-            {isDefaultServing ? '100G/ML STANDARD' : 'EXPLICIT SERVING'}
+      {/* Title & Serving Standard Tag */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <View>
+          <Text style={{ color: colors.text, fontSize: 20, fontWeight: '900', letterSpacing: -0.5 }}>
+            Sugar & Energy
+          </Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 2 }}>
+            Serving: {servingSize || '100 g / 100 ml'}
           </Text>
         </View>
       </View>
 
-      {/* Product Name */}
-      {productName && (
-        <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '700', paddingBottom: 10, lineHeight: 18 }}>
-          {productName}
-        </Text>
-      )}
+      <View style={{ height: 1, backgroundColor: borderDivider, marginBottom: 16 }} />
 
-      {/* Serving Breakdown Card */}
-      <View style={{ flexDirection: 'column', gap: 14 }}>
+      {/* ── Bento Telemetry Grid (Sugar Load & Activity Burn) ── */}
+      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
+        {/* Cell 1: Sugar Content & WHO Limit */}
         <View
           style={{
-            backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#FFFFFF',
-            borderRadius: 18,
-            padding: 16,
-            borderWidth: 1.5,
-            borderColor: colors.primary + (isDarkMode ? '35' : '25'),
-            shadowColor: colors.primary,
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: isDarkMode ? 0.15 : 0.05,
-            shadowRadius: 12,
-            elevation: 2,
+            flex: 1.2,
+            backgroundColor: bentoBg,
+            borderRadius: 16,
+            padding: 14,
+            borderWidth: 1,
+            borderColor: borderDivider,
+            justifyContent: 'space-between',
           }}
         >
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary }} />
-              <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2 }}>
-                Serving Breakdown
+          <View>
+            <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>
+              SUGAR LOAD
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+              <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.6 }}>
+                {formatSugar(displayServingSugarG, sugarUnit)}
               </Text>
-            </View>
-            <View style={{ backgroundColor: colors.primary + (isDarkMode ? '25' : '15'), paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: colors.primary + '30' }}>
-              <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '800' }}>
-                {servingSize || '100 g / 100 ml'}
-              </Text>
-            </View>
-          </View>
-
-          <View style={{ height: 1, backgroundColor: rowDividerColor, marginBottom: 12 }} />
-
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: displayWhoPercent !== undefined ? 12 : 0 }}>
-            <View>
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
-                Sugar Content
-              </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-                <Text style={{ color: labelColor, fontSize: 24, fontWeight: '900', letterSpacing: -0.6 }}>
-                  {formatSugar(displayServingSugarG, sugarUnit)}
-                </Text>
-                <Text style={{ color: colors.primary, fontSize: 15, fontWeight: '800' }}>
-                  ({tspServing} tsp)
-                </Text>
-              </View>
-            </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
-                Energy
-              </Text>
-              <Text style={{ color: colors.textMuted, fontSize: 17, fontWeight: '800' }}>
-                {displayCalories !== undefined ? `${Math.round(displayCalories)} kcal` : '— kcal'}
+              <Text style={{ color: colors.primary, fontSize: 14, fontWeight: '800' }}>
+                ({tspServing} tsp)
               </Text>
             </View>
           </View>
 
           {displayWhoPercent !== undefined && (
-            <View style={{ paddingTop: 10, borderTopWidth: 1, borderTopColor: rowDividerColor, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700' }}>WHO Daily Limit (Per Serving)</Text>
-              <View style={{ backgroundColor: displayWhoPercent > 100 ? colors.error : colors.primary, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: '900' }}>{displayWhoPercent}% of 12 tsp Max</Text>
+            <View style={{ marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: borderDivider }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>WHO Limit</Text>
+                <Text style={{ color: displayWhoPercent > 100 ? '#EF4444' : colors.primary, fontSize: 11, fontWeight: '900' }}>
+                  {displayWhoPercent}%
+                </Text>
+              </View>
+              {/* Mini Gauge bar */}
+              <View style={{ height: 4, backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 2, marginTop: 4, overflow: 'hidden' }}>
+                <View
+                  style={{
+                    width: `${Math.min(100, displayWhoPercent)}%`,
+                    height: '100%',
+                    backgroundColor: displayWhoPercent > 100 ? '#EF4444' : displayWhoPercent > 60 ? '#F5A623' : '#22C55E',
+                    borderRadius: 2,
+                  }}
+                />
               </View>
             </View>
           )}
         </View>
 
-        {/* Stealth Sugar Detective Card */}
-        {hasHiddenSugars !== undefined && (
-          <View
-            style={{
-              backgroundColor: hasHiddenSugars 
-                ? (isDarkMode ? 'rgba(255, 149, 0, 0.08)' : 'rgba(255, 149, 0, 0.04)')
-                : (isDarkMode ? 'rgba(52, 199, 89, 0.08)' : 'rgba(52, 199, 89, 0.04)'),
-              borderColor: hasHiddenSugars 
-                ? 'rgba(255, 149, 0, 0.3)' 
-                : 'rgba(52, 199, 89, 0.3)',
-              borderWidth: 1.5,
-              borderRadius: 18,
-              padding: 16,
-              marginTop: 14,
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <Text style={{ 
-                color: hasHiddenSugars ? '#FF9500' : '#34C759', 
-                fontSize: 12, 
-                fontWeight: '900', 
-                textTransform: 'uppercase', 
-                letterSpacing: 0.8 
-              }}>
-                {hasHiddenSugars ? '⚠️ Stealth Sugar Detective' : '🟢 Stealth Sugar Audit'}
-              </Text>
-              <View style={{ 
-                backgroundColor: hasHiddenSugars ? 'rgba(255, 149, 0, 0.15)' : 'rgba(52, 199, 89, 0.15)',
-                paddingHorizontal: 8, 
-                paddingVertical: 3, 
-                borderRadius: 6 
-              }}>
-                <Text style={{ 
-                  color: hasHiddenSugars ? '#FF9500' : '#34C759', 
-                  fontSize: 9, 
-                  fontWeight: '800' 
-                }}>
-                  {hasHiddenSugars ? `${hiddenSugarCount} matched` : 'Clean'}
+        {/* Cell 2: Energy & Burn Down Activity */}
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: bentoBg,
+            borderRadius: 16,
+            padding: 14,
+            borderWidth: 1,
+            borderColor: borderDivider,
+            justifyContent: 'space-between',
+          }}
+        >
+          <View>
+            <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>
+              ENERGY
+            </Text>
+            <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.6 }}>
+              {displayCalories !== undefined ? `${Math.round(displayCalories)}` : '—'} <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textSecondary }}>kcal</Text>
+            </Text>
+          </View>
+
+          {displayCalories !== undefined && displayCalories > 0 && (
+            <View style={{ marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: borderDivider, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={{ backgroundColor: 'rgba(249, 115, 22, 0.15)', padding: 4, borderRadius: 6 }}>
+                <Flame size={13} color="#F97316" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700', textTransform: 'uppercase' }}>Burn Down</Text>
+                <Text style={{ color: '#F97316', fontSize: 11, fontWeight: '900' }}>
+                  {formatJogTime(joggingMins)} Jogging
                 </Text>
               </View>
             </View>
-            
-            <Text style={{ color: colors.textSecondary, fontSize: 11, lineHeight: 16 }}>
-              {hasHiddenSugars 
-                ? 'Added sugars disguised under chemical synonyms bypass basic checks. Detected stealth sweeteners:'
-                : 'No hidden chemical sweeteners or stealth sugars matched in the parsed ingredients list.'}
+          )}
+        </View>
+      </View>
+
+      {/* ── Disguised / Hidden Sugars Audit Box (No coloured cards, only LED lights & tidy names) ── */}
+      {(() => {
+        const hasHidden = hasHiddenSugars === true && hiddenSugars && hiddenSugars.length > 0;
+
+        if (!hasHidden) {
+          return (
+            <View
+              style={{
+                backgroundColor: bentoBg,
+                borderColor: borderDivider,
+                borderWidth: 1,
+                borderRadius: 16,
+                padding: 16,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                <View
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: '#22C55E',
+                    shadowColor: '#22C55E',
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: 0.6,
+                    shadowRadius: 4,
+                  }}
+                />
+                <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.6 }}>
+                  PURE SWEETNESS PROFILE
+                </Text>
+              </View>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 17, paddingLeft: 18 }}>
+                Zero disguised artificial sweeteners, high-fructose syrups, or sneaky sugar derivatives identified.
+              </Text>
+            </View>
+          );
+        }
+
+        return (
+          <View
+            style={{
+              backgroundColor: bentoBg,
+              borderColor: borderDivider,
+              borderWidth: 1,
+              borderRadius: 16,
+              padding: 16,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <Text
+                style={{
+                  color: colors.textSecondary,
+                  fontSize: 10,
+                  fontWeight: '800',
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.8,
+                }}
+              >
+                Other SUGARS
+              </Text>
+              <Text style={{ color: '#FF9500', fontSize: 11, fontWeight: '800' }}>
+                {hiddenSugarCount || hiddenSugars.length} Found
+              </Text>
+            </View>
+
+            <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 16, marginBottom: 12 }}>
+              Manufacturers use over 60 chemical names for added sugars.
             </Text>
 
-            {hasHiddenSugars && hiddenSugars && hiddenSugars.length > 0 && (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
-                {hiddenSugars.map((sugar, idx) => (
-                  <View 
-                    key={idx} 
-                    style={{ 
-                      backgroundColor: isDarkMode ? 'rgba(255, 149, 0, 0.15)' : 'rgba(255, 149, 0, 0.1)', 
-                      borderColor: 'rgba(255, 149, 0, 0.25)',
-                      borderWidth: 1,
-                      paddingHorizontal: 8, 
-                      paddingVertical: 4, 
-                      borderRadius: 8 
+            <View style={{ gap: 8 }}>
+              {hiddenSugars.map((sugar, idx) => (
+                <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <View
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: '#FF9500',
+                      shadowColor: '#FF9500',
+                      shadowOffset: { width: 0, height: 0 },
+                      shadowOpacity: 0.6,
+                      shadowRadius: 4,
                     }}
-                  >
-                    <Text style={{ color: '#FF9500', fontSize: 10, fontWeight: '800' }}>
-                      {sugar}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
+                  />
+                  <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700' }}>
+                    {sugar}
+                  </Text>
+                </View>
+              ))}
+            </View>
           </View>
-        )}
-      </View>
+        );
+      })()}
     </View>
   );
 }

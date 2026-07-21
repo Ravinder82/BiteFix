@@ -5,12 +5,15 @@ import { router } from 'expo-router';
 import { useAppStore } from '../../stores/appStore';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
-import { ChevronRight, ArrowLeft, ShieldAlert, HeartHandshake, Eye, Moon, Layers, RotateCcw, LogOut, User } from 'lucide-react-native';
+import { ChevronRight, ArrowLeft, ShieldAlert, HeartHandshake, Eye, Moon, Layers, RotateCcw, LogOut, User, ShieldCheck, Sparkles, Filter } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   const { colors, theme, toggleTheme } = useTheme();
-  const { sugarUnit, setSugarUnit, clearScans, clearAllData, userName, userGoal } = useAppStore();
+  const { 
+    sugarUnit, setSugarUnit, clearScans, clearAllData, userName, userGoal,
+    allergenFilters, toggleAllergenFilter, strictNovaAlert, setStrictNovaAlert, stealthAdditivesAlert, setStealthAdditivesAlert 
+  } = useAppStore();
   const { user, displayName, providerLabel, signOut, deleteAccount } = useAuth();
 
   const getGoalLabel = (goal?: string) => {
@@ -76,11 +79,17 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
         style={{ borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.surface }}
         className="flex-row items-center px-6 py-4"
       >
-        {onClose && (
+        {(onClose || router.canGoBack()) && (
           <TouchableOpacity
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onClose();
+              if (onClose) {
+                onClose();
+              } else if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.push('/');
+              }
             }}
             style={{ backgroundColor: colors.surfaceRaised }}
             className="mr-3 p-2 rounded-full"
@@ -217,6 +226,83 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
           </View>
         </SettingsGroup>
 
+        {/* FOOD QUALITY & INGREDIENT ALERTS SECTION */}
+        <SettingsGroup title="Food Quality & Ingredient Alerts" colors={colors}>
+          <View
+            style={{ backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border }}
+            className="flex-row items-center justify-between p-4"
+          >
+            <View className="flex-row items-center gap-3 flex-1 mr-4">
+              <ShieldCheck size={16} color={colors.primary} />
+              <View className="flex-1">
+                <Text style={{ color: colors.text }} className="font-bold text-sm">Strict Processing Alerts</Text>
+                <Text style={{ color: colors.textMuted }} className="text-xs mt-0.5">Flag heavily processed foods instantly</Text>
+              </View>
+            </View>
+            <Switch
+              value={strictNovaAlert}
+              onValueChange={setStrictNovaAlert}
+              trackColor={{ false: '#e2e8f0', true: colors.primary }}
+              thumbColor={strictNovaAlert ? '#ffffff' : '#f4f4f5'}
+            />
+          </View>
+
+          <View style={{ backgroundColor: colors.surface }} className="flex-row items-center justify-between p-4">
+            <View className="flex-row items-center gap-3 flex-1 mr-4">
+              <Sparkles size={16} color="#FF9500" />
+              <View className="flex-1">
+                <Text style={{ color: colors.text }} className="font-bold text-sm">Additive & Sweetener Alerts</Text>
+                <Text style={{ color: colors.textMuted }} className="text-xs mt-0.5">Highlight artificial sweeteners and preservatives</Text>
+              </View>
+            </View>
+            <Switch
+              value={stealthAdditivesAlert}
+              onValueChange={setStealthAdditivesAlert}
+              trackColor={{ false: '#e2e8f0', true: colors.primary }}
+              thumbColor={stealthAdditivesAlert ? '#ffffff' : '#f4f4f5'}
+            />
+          </View>
+        </SettingsGroup>
+
+        {/* PERSONAL ALLERGEN ALERTS SECTION */}
+        <SettingsGroup title="Personal Allergen Alerts" colors={colors}>
+          <View style={{ backgroundColor: colors.surface, padding: 16 }}>
+            <Text style={{ color: colors.textSecondary }} className="text-xs font-semibold mb-3">
+              Select ingredients to trigger high-priority red shields when scanned:
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
+              {['Gluten', 'Dairy', 'Soy', 'Nuts', 'Eggs', 'Artificial Sweeteners', 'Palm Oil'].map((allergen) => {
+                const isSelected = allergenFilters.includes(allergen);
+                return (
+                  <TouchableOpacity
+                    key={allergen}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      toggleAllergenFilter(allergen);
+                    }}
+                    style={{
+                      paddingHorizontal: 14,
+                      paddingVertical: 8,
+                      borderRadius: 14,
+                      backgroundColor: isSelected ? colors.error + '18' : (theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'),
+                      borderWidth: 1,
+                      borderColor: isSelected ? colors.error : colors.border,
+                    }}
+                  >
+                    <Text style={{
+                      color: isSelected ? colors.error : colors.text,
+                      fontSize: 12,
+                      fontWeight: isSelected ? '900' : '700',
+                    }}>
+                      {isSelected ? `🚨 ${allergen}` : allergen}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        </SettingsGroup>
+
         {/* COMPLIANCE & LEGAL SECTION */}
         <SettingsGroup title="Legal & Compliance" colors={colors}>
           <SettingsRowItem
@@ -277,7 +363,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
               onPress={() => {
                 Alert.alert(
                   'Log Out',
-                  'Are you sure you want to log out of CutSugar?',
+                  'Are you sure you want to log out of BiteFix?',
                   [
                     { text: 'Cancel', style: 'cancel' },
                     {
@@ -311,8 +397,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
 
         {/* Version */}
         <View className="mb-16 items-center">
-          <Text style={{ color: colors.textMuted }} className="text-[10px] font-black uppercase tracking-wider">CutSugar v1.0.0</Text>
-
+          <Text style={{ color: colors.textMuted }} className="text-[10px] font-black uppercase tracking-wider">BiteFix v1.0.0</Text>
         </View>
       </ScrollView>
 
@@ -405,7 +490,7 @@ function SettingsRowItem({ label, icon, onPress, textColor = 'normal', colors, i
 const PRIVACY_POLICY_TEXT = `Last Updated: June 2026
 
 1. INFORMATION WE COLLECT
-CutSugar collects your food scan history. This information is saved locally on your device via AsyncStorage and SecureStore and is never shared, uploaded, or sold to third parties.
+BiteFix collects your food scan history. This information is saved locally on your device via AsyncStorage and SecureStore and is never shared, uploaded, or sold to third parties.
 
 2. HEALTH DATA ENCRYPTION
 Any scanned history data is processed locally on your hardware. We do not maintain remote cloud infrastructure.
@@ -414,17 +499,17 @@ Any scanned history data is processed locally on your hardware. We do not mainta
 You have full access to view and delete your scan records. You can use the "Clear Scan History" or "Reset App Data" actions to wipe all device state instantly.
 
 4. THIRD PARTY SERVICE PROVIDERS
-CutSugar uses the Open Food Facts API to query food ingredients. No personal identifiers or location statistics are sent to this database during search queries.
+BiteFix uses the Open Food Facts API to query food ingredients. No personal identifiers or location statistics are sent to this database during search queries.
 
-Contact: support@cutsugarapp.com`;
+Contact: support@bitefixapp.com`;
 
 const TERMS_OF_SERVICE_TEXT = `Last Updated: June 2026
 
 1. ACCEPTANCE
-By installing and using the CutSugar mobile application, you agree to these Terms of Service.
+By installing and using the BiteFix mobile application, you agree to these Terms of Service.
 
 2. MEDICAL DISCLAIMER
-CutSugar is an informational food scanner. It is NOT a medical device, nor does it replace professional diagnostic equipment, clinical consulting, or pharmaceutical advice. Always consult a healthcare specialist before making dietary modifications.
+BiteFix is an informational food processing and ingredient transparency scanner. It is NOT a medical device, nor does it replace professional diagnostic equipment, clinical consulting, or pharmaceutical advice. Always consult a healthcare specialist before making dietary modifications.
 
 3. PAYMENTS & SUBSCRIPTIONS
 In-app subscription payments (if applicable) are governed by App Store and Play Store terms. Subscriptions automatically renew unless cancelled 24 hours before expiration.
@@ -432,20 +517,20 @@ In-app subscription payments (if applicable) are governed by App Store and Play 
 4. USER REPRESENTATION
 You agree to use this application in compliance with local laws and regulations.
 
-Contact: legal@cutsugarapp.com`;
+Contact: legal@bitefixapp.com`;
 
 const EULA_TEXT = `Last Updated: June 2026
 
 1. LICENSE GRANT
-CutSugar grants you a personal, non-transferable, revocable license to run this mobile application on your personal device.
+BiteFix grants you a personal, non-transferable, revocable license to run this mobile application on your personal device.
 
 2. PROHIBITED USES
-You may not reverse-engineer, distribute, or compile the source code or binary configurations of CutSugar.
+You may not reverse-engineer, distribute, or compile the source code or binary configurations of BiteFix.
 
 3. WARRANTY AND LIABILITY
-The application is provided "as is" without warranties of any kind. CutSugar is not liable for health modifications, inaccurate measurements, or device damage.
+The application is provided "as is" without warranties of any kind. BiteFix is not liable for health modifications, inaccurate measurements, or device damage.
 
 4. PLATFORM GOVERNING
 This Agreement is fully compliant with Apple's Standard EULA terms and guidelines.
 
-Contact: license@cutsugarapp.com`;
+Contact: license@bitefixapp.com`;

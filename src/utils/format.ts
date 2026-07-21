@@ -105,3 +105,106 @@ export function formatWeight(valStr: string | undefined, targetUnit: 'g' | 'oz')
     }
   }
 }
+
+// ─────────────────────────────────────────────────────────
+// BiteFix Formatting Helpers
+// ─────────────────────────────────────────────────────────
+
+import { NOVAClass, NOVA_LABELS, NOVA_SHORT_LABELS, AdditiveRiskLevel } from '../types/app.types';
+
+/** Returns the full NOVA label e.g. "Whole & Unprocessed" */
+export function getNovaLabel(novaClass?: NOVAClass): string {
+  if (!novaClass) return 'Not Classified';
+  return NOVA_LABELS[novaClass] ?? 'Not Classified';
+}
+
+/** Returns a short NOVA label e.g. "Whole" */
+export function getNovaShortLabel(novaClass?: NOVAClass): string {
+  if (!novaClass) return 'N/A';
+  return NOVA_SHORT_LABELS[novaClass] ?? 'N/A';
+}
+
+/** Returns a color for the NOVA class (for badges and indicators) */
+export function getNovaColor(novaClass?: NOVAClass): string {
+  switch (novaClass) {
+    case 1: return '#22C55E'; // green
+    case 2: return '#3BB5A0'; // teal
+    case 3: return '#F5A623'; // amber/warning
+    case 4: return '#EF4444'; // red
+    default: return '#8E8E93'; // neutral grey
+  }
+}
+
+/** Returns a user-friendly description for an additive risk level */
+export function getAdditiveRiskDescription(riskLevel: AdditiveRiskLevel): string {
+  switch (riskLevel) {
+    case 'low': return 'Generally Recognized as Safe';
+    case 'moderate': return 'Accepted with Moderate Scrutiny';
+    case 'elevated': return 'Widely Studied for Caution';
+    default: return 'No Data Available';
+  }
+}
+
+/** Returns the risk level indicator color */
+export function getAdditiveRiskColor(riskLevel: AdditiveRiskLevel): string {
+  switch (riskLevel) {
+    case 'low': return '#22C55E';
+    case 'moderate': return '#F5A623';
+    case 'elevated': return '#EF4444';
+    default: return '#8E8E93';
+  }
+}
+
+/** Returns a BiteFix score level label */
+export function getBiteFixScoreLabel(score?: number): string {
+  if (score === undefined || score === null) return 'Not Rated';
+  if (score >= 76) return 'Clean & Wholesome';
+  if (score >= 51) return 'Moderately Processed';
+  if (score >= 26) return 'Significantly Processed';
+  return 'Highly Refined';
+}
+
+/** Returns a color for the BiteFix score */
+export function getBiteFixScoreColor(score?: number): string {
+  if (score === undefined || score === null) return '#8E8E93';
+  if (score >= 76) return '#22C55E';
+  if (score >= 51) return '#3BB5A0';
+  if (score >= 26) return '#F5A623';
+  return '#EF4444';
+}
+
+/** Returns processing group key for pantry categorization */
+export type ProcessingGroup = 'whole' | 'minimal' | 'processed' | 'ultra';
+
+export function getProcessingGroup(novaClass?: NOVAClass): ProcessingGroup {
+  switch (novaClass) {
+    case 1: return 'whole';
+    case 2: return 'minimal';
+    case 3: return 'processed';
+    case 4: return 'ultra';
+    default: return 'processed'; // default for unknown
+  }
+}
+
+export const PROCESSING_GROUP_LABELS: Record<ProcessingGroup, string> = {
+  whole: 'Whole & Unprocessed',
+  minimal: 'Minimally Processed',
+  processed: 'Processed Foods',
+  ultra: 'Highly Refined',
+};
+
+export function calculateJoggingMinutes(calories: number): number {
+  if (!calories || isNaN(calories) || calories <= 0) return 0;
+  return Math.round(calories / 10);
+}
+
+export function formatJogTime(totalMinutes: number): string {
+  if (!totalMinutes || isNaN(totalMinutes) || totalMinutes <= 0) return '0m';
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+  if (hours > 0) {
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  }
+  return `${mins}m`;
+}
+

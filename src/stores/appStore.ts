@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ScanHistoryItem, CollectionItem, CleanBiteCategory } from '../types/app.types';
-import { mapToCleanBiteCategory } from '../utils/categoryMapper';
+import { ScanHistoryItem, CollectionItem, BiteFixCategory, NOVAClass, AdditiveDetail } from '../types/app.types';
+import { mapToBiteFixCategory } from '../utils/categoryMapper';
 
 interface AppState {
   onboardingComplete: boolean;
@@ -12,11 +12,18 @@ interface AppState {
   collection: CollectionItem[];
   userName?: string;
   userGoal?: 'energy' | 'weight' | 'mental' | 'none';
+  allergenFilters: string[];
+  strictNovaAlert: boolean;
+  stealthAdditivesAlert: boolean;
 
   // Actions
   setOnboardingComplete: (complete: boolean) => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   setSugarUnit: (sugarUnit: 'g' | 'oz') => void;
+  setAllergenFilters: (allergens: string[]) => void;
+  toggleAllergenFilter: (allergen: string) => void;
+  setStrictNovaAlert: (enabled: boolean) => void;
+  setStealthAdditivesAlert: (enabled: boolean) => void;
   setProfile: (profile: {
     userName?: string;
     userGoal?: 'energy' | 'weight' | 'mental' | 'none';
@@ -42,13 +49,19 @@ interface AppState {
     ingredientsText?: string,
     hasHiddenSugars?: boolean,
     hiddenSugars?: string[],
-    hiddenSugarCount?: number
+    hiddenSugarCount?: number,
+    novaClass?: NOVAClass,
+    additives?: AdditiveDetail[],
+    additiveCount?: number,
+    allergens?: string[],
+    nutriScore?: 'a' | 'b' | 'c' | 'd' | 'e',
+    biteFixScore?: number
   ) => void;
   deleteScan: (id: string) => void;
   clearScans: () => void;
 
   // Collection Actions
-  addToCollection: (item: ScanHistoryItem, category?: CleanBiteCategory, notes?: string) => void;
+  addToCollection: (item: ScanHistoryItem, category?: BiteFixCategory, notes?: string) => void;
   removeFromCollection: (id: string) => void;
   toggleFavoriteCollectionItem: (id: string) => void;
   clearCollection: () => void;
@@ -69,10 +82,21 @@ export const useAppStore = create<AppState>()(
       collection: [],
       userName: undefined,
       userGoal: 'none',
+      allergenFilters: [],
+      strictNovaAlert: true,
+      stealthAdditivesAlert: true,
 
       setOnboardingComplete: (complete) => set({ onboardingComplete: complete }),
       setTheme: (theme) => set({ theme }),
       setSugarUnit: (sugarUnit) => set({ sugarUnit }),
+      setAllergenFilters: (allergenFilters) => set({ allergenFilters }),
+      toggleAllergenFilter: (allergen) => set((state) => ({
+        allergenFilters: state.allergenFilters.includes(allergen)
+          ? state.allergenFilters.filter((a) => a !== allergen)
+          : [...state.allergenFilters, allergen],
+      })),
+      setStrictNovaAlert: (strictNovaAlert) => set({ strictNovaAlert }),
+      setStealthAdditivesAlert: (stealthAdditivesAlert) => set({ stealthAdditivesAlert }),
       setProfile: (profile) => set((state) => ({
         userName: profile.userName !== undefined ? profile.userName : state.userName,
         userGoal: profile.userGoal !== undefined ? profile.userGoal : state.userGoal,
@@ -97,7 +121,13 @@ export const useAppStore = create<AppState>()(
         ingredientsText,
         hasHiddenSugars,
         hiddenSugars,
-        hiddenSugarCount
+        hiddenSugarCount,
+        novaClass,
+        additives,
+        additiveCount,
+        allergens,
+        nutriScore,
+        biteFixScore
       ) => set((state) => {
         const timestamp = Date.now();
         const sugarTeaspoons = sugarGrams / SUGAR_CONVERSION_GRAMS_PER_TEASPOON;
@@ -128,6 +158,12 @@ export const useAppStore = create<AppState>()(
           hasHiddenSugars,
           hiddenSugars,
           hiddenSugarCount,
+          novaClass,
+          additives,
+          additiveCount,
+          allergens,
+          nutriScore,
+          biteFixScore,
         };
         const scans = [newScan, ...state.scans];
         return { scans };
@@ -144,11 +180,11 @@ export const useAppStore = create<AppState>()(
         if (state.collection.some((col) => col.id === item.id || (col.barcode && item.barcode && col.barcode === item.barcode))) {
           return state;
         }
-        const cleanBiteCategory = category || mapToCleanBiteCategory(item.name, item.brand, item.categoryTag);
+        const biteFixCategory = category || mapToBiteFixCategory(item.name, item.brand, item.categoryTag);
         const newItem: CollectionItem = {
           ...item,
           addedAt: Date.now(),
-          cleanBiteCategory,
+          biteFixCategory,
           notes,
           isFavorite: false,
         };
@@ -175,12 +211,15 @@ export const useAppStore = create<AppState>()(
         collection: [],
         userName: undefined,
         userGoal: 'none',
+        allergenFilters: [],
+        strictNovaAlert: true,
+        stealthAdditivesAlert: true,
       }),
     }),
     {
-      name: '@cutsugar-storage',
+      name: '@bitefix-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 3,
+      version: 5,
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
           persistedState.theme = 'light';
@@ -190,6 +229,25 @@ export const useAppStore = create<AppState>()(
         }
         if (version < 3) {
           persistedState.collection = [];
+        }
+        if (version < 4) {
+          // BiteFix migration: add default BiteFix fields to existing scans
+          if (Array.isArray(persistedState.scans)) {
+            persistedState.scans = persistedState.scans.map((scan: any) => ({
+              ...scan,
+              novaClass: scan.novaClass ?? undefined,
+              additives: scan.additives ?? [],
+              additiveCount: scan.additiveCount ?? 0,
+              allergens: scan.allergens ?? [],
+              nutriScore: scan.nutriScore ?? undefined,
+              biteFixScore: scan.biteFixScore ?? 50,
+            }));
+          }
+        }
+        if (version < 5) {
+          persistedState.allergenFilters = persistedState.allergenFilters ?? [];
+          persistedState.strictNovaAlert = persistedState.strictNovaAlert ?? true;
+          persistedState.stealthAdditivesAlert = persistedState.stealthAdditivesAlert ?? true;
         }
         return persistedState as AppState;
       },
