@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "CutSugar: Scan Teaspoons & Log",
+    "name": "FixBite: Food & Swap Scanner",
     "slug": "cutsugar",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,8 +11,8 @@
       "googleServicesFile": "./GoogleService-Info.plist",
       "supportsTablet": false,
       "infoPlist": {
-        "CFBundleDisplayName": "CutSugar",
-        "NSCameraUsageDescription": "CutSugar needs access to the camera to scan food barcodes and analyze sugar values.",
+        "CFBundleDisplayName": "FixBite",
+        "NSCameraUsageDescription": "FixBite needs access to the camera to scan food barcodes and analyze scores.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -34,7 +34,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "CutSugar needs access to your camera to scan food barcodes and analyse their sugar content.",
+          "cameraPermission": "FixBite needs access to your camera to scan food barcodes and analyse their content.",
           "microphonePermission": false,
           "recordAudioAndroid": false,
           "barcodeScannerEnabled": true
