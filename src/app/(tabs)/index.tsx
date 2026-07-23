@@ -403,7 +403,7 @@ export default function HomeScreen() {
             <Text
               style={{ color: colors.primary, fontSize: 9.5, fontWeight: '800', letterSpacing: 1.6 }}
             >
-              Food Scanner & Swap
+              Food & Swap Scanner
             </Text>
           </View>
         </View>

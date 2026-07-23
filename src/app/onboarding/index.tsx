@@ -30,6 +30,8 @@ import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot } from '../../components/features/OrbMascot';
 import { MagicalBackground } from '../../components/features/MagicalBackground';
 import { SugarProgressRing } from '../../components/features/SugarProgressRing';
+import { OnboardingFlipCard } from '../../components/features/OnboardingFlipCard';
+import { NutriScoreTrafficLight } from '../../components/features/NutriScoreTrafficLight';
 import { ArrowRight, Check } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, {
@@ -229,7 +231,7 @@ function CuriosityCard({ cardW, C }: { cardW: number; C: any }) {
               <Stop offset="70%" stopColor="#1e0c05" />
               <Stop offset="100%" stopColor="#0d0603" />
             </SvgLinearGradient>
-            
+
             <SvgLinearGradient id="label" x1="0%" y1="0%" x2="100%" y2="0%">
               <Stop offset="0%" stopColor="#8a0c0c" />
               <Stop offset="25%" stopColor="#d61818" />
@@ -643,7 +645,7 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
       <Text style={{ color: C.text, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8, alignSelf: 'flex-start', borderBottomWidth: 1, borderBottomColor: C.cardBorder, width: '100%', paddingBottom: 6 }}>
         Smart Food Swap
       </Text>
-      
+
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', flex: 1 }}>
         <View style={{
           flex: 1,
@@ -770,7 +772,7 @@ function HiddenSugarFinderCard({ cardW, C }: { cardW: number; C: any }) {
           borderColor: C.red + '30',
         }, style1]}>
           <Text style={{ color: C.text, fontSize: 10, fontWeight: '800' }}>🔍 Maltodextrin</Text>
-          <Text style={{ color: C.red, fontSize: 7.5, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.2 }}>Disguised Sugar</Text>
+          <Text style={{ color: C.red, fontSize: 7.5, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.2 }}>Hidden Sugar</Text>
         </Animated.View>
 
         <Animated.View style={[{
@@ -801,9 +803,9 @@ function HiddenSugarFinderCard({ cardW, C }: { cardW: number; C: any }) {
           <Text style={{ color: C.red, fontSize: 7.5, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.2 }}>Hidden Sweetener</Text>
         </Animated.View>
       </View>
-      
+
       <Text style={{ color: C.textMuted, fontSize: 8.5, textAlign: 'center', fontStyle: 'italic', marginTop: 2 }}>
-        Exposing hidden sugars disguised under healthy-sounding aliases.
+        Finding hidden Sugars & Additives
       </Text>
     </View>
   );
@@ -873,7 +875,7 @@ function NameCard({
 // ─────────────────────────────────────────────────────────
 // Slide 2: Primary Goal Card (4 Options)
 // ─────────────────────────────────────────────────────────
-type GoalOption = 'energy' | 'weight' | 'mental' | 'none';
+type GoalOption = 'ultra_processed' | 'nutri_score' | 'clean_swaps' | 'healthy_habits';
 
 function GoalCard({
   cardW,
@@ -887,10 +889,10 @@ function GoalCard({
   onSelect: (val: GoalOption) => void;
 }) {
   const options: { label: string; desc: string; value: GoalOption }[] = [
-    { label: "Boost Energy & Alertness", desc: "Prevent insulin spikes and beat the afternoon crash.", value: 'energy' },
-    { label: "Manage Weight & Cravings", desc: "Break the sugar loop and regain control of your appetite.", value: 'weight' },
-    { label: "Sharpen Mental Focus", desc: "Clear the brain fog and maintain sustained mental clarity.", value: 'mental' },
-    { label: "Protect Long-Term Health", desc: "Align with WHO limits to protect cardiovascular and metabolic health.", value: 'none' },
+    { label: "Avoid Ultra-Processed Foods", desc: "Focus on clean, NOVA 1 & 2 whole foods.", value: 'ultra_processed' },
+    { label: "Understand Nutri-Score Ratings", desc: "Learn A to E nutritional quality scale at a glance.", value: 'nutri_score' },
+    { label: "Discover Smart Clean Swaps", desc: "Upgrade unhealthy items to clean alternatives.", value: 'clean_swaps' },
+    { label: "Healthy Eating Habits", desc: "Track daily sugar in grams & clean choices.", value: 'healthy_habits' },
   ];
 
   return (
@@ -971,64 +973,64 @@ const SLIDES: SlideData[] = [
     step: 1,
     title: "What should we call you?",
     highlight: "call you?",
-    subtitle: "Please enter your name to personalize your health dashboard.",
+    subtitle: "Personalize your clean-eating journey and daily health insights.",
     buttonLabel: 'Continue',
     isLast: false,
     mascotState: 'happy',
   },
   {
     step: 2,
-    title: "What is your primary health goal?",
+    title: "What is your main health goal?",
     highlight: "health goal?",
-    subtitle: "Choose what brings you to CutSugar.",
+    subtitle: "Select what brings you to BiteFix.",
     buttonLabel: 'Continue',
     isLast: false,
     mascotState: 'idle',
   },
   {
     step: 3,
-    title: "Your Personal Sweet-Safe Haven.",
-    highlight: "Sweet-Safe Haven.",
-    subtitle: "Scan, collect, and save low-sugar favorites. Your clean-label shortcut at the shelf.",
+    title: "Scan Any Packaged Food.",
+    highlight: "Packaged Food.",
+    subtitle: "Reveal hidden processing levels (NOVA 1–4) and BiteFix scores in seconds.",
     buttonLabel: 'Next',
     isLast: false,
     mascotState: 'happy',
   },
   {
     step: 4,
-    title: "Meet Your Healthy Upgrades.",
-    highlight: "Healthy Upgrades.",
-    subtitle: "Don't just scan it—swap it. Instantly discover delicious, lower-sugar alternatives.",
+    title: "Understand Nutri-Score A to E.",
+    highlight: "Nutri-Score A to E.",
+    subtitle: "Know the exact nutritional grade of what you buy at a glance.",
     buttonLabel: 'Next',
     isLast: false,
     mascotState: 'happy',
   },
   {
     step: 5,
-    title: "Sugar. Measured in Teaspoons.",
-    highlight: "Teaspoons.",
-    subtitle: "We translate confusing laboratory grams into clear teaspoons. See exactly what you're eating.",
-    buttonLabel: 'Next',
-    isLast: false,
-    mascotState: 'shocked',
-  },
-  {
-    step: 6,
-    title: "Grocery Shopping, Cleaned Up.",
-    highlight: "Cleaned Up.",
-    subtitle: "Your ultimate companion. Scan, swap, and bypass sugary supermarket traps on the fly.",
+    title: "Don't Just Scan — Swap It.",
+    highlight: "Swap It.",
+    subtitle: "Turn ultra-processed choices into clean, high-scoring upgrades.",
     buttonLabel: 'Next',
     isLast: false,
     mascotState: 'happy',
   },
   {
+    step: 6,
+    title: "Spot Hidden Sugars & Additives.",
+    highlight: "Sugars & Additives.",
+    subtitle: "We highlight Hidden sugars and artificial additives instantly.",
+    buttonLabel: 'Next',
+    isLast: false,
+    mascotState: 'shocked',
+  },
+  {
     step: 7,
-    title: "Expose Hidden Sugars.",
-    highlight: "Hidden Sugars.",
-    subtitle: "We detect over 60 different chemical names used by manufacturers to disguise sugar in packaged foods.",
+    title: "Build Your Own Clean Collection.",
+    highlight: "Clean Collection.",
+    subtitle: "Save Healthy and Nutritious foods and Scan on the go.",
     buttonLabel: 'Get Started',
     isLast: true,
-    mascotState: 'dizzy',
+    mascotState: 'happy',
   },
 ];
 
@@ -1339,16 +1341,16 @@ export default function OnboardingScreen() {
             <OrbMascot state="happy" size={orbSize * 1.2} />
           </Animated.View>
           <MascotShadow size={orbSize * 0.9} scaleStyle={shadowScaleStyle} />
-          
+
           <View style={{ alignItems: 'center', marginTop: 20, gap: 8 }}>
             <Text style={{ color: C.text, fontSize: 32, fontWeight: '900', letterSpacing: -1 }}>
-              CutSugar
+              FixBite
             </Text>
             <Text style={{ color: C.textSub, fontSize: 14, fontWeight: '600', textAlign: 'center' }}>
-              Goodbye Sugar. Hello Health.
+              Food & Swap Scanner
             </Text>
           </View>
-          
+
           <ActivityIndicator size="large" color={C.amber} style={{ marginTop: 24 }} />
         </View>
       </Animated.View>
@@ -1386,12 +1388,12 @@ export default function OnboardingScreen() {
                   visible={true}
                   text={[
                     "Hi there! Let's get to know each other first!",
-                    "Awesome! Having a clear motive is key to success.",
-                    "Save your go-to clean products in your personal pantry!",
-                    "Instantly discover cleaner, lower-sugar alternatives!",
-                    "WHO Standard:\n1 Teaspoon = 4.2g.\nLet's visualize it!",
-                    "Scan any product barcode to instantly see what's inside.",
-                    "Let's expose hidden sugars disguised as additives!"
+                    "Awesome! Having a clear goal is key to success.",
+                    "Scan any packaged product to see its NOVA group!",
+                    "Nutri-Score A to E shows true nutritional quality.",
+                    "Tap to flip the card & see clean Smart Swaps!",
+                    "We highlight Additives and Hidden sugars!",
+                    "Save Healthy favorites in your clean collection!"
                   ][currentSlide] || ""}
                 />
               </Animated.View>
@@ -1416,31 +1418,30 @@ export default function OnboardingScreen() {
                 />
               )}
               {currentCardIndex === 2 && (
-                <CollectionsDemoCard
-                  cardW={cardW}
-                  C={C}
-                />
-              )}
-              {currentCardIndex === 3 && (
-                <FoodSwapDemoCard
-                  cardW={cardW}
-                  C={C}
-                />
-              )}
-              {currentCardIndex === 4 && (
-                <CuriosityCard
-                  cardW={cardW}
-                  C={C}
-                />
-              )}
-              {currentCardIndex === 5 && (
                 <ScannerDemoCard
                   cardW={cardW}
                   C={C}
                 />
               )}
-              {currentCardIndex === 6 && (
+              {currentCardIndex === 3 && (
+                <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 20, borderWidth: 1, borderColor: C.cardBorder, padding: 16 }}>
+                  <NutriScoreTrafficLight grade="A" isDark={isDark} colors={colors} />
+                </View>
+              )}
+              {currentCardIndex === 4 && (
+                <OnboardingFlipCard
+                  isDark={isDark}
+                  colors={colors}
+                />
+              )}
+              {currentCardIndex === 5 && (
                 <HiddenSugarFinderCard
+                  cardW={cardW}
+                  C={C}
+                />
+              )}
+              {currentCardIndex === 6 && (
+                <CollectionsDemoCard
                   cardW={cardW}
                   C={C}
                 />

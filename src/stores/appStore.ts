@@ -11,7 +11,7 @@ interface AppState {
   scans: ScanHistoryItem[];
   collection: CollectionItem[];
   userName?: string;
-  userGoal?: 'energy' | 'weight' | 'mental' | 'none';
+  userGoal?: 'ultra_processed' | 'nutri_score' | 'clean_swaps' | 'healthy_habits' | 'none';
   allergenFilters: string[];
   strictNovaAlert: boolean;
   stealthAdditivesAlert: boolean;
@@ -26,7 +26,7 @@ interface AppState {
   setStealthAdditivesAlert: (enabled: boolean) => void;
   setProfile: (profile: {
     userName?: string;
-    userGoal?: 'energy' | 'weight' | 'mental' | 'none';
+    userGoal?: 'ultra_processed' | 'nutri_score' | 'clean_swaps' | 'healthy_habits' | 'none';
   }) => void;
 
   // Scan Actions

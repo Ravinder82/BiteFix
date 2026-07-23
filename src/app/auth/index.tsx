@@ -185,7 +185,7 @@ export default function AuthScreen() {
         await signUpWithEmail(email.trim(), password, displayName.trim());
         Alert.alert(
           'Account Created',
-          `Welcome to CutSugar, ${displayName.trim()}! Your account has been successfully created.`,
+          `Welcome to FixBite, ${displayName.trim()}! Your account has been successfully created.`,
           [{ text: 'Get Started', onPress: () => router.replace('/(tabs)') }]
         );
       }
