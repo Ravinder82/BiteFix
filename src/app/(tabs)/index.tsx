@@ -10,7 +10,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
 import ProductHeroCardDashboard from '../../components/features/ProductHeroCardDashboard';
-import { ScanBarcode, ArrowRight, Settings, Bookmark, ArrowUpRight, Trash2, X, Sparkles, RefreshCw } from 'lucide-react-native';
+import { ScanBarcode, ArrowRight, Settings, Bookmark, ArrowUpRight, Trash2, X, Sparkles, RefreshCw, ShieldCheck } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { getBiteFixScoreColor, formatWeight, getNovaColor } from '../../utils/format';
 import Svg, { Circle, Path, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop, G } from 'react-native-svg';
@@ -277,6 +277,31 @@ export default function HomeScreen() {
     );
   }, []);
 
+  // Potion and wave animation shared values for Gut Health progress bar
+  const gutWave1 = useSharedValue(0);
+  const gutWave2 = useSharedValue(0);
+
+  useEffect(() => {
+    gutWave1.value = withRepeat(
+      withTiming(-200, { duration: 3000, easing: Easing.linear }),
+      -1,
+      false
+    );
+    gutWave2.value = withRepeat(
+      withTiming(200, { duration: 4500, easing: Easing.linear }),
+      -1,
+      false
+    );
+  }, []);
+
+  const gutWaveStyle1 = useAnimatedStyle(() => ({
+    transform: [{ translateX: gutWave1.value }],
+  }));
+
+  const gutWaveStyle2 = useAnimatedStyle(() => ({
+    transform: [{ translateX: gutWave2.value - 200 }],
+  }));
+
 
 
   // --- Bento Grid Logic ---
@@ -305,12 +330,71 @@ export default function HomeScreen() {
 
   const activeDayInfo = getLatestActiveScans();
 
-  const mostRecentScan = scans.length > 0
-    ? [...scans].sort((a, b) => b.timestamp - a.timestamp)[0]
-    : null;
+  // Helper function to calculate Gut Health Score for an item (0-100 scale)
+  const getGutHealthScore = (item: any): number => {
+    let score = 100;
+    if (item.novaClass === 4) score -= 25;
+    else if (item.novaClass === 3) score -= 10;
 
-  const avgBiteFixScore = mostRecentScan ? (mostRecentScan.biteFixScore ?? 50) : 0;
-  const latestNovaClass = mostRecentScan ? mostRecentScan.novaClass : undefined;
+    if (item.additives && item.additives.length > 0) {
+      item.additives.forEach((add: any) => {
+        const fn = (add.functionLabel || '').toLowerCase();
+        if (fn.includes('emulsifier') || fn.includes('thickener') || fn.includes('stabilizer') || fn.includes('sweetener')) {
+          score -= 15;
+        } else if (add.riskLevel === 'elevated') {
+          score -= 15;
+        } else if (add.riskLevel === 'moderate') {
+          score -= 8;
+        } else {
+          score -= 4;
+        }
+      });
+    }
+
+    if (item.hasHiddenSugars) {
+      score -= 10;
+    }
+
+    return Math.max(0, Math.min(100, score));
+  };
+
+  const basketItemCount = collection.length;
+
+  // Algorithmic Overall Average for Your Basket
+  const avgBiteFixScore = basketItemCount > 0
+    ? Math.round(collection.reduce((sum, item) => sum + (item.biteFixScore ?? 50), 0) / basketItemCount)
+    : (scans.length > 0 ? (scans[0].biteFixScore ?? 50) : 0);
+
+  const avgGutHealthScore = basketItemCount > 0
+    ? Math.round(collection.reduce((sum, item) => sum + getGutHealthScore(item), 0) / basketItemCount)
+    : (scans.length > 0 ? getGutHealthScore(scans[0]) : 100);
+
+  const latestNovaClass = basketItemCount > 0
+    ? collection[0].novaClass
+    : (scans.length > 0 ? scans[0].novaClass : undefined);
+
+  const mostRecentScan = basketItemCount > 0 ? collection[0] : (scans.length > 0 ? scans[0] : null);
+
+  const getAvgNutriScore = (): 'a' | 'b' | 'c' | 'd' | 'e' | undefined => {
+    if (basketItemCount === 0) {
+      return scans.length > 0 && scans[0].nutriScore ? scans[0].nutriScore : undefined;
+    }
+    const scoreMap = { a: 1, b: 2, c: 3, d: 4, e: 5 };
+    const revMap = { 1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e' } as const;
+    let sum = 0;
+    let count = 0;
+    collection.forEach((item) => {
+      if (item.nutriScore) {
+        sum += scoreMap[item.nutriScore.toLowerCase() as keyof typeof scoreMap] || 3;
+        count++;
+      }
+    });
+    if (count === 0) return undefined;
+    const avg = Math.round(sum / count);
+    return revMap[Math.min(5, Math.max(1, avg)) as keyof typeof revMap];
+  };
+
+  const avgNutriScore = getAvgNutriScore();
 
   const scoreColor = getBiteFixScoreColor(avgBiteFixScore, latestNovaClass);
   const getLighterScoreColor = () => {
@@ -361,13 +445,19 @@ export default function HomeScreen() {
 
   const swapSuggestion = getSmartSwapSuggestion();
 
-  const mascotState = avgBiteFixScore >= 76 ? 'happy' : avgBiteFixScore >= 41 ? 'idle' : (avgBiteFixScore > 0 ? 'shocked' : 'idle');
+  const mascotState = basketItemCount === 0
+    ? 'idle'
+    : avgBiteFixScore >= 76
+      ? 'happy'
+      : avgBiteFixScore >= 41
+        ? 'idle'
+        : 'shocked';
 
   const getMascotThought = () => {
-    if (activeDayInfo.isEmpty) return "Scan any packaged food to see its health score and processing level!";
-    if (avgBiteFixScore >= 76) return "Awesome choices today! Mostly clean, whole foods with minimal processing.";
-    if (avgBiteFixScore >= 51) return "Good balance today. Swapping a few packaged items for whole foods will boost your score!";
-    return "Heavily processed foods detected. Let's look for cleaner, simpler alternatives next time!";
+    if (basketItemCount === 0) return "Add clean products to Your Basket to calculate your overall Health & Gut scores!";
+    if (avgBiteFixScore >= 76) return `Your Basket score is ${avgBiteFixScore}! Exceptionally clean & gut-friendly overall.`;
+    if (avgBiteFixScore >= 51) return `Your Basket score is ${avgBiteFixScore}. Swapping a few items will boost your scores!`;
+    return `Your Basket score is ${avgBiteFixScore}. Highly processed products detected. Check Smart Swaps!`;
   };
   // --- End BiteFix Aggregate Stats ---
 
@@ -465,20 +555,8 @@ export default function HomeScreen() {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
                 <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primary }} />
-                <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 }} numberOfLines={1}>
-                  Last Scanned Product
-                </Text>
-              </View>
-              <View style={{
-                backgroundColor: colors.primary + '15',
-                paddingHorizontal: 10,
-                paddingVertical: 5,
-                borderRadius: 8,
-                borderWidth: 1,
-                borderColor: colors.primary + '30',
-              }}>
-                <Text style={{ color: colors.primary, fontSize: 9, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                  {activeDayInfo.dateStr === 'Today' ? "Today" : activeDayInfo.dateStr}
+                <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }} numberOfLines={1}>
+                  FixBite Basket Scoreboard
                 </Text>
               </View>
             </View>
@@ -487,70 +565,6 @@ export default function HomeScreen() {
             <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 20, width: '100%' }}>
               {/* Animated Mascot Orb Container */}
               <View style={{ width: 220, height: 220, alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                {/* ── Vertical Nutri-Score Indicator on Left ── */}
-                {mostRecentScan && mostRecentScan.nutriScore ? (() => {
-                  const activeGrade = mostRecentScan.nutriScore.toLowerCase();
-                  const grades: Array<{ key: string; letter: string; color: string }> = [
-                    { key: 'a', letter: 'A', color: '#038141' },
-                    { key: 'b', letter: 'B', color: '#85BB2F' },
-                    { key: 'c', letter: 'C', color: '#FECB02' },
-                    { key: 'd', letter: 'D', color: '#EE8100' },
-                    { key: 'e', letter: 'E', color: '#E63E11' },
-                  ];
-
-                  return (
-                    <View
-                      style={{
-                        position: 'absolute',
-                        left: -38,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-                        borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                        borderWidth: 1,
-                        borderRadius: 16,
-                        paddingVertical: 8,
-                        paddingHorizontal: 5,
-                        gap: 4,
-                        zIndex: 10,
-                      }}
-                    >
-                      {grades.map((g) => {
-                        const isActive = activeGrade === g.key;
-                        return (
-                          <View
-                            key={g.key}
-                            style={{
-                              width: isActive ? 22 : 14,
-                              height: isActive ? 22 : 14,
-                              borderRadius: isActive ? 6 : 4,
-                              backgroundColor: isActive ? g.color : g.color + '20',
-                              borderColor: isActive ? '#FFFFFF' : g.color + '40',
-                              borderWidth: isActive ? 1.5 : 0.5,
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              shadowColor: isActive ? g.color : 'transparent',
-                              shadowOffset: { width: 0, height: isActive ? 2 : 0 },
-                              shadowOpacity: isActive ? 0.5 : 0,
-                              shadowRadius: isActive ? 4 : 0,
-                              elevation: isActive ? 2 : 0,
-                            }}
-                          >
-                            <Text
-                              style={{
-                                color: isActive ? '#FFFFFF' : isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
-                                fontSize: isActive ? 11 : 8,
-                                fontWeight: '900',
-                              }}
-                            >
-                              {g.letter}
-                            </Text>
-                          </View>
-                        );
-                      })}
-                    </View>
-                  );
-                })() : null}
 
                 {/* 1. Static track and progress arc */}
                 <Svg width={220} height={220} viewBox="0 0 120 120" style={{ position: 'absolute' }}>
@@ -679,7 +693,7 @@ export default function HomeScreen() {
                     fontWeight: '900',
                     letterSpacing: 0.4,
                   }}>
-                    {activeDayInfo.isEmpty ? 'NO SCANS' : `SCORE: ${avgBiteFixScore}`}
+                    {basketItemCount === 0 ? 'BASKET EMPTY' : `BASKET SCORE: ${avgBiteFixScore}`}
                   </Text>
                 </View>
               </View>
@@ -687,7 +701,7 @@ export default function HomeScreen() {
 
 
 
-            {/* Smart Swap Recommendation Widget */}
+            {/* Basket Processing Composition Section (NOVA Distribution Street Lights) */}
             <View
               style={{
                 marginTop: 16,
@@ -696,157 +710,300 @@ export default function HomeScreen() {
                 borderTopColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
               }}
             >
-              {swapSuggestion ? (
-                swapSuggestion.type === 'category-match' ? (
-                  <TouchableOpacity
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      panY.setValue(0);
-                      setSelectedSavedItem(swapSuggestion.healthy);
-                    }}
-                    activeOpacity={0.8}
-                    style={{
-                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : '#FFFFFF',
-                      borderRadius: 20,
-                      borderWidth: 1,
-                      borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
-                      padding: 14,
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: isDark ? 0.15 : 0.02,
-                      shadowRadius: 6,
-                      elevation: 2,
-                    }}
-                  >
-                    {/* Header */}
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                      <RefreshCw size={12} color="#34C759" />
-                      <Text style={{ color: '#34C759', fontSize: 10, fontWeight: '900', letterSpacing: 0.6, textTransform: 'uppercase' }}>
-                        Smart Swap Found
-                      </Text>
-                    </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10, paddingHorizontal: 4 }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 9.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  Basket NOVA Profile (Processing Levels)
+                </Text>
+              </View>
 
-                    {/* Side-by-Side Comparison */}
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                      {/* Left: Unhealthy scanned product */}
-                      <View style={{ flex: 1, marginRight: 8 }}>
-                        <Text style={{ color: '#EF4444', fontSize: 8, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 2 }}>
-                          Recent Scan
-                        </Text>
-                        <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }} numberOfLines={1}>
-                          {swapSuggestion.unhealthy.brand || 'Generic Brand'}
-                        </Text>
-                        <Text style={{ color: colors.text, fontSize: 10, fontWeight: '800' }}>
-                          {swapSuggestion.unhealthy.name}
-                        </Text>
-                        <Text style={{ color: '#EF4444', fontSize: 11, fontWeight: '900', marginTop: 3 }}>
-                          Score: {swapSuggestion.unhealthy.biteFixScore ?? '--'}
-                        </Text>
-                      </View>
+              <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'space-between' }}>
+                {[
+                  { level: 1, color: '#10B981', label: 'Whole' },
+                  { level: 2, color: '#14B8A6', label: 'Culinary' },
+                  { level: 3, color: '#F59E0B', label: 'Processed' },
+                  { level: 4, color: '#EF4444', label: 'Ultra-Proc' },
+                ].map(({ level, color, label }) => {
+                  const count = collection.filter(item => item.novaClass === level).length;
+                  const isLightActive = count > 0;
 
-                      {/* Middle Arrow */}
-                      <View style={{ paddingHorizontal: 10 }}>
-                        <ArrowRight size={16} color="#34C759" />
-                      </View>
-
-                      {/* Right: Healthy saved product */}
-                      <View style={{ flex: 1, marginLeft: 8 }}>
-                        <Text style={{ color: '#22C55E', fontSize: 8, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 2 }}>
-                          Saved Upgrade
+                  return (
+                    <View key={level} style={{ flex: 1 }}>
+                      <View
+                        style={{
+                          paddingVertical: 10,
+                          borderRadius: 16,
+                          backgroundColor: isLightActive
+                            ? (isDark ? `${color}15` : `${color}08`)
+                            : (isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)'),
+                          borderWidth: 1.5,
+                          borderColor: isLightActive ? color : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'),
+                          alignItems: 'center',
+                          gap: 4,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: isLightActive ? colors.text : colors.textMuted,
+                            fontSize: 9.5,
+                            fontWeight: '900',
+                            marginTop: 1
+                          }}
+                        >
+                          NOVA {level}
                         </Text>
-                        <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }} numberOfLines={1}>
-                          {swapSuggestion.healthy.brand || 'Generic Brand'}
-                        </Text>
-                        <Text style={{ color: colors.text, fontSize: 10, fontWeight: '800' }}>
-                          {swapSuggestion.healthy.name}
-                        </Text>
-                        <Text style={{ color: '#22C55E', fontSize: 11, fontWeight: '900', marginTop: 3 }}>
-                          Score: {swapSuggestion.healthy.biteFixScore ?? '--'}
-                        </Text>
+                        <View
+                          style={{
+                            backgroundColor: isLightActive ? color : 'transparent',
+                            paddingHorizontal: 8,
+                            paddingVertical: 2,
+                            borderRadius: 8,
+                            marginTop: 2,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: isLightActive ? '#FFFFFF' : colors.textMuted,
+                              fontSize: 10,
+                              fontWeight: '900'
+                            }}
+                          >
+                            {count}
+                          </Text>
+                        </View>
                       </View>
                     </View>
+                  );
+                })}
+              </View>
+            </View>
 
-                    {/* Footer suggestion caption */}
-                    <Text style={{ color: colors.textMuted, fontSize: 8.5, fontWeight: '600', marginTop: 10, textAlign: 'center' }}>
-                      Tap to view details for your saved clean alternative
-                    </Text>
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      panY.setValue(0);
-                      setSelectedSavedItem(swapSuggestion.healthy);
-                    }}
-                    activeOpacity={0.8}
-                    style={{
-                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : '#FFFFFF',
-                      borderRadius: 20,
-                      borderWidth: 1,
-                      borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
-                      padding: 14,
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: isDark ? 0.15 : 0.02,
-                      shadowRadius: 6,
-                      elevation: 2,
-                    }}
-                  >
-                    {/* Header */}
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-                      <Sparkles size={12} color={colors.primary} />
-                      <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '900', letterSpacing: 0.6, textTransform: 'uppercase' }}>
-                        Pantry Showcase
-                      </Text>
-                    </View>
-
-                    {/* Layout for single item */}
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <View style={{ flex: 1, paddingRight: 12 }}>
-                        <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>
-                          {swapSuggestion.healthy.brand || 'Generic Brand'}
-                        </Text>
-                        <Text style={{ color: colors.text, fontSize: 11.5, fontWeight: '800' }}>
-                          {swapSuggestion.healthy.name}
-                        </Text>
-                        <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600', marginTop: 2 }}>
-                          Your highest-rated saved clean product. Keep it stocked!
-                        </Text>
-                      </View>
-
-                      <View style={{ alignItems: 'flex-end', backgroundColor: isDark ? 'rgba(34, 197, 94, 0.15)' : 'rgba(34, 197, 94, 0.08)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(34, 197, 94, 0.25)' }}>
-                        <Text style={{ color: '#22C55E', fontSize: 15, fontWeight: '900' }}>
-                          {swapSuggestion.healthy.biteFixScore ?? '--'}
-                        </Text>
-                        <Text style={{ color: '#22C55E', fontSize: 7, fontWeight: '800', textTransform: 'uppercase', marginTop: 1 }}>
-                          Score
-                        </Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                )
-              ) : (
-                <View
-                  style={{
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0,0,0,0.02)',
-                    borderRadius: 20,
-                    borderWidth: 1,
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
-                    padding: 14,
-                    alignItems: 'center',
-                  }}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 4 }}>
-                    <Bookmark size={11} color={colors.textMuted} />
-                    <Text style={{ color: colors.textSecondary, fontSize: 9.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                      Smart Pantry Swaps
+            {/* Basket Nutri-Score Distribution Section */}
+            {avgNutriScore ? (
+              <View
+                style={{
+                  marginTop: 16,
+                  paddingTop: 16,
+                  borderTopWidth: 1.5,
+                  borderTopColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+                }}
+              >
+                {/* Header */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingHorizontal: 4 }}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 9.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    Basket Nutri-Score
+                  </Text>
+                  <View style={{
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                    paddingHorizontal: 8,
+                    paddingVertical: 3,
+                    borderRadius: 8,
+                  }}>
+                    <Text style={{ color: colors.text, fontSize: 10, fontWeight: '900' }}>
+                      AVERAGE: GRADE {avgNutriScore.toUpperCase()}
                     </Text>
                   </View>
-                  <Text style={{ color: colors.textMuted, fontSize: 9.5, fontWeight: '600', textAlign: 'center', lineHeight: 14, maxWidth: 260 }}>
-                    Save clean products to your list. We'll suggest upgrades here when you scan higher-sugar items in the same category!
+                </View>
+
+                {/* Horizontal Progress Bar Facade (Traffic Lights) */}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    height: 38,
+                    backgroundColor: isDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.03)',
+                    borderRadius: 19,
+                    paddingHorizontal: 6,
+                    position: 'relative',
+                  }}
+                >
+                  {[
+                    { key: 'a', letter: 'A', color: '#038141' },
+                    { key: 'b', letter: 'B', color: '#85BB2F' },
+                    { key: 'c', letter: 'C', color: '#FECB02' },
+                    { key: 'd', letter: 'D', color: '#EE8100' },
+                    { key: 'e', letter: 'E', color: '#E63E11' },
+                  ].map((g, index, arr) => {
+                    const isActive = avgNutriScore.toLowerCase() === g.key;
+                    const isFirst = index === 0;
+                    const isLast = index === arr.length - 1;
+
+                    return (
+                      <View
+                        key={g.key}
+                        style={{
+                          flex: 1,
+                          height: isActive ? 28 : 14,
+                          backgroundColor: isActive ? g.color : (isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)'),
+                          borderColor: isActive ? '#FFFFFF' : (isDark ? g.color + '60' : g.color + '35'),
+                          borderWidth: isActive ? 1.5 : 1,
+                          borderTopLeftRadius: isFirst ? 14 : (isActive ? 8 : 4),
+                          borderBottomLeftRadius: isFirst ? 14 : (isActive ? 8 : 4),
+                          borderTopRightRadius: isLast ? 14 : (isActive ? 8 : 4),
+                          borderBottomRightRadius: isLast ? 14 : (isActive ? 8 : 4),
+                          marginHorizontal: 2,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          shadowColor: isActive ? g.color : 'transparent',
+                          shadowOffset: { width: 0, height: isActive ? 4 : 0 },
+                          shadowOpacity: isActive ? 0.6 : 0,
+                          shadowRadius: 8,
+                          elevation: isActive ? 4 : 0,
+                          zIndex: isActive ? 10 : 1,
+                        }}
+                      >
+                        {isActive ? (
+                          <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.15)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>
+                            {g.letter}
+                          </Text>
+                        ) : (
+                          <Text style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)', fontSize: 9.5, fontWeight: '800' }}>
+                            {g.letter}
+                          </Text>
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            ) : null}
+
+            {/* Basket Gut Health Progress Bar Section */}
+            <View
+              style={{
+                marginTop: 16,
+                paddingTop: 16,
+                borderTopWidth: 1.5,
+                borderTopColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+              }}
+            >
+              {/* Header */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingHorizontal: 4 }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 9.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  Basket Gut Health
+                </Text>
+                <View style={{
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                  paddingHorizontal: 8,
+                  paddingVertical: 3,
+                  borderRadius: 8,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 4,
+                }}>
+                  <ShieldCheck size={11} color={avgGutHealthScore >= 75 ? '#10B981' : avgGutHealthScore >= 50 ? '#F59E0B' : '#EF4444'} />
+                  <Text style={{ color: colors.text, fontSize: 10, fontWeight: '900' }}>
+                    SCORE: {avgGutHealthScore}%
                   </Text>
                 </View>
-              )}
+              </View>
+
+              {/* Horizontal Progress Bar Track */}
+              <View
+                style={{
+                  height: 26,
+                  width: '100%',
+                  backgroundColor: isDark ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.04)',
+                  borderRadius: 13,
+                  borderWidth: 1.5,
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)',
+                  overflow: 'hidden',
+                  position: 'relative',
+                }}
+              >
+                {/* Progress Fill Wrapper (determines width based on score) */}
+                <View
+                  style={{
+                    height: '100%',
+                    width: `${Math.max(10, avgGutHealthScore)}%`,
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.01)',
+                    borderRadius: 12,
+                    borderWidth: 1.5,
+                    borderColor: avgGutHealthScore >= 75 ? '#10B981' : avgGutHealthScore >= 50 ? '#F59E0B' : '#EF4444',
+                    overflow: 'hidden',
+                    position: 'relative',
+                  }}
+                >
+                  {/* Back Wave (Oscillating) */}
+                  <AnimatedReanimated.View
+                    style={[
+                      {
+                        position: 'absolute',
+                        top: 0,
+                        bottom: 0,
+                        width: 800,
+                        height: 26,
+                        opacity: 0.45,
+                      },
+                      gutWaveStyle2,
+                    ]}
+                  >
+                    <Svg width={800} height={26} viewBox="0 0 800 26" preserveAspectRatio="none">
+                      <Path
+                        d="M 0 10 Q 50 1, 100 10 T 200 10 T 300 10 T 400 10 T 500 10 T 600 10 T 700 10 T 800 10 V 26 H 0 Z"
+                        fill={avgGutHealthScore >= 75 ? '#10B981' : avgGutHealthScore >= 50 ? '#F59E0B' : '#EF4444'}
+                      />
+                    </Svg>
+                  </AnimatedReanimated.View>
+
+                  {/* Front Wave (Oscillating in opposite phase) */}
+                  <AnimatedReanimated.View
+                    style={[
+                      {
+                        position: 'absolute',
+                        top: 0,
+                        bottom: 0,
+                        width: 800,
+                        height: 26,
+                      },
+                      gutWaveStyle1,
+                    ]}
+                  >
+                    <Svg width={800} height={26} viewBox="0 0 800 26" preserveAspectRatio="none">
+                      <Path
+                        d="M 0 13 Q 50 2, 100 13 T 200 13 T 300 13 T 400 13 T 500 13 T 600 13 T 700 13 T 800 13 V 26 H 0 Z"
+                        fill={avgGutHealthScore >= 75 ? '#10B981' : avgGutHealthScore >= 50 ? '#F59E0B' : '#EF4444'}
+                      />
+                    </Svg>
+                  </AnimatedReanimated.View>
+
+                  {/* Glowing vertical marker outline at the right edge of fill */}
+                  <View
+                    style={{
+                      position: 'absolute',
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: 3,
+                      backgroundColor: '#FFFFFF',
+                      shadowColor: avgGutHealthScore >= 75 ? '#10B981' : avgGutHealthScore >= 50 ? '#F59E0B' : '#EF4444',
+                      shadowOffset: { width: -2, height: 0 },
+                      shadowOpacity: 0.8,
+                      shadowRadius: 4,
+                      elevation: 3,
+                      zIndex: 20,
+                    }}
+                  />
+                </View>
+              </View>
+
+              {/* Info Label Below Progress Bar */}
+              <View style={{ marginTop: 8, alignItems: 'center' }}>
+                <Text
+                  style={{
+                    color: isDark ? 'rgba(255, 255, 255, 0.55)' : 'rgba(0, 0, 0, 0.5)',
+                    fontSize: 9,
+                    fontWeight: '900',
+                    letterSpacing: 0.5,
+                    textAlign: 'center',
+                  }}
+                >
+                  {avgGutHealthScore >= 75
+                    ? '🟢 EXCELLENT MICROBIOME STANDING'
+                    : avgGutHealthScore >= 50
+                      ? '🟡 MODERATE GUT INTEGRITY'
+                      : '🔴 CRITICAL GUT DISRUPTORS DETECTED'}
+                </Text>
+              </View>
             </View>
           </LinearGradient>
         </View>
@@ -901,12 +1058,12 @@ export default function HomeScreen() {
           </AnimatedReanimated.View>
         </View>
 
-        {/* Saved Products Section - No dates, matching History cards & modal */}
+        {/* Your Basket Section */}
         <View className="mb-8">
           <View className="flex-row items-center justify-between px-1 mb-3">
             <View className="flex-row items-center gap-2">
               <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', letterSpacing: -0.3 }}>
-                Saved Products
+                Your Basket
               </Text>
             </View>
             <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700' }}>
@@ -941,10 +1098,10 @@ export default function HomeScreen() {
                 <Bookmark size={22} color={colors.textMuted} />
               </View>
               <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800', textAlign: 'center' }}>
-                No Saved Products Yet
+                Your Basket is Empty
               </Text>
               <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 4, textAlign: 'center', lineHeight: 16, maxWidth: 240 }}>
-                Tap "Save" on any scan result to bookmark clean choices and alternatives to your dashboard.
+                Tap "Save" on any scan result to add products to your basket and calculate your aggregate scores.
               </Text>
             </View>
           ) : (
@@ -962,8 +1119,8 @@ export default function HomeScreen() {
                   }}
                   onDelete={() => {
                     Alert.alert(
-                      'Remove Saved Item',
-                      'Remove this product from your saved list?',
+                      'Remove from Your Basket',
+                      'Remove this product from your basket?',
                       [
                         { text: 'Cancel', style: 'cancel' },
                         {

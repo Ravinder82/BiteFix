@@ -68,9 +68,11 @@ interface AppState {
 
   // Global Actions
   clearAllData: () => void;
+  pruneExpiredScans: () => void;
 }
 
 const SUGAR_CONVERSION_GRAMS_PER_TEASPOON = 4.2; // 1 teaspoon = 4.2 grams of sugar
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
 
 export const useAppStore = create<AppState>()(
   persist(
@@ -165,8 +167,17 @@ export const useAppStore = create<AppState>()(
           nutriScore,
           biteFixScore,
         };
-        const scans = [newScan, ...state.scans];
+        const cutoff = Date.now() - THIRTY_DAYS_MS;
+        const validExistingScans = state.scans.filter((scan) => scan.timestamp >= cutoff);
+        const scans = [newScan, ...validExistingScans];
         return { scans };
+      }),
+
+      pruneExpiredScans: () => set((state) => {
+        const cutoff = Date.now() - THIRTY_DAYS_MS;
+        const freshScans = state.scans.filter((scan) => scan.timestamp >= cutoff);
+        if (freshScans.length === state.scans.length) return state;
+        return { scans: freshScans };
       }),
 
       deleteScan: (id) => set((state) => ({

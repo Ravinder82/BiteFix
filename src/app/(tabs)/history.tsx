@@ -270,8 +270,12 @@ function ScanHistoryGroup({ group, groupIndex, colors, isDark, panY, setSelected
 
 export default function HistoryScreen() {
   const { colors, isDark } = useTheme();
-  const { scans, deleteScan, clearScans, sugarUnit } = useAppStore();
+  const { scans, deleteScan, clearScans, sugarUnit, pruneExpiredScans } = useAppStore();
   const [selectedScan, setSelectedScan] = useState<ScanHistoryItem | null>(null);
+
+  useEffect(() => {
+    pruneExpiredScans();
+  }, []);
 
   const panY = useRef(new Animated.Value(0)).current;
 
