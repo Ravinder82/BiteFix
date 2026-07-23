@@ -707,6 +707,7 @@ export default function ScannerScreen() {
               hasHiddenSugars={scanResult.hasHiddenSugars}
               hiddenSugars={scanResult.hiddenSugars}
               hiddenSugarCount={scanResult.hiddenSugarCount}
+              nutriScore={scanResult.nutriScore}
             />
 
             {/* 3. Action Dock: Save, Alternatives & Scan Another */}

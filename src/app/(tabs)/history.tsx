@@ -40,18 +40,8 @@ function ScanHistoryItemRow({ item, colors, isDark, onPress, onDelete }: any) {
   const metrics = getConsistentNutritionalMetrics(item);
   const servingTsp = metrics.servingTsp ?? 0;
 
-  // BiteFix: LED color based on BiteFix score
   const cbScore = item.biteFixScore ?? 50;
-  let ledColor = '#8E8E93';
-  if (cbScore >= 76) {
-    ledColor = '#22C55E';
-  } else if (cbScore >= 51) {
-    ledColor = '#3BB5A0';
-  } else if (cbScore >= 26) {
-    ledColor = '#F5A623';
-  } else {
-    ledColor = '#EF4444';
-  }
+  const ledColor = getBiteFixScoreColor(cbScore, item.novaClass);
 
   return (
     <TouchableOpacity
@@ -531,6 +521,7 @@ export default function HistoryScreen() {
                   hasHiddenSugars={selectedScan.hasHiddenSugars}
                   hiddenSugars={selectedScan.hiddenSugars}
                   hiddenSugarCount={selectedScan.hiddenSugarCount}
+                  nutriScore={selectedScan.nutriScore}
                 />
 
                 {/* 3. Action Dock */}

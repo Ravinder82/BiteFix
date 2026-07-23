@@ -7,6 +7,7 @@ import { OrbMascot as Mascot } from './OrbMascot';
 import { useAppStore } from '../../stores/appStore';
 import { getNovaColor, getNovaShortLabel, getBiteFixScoreColor } from '../../utils/format';
 import { AdditiveDetail } from '../../types/app.types';
+import { NutriScoreTrafficLight } from './NutriScoreTrafficLight';
 
 export interface ProductHeroCardDashboardProps {
   scanResult: {
@@ -61,6 +62,7 @@ export default function ProductHeroCardDashboard({
   const novaClass = scanResult.novaClass;
   const additiveCount = scanResult.additiveCount ?? 0;
   const additives: AdditiveDetail[] = scanResult.additives ?? [];
+  const nutriScore = scanResult.nutriScore;
 
   let ledColor: string;
   let ledLabel: string;
@@ -70,27 +72,27 @@ export default function ProductHeroCardDashboard({
     ledColor = '#8E8E93';
     ledLabel = 'Unknown';
     ratingDesc = 'No processing data available';
-  } else if (biteFixScore >= 76) {
-    ledColor = '#22C55E';
-    ledLabel = 'Clean Choice';
-    ratingDesc = 'Minimal processing & whole ingredients';
-  } else if (biteFixScore >= 51) {
-    ledColor = '#3BB5A0';
-    ledLabel = 'Moderate';
-    ratingDesc = 'Approach with awareness';
-  } else if (biteFixScore >= 26) {
+  } else if (novaClass === 4 || biteFixScore <= 35) {
+    ledColor = '#EF4444';
+    ledLabel = 'Ultra-Processed';
+    ratingDesc = 'Ultra-processed industrial formulation';
+  } else if (novaClass === 3 || biteFixScore <= 60) {
     ledColor = '#F5A623';
     ledLabel = 'Processed';
-    ratingDesc = 'Contains industrial refinement';
+    ratingDesc = 'Processed with added ingredients';
+  } else if (novaClass === 2 || biteFixScore <= 80) {
+    ledColor = '#3BB5A0';
+    ledLabel = 'Culinary Ingredient';
+    ratingDesc = 'Processed culinary ingredient (oils, sugar, salt)';
   } else {
-    ledColor = '#EF4444';
-    ledLabel = 'Highly Refined';
-    ratingDesc = 'Ultra-processed formulation';
+    ledColor = '#22C55E';
+    ledLabel = 'Minimally Processed';
+    ratingDesc = 'Unprocessed or minimally processed whole food';
   }
 
   const ratingColor = (isUnknown && scanResult.biteFixScore === undefined)
     ? colors.textMuted
-    : getBiteFixScoreColor(biteFixScore);
+    : getBiteFixScoreColor(biteFixScore, novaClass);
 
   const borderDivider = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
   const bentoBg = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)';
@@ -210,18 +212,19 @@ export default function ProductHeroCardDashboard({
             </Text>
           </View>
 
-          <View style={{ alignItems: 'flex-end', gap: 3 }}>
+          <View style={{ alignItems: 'flex-end', gap: 3, flexShrink: 1, maxWidth: '65%' }}>
             <View
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 6,
                 backgroundColor: ledColor + '15',
-                paddingHorizontal: 12,
-                paddingVertical: 6,
+                paddingHorizontal: 10,
+                paddingVertical: 5,
                 borderRadius: 99,
                 borderWidth: 1,
                 borderColor: ledColor + '30',
+                flexShrink: 1,
               }}
             >
               <View
@@ -230,10 +233,14 @@ export default function ProductHeroCardDashboard({
                   height: 7,
                   borderRadius: 3.5,
                   backgroundColor: ledColor,
+                  flexShrink: 0,
                 }}
               />
               <Text
-                style={{ color: colors.text, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}
+                style={{ color: colors.text, fontSize: 10.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4, flexShrink: 1 }}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
               >
                 {ledLabel}
               </Text>
@@ -274,11 +281,16 @@ export default function ProductHeroCardDashboard({
 
         {/* Gauge Ticks */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 2 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700', textTransform: 'uppercase' }}>0 Refined</Text>
-          <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase' }}>50 Moderate</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700', textTransform: 'uppercase' }}>100 Pure</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700', textTransform: 'uppercase' }}>0 Ultra-Processed</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase' }}>50 Processed</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700', textTransform: 'uppercase' }}>100 Whole Food</Text>
         </View>
       </View>
+
+      {/* ── EU Nutri-Score Traffic Light ── */}
+      {nutriScore ? (
+        <NutriScoreTrafficLight grade={nutriScore} isDark={isDark} colors={colors} />
+      ) : null}
 
       <View style={{ height: 1, backgroundColor: borderDivider, marginVertical: 18 }} />
 

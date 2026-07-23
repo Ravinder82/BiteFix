@@ -26,16 +26,7 @@ function SavedItemRow({ item, colors, isDark, onPress, onDelete }: { item: Colle
   }, [item.imageUrl]);
 
   const cbScore = item.biteFixScore ?? 50;
-  let ledColor = '#8E8E93';
-  if (cbScore >= 76) {
-    ledColor = '#22C55E';
-  } else if (cbScore >= 51) {
-    ledColor = '#3BB5A0';
-  } else if (cbScore >= 26) {
-    ledColor = '#F5A623';
-  } else {
-    ledColor = '#EF4444';
-  }
+  const ledColor = getBiteFixScoreColor(cbScore, item.novaClass);
 
   return (
     <TouchableOpacity
@@ -314,11 +305,14 @@ export default function HomeScreen() {
 
   const activeDayInfo = getLatestActiveScans();
 
-  const avgBiteFixScore = activeDayInfo.items.length > 0
-    ? Math.round(activeDayInfo.items.reduce((sum, item) => sum + (item.biteFixScore ?? 50), 0) / activeDayInfo.items.length)
-    : 0;
+  const mostRecentScan = scans.length > 0
+    ? [...scans].sort((a, b) => b.timestamp - a.timestamp)[0]
+    : null;
 
-  const scoreColor = getBiteFixScoreColor(avgBiteFixScore);
+  const avgBiteFixScore = mostRecentScan ? (mostRecentScan.biteFixScore ?? 50) : 0;
+  const latestNovaClass = mostRecentScan ? mostRecentScan.novaClass : undefined;
+
+  const scoreColor = getBiteFixScoreColor(avgBiteFixScore, latestNovaClass);
   const getLighterScoreColor = () => {
     if (avgBiteFixScore >= 76) return '#4ADE80';
     if (avgBiteFixScore >= 51) return '#2DD4BF';
@@ -333,12 +327,12 @@ export default function HomeScreen() {
     }
 
     const sortedScans = [...scans].sort((a, b) => b.timestamp - a.timestamp);
-    
+
     for (const scan of sortedScans) {
       const scanScore = scan.biteFixScore ?? 50;
       if (scanScore < 60) {
         const scanCategory = mapToBiteFixCategory(scan.name, scan.brand, scan.categoryTag);
-        
+
         const matchingCollectionItem = collection.find(item => {
           const itemCategory = item.biteFixCategory || mapToBiteFixCategory(item.name, item.brand, item.categoryTag);
           return itemCategory === scanCategory && (item.biteFixScore ?? 50) >= 75;
@@ -469,7 +463,11 @@ export default function HomeScreen() {
           >
             {/* Top Row: Title Badge */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
+                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primary }} />
+                <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 }} numberOfLines={1}>
+                  Last Scanned Product
+                </Text>
               </View>
               <View style={{
                 backgroundColor: colors.primary + '15',
@@ -489,6 +487,71 @@ export default function HomeScreen() {
             <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 20, width: '100%' }}>
               {/* Animated Mascot Orb Container */}
               <View style={{ width: 220, height: 220, alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                {/* ── Vertical Nutri-Score Indicator on Left ── */}
+                {mostRecentScan && mostRecentScan.nutriScore ? (() => {
+                  const activeGrade = mostRecentScan.nutriScore.toLowerCase();
+                  const grades: Array<{ key: string; letter: string; color: string }> = [
+                    { key: 'a', letter: 'A', color: '#038141' },
+                    { key: 'b', letter: 'B', color: '#85BB2F' },
+                    { key: 'c', letter: 'C', color: '#FECB02' },
+                    { key: 'd', letter: 'D', color: '#EE8100' },
+                    { key: 'e', letter: 'E', color: '#E63E11' },
+                  ];
+
+                  return (
+                    <View
+                      style={{
+                        position: 'absolute',
+                        left: -38,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                        borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                        borderWidth: 1,
+                        borderRadius: 16,
+                        paddingVertical: 8,
+                        paddingHorizontal: 5,
+                        gap: 4,
+                        zIndex: 10,
+                      }}
+                    >
+                      {grades.map((g) => {
+                        const isActive = activeGrade === g.key;
+                        return (
+                          <View
+                            key={g.key}
+                            style={{
+                              width: isActive ? 22 : 14,
+                              height: isActive ? 22 : 14,
+                              borderRadius: isActive ? 6 : 4,
+                              backgroundColor: isActive ? g.color : g.color + '20',
+                              borderColor: isActive ? '#FFFFFF' : g.color + '40',
+                              borderWidth: isActive ? 1.5 : 0.5,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              shadowColor: isActive ? g.color : 'transparent',
+                              shadowOffset: { width: 0, height: isActive ? 2 : 0 },
+                              shadowOpacity: isActive ? 0.5 : 0,
+                              shadowRadius: isActive ? 4 : 0,
+                              elevation: isActive ? 2 : 0,
+                            }}
+                          >
+                            <Text
+                              style={{
+                                color: isActive ? '#FFFFFF' : isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+                                fontSize: isActive ? 11 : 8,
+                                fontWeight: '900',
+                              }}
+                            >
+                              {g.letter}
+                            </Text>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  );
+                })() : null}
+
                 {/* 1. Static track and progress arc */}
                 <Svg width={220} height={220} viewBox="0 0 120 120" style={{ position: 'absolute' }}>
                   <Defs>
@@ -508,17 +571,17 @@ export default function HomeScreen() {
                   <Circle cx="60" cy="60" r="48" fill="none" stroke={isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)'} strokeWidth="3.5" />
                   {/* Inner glow progress arc */}
                   <Circle
-                     cx="60"
-                     cy="60"
-                     r="48"
-                     fill="none"
-                     stroke={scoreColor}
-                     strokeWidth="6"
-                     strokeLinecap="round"
-                     strokeDasharray="301.6"
-                     strokeDashoffset={301.6 * (1 - Math.max(5, avgBiteFixScore) / 100)}
-                     transform="rotate(-90 60 60)"
-                     opacity="0.2"
+                    cx="60"
+                    cy="60"
+                    r="48"
+                    fill="none"
+                    stroke={scoreColor}
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                    strokeDasharray="301.6"
+                    strokeDashoffset={301.6 * (1 - Math.max(5, avgBiteFixScore) / 100)}
+                    transform="rotate(-90 60 60)"
+                    opacity="0.2"
                   />
                   {/* Main progress arc */}
                   <Circle
@@ -622,18 +685,7 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            {/* Bubble thought */}
-            <View style={{
-              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
-              borderRadius: 18,
-              padding: 14,
-              borderWidth: 1,
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
-            }}>
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textAlign: 'center', lineHeight: 17 }}>
-                "{getMascotThought()}"
-              </Text>
-            </View>
+
 
             {/* Smart Swap Recommendation Widget */}
             <View
@@ -684,7 +736,7 @@ export default function HomeScreen() {
                         <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }} numberOfLines={1}>
                           {swapSuggestion.unhealthy.brand || 'Generic Brand'}
                         </Text>
-                        <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }} numberOfLines={1}>
+                        <Text style={{ color: colors.text, fontSize: 10, fontWeight: '800' }}>
                           {swapSuggestion.unhealthy.name}
                         </Text>
                         <Text style={{ color: '#EF4444', fontSize: 11, fontWeight: '900', marginTop: 3 }}>
@@ -705,7 +757,7 @@ export default function HomeScreen() {
                         <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }} numberOfLines={1}>
                           {swapSuggestion.healthy.brand || 'Generic Brand'}
                         </Text>
-                        <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }} numberOfLines={1}>
+                        <Text style={{ color: colors.text, fontSize: 10, fontWeight: '800' }}>
                           {swapSuggestion.healthy.name}
                         </Text>
                         <Text style={{ color: '#22C55E', fontSize: 11, fontWeight: '900', marginTop: 3 }}>
@@ -754,14 +806,14 @@ export default function HomeScreen() {
                         <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '700' }}>
                           {swapSuggestion.healthy.brand || 'Generic Brand'}
                         </Text>
-                        <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }} numberOfLines={1}>
+                        <Text style={{ color: colors.text, fontSize: 11.5, fontWeight: '800' }}>
                           {swapSuggestion.healthy.name}
                         </Text>
                         <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '600', marginTop: 2 }}>
                           Your highest-rated saved clean product. Keep it stocked!
                         </Text>
                       </View>
-                      
+
                       <View style={{ alignItems: 'flex-end', backgroundColor: isDark ? 'rgba(34, 197, 94, 0.15)' : 'rgba(34, 197, 94, 0.08)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(34, 197, 94, 0.25)' }}>
                         <Text style={{ color: '#22C55E', fontSize: 15, fontWeight: '900' }}>
                           {swapSuggestion.healthy.biteFixScore ?? '--'}
@@ -1028,6 +1080,7 @@ export default function HomeScreen() {
                   hasHiddenSugars={selectedSavedItem.hasHiddenSugars}
                   hiddenSugars={selectedSavedItem.hiddenSugars}
                   hiddenSugarCount={selectedSavedItem.hiddenSugarCount}
+                  nutriScore={selectedSavedItem.nutriScore}
                 />
 
                 {/* 3. Action Dock */}

@@ -155,21 +155,23 @@ export function getAdditiveRiskColor(riskLevel: AdditiveRiskLevel): string {
   }
 }
 
-/** Returns a BiteFix score level label */
-export function getBiteFixScoreLabel(score?: number): string {
+/** Returns a BiteFix score level label synchronized with NOVA classification */
+export function getBiteFixScoreLabel(score?: number, novaClass?: NOVAClass): string {
+  if (novaClass) return getNovaLabel(novaClass);
   if (score === undefined || score === null) return 'Not Rated';
-  if (score >= 76) return 'Clean & Wholesome';
-  if (score >= 51) return 'Moderately Processed';
-  if (score >= 26) return 'Significantly Processed';
-  return 'Highly Refined';
+  if (score >= 81) return 'Unprocessed / Minimally Processed';
+  if (score >= 61) return 'Processed Culinary Ingredient';
+  if (score >= 36) return 'Processed Food';
+  return 'Ultra-Processed';
 }
 
-/** Returns a color for the BiteFix score */
-export function getBiteFixScoreColor(score?: number): string {
+/** Returns a color for the BiteFix score synchronized with NOVA class colors */
+export function getBiteFixScoreColor(score?: number, novaClass?: NOVAClass): string {
+  if (novaClass) return getNovaColor(novaClass);
   if (score === undefined || score === null) return '#8E8E93';
-  if (score >= 76) return '#22C55E';
-  if (score >= 51) return '#3BB5A0';
-  if (score >= 26) return '#F5A623';
+  if (score >= 81) return '#22C55E';
+  if (score >= 61) return '#3BB5A0';
+  if (score >= 36) return '#F5A623';
   return '#EF4444';
 }
 
@@ -187,10 +189,10 @@ export function getProcessingGroup(novaClass?: NOVAClass): ProcessingGroup {
 }
 
 export const PROCESSING_GROUP_LABELS: Record<ProcessingGroup, string> = {
-  whole: 'Whole & Unprocessed',
-  minimal: 'Minimally Processed',
-  processed: 'Processed Foods',
-  ultra: 'Highly Refined',
+  whole: 'Unprocessed / Minimally Processed',
+  minimal: 'Processed Culinary Ingredient',
+  processed: 'Processed Food',
+  ultra: 'Ultra-Processed',
 };
 
 export function calculateJoggingMinutes(calories: number): number {

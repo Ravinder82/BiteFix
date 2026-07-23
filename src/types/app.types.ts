@@ -4,15 +4,15 @@
 export type NOVAClass = 1 | 2 | 3 | 4;
 
 export const NOVA_LABELS: Record<NOVAClass, string> = {
-  1: 'Whole & Unprocessed',
-  2: 'Minimally Processed Ingredient',
+  1: 'Unprocessed / Minimally Processed',
+  2: 'Processed Culinary Ingredient',
   3: 'Processed Food',
-  4: 'Highly Refined / Ultra-Processed',
+  4: 'Ultra-Processed',
 };
 
 export const NOVA_SHORT_LABELS: Record<NOVAClass, string> = {
-  1: 'Whole',
-  2: 'Minimal',
+  1: 'Whole Food',
+  2: 'Culinary Ingredient',
   3: 'Processed',
   4: 'Ultra-Processed',
 };

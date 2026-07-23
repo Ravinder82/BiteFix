@@ -70,8 +70,8 @@ export function mapToBiteFixCategory(
 }
 
 export type ProcessingLevelCategory =
-  | 'Whole & Unprocessed (NOVA 1)'
-  | 'Minimally Processed (NOVA 2)'
+  | 'Unprocessed / Minimally Processed (NOVA 1)'
+  | 'Processed Culinary Ingredients (NOVA 2)'
   | 'Processed Foods (NOVA 3)'
   | 'Ultra-Processed (NOVA 4)'
   | 'Unclassified';
@@ -79,9 +79,9 @@ export type ProcessingLevelCategory =
 export function mapToProcessingCategory(novaClass?: number): ProcessingLevelCategory {
   switch (novaClass) {
     case 1:
-      return 'Whole & Unprocessed (NOVA 1)';
+      return 'Unprocessed / Minimally Processed (NOVA 1)';
     case 2:
-      return 'Minimally Processed (NOVA 2)';
+      return 'Processed Culinary Ingredients (NOVA 2)';
     case 3:
       return 'Processed Foods (NOVA 3)';
     case 4:

@@ -5,6 +5,7 @@ import { Text } from '@/components/Text';
 import { useAppStore } from '../../stores/appStore';
 import { formatSugar, getConsistentNutritionalMetrics } from '../../utils/sugar';
 import { calculateJoggingMinutes, formatJogTime } from '../../utils/format';
+import { NutriScoreTrafficLight } from './NutriScoreTrafficLight';
 
 interface NutritionFactsProps {
   colors: any;
@@ -18,6 +19,7 @@ interface NutritionFactsProps {
   hasHiddenSugars?: boolean;
   hiddenSugars?: string[];
   hiddenSugarCount?: number;
+  nutriScore?: string;
 }
 
 export function NutritionFacts({
@@ -32,6 +34,7 @@ export function NutritionFacts({
   hasHiddenSugars,
   hiddenSugars,
   hiddenSugarCount,
+  nutriScore,
 }: NutritionFactsProps) {
   const { sugarUnit } = useAppStore();
   const isDarkMode = colors.background === '#000000' || colors.isDark;
@@ -69,11 +72,11 @@ export function NutritionFacts({
     >
       {/* Title & Serving Standard Tag */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <View>
+        <View style={{ flexShrink: 1 }}>
           <Text style={{ color: colors.text, fontSize: 20, fontWeight: '900', letterSpacing: -0.5 }}>
             Sugar & Energy
           </Text>
-          <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 2 }}>
+          <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 2 }} numberOfLines={1} ellipsizeMode="tail">
             Serving: {servingSize || '100 g / 100 ml'}
           </Text>
         </View>
@@ -82,14 +85,14 @@ export function NutritionFacts({
       <View style={{ height: 1, backgroundColor: borderDivider, marginBottom: 16 }} />
 
       {/* ── Bento Telemetry Grid (Sugar Load & Activity Burn) ── */}
-      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
+      <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
         {/* Cell 1: Sugar Content & WHO Limit */}
         <View
           style={{
-            flex: 1.2,
+            flex: 1.1,
             backgroundColor: bentoBg,
             borderRadius: 16,
-            padding: 14,
+            padding: 12,
             borderWidth: 1,
             borderColor: borderDivider,
             justifyContent: 'space-between',
@@ -99,11 +102,11 @@ export function NutritionFacts({
             <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>
               SUGAR LOAD
             </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-              <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.6 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4, flexWrap: 'wrap' }}>
+              <Text style={{ color: colors.text, fontSize: 22, fontWeight: '900', letterSpacing: -0.6 }}>
                 {formatSugar(displayServingSugarG, sugarUnit)}
               </Text>
-              <Text style={{ color: colors.primary, fontSize: 14, fontWeight: '800' }}>
+              <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '800' }}>
                 ({tspServing} tsp)
               </Text>
             </View>

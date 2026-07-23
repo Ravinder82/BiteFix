@@ -152,28 +152,69 @@ export function parseAllergensFromProduct(p: any): string[] {
 // ─────────────────────────────────────────────────────────
 
 /**
- * Computes a BiteFix Health Score (0-100) from product attributes.
- * Formula: Score = (0.4 × NOVA Factor) + (0.4 × Additive Cleanliness) + (0.2 × Nutrient Profile)
+ * Computes a BiteFix Health Score (0-100) from product attributes, strictly calibrated with NOVA Classification bounds:
+ * - NOVA 1 (Unprocessed / Minimally Processed): Score 81 – 100
+ * - NOVA 2 (Processed Culinary Ingredient):     Score 61 – 80
+ * - NOVA 3 (Processed Food):                    Score 36 – 60
+ * - NOVA 4 (Ultra-Processed):                   Score 0 – 35
  */
 export function computeBiteFixScore(opts: {
   novaClass?: NOVAClass;
   additiveCount: number;
   nutriScore?: 'a' | 'b' | 'c' | 'd' | 'e';
   sugarPer100g?: number;
+  ingredientsText?: string;
 }): number {
-  // NOVA factor: NOVA 1 → 100, NOVA 2 → 75, NOVA 3 → 45, NOVA 4 → 15, unknown → 50
-  const novaScores: Record<number, number> = { 1: 100, 2: 75, 3: 45, 4: 15 };
-  const novaFactor = opts.novaClass ? (novaScores[opts.novaClass] ?? 50) : 50;
+  let inferredNova = opts.novaClass;
+  if (!inferredNova) {
+    if (opts.additiveCount >= 4) {
+      inferredNova = 4;
+    } else if (opts.additiveCount >= 2) {
+      inferredNova = 3;
+    } else {
+      // 0 or 1 additives: check if it's a pure processed culinary ingredient
+      const ing = opts.ingredientsText ? opts.ingredientsText.toLowerCase().trim() : '';
+      const isCulinary = ing === 'sugar' || ing === 'salt' || ing === 'honey' || ing === 'maple syrup' || ing === 'butter' || ing === 'vegetable oil' || ing === 'olive oil' || ing === 'coconut oil';
+      
+      const hasHighSugar = opts.sugarPer100g !== undefined && opts.sugarPer100g > 15;
+      if (isCulinary) {
+        inferredNova = 2;
+      } else if (hasHighSugar) {
+        inferredNova = 3;
+      } else {
+        inferredNova = 1; // Default to whole food / unprocessed for clean profile
+      }
+    }
+  }
 
-  // Additive cleanliness: 0 additives → 100, decays with more
-  const additiveFactor = Math.max(0, 100 - (opts.additiveCount * 12));
+  // Base NOVA factor values centered in each NOVA group bracket
+  const novaScores: Record<number, number> = { 1: 90, 2: 70, 3: 48, 4: 18 };
+  const novaFactor = inferredNova ? (novaScores[inferredNova] ?? 50) : 50;
 
-  // Nutrient profile: based on Nutri-Score letter
+  // Additive cleanliness: 0 additives → 100, decays with more additives
+  const additiveFactor = Math.max(0, 100 - (opts.additiveCount * 15));
+
+  // Nutrient profile: based on Nutri-Score letter grade
   const nutriMap: Record<string, number> = { a: 100, b: 80, c: 55, d: 30, e: 10 };
   const nutrientFactor = opts.nutriScore ? (nutriMap[opts.nutriScore] ?? 50) : 50;
 
-  const raw = (0.4 * novaFactor) + (0.4 * additiveFactor) + (0.2 * nutrientFactor);
-  return Math.max(0, Math.min(100, Math.round(raw)));
+  const raw = (0.5 * novaFactor) + (0.3 * additiveFactor) + (0.2 * nutrientFactor);
+  let score = Math.round(raw);
+
+  // Strict NOVA group bounding to guarantee 100% calibration between NOVA class and BiteFix Score
+  if (inferredNova === 1) {
+    score = Math.max(81, Math.min(100, score));
+  } else if (inferredNova === 2) {
+    score = Math.max(61, Math.min(80, score));
+  } else if (inferredNova === 3) {
+    score = Math.max(36, Math.min(60, score));
+  } else if (inferredNova === 4) {
+    score = Math.max(0, Math.min(35, score));
+  } else {
+    score = Math.max(0, Math.min(100, score));
+  }
+
+  return score;
 }
 
 export class RequestTimeoutError extends Error {
@@ -640,7 +681,7 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
     const rawNutriScore = String(p.nutriscore_grade ?? p.nutrition_grades ?? '').toLowerCase();
     const nutriScore: ScanResultData['nutriScore'] = ['a', 'b', 'c', 'd', 'e'].includes(rawNutriScore) ? rawNutriScore as ScanResultData['nutriScore'] : undefined;
 
-    const biteFixScore = computeBiteFixScore({ novaClass, additiveCount, nutriScore, sugarPer100g });
+    const biteFixScore = computeBiteFixScore({ novaClass, additiveCount, nutriScore, sugarPer100g, ingredientsText });
 
     const resultData: ScanResultData = {
       name,
@@ -1676,7 +1717,7 @@ const BRANDED_HEALTHY_SWAPS_CATALOG: Record<FunctionalArchetype, ScanResultData[
       additiveCount: 0,
       allergens: ['Milk', 'Tree Nuts'],
       nutriScore: 'b',
-      biteFixScore: 80,
+      biteFixScore: 58,
     },
   ],
   candy_sweet: [
@@ -1707,7 +1748,7 @@ const BRANDED_HEALTHY_SWAPS_CATALOG: Record<FunctionalArchetype, ScanResultData[
       additiveCount: 1,
       allergens: ['Milk', 'Almonds'],
       nutriScore: 'b',
-      biteFixScore: 82,
+      biteFixScore: 56,
     },
   ],
   bread_bakery: [
@@ -2120,7 +2161,7 @@ export async function lookupAlternatives(
       const rawNutriScore = String(p.nutriscore_grade ?? p.nutrition_grades ?? '').toLowerCase();
       const nutriScore: ScanResultData['nutriScore'] = ['a', 'b', 'c', 'd', 'e'].includes(rawNutriScore) ? rawNutriScore as ScanResultData['nutriScore'] : undefined;
 
-      const biteFixScore = computeBiteFixScore({ novaClass, additiveCount, nutriScore, sugarPer100g });
+      const biteFixScore = computeBiteFixScore({ novaClass, additiveCount, nutriScore, sugarPer100g, ingredientsText });
       const candElevatedCount = additives.filter(a => a.riskLevel === 'elevated').length;
 
       const candidateObj: ScanResultData = {
