@@ -15,11 +15,13 @@ interface AppState {
   allergenFilters: string[];
   strictNovaAlert: boolean;
   stealthAdditivesAlert: boolean;
+  isPremium: boolean;
 
   // Actions
   setOnboardingComplete: (complete: boolean) => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   setSugarUnit: (sugarUnit: 'g' | 'oz') => void;
+  setPremium: (premium: boolean) => void;
   setAllergenFilters: (allergens: string[]) => void;
   toggleAllergenFilter: (allergen: string) => void;
   setStrictNovaAlert: (enabled: boolean) => void;
@@ -87,10 +89,12 @@ export const useAppStore = create<AppState>()(
       allergenFilters: [],
       strictNovaAlert: true,
       stealthAdditivesAlert: true,
+      isPremium: false,
 
       setOnboardingComplete: (complete) => set({ onboardingComplete: complete }),
       setTheme: (theme) => set({ theme }),
       setSugarUnit: (sugarUnit) => set({ sugarUnit }),
+      setPremium: (isPremium) => set({ isPremium }),
       setAllergenFilters: (allergenFilters) => set({ allergenFilters }),
       toggleAllergenFilter: (allergen) => set((state) => ({
         allergenFilters: state.allergenFilters.includes(allergen)
@@ -225,6 +229,7 @@ export const useAppStore = create<AppState>()(
         allergenFilters: [],
         strictNovaAlert: true,
         stealthAdditivesAlert: true,
+        isPremium: false,
       }),
     }),
     {

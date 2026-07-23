@@ -237,7 +237,7 @@ export default function AuthScreen() {
                 marginTop: 16,
               }}
             >
-              CutSugar
+              BiteFix
             </Text>
             <Text
               style={{

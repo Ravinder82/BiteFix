@@ -8,6 +8,9 @@ import { useAppStore } from '../../stores/appStore';
 import { getNovaColor, getNovaShortLabel, getBiteFixScoreColor } from '../../utils/format';
 import { AdditiveDetail } from '../../types/app.types';
 import { NutriScoreTrafficLight } from './NutriScoreTrafficLight';
+import { GutShieldCard } from './GutShieldCard';
+import { AdditiveDetectiveCard } from './AdditiveDetectiveCard';
+import { evaluateGutHealth } from '../../utils/gutShieldEvaluator';
 
 export interface ProductHeroCardDashboardProps {
   scanResult: {
@@ -63,6 +66,8 @@ export default function ProductHeroCardDashboard({
   const additiveCount = scanResult.additiveCount ?? 0;
   const additives: AdditiveDetail[] = scanResult.additives ?? [];
   const nutriScore = scanResult.nutriScore;
+
+  const gutHealth = evaluateGutHealth(additives);
 
   let ledColor: string;
   let ledLabel: string;
@@ -294,100 +299,8 @@ export default function ProductHeroCardDashboard({
 
       <View style={{ height: 1, backgroundColor: borderDivider, marginVertical: 18 }} />
 
-      {(() => {
-        const hasAdditives = additives.length > 0;
-        const elevatedAdditives = additives.filter(a => a.riskLevel === 'elevated');
-        const isAlert = elevatedAdditives.length > 0;
-
-        if (!hasAdditives) {
-          return (
-            <View
-              style={{
-                backgroundColor: bentoBg,
-                borderColor: borderDivider,
-                borderWidth: 1,
-                borderRadius: 16,
-                padding: 16,
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <View
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor: '#22C55E',
-                    shadowColor: '#22C55E',
-                    shadowOffset: { width: 0, height: 0 },
-                    shadowOpacity: 0.6,
-                    shadowRadius: 4,
-                  }}
-                />
-                <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.6 }}>
-                  NO ADDITIVES
-                </Text>
-              </View>
-            </View>
-          );
-        }
-
-        return (
-          <View
-            style={{
-              backgroundColor: bentoBg,
-              borderColor: borderDivider,
-              borderWidth: 1,
-              borderRadius: 16,
-              padding: 16,
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Text
-                style={{
-                  color: colors.textSecondary,
-                  fontSize: 10,
-                  fontWeight: '800',
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.8,
-                }}
-              >
-                ADDITIVES
-              </Text>
-              <Text style={{ color: isAlert ? '#EF4444' : '#F5A623', fontSize: 11, fontWeight: '800' }}>
-                {additives.length} Found
-              </Text>
-            </View>
-
-            <View style={{ gap: 8 }}>
-              {additives.map((item, idx) => {
-                const ledColor = item.riskLevel === 'elevated' ? '#EF4444' : item.riskLevel === 'moderate' ? '#F5A623' : '#22C55E';
-                return (
-                  <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <View
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: 4,
-                        backgroundColor: ledColor,
-                        shadowColor: ledColor,
-                        shadowOffset: { width: 0, height: 0 },
-                        shadowOpacity: 0.6,
-                        shadowRadius: 4,
-                      }}
-                    />
-                    <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700' }}>
-                      {item.displayName}{' '}
-                      <Text style={{ color: colors.textSecondary, fontWeight: '600', fontSize: 12 }}>
-                        ({item.functionLabel})
-                      </Text>
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-        );
-      })()}
+      <AdditiveDetectiveCard additives={additives} colors={colors} isDark={isDark} />
+      <GutShieldCard score={gutHealth.score} insights={gutHealth.insights} colors={colors} isDark={isDark} />
 
       {/* ── Action Bar ── */}
       {showActions && (

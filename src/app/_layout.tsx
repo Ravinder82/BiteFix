@@ -73,6 +73,7 @@ export default function RootLayout() {
             <Stack.Screen name="onboarding/index" />
             <Stack.Screen name="auth/index" />
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
             <Stack.Screen name="delete-account" options={{ presentation: 'modal' }} />
           </Stack>
         </ThemeProvider>

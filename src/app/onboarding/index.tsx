@@ -980,54 +980,54 @@ const SLIDES: SlideData[] = [
   },
   {
     step: 2,
-    title: "What is your main health goal?",
-    highlight: "health goal?",
-    subtitle: "Select what brings you to BiteFix.",
+    title: "Are you struggling with any of these?",
+    highlight: "any of these?",
+    subtitle: "Select your primary health concerns to customize your scanner.",
     buttonLabel: 'Continue',
     isLast: false,
     mascotState: 'idle',
   },
   {
     step: 3,
-    title: "Scan Any Packaged Food.",
-    highlight: "Packaged Food.",
-    subtitle: "Reveal hidden processing levels (NOVA 1–4) and BiteFix scores in seconds.",
+    title: "We Decode Processing & Nutri-Scores.",
+    highlight: "NOVA & Nutri-Scores.",
+    subtitle: "Instant NOVA 1–4 processing levels and Nutri-Score A–E quality grades.",
     buttonLabel: 'Next',
     isLast: false,
     mascotState: 'happy',
   },
   {
     step: 4,
-    title: "Understand Nutri-Score A to E.",
-    highlight: "Nutri-Score A to E.",
-    subtitle: "Know the exact nutritional grade of what you buy at a glance.",
+    title: "Over 70% of Packaged Foods Hide Chemicals.",
+    highlight: "Hide Chemicals.",
+    subtitle: "Synthetic food dyes, artificial sweeteners, and hidden sugars mask as healthy foods.",
     buttonLabel: 'Next',
     isLast: false,
-    mascotState: 'happy',
+    mascotState: 'shocked',
   },
   {
     step: 5,
-    title: "Don't Just Scan — Swap It.",
-    highlight: "Swap It.",
-    subtitle: "Turn ultra-processed choices into clean, high-scoring upgrades.",
+    title: "Spot Dyes, Preservatives & Hidden Sugars.",
+    highlight: "Dyes & Sugars.",
+    subtitle: "Dye Detective & Preservative Monitor expose toxic additives before you buy.",
     buttonLabel: 'Next',
     isLast: false,
     mascotState: 'happy',
   },
   {
     step: 6,
-    title: "Spot Hidden Sugars & Additives.",
-    highlight: "Sugars & Additives.",
-    subtitle: "We highlight Hidden sugars and artificial additives instantly.",
+    title: "Emulsifiers Erode Your Gut Lining.",
+    highlight: "Gut Lining.",
+    subtitle: "Common thickeners like Carrageenan degrade your mucosal barrier and cause bloating.",
     buttonLabel: 'Next',
     isLast: false,
     mascotState: 'shocked',
   },
   {
     step: 7,
-    title: "Build Your Own Clean Collection.",
-    highlight: "Clean Collection.",
-    subtitle: "Save Healthy and Nutritious foods and Scan on the go.",
+    title: "Gut Shield & Smart Clean Swaps.",
+    highlight: "Gut Shield.",
+    subtitle: "Audit your microbiome barrier and swap ultra-processed items for clean upgrades.",
     buttonLabel: 'Get Started',
     isLast: true,
     mascotState: 'happy',
@@ -1243,7 +1243,7 @@ export default function OnboardingScreen() {
         userGoal: userGoal || 'none',
       });
       setOnboardingComplete(true);
-      router.replace('/auth');
+      router.replace('/paywall');
     }
   };
 
@@ -1388,12 +1388,12 @@ export default function OnboardingScreen() {
                   visible={true}
                   text={[
                     "Hi there! Let's get to know each other first!",
-                    "Awesome! Having a clear goal is key to success.",
-                    "Scan any packaged product to see its NOVA group!",
-                    "Nutri-Score A to E shows true nutritional quality.",
-                    "Tap to flip the card & see clean Smart Swaps!",
-                    "We highlight Additives and Hidden sugars!",
-                    "Save Healthy favorites in your clean collection!"
+                    "Select what you'd like to fix or avoid!",
+                    "We calculate NOVA 1-4 & Nutri-Scores instantly!",
+                    "70%+ of packaged foods hide synthetic chemicals!",
+                    "Dye Detective & Preservative Monitor keep you safe!",
+                    "Emulsifiers erode your mucosal gut barrier!",
+                    "Audit your Gut Shield & get clean Smart Swaps!"
                   ][currentSlide] || ""}
                 />
               </Animated.View>
