@@ -21,8 +21,8 @@ try {
 
 // ── App Store Connect Product IDs ────────────────────────
 export const IAP_PRODUCT_IDS = {
-  MONTHLY: 'com.bitefix.monthly',
-  ANNUAL: 'com.bitefix.annual',
+  MONTHLY: 'com.ravinderpoonia.bitefix.monthly',
+  ANNUAL: 'com.ravinderpoonia.bitefix.yearly',
 };
 
 // ── RevenueCat Entitlement Identifier ────────────────────
