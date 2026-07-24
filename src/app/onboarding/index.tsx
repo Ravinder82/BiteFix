@@ -1423,42 +1423,42 @@ function InstantResultSummaryCard({ cardW, C, isDark }: { cardW: number; C: any;
     {
       title: 'NOVA Class',
       desc: 'Processing level audit',
-      icon: <Activity size={16} color="#FF9500" />,
+      icon: <Activity size={12} color="#FF9500" />,
       bg: 'rgba(255, 149, 0, 0.08)',
       style: item1Style,
     },
     {
       title: 'Nutri-Score',
       desc: 'Traffic light grade',
-      icon: <Sparkles size={16} color="#34C759" />,
+      icon: <Sparkles size={12} color="#34C759" />,
       bg: 'rgba(52, 199, 89, 0.08)',
       style: item2Style,
     },
     {
       title: 'Gut Shield',
       desc: 'Barrier erosion alert',
-      icon: <ShieldAlert size={16} color="#FF3B30" />,
+      icon: <ShieldAlert size={12} color="#FF3B30" />,
       bg: 'rgba(255, 59, 48, 0.08)',
       style: item3Style,
     },
     {
       title: 'Dye Detective',
       desc: 'Synthetic dye checks',
-      icon: <Search size={16} color="#AF52DE" />,
+      icon: <Search size={12} color="#AF52DE" />,
       bg: 'rgba(175, 82, 222, 0.08)',
       style: item4Style,
     },
     {
       title: 'Hidden Sugar',
       desc: 'Teaspoon daily limit',
-      icon: <Zap size={16} color="#FFCC00" />,
+      icon: <Zap size={12} color="#FFCC00" />,
       bg: 'rgba(255, 204, 0, 0.08)',
       style: item5Style,
     },
     {
       title: 'Smart Swaps',
       desc: 'A-Grade clean match',
-      icon: <RefreshCw size={16} color="#007AFF" />,
+      icon: <RefreshCw size={12} color="#007AFF" />,
       bg: 'rgba(0, 122, 255, 0.08)',
       style: item6Style,
     },
@@ -1472,8 +1472,8 @@ function InstantResultSummaryCard({ cardW, C, isDark }: { cardW: number; C: any;
         borderRadius: 24,
         borderWidth: 2,
         borderColor: gold,
-        padding: 16,
-        gap: 12,
+        padding: 14,
+        gap: 10,
         shadowColor: gold,
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.16,
@@ -1482,44 +1482,50 @@ function InstantResultSummaryCard({ cardW, C, isDark }: { cardW: number; C: any;
       }}
     >
       {/* Premium Luxury Header */}
-      <View style={{ alignItems: 'center', gap: 4 }}>
+      <View style={{ alignItems: 'center', gap: 2 }}>
         <Text style={{ color: gold, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.5 }}>
           Exclusive 6-in-1 Scanner
         </Text>
-        <Text style={{ color: C.text, fontSize: 15, fontWeight: '900', textAlign: 'center' }}>
+        <Text style={{ color: C.text, fontSize: 14, fontWeight: '900', textAlign: 'center' }}>
           Scan Once. Unlock Everything.
         </Text>
       </View>
 
-      {/* 2-Column Luxury Feature Grid */}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10 }}>
+      {/* Sleek Horizontal Stretched Cards Container */}
+      <View style={{ gap: 6, width: '100%' }}>
         {features.map((item, idx) => (
           <Animated.View
             key={idx}
             style={[
               {
-                width: (cardW - 42) / 2,
+                width: '100%',
                 backgroundColor: C.cardInner,
-                borderRadius: 16,
-                borderWidth: 1.2,
+                borderRadius: 12,
+                borderWidth: 1,
                 borderColor: C.cardBorder,
-                padding: 10,
-                gap: 6,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
               },
               item.style,
             ]}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <View style={{ width: 26, height: 26, borderRadius: 8, backgroundColor: item.bg, alignItems: 'center', justifyContent: 'center' }}>
-                {item.icon}
-              </View>
-              <Text style={{ color: C.text, fontSize: 11, fontWeight: '800' }} numberOfLines={1}>
+            {/* Left circular icon container */}
+            <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: item.bg, alignItems: 'center', justifyContent: 'center' }}>
+              {item.icon}
+            </View>
+
+            {/* Title & description side-by-side */}
+            <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ color: C.text, fontSize: 11.5, fontWeight: '800' }}>
                 {item.title}
               </Text>
+              <Text style={{ color: C.textSub, fontSize: 9.5, fontWeight: '600' }}>
+                {item.desc}
+              </Text>
             </View>
-            <Text style={{ color: C.textSub, fontSize: 9, fontWeight: '500', lineHeight: 12 }}>
-              {item.desc}
-            </Text>
           </Animated.View>
         ))}
       </View>
