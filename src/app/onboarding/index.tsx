@@ -29,7 +29,7 @@ import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot } from '../../components/features/OrbMascot';
 import { MagicalBackground } from '../../components/features/MagicalBackground';
-import { ArrowRight, Check, Search, AlertTriangle, ShieldCheck, ShieldAlert, Activity, Sparkles, RefreshCw, Zap } from 'lucide-react-native';
+import { ArrowRight, Check, Search, AlertTriangle, ShieldCheck, ShieldAlert, Activity, Sparkles, RefreshCw, Zap, Star, X } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, {
   Line,
@@ -885,6 +885,146 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
   );
 }
 
+// ─────────────────────────────────────────────────────────
+// Premium App Store Rating Modal Overlay
+// ─────────────────────────────────────────────────────────
+interface RatingModalProps {
+  C: any;
+  isDark: boolean;
+  rating: number;
+  setRating: (r: number) => void;
+  onSubmit: () => void;
+  onLater: () => void;
+  width: number;
+}
+
+function RatingModal({ C, isDark, rating, setRating, onSubmit, onLater, width }: RatingModalProps) {
+  const modalScale = useSharedValue(0.85);
+  const modalOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    modalScale.value = withSpring(1, { damping: 15, stiffness: 180 });
+    modalOpacity.value = withTiming(1, { duration: 250 });
+  }, []);
+
+  const modalStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: modalScale.value }],
+    opacity: modalOpacity.value,
+  }));
+
+  const handleStarPress = (r: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setRating(r);
+  };
+
+  return (
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.65)', justifyContent: 'center', alignItems: 'center', zIndex: 999, paddingHorizontal: 20 }]}>
+      <Animated.View
+        style={[
+          {
+            width: Math.min(width - 40, 360),
+            backgroundColor: C.card,
+            borderRadius: 28,
+            borderWidth: 1.5,
+            borderColor: C.cardBorder,
+            padding: 24,
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 12 },
+            shadowOpacity: 0.3,
+            shadowRadius: 24,
+            elevation: 10,
+            gap: 16,
+          },
+          modalStyle,
+        ]}
+      >
+        {/* Mascot Header */}
+        <View style={{ width: 90, height: 90, borderRadius: 45, backgroundColor: C.amberLight, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.amber + '40', marginBottom: 4 }}>
+          <OrbMascot state="happy" size={80} />
+        </View>
+
+        <Text style={{ color: C.text, fontSize: 20, fontWeight: '900', textAlign: 'center', letterSpacing: -0.5 }}>
+          Enjoying FixBite?
+        </Text>
+
+        <Text style={{ color: C.textSub, fontSize: 13, fontWeight: '500', textAlign: 'center', lineHeight: 18, paddingHorizontal: 8 }}>
+          If you love scanner insights and clean swaps, please take a moment to rate us on the App Store!
+        </Text>
+
+        {/* 5-Star Rating Indicators */}
+        <View style={{ flexDirection: 'row', gap: 10, marginVertical: 8 }}>
+          {[1, 2, 3, 4, 5].map((star) => {
+            const active = star <= rating;
+            return (
+              <TouchableOpacity
+                key={star}
+                onPress={() => handleStarPress(star)}
+                activeOpacity={0.7}
+                style={{
+                  width: 42,
+                  height: 42,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Star
+                  size={36}
+                  color={active ? '#FFC107' : C.cardBorder}
+                  fill={active ? '#FFC107' : 'transparent'}
+                  strokeWidth={2}
+                />
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Action Buttons */}
+        <View style={{ width: '100%', gap: 8, marginTop: 4 }}>
+          <TouchableOpacity
+            onPress={onSubmit}
+            disabled={rating === 0}
+            activeOpacity={0.9}
+            style={{
+              width: '100%',
+              backgroundColor: C.amber,
+              borderRadius: 16,
+              paddingVertical: 14,
+              alignItems: 'center',
+              justifyContent: 'center',
+              shadowColor: C.amber,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: isDark ? 0.35 : 0.15,
+              shadowRadius: 10,
+              elevation: 4,
+              opacity: rating === 0 ? 0.55 : 1,
+            }}
+          >
+            <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '800' }}>
+              Submit Rating
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={onLater}
+            activeOpacity={0.75}
+            style={{
+              width: '100%',
+              paddingVertical: 12,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ color: C.textSub, fontSize: 13, fontWeight: '700' }}>
+              Maybe Later
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    </View>
+  );
+}
+
 interface SlideData {
   step: number;
   title: string;
@@ -1002,6 +1142,8 @@ export default function OnboardingScreen() {
 
   const [userName, setUserName] = useState('');
   const [userGoal, setUserGoal] = useState<GoalOption | null>(null);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [rating, setRating] = useState(0);
 
   const { setOnboardingComplete, setProfile } = useAppStore();
   const { width, height } = useWindowDimensions();
@@ -1151,7 +1293,7 @@ export default function OnboardingScreen() {
         userGoal: userGoal || 'none',
       });
       setOnboardingComplete(true);
-      router.replace('/paywall');
+      setShowRatingModal(true);
     }
   };
 
@@ -1283,7 +1425,7 @@ export default function OnboardingScreen() {
                   "Hi! I'm FixBite. What should I call you?",
                   "What's your #1 health & food goal right now?",
                   "Not all food is equal! We decode processing & grades.",
-                  "Surprise! 1 soda has 9.3 teaspoons of hidden sugar!",
+                  "Surprise! 1 soda has 9.3 teaspoons of sugar!",
                   "Synthetic dyes & petroleum preservatives hide on labels!",
                   "Emulsifiers strip away your protective gut barrier!",
                   "Don't just restrict—swap bad foods for clean upgrades!"
@@ -1393,6 +1535,23 @@ export default function OnboardingScreen() {
           </View>
         </View>
       </ScrollView>
+      {showRatingModal && (
+        <RatingModal
+          C={C}
+          isDark={isDark}
+          rating={rating}
+          setRating={setRating}
+          onSubmit={() => {
+            setShowRatingModal(false);
+            router.replace('/auth');
+          }}
+          onLater={() => {
+            setShowRatingModal(false);
+            router.replace('/auth');
+          }}
+          width={width}
+        />
+      )}
     </KeyboardAvoidingView>
   );
 }

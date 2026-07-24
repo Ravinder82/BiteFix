@@ -95,7 +95,7 @@ export default function AuthScreen() {
       Alert.alert(
         'Success',
         'Signed in with Google successfully!',
-        [{ text: 'Continue', onPress: () => router.replace('/(tabs)') }]
+        [{ text: 'Continue', onPress: () => router.replace('/paywall') }]
       );
     } catch (error: any) {
       console.error('Google Sign-In Error:', error);
@@ -145,7 +145,7 @@ export default function AuthScreen() {
       Alert.alert(
         'Success',
         'Signed in with Apple successfully!',
-        [{ text: 'Continue', onPress: () => router.replace('/(tabs)') }]
+        [{ text: 'Continue', onPress: () => router.replace('/paywall') }]
       );
     } catch (error: any) {
       console.error('Apple Sign-In Error:', error);
@@ -179,14 +179,14 @@ export default function AuthScreen() {
         Alert.alert(
           'Success',
           'Signed in successfully!',
-          [{ text: 'Continue', onPress: () => router.replace('/(tabs)') }]
+          [{ text: 'Continue', onPress: () => router.replace('/paywall') }]
         );
       } else {
         await signUpWithEmail(email.trim(), password, displayName.trim());
         Alert.alert(
           'Account Created',
           `Welcome to FixBite, ${displayName.trim()}! Your account has been successfully created.`,
-          [{ text: 'Get Started', onPress: () => router.replace('/(tabs)') }]
+          [{ text: 'Get Started', onPress: () => router.replace('/paywall') }]
         );
       }
     } catch (error: any) {
