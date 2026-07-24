@@ -1149,9 +1149,8 @@ function SwapPokerCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: bo
   const isShort = height < 700;
 
   // Responsive dimensions - 50%+ size increase
-  const cardH = isShort ? 240 : 290;
-  const containerH = isShort ? 270 : 320;
-  const imgSize = isShort ? cardW * 0.26 : cardW * 0.34;
+  const cardH = isShort ? 230 : 280;
+  const containerH = isShort ? 295 : 345;
   
   // Animation values for interactive fanning
   const badScale = useSharedValue(0.9);
@@ -1206,9 +1205,14 @@ function SwapPokerCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: bo
     zIndex: goodZIndex.value,
   }));
 
+  const handleSwap = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setActiveCard(prev => prev === 'good' ? 'bad' : 'good');
+  };
+
   return (
     <View style={{ width: cardW, height: containerH, justifyContent: 'center', alignItems: 'center' }}>
-      <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'center', alignItems: 'center', position: 'relative', height: cardH + 20 }}>
+      <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'center', alignItems: 'center', position: 'relative', height: cardH + 10 }}>
         
         {/* Left Card: Bad Option (Sweet Ketchup) */}
         <Animated.View
@@ -1221,45 +1225,51 @@ function SwapPokerCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: bo
               borderRadius: 22,
               borderWidth: 2,
               borderColor: activeCard === 'bad' ? C.red : C.cardBorder,
-              padding: 12,
-              justifyContent: 'space-between',
-              alignItems: 'center',
               shadowColor: '#000',
               shadowOffset: { width: -4, height: 8 },
               shadowOpacity: isDark ? 0.4 : 0.08,
               shadowRadius: 14,
               elevation: 4,
+              overflow: 'hidden',
             },
             badCardStyle,
           ]}
         >
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              setActiveCard('bad');
+          {/* Full Card Background Image */}
+          <Image
+            source={require('../../../assets/unhealthy_ketchup.png')}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+          />
+          {/* Subtle Dark Overlay */}
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.18)' }]} />
+
+          {/* Top pill badge */}
+          <View style={{ position: 'absolute', top: 10, left: 10, backgroundColor: 'rgba(230, 51, 18, 0.9)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 8.5, fontWeight: '900', letterSpacing: 0.5 }}>HIGH SUGAR</Text>
+          </View>
+
+          {/* Frosted Glass Footer */}
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 8,
+              left: 8,
+              right: 8,
+              backgroundColor: isDark ? 'rgba(30, 30, 30, 0.92)' : 'rgba(255, 255, 255, 0.92)',
+              borderRadius: 14,
+              padding: 8,
+              borderWidth: 1,
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+              alignItems: 'center',
             }}
-            style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'space-between' }}
           >
-            <View style={{ backgroundColor: C.red + '15', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
-              <Text style={{ color: C.red, fontSize: 9, fontWeight: '900', letterSpacing: 0.5 }}>HIGH SUGAR</Text>
-            </View>
-
-            {/* High-quality Product Image */}
-            <Image
-              source={require('../../../assets/unhealthy_ketchup.png')}
-              style={{ width: imgSize, height: imgSize, borderRadius: 12, marginVertical: 4 }}
-              resizeMode="contain"
-            />
-
-            <View style={{ alignItems: 'center', width: '100%' }}>
-              <Text style={{ color: C.text, fontSize: 12, fontWeight: '800', textAlign: 'center' }} numberOfLines={1}>
-                Sweet Ketchup
-              </Text>
-              <Text style={{ color: C.red, fontSize: 14, fontWeight: '900', marginTop: 1 }}>6.4 tsp sugar</Text>
-              <Text style={{ color: C.textMuted, fontSize: 9, fontWeight: '700', marginTop: 1, textAlign: 'center' }}>NOVA 4 • Ultra-Processed</Text>
-            </View>
-          </TouchableOpacity>
+            <Text style={{ color: C.text, fontSize: 11, fontWeight: '800', textAlign: 'center' }} numberOfLines={1}>
+              Sweet Ketchup
+            </Text>
+            <Text style={{ color: C.red, fontSize: 13, fontWeight: '900', marginTop: 1 }}>6.4 tsp sugar</Text>
+            <Text style={{ color: C.textSub, fontSize: 8, fontWeight: '700', marginTop: 1, textAlign: 'center' }}>NOVA 4 • Ultra-Processed</Text>
+          </View>
         </Animated.View>
 
         {/* Right Card: Clean Option (Tomato Purée) */}
@@ -1273,58 +1283,87 @@ function SwapPokerCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: bo
               borderRadius: 22,
               borderWidth: 2,
               borderColor: activeCard === 'good' ? C.green : C.cardBorder,
-              padding: 12,
-              justifyContent: 'space-between',
-              alignItems: 'center',
               shadowColor: '#000',
               shadowOffset: { width: 4, height: 8 },
               shadowOpacity: isDark ? 0.4 : 0.08,
               shadowRadius: 14,
               elevation: 5,
+              overflow: 'hidden',
             },
             goodCardStyle,
           ]}
         >
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              setActiveCard('good');
+          {/* Full Card Background Image */}
+          <Image
+            source={require('../../../assets/healthy_tomato_puree.png')}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+          />
+          {/* Subtle Dark Overlay */}
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.18)' }]} />
+
+          {/* Top pill badge */}
+          <View style={{ position: 'absolute', top: 10, left: 10, backgroundColor: 'rgba(0, 139, 80, 0.95)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 8.5, fontWeight: '900', letterSpacing: 0.5 }}>100% CLEAN</Text>
+          </View>
+
+          {/* Frosted Glass Footer */}
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 8,
+              left: 8,
+              right: 8,
+              backgroundColor: isDark ? 'rgba(30, 30, 30, 0.92)' : 'rgba(255, 255, 255, 0.92)',
+              borderRadius: 14,
+              padding: 8,
+              borderWidth: 1,
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+              alignItems: 'center',
             }}
-            style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'space-between' }}
           >
-            <View style={{ backgroundColor: C.green + '15', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
-              <Text style={{ color: C.green, fontSize: 9, fontWeight: '900', letterSpacing: 0.5 }}>100% CLEAN</Text>
+            <Text style={{ color: C.text, fontSize: 11, fontWeight: '800', textAlign: 'center' }} numberOfLines={1}>
+              Tomato Purée
+            </Text>
+            <Text style={{ color: C.green, fontSize: 13, fontWeight: '900', marginTop: 1 }}>0.5 tsp sugar</Text>
+            <Text style={{ color: C.green, fontSize: 8, fontWeight: '800', marginTop: 1, textAlign: 'center' }}>NOVA 1 • Unprocessed</Text>
+          </View>
+
+          {/* Glowing Zap Swap indicator */}
+          {activeCard === 'good' && (
+            <View style={{ position: 'absolute', top: -12, right: -12, width: 28, height: 28, borderRadius: 14, backgroundColor: C.amber, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF', shadowColor: C.amber, shadowOpacity: 0.5, shadowRadius: 4 }}>
+              <Zap size={14} color="#FFFFFF" />
             </View>
-
-            {/* High-quality Product Image */}
-            <Image
-              source={require('../../../assets/healthy_tomato_puree.png')}
-              style={{ width: imgSize, height: imgSize, borderRadius: 12, marginVertical: 4 }}
-              resizeMode="contain"
-            />
-
-            <View style={{ alignItems: 'center', width: '100%' }}>
-              <Text style={{ color: C.text, fontSize: 12, fontWeight: '800', textAlign: 'center' }} numberOfLines={1}>
-                Tomato Purée
-              </Text>
-              <Text style={{ color: C.green, fontSize: 14, fontWeight: '900', marginTop: 1 }}>0.5 tsp sugar</Text>
-              <Text style={{ color: C.green, fontSize: 9, fontWeight: '800', marginTop: 1, textAlign: 'center' }}>NOVA 1 • Unprocessed</Text>
-            </View>
-
-            {/* Glowing Zap Swap indicator */}
-            {activeCard === 'good' && (
-              <View style={{ position: 'absolute', top: -12, right: -12, width: 28, height: 28, borderRadius: 14, backgroundColor: C.amber, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF', shadowColor: C.amber, shadowOpacity: 0.5, shadowRadius: 4 }}>
-                <Zap size={14} color="#FFFFFF" />
-              </View>
-            )}
-          </TouchableOpacity>
+          )}
         </Animated.View>
 
       </View>
-      <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600', marginTop: isShort ? 6 : 10, textAlign: 'center' }}>
-        💡 Tap a card to inspect and compare ingredients
-      </Text>
+
+      {/* Swap Trigger Button */}
+      <TouchableOpacity
+        activeOpacity={0.88}
+        onPress={handleSwap}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 6,
+          backgroundColor: activeCard === 'good' ? C.green : C.amber,
+          paddingHorizontal: 20,
+          paddingVertical: 10,
+          borderRadius: 20,
+          marginTop: 14,
+          shadowColor: activeCard === 'good' ? C.green : C.amber,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.35,
+          shadowRadius: 8,
+          elevation: 3,
+        }}
+      >
+        <RefreshCw size={14} color="#FFFFFF" />
+        <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '800', letterSpacing: 0.3 }}>
+          Swap Product!
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
