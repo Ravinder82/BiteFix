@@ -1372,67 +1372,156 @@ function SwapPokerCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: bo
 // ─────────────────────────────────────────────────────────
 // SLIDE 6 BODY: Instant 4-in-1 Scan Results Summary Card
 // ─────────────────────────────────────────────────────────
-function InstantResultSummaryCard({ cardW, C }: { cardW: number; C: any }) {
+function InstantResultSummaryCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: boolean }) {
+  // Staggered entry animation values
+  const scale1 = useSharedValue(0.4);
+  const opacity1 = useSharedValue(0);
+  const scale2 = useSharedValue(0.4);
+  const opacity2 = useSharedValue(0);
+  const scale3 = useSharedValue(0.4);
+  const opacity3 = useSharedValue(0);
+  const scale4 = useSharedValue(0.4);
+  const opacity4 = useSharedValue(0);
+  const scale5 = useSharedValue(0.4);
+  const opacity5 = useSharedValue(0);
+  const scale6 = useSharedValue(0.4);
+  const opacity6 = useSharedValue(0);
+
+  useEffect(() => {
+    const config = { damping: 14, stiffness: 120 };
+    
+    scale1.value = withDelay(0, withSpring(1, config));
+    opacity1.value = withDelay(0, withTiming(1, { duration: 250 }));
+
+    scale2.value = withDelay(80, withSpring(1, config));
+    opacity2.value = withDelay(80, withTiming(1, { duration: 250 }));
+
+    scale3.value = withDelay(160, withSpring(1, config));
+    opacity3.value = withDelay(160, withTiming(1, { duration: 250 }));
+
+    scale4.value = withDelay(240, withSpring(1, config));
+    opacity4.value = withDelay(240, withTiming(1, { duration: 250 }));
+
+    scale5.value = withDelay(320, withSpring(1, config));
+    opacity5.value = withDelay(320, withTiming(1, { duration: 250 }));
+
+    scale6.value = withDelay(400, withSpring(1, config));
+    opacity6.value = withDelay(400, withTiming(1, { duration: 250 }));
+  }, []);
+
+  const item1Style = useAnimatedStyle(() => ({ transform: [{ scale: scale1.value }], opacity: opacity1.value }));
+  const item2Style = useAnimatedStyle(() => ({ transform: [{ scale: scale2.value }], opacity: opacity2.value }));
+  const item3Style = useAnimatedStyle(() => ({ transform: [{ scale: scale3.value }], opacity: opacity3.value }));
+  const item4Style = useAnimatedStyle(() => ({ transform: [{ scale: scale4.value }], opacity: opacity4.value }));
+  const item5Style = useAnimatedStyle(() => ({ transform: [{ scale: scale5.value }], opacity: opacity5.value }));
+  const item6Style = useAnimatedStyle(() => ({ transform: [{ scale: scale6.value }], opacity: opacity6.value }));
+
+  // Luxury Gold theme colors
+  const gold = '#D4AF37';
+
+  const features = [
+    {
+      title: 'NOVA Class',
+      desc: 'Processing level audit',
+      icon: <Activity size={16} color="#FF9500" />,
+      bg: 'rgba(255, 149, 0, 0.08)',
+      style: item1Style,
+    },
+    {
+      title: 'Nutri-Score',
+      desc: 'Traffic light grade',
+      icon: <Sparkles size={16} color="#34C759" />,
+      bg: 'rgba(52, 199, 89, 0.08)',
+      style: item2Style,
+    },
+    {
+      title: 'Gut Shield',
+      desc: 'Barrier erosion alert',
+      icon: <ShieldAlert size={16} color="#FF3B30" />,
+      bg: 'rgba(255, 59, 48, 0.08)',
+      style: item3Style,
+    },
+    {
+      title: 'Dye Detective',
+      desc: 'Synthetic dye checks',
+      icon: <Search size={16} color="#AF52DE" />,
+      bg: 'rgba(175, 82, 222, 0.08)',
+      style: item4Style,
+    },
+    {
+      title: 'Hidden Sugar',
+      desc: 'Teaspoon daily limit',
+      icon: <Zap size={16} color="#FFCC00" />,
+      bg: 'rgba(255, 204, 0, 0.08)',
+      style: item5Style,
+    },
+    {
+      title: 'Smart Swaps',
+      desc: 'A-Grade clean match',
+      icon: <RefreshCw size={16} color="#007AFF" />,
+      bg: 'rgba(0, 122, 255, 0.08)',
+      style: item6Style,
+    },
+  ];
+
   return (
     <View
       style={{
         width: cardW,
-        backgroundColor: C.card,
-        borderRadius: 22,
-        borderWidth: 1.5,
-        borderColor: C.cardBorder,
+        backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+        borderRadius: 24,
+        borderWidth: 2,
+        borderColor: gold,
         padding: 16,
         gap: 12,
+        shadowColor: gold,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.16,
+        shadowRadius: 24,
+        elevation: 8,
       }}
     >
-      <Text style={{ color: C.text, fontSize: 12, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8, textAlign: 'center' }}>
-        Instant 4-in-1 Scan Deliverables
-      </Text>
+      {/* Premium Luxury Header */}
+      <View style={{ alignItems: 'center', gap: 4 }}>
+        <Text style={{ color: gold, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.5 }}>
+          Exclusive 6-in-1 Scanner
+        </Text>
+        <Text style={{ color: C.text, fontSize: 15, fontWeight: '900', textAlign: 'center' }}>
+          Scan Once. Unlock Everything.
+        </Text>
+      </View>
 
-      <View style={{ gap: 8 }}>
-        {/* Item 1: NOVA Class */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.cardInner, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: C.cardBorder }}>
-          <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: C.amberLight, alignItems: 'center', justifyContent: 'center' }}>
-            <Activity size={18} color={C.amber} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: C.text, fontSize: 12, fontWeight: '800' }}>NOVA Industrial Classification</Text>
-            <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '500' }}>Grades 1 (Whole Food) to 4 (Ultra-Processed)</Text>
-          </View>
-        </View>
-
-        {/* Item 2: Nutri-Score */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.cardInner, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: C.cardBorder }}>
-          <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: C.greenLight, alignItems: 'center', justifyContent: 'center' }}>
-            <Sparkles size={18} color={C.green} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: C.text, fontSize: 12, fontWeight: '800' }}>Nutri-Score Rating</Text>
-            <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '500' }}>A-E Traffic Light Nutritional Quality Audit</Text>
-          </View>
-        </View>
-
-        {/* Item 3: Gut Health Disruptors */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.cardInner, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: C.cardBorder }}>
-          <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: C.redLight, alignItems: 'center', justifyContent: 'center' }}>
-            <ShieldAlert size={18} color={C.red} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: C.text, fontSize: 12, fontWeight: '800' }}>Gut Health Disruptors Audit</Text>
-            <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '500' }}>Emulsifiers & Synthetic Dye Alert System</Text>
-          </View>
-        </View>
-
-        {/* Item 4: Hidden Sugar */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.cardInner, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: C.cardBorder }}>
-          <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: C.amberLight, alignItems: 'center', justifyContent: 'center' }}>
-            <Zap size={18} color={C.amber} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: C.text, fontSize: 12, fontWeight: '800' }}>Hidden Sugar in Teaspoons</Text>
-            <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '500' }}>Exact TSP metrics & WHO daily limit gauges</Text>
-          </View>
-        </View>
+      {/* 2-Column Luxury Feature Grid */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10 }}>
+        {features.map((item, idx) => (
+          <Animated.View
+            key={idx}
+            style={[
+              {
+                width: (cardW - 42) / 2,
+                backgroundColor: C.cardInner,
+                borderRadius: 16,
+                borderWidth: 1.2,
+                borderColor: C.cardBorder,
+                padding: 10,
+                gap: 6,
+              },
+              item.style,
+            ]}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={{ width: 26, height: 26, borderRadius: 8, backgroundColor: item.bg, alignItems: 'center', justifyContent: 'center' }}>
+                {item.icon}
+              </View>
+              <Text style={{ color: C.text, fontSize: 11, fontWeight: '800' }} numberOfLines={1}>
+                {item.title}
+              </Text>
+            </View>
+            <Text style={{ color: C.textSub, fontSize: 9, fontWeight: '500', lineHeight: 12 }}>
+              {item.desc}
+            </Text>
+          </Animated.View>
+        ))}
       </View>
     </View>
   );
@@ -1638,7 +1727,7 @@ const SLIDES: SlideData[] = [
     step: 6,
     title: 'Instant Scan Intelligence',
     highlight: 'Scan Intelligence',
-    subtitle: 'Get instant Nova Class, Nutri-Score, Gut Disruptors & Sugar in teaspoons.',
+    subtitle: '',
     buttonLabel: 'Get Started',
     isLast: true,
     mascotState: 'happy',
@@ -2017,7 +2106,7 @@ export default function OnboardingScreen() {
               <SwapPokerCard cardW={cardW} C={C} isDark={isDark} />
             )}
             {currentCardIndex === 5 && (
-              <InstantResultSummaryCard cardW={cardW} C={C} />
+              <InstantResultSummaryCard cardW={cardW} C={C} isDark={isDark} />
             )}
           </Animated.View>
 
