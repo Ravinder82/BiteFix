@@ -126,27 +126,6 @@ export default function PaywallScreen() {
           >
             <X size={18} color={colors.text} />
           </TouchableOpacity>
-
-          {/* Pass to Home Screen UI Test button */}
-          <TouchableOpacity
-            onPress={handlePassToHome}
-            style={{
-              backgroundColor: colors.success + '15',
-              borderWidth: 1.5,
-              borderColor: colors.success,
-              paddingHorizontal: 14,
-              paddingVertical: 7,
-              borderRadius: 20,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <Text style={{ color: colors.success, fontSize: 12, fontWeight: '900' }}>
-              Pass to Home
-            </Text>
-            <ArrowRight size={14} color={colors.success} />
-          </TouchableOpacity>
         </View>
 
         {/* ── Mascot & Title Banner ── */}
