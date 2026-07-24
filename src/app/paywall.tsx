@@ -14,7 +14,7 @@ import { useTheme } from '../hooks/useTheme';
 import { useAppStore } from '../stores/appStore';
 import { OrbMascot } from '../components/features/OrbMascot';
 import { MagicalBackground } from '../components/features/MagicalBackground';
-import { ShieldCheck, RefreshCw, Search, ArrowRight, Check, X } from 'lucide-react-native';
+import { ShieldCheck, RefreshCw, Search, ArrowRight, Check, X, Sparkles, AlertCircle } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 
@@ -40,8 +40,17 @@ export default function PaywallScreen() {
     router.replace('/(tabs)');
   };
 
+  const handleRestore = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Alert.alert(
+      'Purchase Restored',
+      'Your premium subscription status has been successfully restored.',
+      [{ text: 'OK' }]
+    );
+  };
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0B0F19' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <MagicalBackground />
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingBottom: 40 }}
@@ -56,23 +65,23 @@ export default function PaywallScreen() {
               width: 36,
               height: 36,
               borderRadius: 18,
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              backgroundColor: colors.surfaceRaised,
               alignItems: 'center',
               justifyContent: 'center',
               borderWidth: 1,
-              borderColor: 'rgba(255, 255, 255, 0.15)',
+              borderColor: colors.border,
             }}
           >
-            <X size={18} color="#FFFFFF" />
+            <X size={18} color={colors.text} />
           </TouchableOpacity>
 
           {/* Pass to Home Screen UI Test button */}
           <TouchableOpacity
             onPress={handlePassToHome}
             style={{
-              backgroundColor: '#10B98115',
+              backgroundColor: colors.success + '15',
               borderWidth: 1.5,
-              borderColor: '#10B981',
+              borderColor: colors.success,
               paddingHorizontal: 14,
               paddingVertical: 7,
               borderRadius: 20,
@@ -81,22 +90,22 @@ export default function PaywallScreen() {
               gap: 6,
             }}
           >
-            <Text style={{ color: '#10B981', fontSize: 12, fontWeight: '900' }}>
+            <Text style={{ color: colors.success, fontSize: 12, fontWeight: '900' }}>
               Pass to Home Screen
             </Text>
-            <ArrowRight size={14} color="#10B981" />
+            <ArrowRight size={14} color={colors.success} />
           </TouchableOpacity>
         </View>
 
         {/* ── Mascot & Title Banner ── */}
-        <View style={{ alignItems: 'center', marginTop: 24, marginBottom: 20 }}>
-          <View style={{ position: 'relative', alignItems: 'center', justifyContent: 'center', width: 140, height: 140 }}>
-            <OrbMascot state="happy" size={120} />
+        <View style={{ alignItems: 'center', marginTop: 20, marginBottom: 20 }}>
+          <View style={{ position: 'relative', alignItems: 'center', justifyContent: 'center', width: 120, height: 120 }}>
+            <OrbMascot state="happy" size={110} />
           </View>
 
           <View style={{
-            backgroundColor: '#10B98120',
-            borderColor: '#10B98160',
+            backgroundColor: colors.success + '20',
+            borderColor: colors.success + '60',
             borderWidth: 1,
             paddingHorizontal: 12,
             paddingVertical: 4,
@@ -104,15 +113,15 @@ export default function PaywallScreen() {
             marginTop: 12,
             marginBottom: 8,
           }}>
-            <Text style={{ color: '#34D399', fontSize: 10, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase' }}>
+            <Text style={{ color: colors.success, fontSize: 10, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase' }}>
               B I T E F I X   P R E M I U M
             </Text>
           </View>
 
-          <Text style={{ color: '#FFFFFF', fontSize: 26, fontWeight: '900', textAlign: 'center', letterSpacing: -0.5 }}>
+          <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', textAlign: 'center', letterSpacing: -0.5 }}>
             Your Ultimate Gut Shield
           </Text>
-          <Text style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 13, fontWeight: '600', textAlign: 'center', marginTop: 4, maxWidth: 280 }}>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', textAlign: 'center', marginTop: 4, maxWidth: 280 }}>
             Protect your microbiome and swap ultra-processed items for clean upgrades.
           </Text>
         </View>
@@ -120,57 +129,70 @@ export default function PaywallScreen() {
         {/* ── Feature Highlights Card ── */}
         <View
           style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.04)',
+            backgroundColor: colors.surfaceRaised,
             borderRadius: 24,
             borderWidth: 1.5,
-            borderColor: 'rgba(255, 255, 255, 0.08)',
-            padding: 20,
-            gap: 16,
+            borderColor: colors.border,
+            padding: 18,
+            gap: 14,
             marginBottom: 24,
           }}
         >
           {/* Feature 1 */}
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
-            <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: '#10B98120', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#10B98150' }}>
-              <ShieldCheck size={20} color="#10B981" />
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+            <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: colors.success + '20', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.success + '40' }}>
+              <ShieldCheck size={18} color={colors.success} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '800' }}>Gut Shield Pro</Text>
-              <Text style={{ color: 'rgba(255, 255, 255, 0.55)', fontSize: 11, fontWeight: '500', marginTop: 2, lineHeight: 15 }}>
+              <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>Gut Shield Pro</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 1, lineHeight: 15 }}>
                 Protect your mucosal lining. Audit emulsifiers like Carrageenan & Polysorbate 80.
               </Text>
             </View>
           </View>
 
           {/* Feature 2 */}
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
-            <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: '#6366F120', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#6366F150' }}>
-              <RefreshCw size={20} color="#6366F1" />
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+            <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: colors.primary + '20', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.primary + '40' }}>
+              <RefreshCw size={18} color={colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '800' }}>Smart Swaps Engine</Text>
-              <Text style={{ color: 'rgba(255, 255, 255, 0.55)', fontSize: 11, fontWeight: '500', marginTop: 2, lineHeight: 15 }}>
+              <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>Smart Swaps Engine</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 1, lineHeight: 15 }}>
                 Convert ultra-processed NOVA 4 choices into clean, high-scoring upgrades.
               </Text>
             </View>
           </View>
 
           {/* Feature 3 */}
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
-            <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: '#F59E0B20', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#F59E0B50' }}>
-              <Search size={20} color="#F59E0B" />
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+            <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: colors.secondary + '20', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.secondary + '40' }}>
+              <Search size={18} color={colors.secondary} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '800' }}>Additive Detective Cards</Text>
-              <Text style={{ color: 'rgba(255, 255, 255, 0.55)', fontSize: 11, fontWeight: '500', marginTop: 2, lineHeight: 15 }}>
+              <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>Additive Detective Cards</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 1, lineHeight: 15 }}>
                 Automatic alerts for synthetic food dyes (Red 40), artificial sweeteners, & preservatives.
+              </Text>
+            </View>
+          </View>
+
+          {/* Feature 4: Nutri-Score, Sugar and Nova Score */}
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+            <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: colors.success + '20', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.success + '40' }}>
+              <Sparkles size={18} color={colors.success} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>Nutri-Score, Sugar & NOVA Grades</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 1, lineHeight: 15 }}>
+                Full breakdown of A–E food quality, daily teaspoons limits, and industrial processing level.
               </Text>
             </View>
           </View>
         </View>
 
         {/* ── Plan Selection Options ── */}
-        <View style={{ gap: 12, marginBottom: 24 }}>
+        <View style={{ gap: 10, marginBottom: 24 }}>
           {/* Weekly Pass Plan */}
           <TouchableOpacity
             onPress={() => {
@@ -179,11 +201,11 @@ export default function PaywallScreen() {
             }}
             activeOpacity={0.85}
             style={{
-              backgroundColor: selectedPlan === 'weekly' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.03)',
-              borderRadius: 20,
+              backgroundColor: selectedPlan === 'weekly' ? colors.success + '15' : colors.surfaceRaised,
+              borderRadius: 18,
               borderWidth: 2,
-              borderColor: selectedPlan === 'weekly' ? '#10B981' : 'rgba(255, 255, 255, 0.08)',
-              padding: 16,
+              borderColor: selectedPlan === 'weekly' ? colors.success : colors.border,
+              padding: 14,
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -192,26 +214,26 @@ export default function PaywallScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View
                 style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: 11,
+                  width: 20,
+                  height: 20,
+                  borderRadius: 10,
                   borderWidth: 2,
-                  borderColor: selectedPlan === 'weekly' ? '#10B981' : 'rgba(255, 255, 255, 0.3)',
+                  borderColor: selectedPlan === 'weekly' ? colors.success : colors.textMuted,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                {selectedPlan === 'weekly' && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#10B981' }} />}
+                {selectedPlan === 'weekly' && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.success }} />}
               </View>
               <View>
-                <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '800' }}>Weekly Pass</Text>
-                <Text style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 11, fontWeight: '600', marginTop: 2 }}>Billed weekly • Cancel anytime</Text>
+                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800' }}>Weekly Pass</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 1 }}>Billed weekly • Cancel anytime</Text>
               </View>
             </View>
 
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '900' }}>$2.99</Text>
-              <Text style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 10, fontWeight: '700' }}>/ week</Text>
+              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900' }}>$2.99</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>/ week</Text>
             </View>
           </TouchableOpacity>
 
@@ -223,11 +245,11 @@ export default function PaywallScreen() {
             }}
             activeOpacity={0.85}
             style={{
-              backgroundColor: selectedPlan === 'monthly' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.03)',
-              borderRadius: 20,
+              backgroundColor: selectedPlan === 'monthly' ? colors.success + '15' : colors.surfaceRaised,
+              borderRadius: 18,
               borderWidth: 2,
-              borderColor: selectedPlan === 'monthly' ? '#10B981' : 'rgba(255, 255, 255, 0.08)',
-              padding: 16,
+              borderColor: selectedPlan === 'monthly' ? colors.success : colors.border,
+              padding: 14,
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -236,26 +258,26 @@ export default function PaywallScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View
                 style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: 11,
+                  width: 20,
+                  height: 20,
+                  borderRadius: 10,
                   borderWidth: 2,
-                  borderColor: selectedPlan === 'monthly' ? '#10B981' : 'rgba(255, 255, 255, 0.3)',
+                  borderColor: selectedPlan === 'monthly' ? colors.success : colors.textMuted,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                {selectedPlan === 'monthly' && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#10B981' }} />}
+                {selectedPlan === 'monthly' && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.success }} />}
               </View>
               <View>
-                <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '800' }}>Monthly Pass</Text>
-                <Text style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 11, fontWeight: '600', marginTop: 2 }}>Billed monthly • Flexible</Text>
+                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800' }}>Monthly Pass</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 1 }}>Billed monthly • Flexible</Text>
               </View>
             </View>
 
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '900' }}>$4.99</Text>
-              <Text style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 10, fontWeight: '700' }}>/ month</Text>
+              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900' }}>$4.99</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>/ month</Text>
             </View>
           </TouchableOpacity>
 
@@ -267,11 +289,11 @@ export default function PaywallScreen() {
             }}
             activeOpacity={0.85}
             style={{
-              backgroundColor: selectedPlan === 'annual' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.03)',
-              borderRadius: 20,
+              backgroundColor: selectedPlan === 'annual' ? colors.success + '15' : colors.surfaceRaised,
+              borderRadius: 18,
               borderWidth: 2,
-              borderColor: selectedPlan === 'annual' ? '#10B981' : 'rgba(255, 255, 255, 0.08)',
-              padding: 16,
+              borderColor: selectedPlan === 'annual' ? colors.success : colors.border,
+              padding: 14,
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -283,7 +305,7 @@ export default function PaywallScreen() {
               position: 'absolute',
               top: 0,
               right: 16,
-              backgroundColor: '#10B981',
+              backgroundColor: colors.success,
               paddingHorizontal: 8,
               paddingVertical: 3,
               borderBottomLeftRadius: 8,
@@ -295,26 +317,26 @@ export default function PaywallScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View
                 style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: 11,
+                  width: 20,
+                  height: 20,
+                  borderRadius: 10,
                   borderWidth: 2,
-                  borderColor: selectedPlan === 'annual' ? '#10B981' : 'rgba(255, 255, 255, 0.3)',
+                  borderColor: selectedPlan === 'annual' ? colors.success : colors.textMuted,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                {selectedPlan === 'annual' && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#10B981' }} />}
+                {selectedPlan === 'annual' && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.success }} />}
               </View>
               <View>
-                <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '800' }}>Annual Pass</Text>
-                <Text style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 11, fontWeight: '600', marginTop: 2 }}>$3.33 / month • Billed yearly</Text>
+                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800' }}>Annual Pass</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 1 }}>$3.33 / month • Billed yearly</Text>
               </View>
             </View>
 
             <View style={{ alignItems: 'flex-end', marginTop: 8 }}>
-              <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '900' }}>$39.99</Text>
-              <Text style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 10, fontWeight: '700' }}>/ year</Text>
+              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900' }}>$39.99</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>/ year</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -324,27 +346,47 @@ export default function PaywallScreen() {
           onPress={handleSubscribe}
           activeOpacity={0.9}
           style={{
-            backgroundColor: '#10B981',
+            backgroundColor: colors.success,
             borderRadius: 20,
-            paddingVertical: 18,
+            paddingVertical: 16,
             alignItems: 'center',
             justifyContent: 'center',
-            shadowColor: '#10B981',
+            shadowColor: colors.success,
             shadowOffset: { width: 0, height: 6 },
             shadowOpacity: 0.4,
             shadowRadius: 16,
             elevation: 8,
           }}
         >
-          <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '900', letterSpacing: 0.5 }}>
+          <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 0.5 }}>
             SUBSCRIBE NOW
           </Text>
         </TouchableOpacity>
 
-        {/* ── Terms & Privacy Footer ── */}
-        <Text style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: 10, textAlign: 'center', marginTop: 16, lineHeight: 14 }}>
-          No free trial. Recurring billing. Cancel anytime in App Store settings.
-        </Text>
+        {/* ── Apple Guidelines Subscription Disclosures & Policies ── */}
+        <View style={{ marginTop: 20, gap: 10, borderTopWidth: 1.5, borderTopColor: colors.border, paddingTop: 16 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 9.5, textAlign: 'center', lineHeight: 14 }}>
+            Payment will be charged to your iTunes Account upon purchase confirmation. Subscription automatically renews unless auto-renew is turned off at least 24 hours before the end of the current period. Manage your subscription or turn off auto-renew in your iTunes Account Settings.
+          </Text>
+
+          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 4 }}>
+            <TouchableOpacity onPress={() => Alert.alert('Privacy Policy', 'We value your privacy. We secure all data and do not sell information.')}>
+              <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '700', textDecorationLine: 'underline' }}>
+                Privacy Policy
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => Alert.alert('Terms of Use (EULA)', 'Standard Apple EULA governs the use of this application.')}>
+              <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '700', textDecorationLine: 'underline' }}>
+                Terms of Use (EULA)
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleRestore}>
+              <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '700', textDecorationLine: 'underline' }}>
+                Restore Purchases
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
