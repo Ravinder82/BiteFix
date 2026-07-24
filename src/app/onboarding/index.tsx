@@ -338,140 +338,181 @@ function GoalCard({
 // SLIDE 3 BODY: NOVA & Nutri-Score Visual Card
 // ─────────────────────────────────────────────────────────
 function NovaNutriScoreDemoCard({ cardW, C }: { cardW: number; C: any }) {
-  const novaScale = useSharedValue(0.4);
-  const novaOpacity = useSharedValue(0);
-  const nutriScale = useSharedValue(0.4);
-  const nutriOpacity = useSharedValue(0);
+  const [activeTab, setActiveTab] = useState<'nova' | 'nutri'>('nova');
+  const slideAnim = useSharedValue(0);
 
   useEffect(() => {
-    // Nova card pops out first
-    novaScale.value = withSpring(1, { damping: 12, stiffness: 120 });
-    novaOpacity.value = withTiming(1, { duration: 300 });
+    slideAnim.value = withSpring(activeTab === 'nova' ? 0 : 1, { damping: 15, stiffness: 120 });
+  }, [activeTab]);
 
-    // Nutri-Score card pops out with a 250ms delay
-    nutriScale.value = withDelay(250, withSpring(1, { damping: 12, stiffness: 120 }));
-    nutriOpacity.value = withDelay(250, withTiming(1, { duration: 300 }));
-  }, []);
+  const novaTabOpacity = useSharedValue(1);
+  const nutriTabOpacity = useSharedValue(0);
 
-  const novaStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: novaScale.value }],
-    opacity: novaOpacity.value,
+  useEffect(() => {
+    if (activeTab === 'nova') {
+      novaTabOpacity.value = withTiming(1, { duration: 180 });
+      nutriTabOpacity.value = withTiming(0, { duration: 180 });
+    } else {
+      novaTabOpacity.value = withTiming(0, { duration: 180 });
+      nutriTabOpacity.value = withTiming(1, { duration: 180 });
+    }
+  }, [activeTab]);
+
+  const novaContentStyle = useAnimatedStyle(() => ({
+    opacity: novaTabOpacity.value,
+    transform: [{ scale: withSpring(activeTab === 'nova' ? 1 : 0.95, { damping: 15 }) }],
   }));
 
-  const nutriStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: nutriScale.value }],
-    opacity: nutriOpacity.value,
+  const nutriContentStyle = useAnimatedStyle(() => ({
+    opacity: nutriTabOpacity.value,
+    transform: [{ scale: withSpring(activeTab === 'nutri' ? 1 : 0.95, { damping: 15 }) }],
+  }));
+
+  // Segmented control sliding indicator background style
+  const indicatorWidth = (cardW - 38) / 2;
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: slideAnim.value * indicatorWidth }],
   }));
 
   return (
     <View
       style={{
         width: cardW,
+        backgroundColor: C.card,
+        borderRadius: 24,
+        borderWidth: 1.5,
+        borderColor: C.cardBorder,
+        padding: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.08,
+        shadowRadius: 16,
+        elevation: 4,
         gap: 12,
+        height: 200, // Fixed height to keep spacing absolute and compact!
       }}
     >
-      {/* NOVA System UI Card */}
-      <Animated.View
-        style={[
-          {
-            backgroundColor: C.card,
-            borderRadius: 22,
-            borderWidth: 1.5,
-            borderColor: C.cardBorder,
-            padding: 16,
-            shadowColor: C.red,
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.08,
-            shadowRadius: 12,
-            elevation: 4,
-            gap: 10,
-          },
-          novaStyle,
-        ]}
+      {/* ── Segmented Control Tabs ── */}
+      <View
+        style={{
+          flexDirection: 'row',
+          backgroundColor: C.cardInner,
+          borderRadius: 14,
+          padding: 3,
+          position: 'relative',
+          width: '100%',
+          height: 38,
+          alignItems: 'center',
+          borderWidth: 1,
+          borderColor: C.cardBorder,
+        }}
       >
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ color: C.text, fontSize: 12, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            NOVA Processing Level
+        {/* Sliding Indicator Pill */}
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              width: indicatorWidth,
+              height: 30,
+              backgroundColor: C.amber,
+              borderRadius: 11,
+              left: 3,
+              shadowColor: C.amber,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.3,
+              shadowRadius: 4,
+              elevation: 2,
+            },
+            indicatorStyle,
+          ]}
+        />
+
+        {/* Tab 1 Trigger */}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setActiveTab('nova');
+          }}
+          style={{ flex: 1, height: '100%', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}
+        >
+          <Text style={{ color: activeTab === 'nova' ? '#FFFFFF' : C.textSub, fontSize: 12, fontWeight: '800' }}>
+            NOVA System
           </Text>
-          <View style={{ backgroundColor: C.redLight, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, borderWidth: 1, borderColor: C.red + '30' }}>
-            <Text style={{ color: C.red, fontSize: 9, fontWeight: '900' }}>NOVA 4</Text>
-          </View>
-        </View>
+        </TouchableOpacity>
 
-        <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '500', lineHeight: 16 }}>
-          NOVA classifies food by its degree of industrial processing. <Text style={{ color: C.red, fontWeight: '800' }}>NOVA 4</Text> indicates ultra-processed foods loaded with chemical additives, hydrogenated oils, and flavor enhancers.
-        </Text>
-
-        <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
-          <View style={{ flex: 1, backgroundColor: C.greenLight, padding: 8, borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: C.green + '20', flexDirection: 'row', gap: 6 }}>
-            <ShieldCheck size={14} color={C.green} />
-            <View>
-              <Text style={{ color: C.green, fontSize: 10, fontWeight: '900' }}>NOVA 1</Text>
-              <Text style={{ color: C.textSub, fontSize: 8, fontWeight: '700' }}>Whole Foods</Text>
-            </View>
-          </View>
-
-          <View style={{ flex: 1, backgroundColor: C.redLight, padding: 8, borderRadius: 10, alignItems: 'center', borderWidth: 1.5, borderColor: C.red, flexDirection: 'row', gap: 6 }}>
-            <AlertTriangle size={14} color={C.red} />
-            <View>
-              <Text style={{ color: C.red, fontSize: 10, fontWeight: '900' }}>NOVA 4</Text>
-              <Text style={{ color: C.red, fontSize: 8, fontWeight: '800' }}>Ultra-Processed</Text>
-            </View>
-          </View>
-        </View>
-      </Animated.View>
-
-      {/* Nutri-Score A-E Card */}
-      <Animated.View
-        style={[
-          {
-            backgroundColor: C.card,
-            borderRadius: 22,
-            borderWidth: 1.5,
-            borderColor: C.cardBorder,
-            padding: 16,
-            shadowColor: C.green,
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.08,
-            shadowRadius: 12,
-            elevation: 4,
-            gap: 10,
-          },
-          nutriStyle,
-        ]}
-      >
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ color: C.text, fontSize: 12, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            Nutri-Score Rating
+        {/* Tab 2 Trigger */}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setActiveTab('nutri');
+          }}
+          style={{ flex: 1, height: '100%', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}
+        >
+          <Text style={{ color: activeTab === 'nutri' ? '#FFFFFF' : C.textSub, fontSize: 12, fontWeight: '800' }}>
+            Nutri-Score
           </Text>
-          <View style={{ backgroundColor: C.greenLight, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, borderWidth: 1, borderColor: C.green + '30' }}>
-            <Text style={{ color: C.green, fontSize: 9, fontWeight: '900' }}>GRADE A</Text>
-          </View>
-        </View>
+        </TouchableOpacity>
+      </View>
 
-        <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '500', lineHeight: 16 }}>
-          Rates the nutritional quality of products from <Text style={{ color: C.green, fontWeight: '800' }}>A (healthy/green)</Text> to <Text style={{ color: C.red, fontWeight: '800' }}>E (unhealthy/red)</Text> based on fiber, protein, sugar, and sodium density.
-        </Text>
+      {/* ── Active Tab Content Layer ── */}
+      <View style={{ flex: 1, position: 'relative' }}>
+        {/* NOVA Tab Content */}
+        {activeTab === 'nova' && (
+          <Animated.View style={[{ width: '100%', gap: 8, position: 'absolute', top: 0, left: 0 }, novaContentStyle]}>
+            <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '500', lineHeight: 16 }}>
+              NOVA rates food by processing level. <Text style={{ color: C.red, fontWeight: '800' }}>NOVA 4</Text> indicates ultra-processed items packed with industrial chemical additives.
+            </Text>
 
-        {/* Traffic light bar */}
-        <View style={{ flexDirection: 'row', gap: 4, height: 26, alignItems: 'center', marginTop: 4 }}>
-          <View style={{ flex: 1.2, height: 26, backgroundColor: '#008B50', borderRadius: 6, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF' }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '900' }}>A</Text>
-          </View>
-          <View style={{ flex: 1, height: 20, backgroundColor: '#80BB2D', borderRadius: 4, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '800' }}>B</Text>
-          </View>
-          <View style={{ flex: 1, height: 20, backgroundColor: '#FFC900', borderRadius: 4, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '800' }}>C</Text>
-          </View>
-          <View style={{ flex: 1, height: 20, backgroundColor: '#FF8000', borderRadius: 4, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '800' }}>D</Text>
-          </View>
-          <View style={{ flex: 1, height: 20, backgroundColor: '#E63312', borderRadius: 4, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '800' }}>E</Text>
-          </View>
-        </View>
-      </Animated.View>
+            <View style={{ flexDirection: 'row', gap: 6, marginTop: 2 }}>
+              <View style={{ flex: 1, backgroundColor: C.greenLight, padding: 6, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 4 }}>
+                <ShieldCheck size={12} color={C.green} />
+                <View>
+                  <Text style={{ color: C.green, fontSize: 9, fontWeight: '900' }}>NOVA 1</Text>
+                  <Text style={{ color: C.textSub, fontSize: 8, fontWeight: '600' }}>Whole Foods</Text>
+                </View>
+              </View>
+
+              <View style={{ flex: 1, backgroundColor: C.redLight, padding: 6, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 4, borderWidth: 1, borderColor: C.red + '30' }}>
+                <AlertTriangle size={12} color={C.red} />
+                <View>
+                  <Text style={{ color: C.red, fontSize: 9, fontWeight: '900' }}>NOVA 4</Text>
+                  <Text style={{ color: C.red, fontSize: 8, fontWeight: '800' }}>Processed</Text>
+                </View>
+              </View>
+            </View>
+          </Animated.View>
+        )}
+
+        {/* Nutri-Score Tab Content */}
+        {activeTab === 'nutri' && (
+          <Animated.View style={[{ width: '100%', gap: 8, position: 'absolute', top: 0, left: 0 }, nutriContentStyle]}>
+            <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '500', lineHeight: 16 }}>
+              Rates overall nutritional quality from <Text style={{ color: C.green, fontWeight: '800' }}>A (healthy)</Text> to <Text style={{ color: C.red, fontWeight: '800' }}>E (unhealthy)</Text> based on fiber, sugar, sodium, and density.
+            </Text>
+
+            {/* Traffic Light Bar */}
+            <View style={{ flexDirection: 'row', gap: 4, height: 22, alignItems: 'center', marginTop: 4, width: '100%' }}>
+              <View style={{ flex: 1.2, height: 22, backgroundColor: '#008B50', borderRadius: 4, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#FFFFFF' }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '900' }}>A</Text>
+              </View>
+              <View style={{ flex: 1, height: 18, backgroundColor: '#80BB2D', borderRadius: 4, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '800' }}>B</Text>
+              </View>
+              <View style={{ flex: 1, height: 18, backgroundColor: '#FFC900', borderRadius: 4, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '800' }}>C</Text>
+              </View>
+              <View style={{ flex: 1, height: 18, backgroundColor: '#FF8000', borderRadius: 4, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '800' }}>D</Text>
+              </View>
+              <View style={{ flex: 1, height: 18, backgroundColor: '#E63312', borderRadius: 4, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '800' }}>E</Text>
+              </View>
+            </View>
+          </Animated.View>
+        )}
+      </View>
     </View>
   );
 }
@@ -1459,7 +1500,7 @@ const SLIDES: SlideData[] = [
     step: 4,
     title: 'Gut Health & Additives',
     highlight: 'Gut Health',
-    subtitle: 'Do you want to know how Gut Health is related to Additives?',
+    subtitle: 'How Gut Health is related to Additives?',
     buttonLabel: 'Continue',
     isLast: false,
     mascotState: 'shocked',
