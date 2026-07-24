@@ -962,100 +962,180 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
 
 
 // ─────────────────────────────────────────────────────────
-// SLIDE 4 BODY: Gut Health & Additives Question Card
+// SLIDE 4 BODY: Gut Health & Additives Demo Card (Segmented Control)
 // ─────────────────────────────────────────────────────────
-function GutAdditivesQuestionCard({
-  cardW,
-  C,
-  showModal,
-  setShowModal,
-  onNext,
-}: {
-  cardW: number;
-  C: any;
-  showModal: boolean;
-  setShowModal: (v: boolean) => void;
-  onNext: () => void;
-}) {
+function GutAdditivesDemoCard({ cardW, C }: { cardW: number; C: any }) {
+  const [activeTab, setActiveTab] = useState<'gut' | 'additives'>('gut');
+  const slideAnim = useSharedValue(0);
+
+  useEffect(() => {
+    slideAnim.value = withSpring(activeTab === 'gut' ? 0 : 1, { damping: 15, stiffness: 120 });
+  }, [activeTab]);
+
+  const gutTabOpacity = useSharedValue(1);
+  const additivesTabOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (activeTab === 'gut') {
+      gutTabOpacity.value = withTiming(1, { duration: 180 });
+      additivesTabOpacity.value = withTiming(0, { duration: 180 });
+    } else {
+      gutTabOpacity.value = withTiming(0, { duration: 180 });
+      additivesTabOpacity.value = withTiming(1, { duration: 180 });
+    }
+  }, [activeTab]);
+
+  const gutContentStyle = useAnimatedStyle(() => ({
+    opacity: gutTabOpacity.value,
+    transform: [{ scale: withSpring(activeTab === 'gut' ? 1 : 0.95, { damping: 15 }) }],
+  }));
+
+  const additivesContentStyle = useAnimatedStyle(() => ({
+    opacity: additivesTabOpacity.value,
+    transform: [{ scale: withSpring(activeTab === 'additives' ? 1 : 0.95, { damping: 15 }) }],
+  }));
+
+  // Segmented control sliding indicator background style
+  const indicatorWidth = (cardW - 38) / 2;
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: slideAnim.value * indicatorWidth }],
+  }));
+
   return (
-    <View style={{ gap: 12, width: cardW }}>
+    <View
+      style={{
+        width: cardW,
+        backgroundColor: C.card,
+        borderRadius: 24,
+        borderWidth: 1.5,
+        borderColor: C.cardBorder,
+        padding: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.08,
+        shadowRadius: 16,
+        elevation: 4,
+        gap: 12,
+        height: 200, // Fixed height to keep spacing absolute and compact!
+      }}
+    >
+      {/* ── Segmented Control Tabs ── */}
       <View
         style={{
-          backgroundColor: C.card,
-          borderRadius: 22,
-          borderWidth: 1.5,
-          borderColor: C.cardBorder,
-          padding: 16,
+          flexDirection: 'row',
+          backgroundColor: C.cardInner,
+          borderRadius: 14,
+          padding: 3,
+          position: 'relative',
+          width: '100%',
+          height: 38,
           alignItems: 'center',
-          gap: 12,
+          borderWidth: 1,
+          borderColor: C.cardBorder,
         }}
       >
-        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: C.redLight, alignItems: 'center', justifyContent: 'center' }}>
-          <AlertTriangle size={24} color={C.red} />
-        </View>
-        <Text style={{ color: C.text, fontSize: 15, fontWeight: '800', textAlign: 'center' }}>
-          Would you like to know what Gut Health & Additives mean in packaged products?
-        </Text>
-        <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '500', textAlign: 'center', lineHeight: 16 }}>
-          Discover how synthetic dyes and emulsifiers erode mucosal gut lining.
-        </Text>
+        {/* Sliding Indicator Pill */}
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              width: indicatorWidth,
+              height: 30,
+              backgroundColor: C.red,
+              borderRadius: 11,
+              left: 3,
+              shadowColor: C.red,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.3,
+              shadowRadius: 4,
+              elevation: 2,
+            },
+            indicatorStyle,
+          ]}
+        />
 
-        {/* Choice Buttons */}
-        <View style={{ flexDirection: 'row', gap: 10, width: '100%', marginTop: 4 }}>
-          <TouchableOpacity
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              setShowModal(!showModal);
-            }}
-            activeOpacity={0.85}
-            style={{
-              flex: 1,
-              backgroundColor: showModal ? C.red : C.redLight,
-              borderWidth: 1.5,
-              borderColor: C.red,
-              borderRadius: 14,
-              paddingVertical: 12,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'row',
-              gap: 6,
-            }}
-          >
-            <Check size={16} color={showModal ? '#FFFFFF' : C.red} strokeWidth={2.5} />
-            <Text style={{ color: showModal ? '#FFFFFF' : C.red, fontSize: 13, fontWeight: '800' }}>
-              {showModal ? 'Hide Details' : 'YES, Explain'}
-            </Text>
-          </TouchableOpacity>
+        {/* Tab 1 Trigger */}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setActiveTab('gut');
+          }}
+          style={{ flex: 1, height: '100%', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}
+        >
+          <Text style={{ color: activeTab === 'gut' ? '#FFFFFF' : C.textSub, fontSize: 12, fontWeight: '800' }}>
+            Gut Shield
+          </Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onNext();
-            }}
-            activeOpacity={0.85}
-            style={{
-              flex: 1,
-              backgroundColor: C.cardInner,
-              borderWidth: 1.5,
-              borderColor: C.cardBorder,
-              borderRadius: 14,
-              paddingVertical: 12,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'row',
-              gap: 6,
-            }}
-          >
-            <Text style={{ color: C.textSub, fontSize: 13, fontWeight: '800' }}>
-              NO, Next Screen
-            </Text>
-            <ArrowRight size={14} color={C.textSub} />
-          </TouchableOpacity>
-        </View>
+        {/* Tab 2 Trigger */}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setActiveTab('additives');
+          }}
+          style={{ flex: 1, height: '100%', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}
+        >
+          <Text style={{ color: activeTab === 'additives' ? '#FFFFFF' : C.textSub, fontSize: 12, fontWeight: '800' }}>
+            Additive Detective
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Expanded Modal Content if YES */}
-      {showModal && <GutShieldDemoCard cardW={cardW} C={C} />}
+      {/* ── Active Tab Content Layer ── */}
+      <View style={{ flex: 1, position: 'relative' }}>
+        {/* Gut Shield Tab Content */}
+        {activeTab === 'gut' && (
+          <Animated.View style={[{ width: '100%', gap: 8, position: 'absolute', top: 0, left: 0 }, gutContentStyle]}>
+            <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '500', lineHeight: 16 }}>
+              Gut Shield audits foods for emulsifiers (like polysorbates) and gums that wear away your intestinal lining, causing leaky gut and system inflammation.
+            </Text>
+
+            <View style={{ flexDirection: 'row', gap: 6, marginTop: 2 }}>
+              <View style={{ flex: 1, backgroundColor: C.redLight, padding: 6, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6, borderWidth: 1, borderColor: C.red + '20' }}>
+                <ShieldAlert size={14} color={C.red} />
+                <View>
+                  <Text style={{ color: C.red, fontSize: 9, fontWeight: '900' }}>42/100</Text>
+                  <Text style={{ color: C.textSub, fontSize: 8, fontWeight: '600' }}>Critical Threat</Text>
+                </View>
+              </View>
+
+              <View style={{ flex: 1.3, backgroundColor: C.cardInner, padding: 6, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: C.text, fontSize: 9, fontWeight: '800', textAlign: 'center' }}>Carrageenan Found</Text>
+                <Text style={{ color: C.textSub, fontSize: 7, fontWeight: '500', textAlign: 'center', marginTop: 1 }}>Erodes mucosal gut lining</Text>
+              </View>
+            </View>
+          </Animated.View>
+        )}
+
+        {/* Additive Detective Tab Content */}
+        {activeTab === 'additives' && (
+          <Animated.View style={[{ width: '100%', gap: 8, position: 'absolute', top: 0, left: 0 }, additivesContentStyle]}>
+            <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '500', lineHeight: 16 }}>
+              Additive Detective runs real-time optical audits on packaging ingredients lists, instantly catching synthetic food dyes, dangerous preservatives, and chemicals.
+            </Text>
+
+            <View style={{ flexDirection: 'row', gap: 6, marginTop: 2 }}>
+              <View style={{ flex: 1, backgroundColor: C.redLight, padding: 5, borderRadius: 8, alignItems: 'center', flexDirection: 'row', gap: 4, borderWidth: 1, borderColor: C.red + '20' }}>
+                <AlertTriangle size={12} color={C.red} />
+                <View>
+                  <Text style={{ color: C.text, fontSize: 8.5, fontWeight: '800' }} numberOfLines={1}>Red 40 Dye</Text>
+                  <Text style={{ color: C.textMuted, fontSize: 7 }} numberOfLines={1}>Hyperactivity risk</Text>
+                </View>
+              </View>
+
+              <View style={{ flex: 1, backgroundColor: C.redLight, padding: 5, borderRadius: 8, alignItems: 'center', flexDirection: 'row', gap: 4, borderWidth: 1, borderColor: C.red + '20' }}>
+                <AlertTriangle size={12} color={C.red} />
+                <View>
+                  <Text style={{ color: C.text, fontSize: 8.5, fontWeight: '800' }} numberOfLines={1}>Titanium Dioxide</Text>
+                  <Text style={{ color: C.red, fontSize: 7, fontWeight: '700' }} numberOfLines={1}>Banned in EU</Text>
+                </View>
+              </View>
+            </View>
+          </Animated.View>
+        )}
+      </View>
     </View>
   );
 }
@@ -1891,13 +1971,7 @@ export default function OnboardingScreen() {
               <NovaNutriScoreDemoCard cardW={cardW} C={C} />
             )}
             {currentCardIndex === 3 && (
-              <GutAdditivesQuestionCard
-                cardW={cardW}
-                C={C}
-                showModal={showGutModal}
-                setShowModal={setShowGutModal}
-                onNext={handleNext}
-              />
+              <GutAdditivesDemoCard cardW={cardW} C={C} />
             )}
             {currentCardIndex === 4 && (
               <SwapPokerCard cardW={cardW} C={C} isDark={isDark} />
