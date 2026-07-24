@@ -10,6 +10,7 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Camera } from 'expo-camera';
@@ -1023,38 +1024,45 @@ function GutAdditivesQuestionCard({
 // ─────────────────────────────────────────────────────────
 function SwapPokerCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: boolean }) {
   const [activeCard, setActiveCard] = useState<'bad' | 'good'>('good');
+  const { height } = useWindowDimensions();
+  const isShort = height < 700;
 
+  // Responsive dimensions - 50%+ size increase
+  const cardH = isShort ? 240 : 290;
+  const containerH = isShort ? 270 : 320;
+  const imgSize = isShort ? cardW * 0.26 : cardW * 0.34;
+  
   // Animation values for interactive fanning
-  const badScale = useSharedValue(0.95);
+  const badScale = useSharedValue(0.9);
   const badRotate = useSharedValue(-8);
-  const badTranslateX = useSharedValue(-25);
+  const badTranslateX = useSharedValue(-35);
   const badZIndex = useSharedValue(1);
 
-  const goodScale = useSharedValue(1.02);
-  const goodRotate = useSharedValue(8);
-  const goodTranslateX = useSharedValue(25);
+  const goodScale = useSharedValue(1.05);
+  const goodRotate = useSharedValue(4);
+  const goodTranslateX = useSharedValue(20);
   const goodZIndex = useSharedValue(2);
 
   useEffect(() => {
     if (activeCard === 'bad') {
-      badScale.value = withSpring(1.02, { damping: 12 });
-      badRotate.value = withSpring(-4, { damping: 12 });
-      badTranslateX.value = withSpring(-15, { damping: 12 });
+      badScale.value = withSpring(1.05, { damping: 12, stiffness: 90 });
+      badRotate.value = withSpring(-3, { damping: 12, stiffness: 90 });
+      badTranslateX.value = withSpring(-15, { damping: 12, stiffness: 90 });
       badZIndex.value = 2;
 
-      goodScale.value = withSpring(0.92, { damping: 12 });
-      goodRotate.value = withSpring(10, { damping: 12 });
-      goodTranslateX.value = withSpring(35, { damping: 12 });
+      goodScale.value = withSpring(0.85, { damping: 12, stiffness: 90 });
+      goodRotate.value = withSpring(12, { damping: 12, stiffness: 90 });
+      goodTranslateX.value = withSpring(50, { damping: 12, stiffness: 90 });
       goodZIndex.value = 1;
     } else {
-      badScale.value = withSpring(0.92, { damping: 12 });
-      badRotate.value = withSpring(-10, { damping: 12 });
-      badTranslateX.value = withSpring(-35, { damping: 12 });
+      badScale.value = withSpring(0.85, { damping: 12, stiffness: 90 });
+      badRotate.value = withSpring(-12, { damping: 12, stiffness: 90 });
+      badTranslateX.value = withSpring(-50, { damping: 12, stiffness: 90 });
       badZIndex.value = 1;
 
-      goodScale.value = withSpring(1.02, { damping: 12 });
-      goodRotate.value = withSpring(4, { damping: 12 });
-      goodTranslateX.value = withSpring(15, { damping: 12 });
+      goodScale.value = withSpring(1.05, { damping: 12, stiffness: 90 });
+      goodRotate.value = withSpring(3, { damping: 12, stiffness: 90 });
+      goodTranslateX.value = withSpring(15, { damping: 12, stiffness: 90 });
       goodZIndex.value = 2;
     }
   }, [activeCard]);
@@ -1078,18 +1086,18 @@ function SwapPokerCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: bo
   }));
 
   return (
-    <View style={{ width: cardW, height: 250, justifyContent: 'center', alignItems: 'center' }}>
-      <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'center', alignItems: 'center', position: 'relative', height: 210 }}>
-
+    <View style={{ width: cardW, height: containerH, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'center', alignItems: 'center', position: 'relative', height: cardH + 20 }}>
+        
         {/* Left Card: Bad Option (Sweet Ketchup) */}
         <Animated.View
           style={[
             {
               position: 'absolute',
-              width: cardW * 0.46,
-              height: 200,
+              width: cardW * 0.54,
+              height: cardH,
               backgroundColor: C.card,
-              borderRadius: 18,
+              borderRadius: 22,
               borderWidth: 2,
               borderColor: activeCard === 'bad' ? C.red : C.cardBorder,
               padding: 12,
@@ -1098,7 +1106,7 @@ function SwapPokerCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: bo
               shadowColor: '#000',
               shadowOffset: { width: -4, height: 8 },
               shadowOpacity: isDark ? 0.4 : 0.08,
-              shadowRadius: 12,
+              shadowRadius: 14,
               elevation: 4,
             },
             badCardStyle,
@@ -1112,24 +1120,23 @@ function SwapPokerCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: bo
             }}
             style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'space-between' }}
           >
-            <View style={{ backgroundColor: C.red + '15', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
-              <Text style={{ color: C.red, fontSize: 8, fontWeight: '900' }}>HIGH SUGAR</Text>
+            <View style={{ backgroundColor: C.red + '15', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
+              <Text style={{ color: C.red, fontSize: 9, fontWeight: '900', letterSpacing: 0.5 }}>HIGH SUGAR</Text>
             </View>
 
-            {/* SVG Tin Can */}
-            <Svg width={36} height={36} viewBox="0 0 24 24" fill="none">
-              <Path d="M6 18V9C6 7.34315 7.34315 6 9 6H15C16.6569 6 18 7.34315 18 9V18C18 19.6569 16.6569 21 15 21H9C7.34315 21 6 19.6569 6 18Z" stroke={C.red} strokeWidth={2.2} />
-              <Path d="M10 6V4C10 3.44772 10.4477 3 11 3H13C13.5523 3 14 3.44772 14 4V6" stroke={C.red} strokeWidth={2.2} />
-              <Path d="M9 11H15" stroke={C.red} strokeWidth={1.8} />
-              <Path d="M9 15H15" stroke={C.red} strokeWidth={1.8} />
-            </Svg>
+            {/* High-quality Product Image */}
+            <Image
+              source={require('../../../assets/unhealthy_ketchup.png')}
+              style={{ width: imgSize, height: imgSize, borderRadius: 12, marginVertical: 4 }}
+              resizeMode="contain"
+            />
 
-            <View style={{ alignItems: 'center' }}>
-              <Text style={{ color: C.text, fontSize: 11, fontWeight: '800', textAlign: 'center' }} numberOfLines={1}>
+            <View style={{ alignItems: 'center', width: '100%' }}>
+              <Text style={{ color: C.text, fontSize: 12, fontWeight: '800', textAlign: 'center' }} numberOfLines={1}>
                 Sweet Ketchup
               </Text>
-              <Text style={{ color: C.red, fontSize: 14, fontWeight: '900', marginTop: 2 }}>6.4 tsp</Text>
-              <Text style={{ color: C.textMuted, fontSize: 8, fontWeight: '700', marginTop: 2 }}>NOVA 4 • Ultra-Processed</Text>
+              <Text style={{ color: C.red, fontSize: 14, fontWeight: '900', marginTop: 1 }}>6.4 tsp sugar</Text>
+              <Text style={{ color: C.textMuted, fontSize: 9, fontWeight: '700', marginTop: 1, textAlign: 'center' }}>NOVA 4 • Ultra-Processed</Text>
             </View>
           </TouchableOpacity>
         </Animated.View>
@@ -1139,10 +1146,10 @@ function SwapPokerCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: bo
           style={[
             {
               position: 'absolute',
-              width: cardW * 0.46,
-              height: 200,
+              width: cardW * 0.54,
+              height: cardH,
               backgroundColor: C.card,
-              borderRadius: 18,
+              borderRadius: 22,
               borderWidth: 2,
               borderColor: activeCard === 'good' ? C.green : C.cardBorder,
               padding: 12,
@@ -1151,7 +1158,7 @@ function SwapPokerCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: bo
               shadowColor: '#000',
               shadowOffset: { width: 4, height: 8 },
               shadowOpacity: isDark ? 0.4 : 0.08,
-              shadowRadius: 12,
+              shadowRadius: 14,
               elevation: 5,
             },
             goodCardStyle,
@@ -1165,36 +1172,36 @@ function SwapPokerCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: bo
             }}
             style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'space-between' }}
           >
-            <View style={{ backgroundColor: C.green + '15', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
-              <Text style={{ color: C.green, fontSize: 8, fontWeight: '900' }}>100% CLEAN</Text>
+            <View style={{ backgroundColor: C.green + '15', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
+              <Text style={{ color: C.green, fontSize: 9, fontWeight: '900', letterSpacing: 0.5 }}>100% CLEAN</Text>
             </View>
 
-            {/* SVG Fresh Tomato */}
-            <Svg width={36} height={36} viewBox="0 0 24 24" fill="none">
-              <Circle cx={12} cy={13} r={7} fill={C.greenLight} stroke={C.green} strokeWidth={2.2} />
-              <Path d="M12 6C12 4.5 11.5 3.5 10 3.5" stroke={C.green} strokeWidth={1.8} strokeLinecap="round" />
-              <Path d="M12 6C13 5 13.5 5 15 4.5" stroke={C.green} strokeWidth={1.8} strokeLinecap="round" />
-            </Svg>
+            {/* High-quality Product Image */}
+            <Image
+              source={require('../../../assets/healthy_tomato_puree.png')}
+              style={{ width: imgSize, height: imgSize, borderRadius: 12, marginVertical: 4 }}
+              resizeMode="contain"
+            />
 
-            <View style={{ alignItems: 'center' }}>
-              <Text style={{ color: C.text, fontSize: 11, fontWeight: '800', textAlign: 'center' }} numberOfLines={1}>
+            <View style={{ alignItems: 'center', width: '100%' }}>
+              <Text style={{ color: C.text, fontSize: 12, fontWeight: '800', textAlign: 'center' }} numberOfLines={1}>
                 Tomato Purée
               </Text>
-              <Text style={{ color: C.green, fontSize: 14, fontWeight: '900', marginTop: 2 }}>0.5 tsp</Text>
-              <Text style={{ color: C.green, fontSize: 8, fontWeight: '700', marginTop: 2 }}>NOVA 1 • Unprocessed</Text>
+              <Text style={{ color: C.green, fontSize: 14, fontWeight: '900', marginTop: 1 }}>0.5 tsp sugar</Text>
+              <Text style={{ color: C.green, fontSize: 9, fontWeight: '800', marginTop: 1, textAlign: 'center' }}>NOVA 1 • Unprocessed</Text>
             </View>
 
             {/* Glowing Zap Swap indicator */}
             {activeCard === 'good' && (
-              <View style={{ position: 'absolute', top: -14, right: -14, width: 26, height: 26, borderRadius: 13, backgroundColor: C.amber, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF', shadowColor: C.amber, shadowOpacity: 0.5, shadowRadius: 4 }}>
-                <Zap size={12} color="#FFFFFF" />
+              <View style={{ position: 'absolute', top: -12, right: -12, width: 28, height: 28, borderRadius: 14, backgroundColor: C.amber, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF', shadowColor: C.amber, shadowOpacity: 0.5, shadowRadius: 4 }}>
+                <Zap size={14} color="#FFFFFF" />
               </View>
             )}
           </TouchableOpacity>
         </Animated.View>
 
       </View>
-      <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600', marginTop: 10, textAlign: 'center' }}>
+      <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600', marginTop: isShort ? 6 : 10, textAlign: 'center' }}>
         💡 Tap a card to inspect and compare ingredients
       </Text>
     </View>
