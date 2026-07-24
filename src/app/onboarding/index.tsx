@@ -234,8 +234,8 @@ function GoalCard({
 }: {
   cardW: number;
   C: any;
-  selected: GoalOption | null;
-  onSelect: (val: GoalOption) => void;
+  selected: GoalOption[];
+  onSelect: (vals: GoalOption[]) => void;
 }) {
   const options: { label: string; tag: string; icon: React.ReactNode; value: GoalOption }[] = [
     { label: 'Avoid Ultra-Processed Foods', tag: 'NOVA 4 Alert', icon: <AlertTriangle size={18} color={C.red} />, value: 'ultra_processed' },
@@ -243,6 +243,15 @@ function GoalCard({
     { label: 'Protect Gut Shield & Digestion', tag: 'Microbiome Safe', icon: <ShieldCheck size={18} color={C.green} />, value: 'healthy_habits' },
     { label: 'Discover Clean Food Swaps', tag: '100% Clean Upgrades', icon: <Zap size={18} color={C.amber} />, value: 'clean_swaps' },
   ];
+
+  const handleToggle = (val: GoalOption) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (selected.includes(val)) {
+      onSelect(selected.filter((item) => item !== val));
+    } else {
+      onSelect([...selected, val]);
+    }
+  };
 
   return (
     <View
@@ -262,14 +271,11 @@ function GoalCard({
       }}
     >
       {options.map((opt) => {
-        const isSelected = selected === opt.value;
+        const isSelected = selected.includes(opt.value);
         return (
           <TouchableOpacity
             key={opt.value}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onSelect(opt.value);
-            }}
+            onPress={() => handleToggle(opt.value)}
             activeOpacity={0.85}
             style={{
               flexDirection: 'row',
@@ -315,9 +321,10 @@ function GoalCard({
                 borderColor: isSelected ? C.amber : C.textMuted,
                 alignItems: 'center',
                 justifyContent: 'center',
+                backgroundColor: isSelected ? C.amber : 'transparent',
               }}
             >
-              {isSelected && <View style={{ width: 9, height: 9, borderRadius: 4.5, backgroundColor: C.amber }} />}
+              {isSelected && <Check size={12} color="#FFFFFF" strokeWidth={3.5} />}
             </View>
           </TouchableOpacity>
         );
@@ -1498,7 +1505,7 @@ export default function OnboardingScreen() {
   }, []);
 
   const [userName, setUserName] = useState('');
-  const [userGoal, setUserGoal] = useState<GoalOption | null>(null);
+  const [userGoals, setUserGoals] = useState<GoalOption[]>([]);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [rating, setRating] = useState(0);
   const [showNovaModal, setShowNovaModal] = useState(false);
@@ -1632,7 +1639,7 @@ export default function OnboardingScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
-    if (currentSlide === 1 && userGoal === null) {
+    if (currentSlide === 1 && userGoals.length === 0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
@@ -1650,7 +1657,7 @@ export default function OnboardingScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setProfile({
         userName: userName.trim(),
-        userGoal: userGoal || 'none',
+        userGoal: userGoals[0] || 'none',
       });
       setOnboardingComplete(true);
       setShowRatingModal(true);
@@ -1659,7 +1666,7 @@ export default function OnboardingScreen() {
 
   const isNextDisabled = () => {
     if (currentSlide === 0 && !userName.trim()) return true;
-    if (currentSlide === 1 && userGoal === null) return true;
+    if (currentSlide === 1 && userGoals.length === 0) return true;
     return false;
   };
 
@@ -1818,7 +1825,7 @@ export default function OnboardingScreen() {
               <NameCard cardW={cardW} C={C} value={userName} onChange={setUserName} />
             )}
             {currentCardIndex === 1 && (
-              <GoalCard cardW={cardW} C={C} selected={userGoal} onSelect={setUserGoal} />
+              <GoalCard cardW={cardW} C={C} selected={userGoals} onSelect={setUserGoals} />
             )}
             {currentCardIndex === 2 && (
               <NovaQuestionCard
