@@ -230,6 +230,16 @@ export default function AuthScreen() {
             <TouchableOpacity
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                // Set mock test bypass user in auth store to satisfy navigation guards
+                useAuthStore.setState({
+                  user: {
+                    uid: 'test-bypass-user',
+                    email: 'test@bypass.com',
+                    displayName: 'Test Bypass',
+                    photoURL: null,
+                    provider: 'email',
+                  },
+                });
                 router.replace('/paywall');
               }}
               style={{
