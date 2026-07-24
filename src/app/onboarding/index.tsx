@@ -886,6 +886,372 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
 }
 
 // ─────────────────────────────────────────────────────────
+// SLIDE 3 BODY: Nova & Nutri-Score Question Card
+// ─────────────────────────────────────────────────────────
+function NovaQuestionCard({
+  cardW,
+  C,
+  showModal,
+  setShowModal,
+  onNext,
+}: {
+  cardW: number;
+  C: any;
+  showModal: boolean;
+  setShowModal: (v: boolean) => void;
+  onNext: () => void;
+}) {
+  return (
+    <View style={{ gap: 12, width: cardW }}>
+      <View
+        style={{
+          backgroundColor: C.card,
+          borderRadius: 22,
+          borderWidth: 1.5,
+          borderColor: C.cardBorder,
+          padding: 16,
+          alignItems: 'center',
+          gap: 12,
+        }}
+      >
+        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: C.amberLight, alignItems: 'center', justifyContent: 'center' }}>
+          <Sparkles size={24} color={C.amber} />
+        </View>
+        <Text style={{ color: C.text, fontSize: 15, fontWeight: '800', textAlign: 'center' }}>
+          Do you know about Nova Scoring on Packaged Products?
+        </Text>
+        <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '500', textAlign: 'center', lineHeight: 16 }}>
+          NOVA classifies food from 1 (unprocessed) to 4 (ultra-processed industrial items).
+        </Text>
+
+        {/* Choice Buttons */}
+        <View style={{ flexDirection: 'row', gap: 10, width: '100%', marginTop: 4 }}>
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setShowModal(!showModal);
+            }}
+            activeOpacity={0.85}
+            style={{
+              flex: 1,
+              backgroundColor: showModal ? C.amber : C.amberLight,
+              borderWidth: 1.5,
+              borderColor: C.amber,
+              borderRadius: 14,
+              paddingVertical: 12,
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'row',
+              gap: 6,
+            }}
+          >
+            <Check size={16} color={showModal ? '#FFFFFF' : C.amber} strokeWidth={2.5} />
+            <Text style={{ color: showModal ? '#FFFFFF' : C.amber, fontSize: 13, fontWeight: '800' }}>
+              {showModal ? 'Hide Details' : 'YES, Explain'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onNext();
+            }}
+            activeOpacity={0.85}
+            style={{
+              flex: 1,
+              backgroundColor: C.cardInner,
+              borderWidth: 1.5,
+              borderColor: C.cardBorder,
+              borderRadius: 14,
+              paddingVertical: 12,
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'row',
+              gap: 6,
+            }}
+          >
+            <Text style={{ color: C.textSub, fontSize: 13, fontWeight: '800' }}>
+              NO, Next Screen
+            </Text>
+            <ArrowRight size={14} color={C.textSub} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Expanded Modal Content if YES */}
+      {showModal && <NovaNutriScoreDemoCard cardW={cardW} C={C} />}
+    </View>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// SLIDE 4 BODY: Gut Health & Additives Question Card
+// ─────────────────────────────────────────────────────────
+function GutAdditivesQuestionCard({
+  cardW,
+  C,
+  showModal,
+  setShowModal,
+  onNext,
+}: {
+  cardW: number;
+  C: any;
+  showModal: boolean;
+  setShowModal: (v: boolean) => void;
+  onNext: () => void;
+}) {
+  return (
+    <View style={{ gap: 12, width: cardW }}>
+      <View
+        style={{
+          backgroundColor: C.card,
+          borderRadius: 22,
+          borderWidth: 1.5,
+          borderColor: C.cardBorder,
+          padding: 16,
+          alignItems: 'center',
+          gap: 12,
+        }}
+      >
+        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: C.redLight, alignItems: 'center', justifyContent: 'center' }}>
+          <AlertTriangle size={24} color={C.red} />
+        </View>
+        <Text style={{ color: C.text, fontSize: 15, fontWeight: '800', textAlign: 'center' }}>
+          Would you like to know what Gut Health & Additives mean in packaged products?
+        </Text>
+        <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '500', textAlign: 'center', lineHeight: 16 }}>
+          Discover how synthetic dyes and emulsifiers erode mucosal gut lining.
+        </Text>
+
+        {/* Choice Buttons */}
+        <View style={{ flexDirection: 'row', gap: 10, width: '100%', marginTop: 4 }}>
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setShowModal(!showModal);
+            }}
+            activeOpacity={0.85}
+            style={{
+              flex: 1,
+              backgroundColor: showModal ? C.red : C.redLight,
+              borderWidth: 1.5,
+              borderColor: C.red,
+              borderRadius: 14,
+              paddingVertical: 12,
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'row',
+              gap: 6,
+            }}
+          >
+            <Check size={16} color={showModal ? '#FFFFFF' : C.red} strokeWidth={2.5} />
+            <Text style={{ color: showModal ? '#FFFFFF' : C.red, fontSize: 13, fontWeight: '800' }}>
+              {showModal ? 'Hide Details' : 'YES, Explain'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onNext();
+            }}
+            activeOpacity={0.85}
+            style={{
+              flex: 1,
+              backgroundColor: C.cardInner,
+              borderWidth: 1.5,
+              borderColor: C.cardBorder,
+              borderRadius: 14,
+              paddingVertical: 12,
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'row',
+              gap: 6,
+            }}
+          >
+            <Text style={{ color: C.textSub, fontSize: 13, fontWeight: '800' }}>
+              NO, Next Screen
+            </Text>
+            <ArrowRight size={14} color={C.textSub} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Expanded Modal Content if YES */}
+      {showModal && <GutShieldDemoCard cardW={cardW} C={C} />}
+    </View>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// SLIDE 5 BODY: Healthier Option "SWAP Product" Question Card
+// ─────────────────────────────────────────────────────────
+function SwapQuestionCard({
+  cardW,
+  C,
+  showModal,
+  setShowModal,
+  onNext,
+}: {
+  cardW: number;
+  C: any;
+  showModal: boolean;
+  setShowModal: (v: boolean) => void;
+  onNext: () => void;
+}) {
+  return (
+    <View style={{ gap: 12, width: cardW }}>
+      <View
+        style={{
+          backgroundColor: C.card,
+          borderRadius: 22,
+          borderWidth: 1.5,
+          borderColor: C.cardBorder,
+          padding: 16,
+          alignItems: 'center',
+          gap: 12,
+        }}
+      >
+        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: C.greenLight, alignItems: 'center', justifyContent: 'center' }}>
+          <RefreshCw size={24} color={C.green} />
+        </View>
+        <Text style={{ color: C.text, fontSize: 15, fontWeight: '800', textAlign: 'center' }}>
+          Would you like to find out Healthier Option "SWAP Products"?
+        </Text>
+        <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '500', textAlign: 'center', lineHeight: 16 }}>
+          Automatically discover 100% clean upgrades for ultra-processed items.
+        </Text>
+
+        {/* Choice Buttons */}
+        <View style={{ flexDirection: 'row', gap: 10, width: '100%', marginTop: 4 }}>
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setShowModal(!showModal);
+            }}
+            activeOpacity={0.85}
+            style={{
+              flex: 1,
+              backgroundColor: showModal ? C.green : C.greenLight,
+              borderWidth: 1.5,
+              borderColor: C.green,
+              borderRadius: 14,
+              paddingVertical: 12,
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'row',
+              gap: 6,
+            }}
+          >
+            <Check size={16} color={showModal ? '#FFFFFF' : C.green} strokeWidth={2.5} />
+            <Text style={{ color: showModal ? '#FFFFFF' : C.green, fontSize: 13, fontWeight: '800' }}>
+              {showModal ? 'Hide Details' : 'YES, Show Swaps'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onNext();
+            }}
+            activeOpacity={0.85}
+            style={{
+              flex: 1,
+              backgroundColor: C.cardInner,
+              borderWidth: 1.5,
+              borderColor: C.cardBorder,
+              borderRadius: 14,
+              paddingVertical: 12,
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'row',
+              gap: 6,
+            }}
+          >
+            <Text style={{ color: C.textSub, fontSize: 13, fontWeight: '800' }}>
+              NO, Next Screen
+            </Text>
+            <ArrowRight size={14} color={C.textSub} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Expanded Modal Content if YES */}
+      {showModal && <FoodSwapDemoCard cardW={cardW} C={C} />}
+    </View>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// SLIDE 6 BODY: Instant 4-in-1 Scan Results Summary Card
+// ─────────────────────────────────────────────────────────
+function InstantResultSummaryCard({ cardW, C }: { cardW: number; C: any }) {
+  return (
+    <View
+      style={{
+        width: cardW,
+        backgroundColor: C.card,
+        borderRadius: 22,
+        borderWidth: 1.5,
+        borderColor: C.cardBorder,
+        padding: 16,
+        gap: 12,
+      }}
+    >
+      <Text style={{ color: C.text, fontSize: 12, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8, textAlign: 'center' }}>
+        Instant 4-in-1 Scan Deliverables
+      </Text>
+
+      <View style={{ gap: 8 }}>
+        {/* Item 1: NOVA Class */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.cardInner, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: C.cardBorder }}>
+          <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: C.amberLight, alignItems: 'center', justifyContent: 'center' }}>
+            <Activity size={18} color={C.amber} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: C.text, fontSize: 12, fontWeight: '800' }}>NOVA Industrial Classification</Text>
+            <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '500' }}>Grades 1 (Whole Food) to 4 (Ultra-Processed)</Text>
+          </View>
+        </View>
+
+        {/* Item 2: Nutri-Score */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.cardInner, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: C.cardBorder }}>
+          <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: C.greenLight, alignItems: 'center', justifyContent: 'center' }}>
+            <Sparkles size={18} color={C.green} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: C.text, fontSize: 12, fontWeight: '800' }}>Nutri-Score Rating</Text>
+            <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '500' }}>A-E Traffic Light Nutritional Quality Audit</Text>
+          </View>
+        </View>
+
+        {/* Item 3: Gut Health Disruptors */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.cardInner, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: C.cardBorder }}>
+          <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: C.redLight, alignItems: 'center', justifyContent: 'center' }}>
+            <ShieldAlert size={18} color={C.red} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: C.text, fontSize: 12, fontWeight: '800' }}>Gut Health Disruptors Audit</Text>
+            <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '500' }}>Emulsifiers & Synthetic Dye Alert System</Text>
+          </View>
+        </View>
+
+        {/* Item 4: Hidden Sugar */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.cardInner, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: C.cardBorder }}>
+          <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: C.amberLight, alignItems: 'center', justifyContent: 'center' }}>
+            <Zap size={18} color={C.amber} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: C.text, fontSize: 12, fontWeight: '800' }}>Hidden Sugar in Teaspoons</Text>
+            <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '500' }}>Exact TSP metrics & WHO daily limit gauges</Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
 // Premium App Store Rating Modal Overlay
 // ─────────────────────────────────────────────────────────
 interface RatingModalProps {
@@ -945,7 +1311,7 @@ function RatingModal({ C, isDark, rating, setRating, onSubmit, onLater, width }:
         </View>
 
         <Text style={{ color: C.text, fontSize: 20, fontWeight: '900', textAlign: 'center', letterSpacing: -0.5 }}>
-          Enjoying FixBite?
+          Enjoying BiteFix?
         </Text>
 
         <Text style={{ color: C.textSub, fontSize: 13, fontWeight: '500', textAlign: 'center', lineHeight: 18, paddingHorizontal: 8 }}>
@@ -1040,61 +1406,52 @@ const SLIDES: SlideData[] = [
     step: 1,
     title: 'Welcome to BiteFix',
     highlight: 'BiteFix',
-    subtitle: 'Personalize your clean eating journey & daily health insights.',
+    subtitle: 'Let\'s personalize your food scanning experience.',
     buttonLabel: 'Continue',
     isLast: false,
     mascotState: 'happy',
   },
   {
     step: 2,
-    title: 'Customize Your Scanner',
-    highlight: 'Your Scanner',
-    subtitle: 'Select your primary food concerns to tailor ingredient alerts.',
+    title: 'Select Your Primary Goal',
+    highlight: 'Primary Goal',
+    subtitle: 'Tailor your scanner to focus on what matters most.',
     buttonLabel: 'Continue',
     isLast: false,
     mascotState: 'idle',
   },
   {
     step: 3,
-    title: 'Decode NOVA & Nutri-Score',
+    title: 'NOVA & Nutri-Score',
     highlight: 'NOVA & Nutri-Score',
-    subtitle: 'Instantly spot ultra-processed foods & nutritional quality scores.',
-    buttonLabel: 'Next',
+    subtitle: 'Do you know about Nova Scoring on Packaged Products?',
+    buttonLabel: 'Continue',
     isLast: false,
     mascotState: 'happy',
   },
   {
     step: 4,
-    title: 'Unmask Hidden Sugars',
-    highlight: 'Hidden Sugars',
-    subtitle: '70%+ of packaged foods disguise sugar under 60+ chemical names.',
-    buttonLabel: 'Next',
+    title: 'Gut Health & Additives',
+    highlight: 'Gut Health',
+    subtitle: 'Would you like to know what Gut Health & Additives mean?',
+    buttonLabel: 'Continue',
     isLast: false,
     mascotState: 'shocked',
   },
   {
     step: 5,
-    title: 'Detect Toxic Additives',
-    highlight: 'Toxic Additives',
-    subtitle: 'Expose synthetic colors, petroleum dyes & chemical preservatives.',
-    buttonLabel: 'Next',
+    title: 'Healthier Swaps',
+    highlight: 'Healthier Swaps',
+    subtitle: 'Would you like to find out Healthier Option "SWAP Products"?',
+    buttonLabel: 'Continue',
     isLast: false,
     mascotState: 'happy',
   },
   {
     step: 6,
-    title: 'Protect Your Gut Shield',
-    highlight: 'Gut Shield',
-    subtitle: 'Spot harmful thickeners & emulsifiers that disrupt your gut.',
-    buttonLabel: 'Next',
-    isLast: false,
-    mascotState: 'shocked',
-  },
-  {
-    step: 7,
-    title: 'Discover Clean Swaps',
-    highlight: 'Clean Swaps',
-    subtitle: 'Instantly replace ultra-processed items with healthy upgrades.',
+    title: 'Instant Scan Intelligence',
+    highlight: 'Scan Intelligence',
+    subtitle: 'Get instant Nova Class, Nutri-Score, Gut Disruptors & Sugar in teaspoons.',
     buttonLabel: 'Get Started',
     isLast: true,
     mascotState: 'happy',
@@ -1144,6 +1501,9 @@ export default function OnboardingScreen() {
   const [userGoal, setUserGoal] = useState<GoalOption | null>(null);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [rating, setRating] = useState(0);
+  const [showNovaModal, setShowNovaModal] = useState(false);
+  const [showGutModal, setShowGutModal] = useState(false);
+  const [showSwapModal, setShowSwapModal] = useState(false);
 
   const { setOnboardingComplete, setProfile } = useAppStore();
   const { width, height } = useWindowDimensions();
@@ -1422,13 +1782,12 @@ export default function OnboardingScreen() {
               <ThoughtBubble
                 visible={true}
                 text={[
-                  "Hi! I'm FixBite. What should I call you?",
+                  "Hi! I'm BiteFix. What should I call you?",
                   "What's your #1 health & food goal right now?",
-                  "Not all food is equal! We decode processing & grades.",
-                  "Surprise! 1 soda has 9.3 teaspoons of sugar!",
-                  "Synthetic dyes & petroleum preservatives hide on labels!",
-                  "Emulsifiers strip away your protective gut barrier!",
-                  "Don't just restrict—swap bad foods for clean upgrades!"
+                  "Do you know what NOVA & Nutri-Score mean?",
+                  "Ever wondered how additives hurt your gut?",
+                  "Never give up your favorite foods—swap them!",
+                  "Everything delivered in 1 single barcode scan!"
                 ][currentSlide] || ""}
               />
             </Animated.View>
@@ -1462,19 +1821,34 @@ export default function OnboardingScreen() {
               <GoalCard cardW={cardW} C={C} selected={userGoal} onSelect={setUserGoal} />
             )}
             {currentCardIndex === 2 && (
-              <NovaNutriScoreDemoCard cardW={cardW} C={C} />
+              <NovaQuestionCard
+                cardW={cardW}
+                C={C}
+                showModal={showNovaModal}
+                setShowModal={setShowNovaModal}
+                onNext={handleNext}
+              />
             )}
             {currentCardIndex === 3 && (
-              <SugarLiquidPourCard cardW={cardW} C={C} />
+              <GutAdditivesQuestionCard
+                cardW={cardW}
+                C={C}
+                showModal={showGutModal}
+                setShowModal={setShowGutModal}
+                onNext={handleNext}
+              />
             )}
             {currentCardIndex === 4 && (
-              <AdditiveDetectiveDemoCard cardW={cardW} C={C} />
+              <SwapQuestionCard
+                cardW={cardW}
+                C={C}
+                showModal={showSwapModal}
+                setShowModal={setShowSwapModal}
+                onNext={handleNext}
+              />
             )}
             {currentCardIndex === 5 && (
-              <GutShieldDemoCard cardW={cardW} C={C} />
-            )}
-            {currentCardIndex === 6 && (
-              <FoodSwapDemoCard cardW={cardW} C={C} />
+              <InstantResultSummaryCard cardW={cardW} C={C} />
             )}
           </Animated.View>
 
