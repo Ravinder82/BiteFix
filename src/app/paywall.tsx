@@ -280,7 +280,7 @@ export default function PaywallScreen() {
             </View>
 
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900' }}>$4.99</Text>
+              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900' }}>$5.99</Text>
               <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>/ month</Text>
             </View>
           </TouchableOpacity>
@@ -315,7 +315,7 @@ export default function PaywallScreen() {
               borderBottomLeftRadius: 8,
               borderBottomRightRadius: 8,
             }}>
-              <Text style={{ color: '#FFFFFF', fontSize: 8.5, fontWeight: '900', letterSpacing: 0.5 }}>BEST VALUE • SAVE 75%</Text>
+              <Text style={{ color: '#FFFFFF', fontSize: 8.5, fontWeight: '900', letterSpacing: 0.5 }}>50% DISCOUNT</Text>
             </View>
 
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -333,13 +333,13 @@ export default function PaywallScreen() {
                 {selectedPlan === 'annual' && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.success }} />}
               </View>
               <View style={{ marginTop: 6 }}>
-                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800' }}>Annual Pass</Text>
-                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 1 }}>$3.33 / month • Billed yearly</Text>
+                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800' }}>Yearly Pass</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 1 }}>$3.00 / month • Billed yearly</Text>
               </View>
             </View>
 
             <View style={{ alignItems: 'flex-end', marginTop: 8 }}>
-              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900' }}>$39.99</Text>
+              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900' }}>$35.99</Text>
               <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>/ year</Text>
             </View>
           </TouchableOpacity>
