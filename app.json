@@ -1,23 +1,23 @@
 {
   "expo": {
-    "name": "FixBite: Food & Swap Scanner",
-    "slug": "cutsugar",
+    "name": "BiteFix: Food & Swap Scanner",
+    "slug": "bitefix",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.ravinderpoonia.cutsugar",
+      "bundleIdentifier": "com.ravinderpoonia.bitefix",
       "googleServicesFile": "./GoogleService-Info.plist",
       "supportsTablet": false,
       "infoPlist": {
-        "CFBundleDisplayName": "FixBite",
-        "NSCameraUsageDescription": "FixBite needs access to the camera to scan food barcodes and analyze scores.",
+        "CFBundleDisplayName": "BiteFix",
+        "NSCameraUsageDescription": "BiteFix needs access to the camera to scan food barcodes and analyze scores.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.ravinderpoonia.cutsugar",
+      "package": "com.ravinderpoonia.bitefix",
       "adaptiveIcon": {
         "backgroundColor": "#faf8f5",
         "foregroundImage": "./assets/icon.png"
@@ -34,7 +34,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "FixBite needs access to your camera to scan food barcodes and analyse their content.",
+          "cameraPermission": "BiteFix needs access to your camera to scan food barcodes and analyse their content.",
           "microphonePermission": false,
           "recordAudioAndroid": false,
           "barcodeScannerEnabled": true
