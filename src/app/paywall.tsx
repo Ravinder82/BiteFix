@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Text } from '@/components/Text';
 import { router } from 'expo-router';
@@ -17,6 +18,7 @@ import { OrbMascot } from '../components/features/OrbMascot';
 import { MagicalBackground } from '../components/features/MagicalBackground';
 import { ShieldCheck, RefreshCw, Search, ArrowRight, Check, X, Sparkles, ShieldAlert, Zap, Activity } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { iapService } from '../services/iapService';
 
 type PlanTier = 'monthly' | 'annual';
 
@@ -25,8 +27,18 @@ export default function PaywallScreen() {
   const { setPremium } = useAppStore();
   const { user } = useAuthStore();
   const [selectedPlan, setSelectedPlan] = useState<PlanTier>('annual'); // Default to annual (highest value)
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleSubscribe = () => {
+  useEffect(() => {
+    // Sync user identity with IAP service if authenticated
+    if (user?.uid) {
+      iapService.identifyUser(user.uid);
+    } else {
+      iapService.initialize();
+    }
+  }, [user?.uid]);
+
+  const handleSubscribe = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (!user) {
       // Lazy Auth: redirect to auth screen first, instructing it to come back to paywall
@@ -34,13 +46,24 @@ export default function PaywallScreen() {
       return;
     }
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setPremium(true);
-    Alert.alert(
-      'Premium Unlocked! ✨',
-      'Welcome to BiteFix Premium. You now have full access to Gut Shield & Smart Swaps.',
-      [{ text: 'Start Scanning', onPress: () => router.replace('/(tabs)') }]
-    );
+    setIsProcessing(true);
+    try {
+      const result = await iapService.purchasePlan(selectedPlan);
+      if (result.success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert(
+          'Premium Unlocked! ✨',
+          'Welcome to BiteFix Premium. You now have full access to Gut Shield & Smart Swaps.',
+          [{ text: 'Start Scanning', onPress: () => router.replace('/(tabs)') }]
+        );
+      } else if (!result.userCancelled) {
+        Alert.alert('Subscription Notice', result.error || 'Unable to process purchase. Please try again.');
+      }
+    } catch (e: any) {
+      Alert.alert('Purchase Error', e.message || 'Something went wrong during payment.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handlePassToHome = () => {
@@ -54,13 +77,25 @@ export default function PaywallScreen() {
     router.replace('/(tabs)');
   };
 
-  const handleRestore = () => {
+  const handleRestore = async () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Alert.alert(
-      'Purchase Restored',
-      'Your premium subscription status has been successfully restored.',
-      [{ text: 'OK' }]
-    );
+    setIsProcessing(true);
+    try {
+      const result = await iapService.restorePurchases();
+      if (result.isEntitled) {
+        Alert.alert(
+          'Purchase Restored',
+          'Your premium subscription status has been successfully restored.',
+          [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
+        );
+      } else {
+        Alert.alert('No Subscription Found', 'No active subscription was found for your Apple Account.');
+      }
+    } catch (e: any) {
+      Alert.alert('Restore Error', e.message || 'Failed to restore purchases.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   // Luxury style definitions
@@ -348,9 +383,10 @@ export default function PaywallScreen() {
         {/* ── Subscribe CTA Button ── */}
         <TouchableOpacity
           onPress={handleSubscribe}
+          disabled={isProcessing}
           activeOpacity={0.9}
           style={{
-            backgroundColor: colors.success,
+            backgroundColor: isProcessing ? colors.success + 'AA' : colors.success,
             borderRadius: 20,
             paddingVertical: 16,
             alignItems: 'center',
@@ -362,9 +398,13 @@ export default function PaywallScreen() {
             elevation: 8,
           }}
         >
-          <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 0.5 }}>
-            SUBSCRIBE NOW
-          </Text>
+          {isProcessing ? (
+            <ActivityIndicator color="#FFFFFF" size="small" />
+          ) : (
+            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 0.5 }}>
+              SUBSCRIBE NOW
+            </Text>
+          )}
         </TouchableOpacity>
 
         {/* ── Apple Guidelines Subscription Disclosures & Policies ── */}

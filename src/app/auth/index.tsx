@@ -227,42 +227,6 @@ export default function AuthScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* ── Test Bypass / Pass to Paywall Button ── */}
-          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingTop: 16 }}>
-            <TouchableOpacity
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                // Set mock test bypass user in auth store to satisfy navigation guards
-                useAuthStore.setState({
-                  user: {
-                    uid: 'test-bypass-user',
-                    email: 'test@bypass.com',
-                    displayName: 'Test Bypass',
-                    photoURL: null,
-                    provider: 'email',
-                  },
-                });
-                router.replace(target);
-              }}
-              style={{
-                backgroundColor: '#10B98115',
-                borderWidth: 1.5,
-                borderColor: '#10B981',
-                paddingHorizontal: 14,
-                paddingVertical: 7,
-                borderRadius: 20,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <Text style={{ color: '#10B981', fontSize: 12, fontWeight: '900' }}>
-                Pass to Paywall Screen
-              </Text>
-              <ArrowRight size={14} color="#10B981" />
-            </TouchableOpacity>
-          </View>
-
           {/* ── Header: Mascot + Brand ── */}
           <View style={{ alignItems: 'center', paddingTop: 20, paddingBottom: 12 }}>
             <OrbMascot state="happy" size={100} />
