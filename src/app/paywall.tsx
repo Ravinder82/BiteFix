@@ -18,7 +18,7 @@ import { MagicalBackground } from '../components/features/MagicalBackground';
 import { ShieldCheck, RefreshCw, Search, ArrowRight, Check, X, Sparkles, ShieldAlert, Zap, Activity } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
-type PlanTier = 'weekly' | 'monthly' | 'annual';
+type PlanTier = 'monthly' | 'annual';
 
 export default function PaywallScreen() {
   const { colors, isDark } = useTheme();
@@ -241,50 +241,6 @@ export default function PaywallScreen() {
 
         {/* ── Plan Selection Options ── */}
         <View style={{ gap: 10, marginBottom: 20 }}>
-          {/* Weekly Pass Plan */}
-          <TouchableOpacity
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setSelectedPlan('weekly');
-            }}
-            activeOpacity={0.85}
-            style={{
-              backgroundColor: selectedPlan === 'weekly' ? colors.success + '08' : colors.surfaceRaised,
-              borderRadius: 18,
-              borderWidth: selectedPlan === 'weekly' ? 2 : 1.5,
-              borderColor: selectedPlan === 'weekly' ? colors.success : colors.border,
-              padding: 14,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View
-                style={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: 10,
-                  borderWidth: 2,
-                  borderColor: selectedPlan === 'weekly' ? colors.success : colors.textMuted,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                {selectedPlan === 'weekly' && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.success }} />}
-              </View>
-              <View>
-                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800' }}>Weekly Pass</Text>
-                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 1 }}>Billed weekly • Cancel anytime</Text>
-              </View>
-            </View>
-
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900' }}>$2.99</Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>/ week</Text>
-            </View>
-          </TouchableOpacity>
-
           {/* Monthly Pass Plan */}
           <TouchableOpacity
             onPress={() => {
