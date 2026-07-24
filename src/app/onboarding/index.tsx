@@ -1091,100 +1091,184 @@ function GutAdditivesQuestionCard({
 }
 
 // ─────────────────────────────────────────────────────────
-// SLIDE 5 BODY: Healthier Option "SWAP Product" Question Card
+// SLIDE 5 BODY: Healthier Option "SWAP Product" Poker Hands Card
 // ─────────────────────────────────────────────────────────
-function SwapQuestionCard({
-  cardW,
-  C,
-  showModal,
-  setShowModal,
-  onNext,
-}: {
-  cardW: number;
-  C: any;
-  showModal: boolean;
-  setShowModal: (v: boolean) => void;
-  onNext: () => void;
-}) {
-  return (
-    <View style={{ gap: 12, width: cardW }}>
-      <View
-        style={{
-          backgroundColor: C.card,
-          borderRadius: 22,
-          borderWidth: 1.5,
-          borderColor: C.cardBorder,
-          padding: 16,
-          alignItems: 'center',
-          gap: 12,
-        }}
-      >
-        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: C.greenLight, alignItems: 'center', justifyContent: 'center' }}>
-          <RefreshCw size={24} color={C.green} />
-        </View>
-        <Text style={{ color: C.text, fontSize: 15, fontWeight: '800', textAlign: 'center' }}>
-          Would you like to find out Healthier Option "SWAP Products"?
-        </Text>
-        <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '500', textAlign: 'center', lineHeight: 16 }}>
-          Automatically discover 100% clean upgrades for ultra-processed items.
-        </Text>
+function SwapPokerCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: boolean }) {
+  const [activeCard, setActiveCard] = useState<'bad' | 'good'>('good');
+  
+  // Animation values for interactive fanning
+  const badScale = useSharedValue(0.95);
+  const badRotate = useSharedValue(-8);
+  const badTranslateX = useSharedValue(-25);
+  const badZIndex = useSharedValue(1);
 
-        {/* Choice Buttons */}
-        <View style={{ flexDirection: 'row', gap: 10, width: '100%', marginTop: 4 }}>
+  const goodScale = useSharedValue(1.02);
+  const goodRotate = useSharedValue(8);
+  const goodTranslateX = useSharedValue(25);
+  const goodZIndex = useSharedValue(2);
+
+  useEffect(() => {
+    if (activeCard === 'bad') {
+      badScale.value = withSpring(1.02, { damping: 12 });
+      badRotate.value = withSpring(-4, { damping: 12 });
+      badTranslateX.value = withSpring(-15, { damping: 12 });
+      badZIndex.value = 2;
+
+      goodScale.value = withSpring(0.92, { damping: 12 });
+      goodRotate.value = withSpring(10, { damping: 12 });
+      goodTranslateX.value = withSpring(35, { damping: 12 });
+      goodZIndex.value = 1;
+    } else {
+      badScale.value = withSpring(0.92, { damping: 12 });
+      badRotate.value = withSpring(-10, { damping: 12 });
+      badTranslateX.value = withSpring(-35, { damping: 12 });
+      badZIndex.value = 1;
+
+      goodScale.value = withSpring(1.02, { damping: 12 });
+      goodRotate.value = withSpring(4, { damping: 12 });
+      goodTranslateX.value = withSpring(15, { damping: 12 });
+      goodZIndex.value = 2;
+    }
+  }, [activeCard]);
+
+  const badCardStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: badScale.value },
+      { rotate: `${badRotate.value}deg` },
+      { translateX: badTranslateX.value },
+    ],
+    zIndex: badZIndex.value,
+  }));
+
+  const goodCardStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: goodScale.value },
+      { rotate: `${goodRotate.value}deg` },
+      { translateX: goodTranslateX.value },
+    ],
+    zIndex: goodZIndex.value,
+  }));
+
+  return (
+    <View style={{ width: cardW, height: 250, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'center', alignItems: 'center', position: 'relative', height: 210 }}>
+        
+        {/* Left Card: Bad Option (Sweet Ketchup) */}
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              width: cardW * 0.46,
+              height: 200,
+              backgroundColor: C.card,
+              borderRadius: 18,
+              borderWidth: 2,
+              borderColor: activeCard === 'bad' ? C.red : C.cardBorder,
+              padding: 12,
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              shadowColor: '#000',
+              shadowOffset: { width: -4, height: 8 },
+              shadowOpacity: isDark ? 0.4 : 0.08,
+              shadowRadius: 12,
+              elevation: 4,
+            },
+            badCardStyle,
+          ]}
+        >
           <TouchableOpacity
+            activeOpacity={1}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              setShowModal(!showModal);
+              setActiveCard('bad');
             }}
-            activeOpacity={0.85}
-            style={{
-              flex: 1,
-              backgroundColor: showModal ? C.green : C.greenLight,
-              borderWidth: 1.5,
-              borderColor: C.green,
-              borderRadius: 14,
-              paddingVertical: 12,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'row',
-              gap: 6,
-            }}
+            style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'space-between' }}
           >
-            <Check size={16} color={showModal ? '#FFFFFF' : C.green} strokeWidth={2.5} />
-            <Text style={{ color: showModal ? '#FFFFFF' : C.green, fontSize: 13, fontWeight: '800' }}>
-              {showModal ? 'Hide Details' : 'YES, Show Swaps'}
-            </Text>
-          </TouchableOpacity>
+            <View style={{ backgroundColor: C.red + '15', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+              <Text style={{ color: C.red, fontSize: 8, fontWeight: '900' }}>HIGH SUGAR</Text>
+            </View>
 
+            {/* SVG Tin Can */}
+            <Svg width={36} height={36} viewBox="0 0 24 24" fill="none">
+              <Path d="M6 18V9C6 7.34315 7.34315 6 9 6H15C16.6569 6 18 7.34315 18 9V18C18 19.6569 16.6569 21 15 21H9C7.34315 21 6 19.6569 6 18Z" stroke={C.red} strokeWidth={2.2} />
+              <Path d="M10 6V4C10 3.44772 10.4477 3 11 3H13C13.5523 3 14 3.44772 14 4V6" stroke={C.red} strokeWidth={2.2} />
+              <Path d="M9 11H15" stroke={C.red} strokeWidth={1.8} />
+              <Path d="M9 15H15" stroke={C.red} strokeWidth={1.8} />
+            </Svg>
+
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ color: C.text, fontSize: 11, fontWeight: '800', textAlign: 'center' }} numberOfLines={1}>
+                Sweet Ketchup
+              </Text>
+              <Text style={{ color: C.red, fontSize: 14, fontWeight: '900', marginTop: 2 }}>6.4 tsp</Text>
+              <Text style={{ color: C.textMuted, fontSize: 8, fontWeight: '700', marginTop: 2 }}>NOVA 4 • Ultra-Processed</Text>
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+
+        {/* Right Card: Clean Option (Tomato Purée) */}
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              width: cardW * 0.46,
+              height: 200,
+              backgroundColor: C.card,
+              borderRadius: 18,
+              borderWidth: 2,
+              borderColor: activeCard === 'good' ? C.green : C.cardBorder,
+              padding: 12,
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              shadowColor: '#000',
+              shadowOffset: { width: 4, height: 8 },
+              shadowOpacity: isDark ? 0.4 : 0.08,
+              shadowRadius: 12,
+              elevation: 5,
+            },
+            goodCardStyle,
+          ]}
+        >
           <TouchableOpacity
+            activeOpacity={1}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onNext();
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setActiveCard('good');
             }}
-            activeOpacity={0.85}
-            style={{
-              flex: 1,
-              backgroundColor: C.cardInner,
-              borderWidth: 1.5,
-              borderColor: C.cardBorder,
-              borderRadius: 14,
-              paddingVertical: 12,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'row',
-              gap: 6,
-            }}
+            style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'space-between' }}
           >
-            <Text style={{ color: C.textSub, fontSize: 13, fontWeight: '800' }}>
-              NO, Next Screen
-            </Text>
-            <ArrowRight size={14} color={C.textSub} />
-          </TouchableOpacity>
-        </View>
-      </View>
+            <View style={{ backgroundColor: C.green + '15', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+              <Text style={{ color: C.green, fontSize: 8, fontWeight: '900' }}>100% CLEAN</Text>
+            </View>
 
-      {/* Expanded Modal Content if YES */}
-      {showModal && <FoodSwapDemoCard cardW={cardW} C={C} />}
+            {/* SVG Fresh Tomato */}
+            <Svg width={36} height={36} viewBox="0 0 24 24" fill="none">
+              <Circle cx={12} cy={13} r={7} fill={C.greenLight} stroke={C.green} strokeWidth={2.2} />
+              <Path d="M12 6C12 4.5 11.5 3.5 10 3.5" stroke={C.green} strokeWidth={1.8} strokeLinecap="round" />
+              <Path d="M12 6C13 5 13.5 5 15 4.5" stroke={C.green} strokeWidth={1.8} strokeLinecap="round" />
+            </Svg>
+
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ color: C.text, fontSize: 11, fontWeight: '800', textAlign: 'center' }} numberOfLines={1}>
+                Tomato Purée
+              </Text>
+              <Text style={{ color: C.green, fontSize: 14, fontWeight: '900', marginTop: 2 }}>0.5 tsp</Text>
+              <Text style={{ color: C.green, fontSize: 8, fontWeight: '700', marginTop: 2 }}>NOVA 1 • Unprocessed</Text>
+            </View>
+
+            {/* Glowing Zap Swap indicator */}
+            {activeCard === 'good' && (
+              <View style={{ position: 'absolute', top: -14, right: -14, width: 26, height: 26, borderRadius: 13, backgroundColor: C.amber, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF', shadowColor: C.amber, shadowOpacity: 0.5, shadowRadius: 4 }}>
+                <Zap size={12} color="#FFFFFF" />
+              </View>
+            )}
+          </TouchableOpacity>
+        </Animated.View>
+
+      </View>
+      <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600', marginTop: 10, textAlign: 'center' }}>
+        💡 Tap a card to inspect and compare ingredients
+      </Text>
     </View>
   );
 }
@@ -1431,7 +1515,7 @@ const SLIDES: SlideData[] = [
     step: 3,
     title: 'NOVA & Nutri-Score',
     highlight: 'NOVA & Nutri-Score',
-    subtitle: 'Do you know about Nova Scoring on Packaged Products?',
+    subtitle: 'Do you know what NOVA & Nutri-Score on Packaged Products means?',
     buttonLabel: 'Continue',
     isLast: false,
     mascotState: 'happy',
@@ -1440,7 +1524,7 @@ const SLIDES: SlideData[] = [
     step: 4,
     title: 'Gut Health & Additives',
     highlight: 'Gut Health',
-    subtitle: 'Would you like to know what Gut Health & Additives mean?',
+    subtitle: 'Do you want to know how Gut Health is related to Additives?',
     buttonLabel: 'Continue',
     isLast: false,
     mascotState: 'shocked',
@@ -1449,7 +1533,7 @@ const SLIDES: SlideData[] = [
     step: 5,
     title: 'Healthier Swaps',
     highlight: 'Healthier Swaps',
-    subtitle: 'Would you like to find out Healthier Option "SWAP Products"?',
+    subtitle: 'Scan and Swap for Healthier Options',
     buttonLabel: 'Continue',
     isLast: false,
     mascotState: 'happy',
@@ -1846,13 +1930,7 @@ export default function OnboardingScreen() {
               />
             )}
             {currentCardIndex === 4 && (
-              <SwapQuestionCard
-                cardW={cardW}
-                C={C}
-                showModal={showSwapModal}
-                setShowModal={setShowSwapModal}
-                onNext={handleNext}
-              />
+              <SwapPokerCard cardW={cardW} C={C} isDark={isDark} />
             )}
             {currentCardIndex === 5 && (
               <InstantResultSummaryCard cardW={cardW} C={C} />
