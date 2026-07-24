@@ -58,9 +58,9 @@ export default function Index() {
     return <Redirect href="/onboarding" />;
   }
 
-  // Step 2: If not authenticated, go to auth screen
+  // Step 2: If not authenticated, go to paywall screen
   if (!user) {
-    return <Redirect href="/auth" />;
+    return <Redirect href="/paywall" />;
   }
 
   // Step 3: Authenticated + onboarded → go to main tabs

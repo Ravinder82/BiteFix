@@ -2181,11 +2181,11 @@ export default function OnboardingScreen() {
           setRating={setRating}
           onSubmit={() => {
             setShowRatingModal(false);
-            router.replace('/auth');
+            router.replace('/paywall');
           }}
           onLater={() => {
             setShowRatingModal(false);
-            router.replace('/auth');
+            router.replace('/paywall');
           }}
           width={width}
         />

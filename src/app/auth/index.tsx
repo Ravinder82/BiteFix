@@ -29,7 +29,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import Svg, { Path } from 'react-native-svg';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 
 // ── Configure Google Sign-In ─────────────────────────────
 // Note: iosClientId is only passed when explicitly set.
@@ -53,6 +53,8 @@ GoogleSignin.configure(googleConfig);
 export default function AuthScreen() {
   const { colors, isDark } = useTheme();
   const { signInWithGoogle, signInWithApple, signInWithEmail, signUpWithEmail, resetPassword } = useAuthStore();
+  const { redirect } = useLocalSearchParams<{ redirect?: string }>();
+  const target = (redirect === 'tabs' ? '/(tabs)' : '/paywall') as any;
 
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
@@ -95,7 +97,7 @@ export default function AuthScreen() {
       Alert.alert(
         'Success',
         'Signed in with Google successfully!',
-        [{ text: 'Continue', onPress: () => router.replace('/paywall') }]
+        [{ text: 'Continue', onPress: () => router.replace(target) }]
       );
     } catch (error: any) {
       console.error('Google Sign-In Error:', error);
@@ -145,7 +147,7 @@ export default function AuthScreen() {
       Alert.alert(
         'Success',
         'Signed in with Apple successfully!',
-        [{ text: 'Continue', onPress: () => router.replace('/paywall') }]
+        [{ text: 'Continue', onPress: () => router.replace(target) }]
       );
     } catch (error: any) {
       console.error('Apple Sign-In Error:', error);
@@ -179,14 +181,14 @@ export default function AuthScreen() {
         Alert.alert(
           'Success',
           'Signed in successfully!',
-          [{ text: 'Continue', onPress: () => router.replace('/paywall') }]
+          [{ text: 'Continue', onPress: () => router.replace(target) }]
         );
       } else {
         await signUpWithEmail(email.trim(), password, displayName.trim());
         Alert.alert(
           'Account Created',
           `Welcome to FixBite, ${displayName.trim()}! Your account has been successfully created.`,
-          [{ text: 'Get Started', onPress: () => router.replace('/paywall') }]
+          [{ text: 'Get Started', onPress: () => router.replace(target) }]
         );
       }
     } catch (error: any) {
@@ -240,7 +242,7 @@ export default function AuthScreen() {
                     provider: 'email',
                   },
                 });
-                router.replace('/paywall');
+                router.replace(target);
               }}
               style={{
                 backgroundColor: '#10B98115',

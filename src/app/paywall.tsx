@@ -12,6 +12,7 @@ import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useTheme } from '../hooks/useTheme';
 import { useAppStore } from '../stores/appStore';
+import { useAuthStore } from '../stores/authStore';
 import { OrbMascot } from '../components/features/OrbMascot';
 import { MagicalBackground } from '../components/features/MagicalBackground';
 import { ShieldCheck, RefreshCw, Search, ArrowRight, Check, X, Sparkles, ShieldAlert, Zap } from 'lucide-react-native';
@@ -22,9 +23,17 @@ type PlanTier = 'weekly' | 'monthly' | 'annual';
 export default function PaywallScreen() {
   const { colors, isDark } = useTheme();
   const { setPremium } = useAppStore();
+  const { user } = useAuthStore();
   const [selectedPlan, setSelectedPlan] = useState<PlanTier>('annual'); // Default to annual (highest value)
 
   const handleSubscribe = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (!user) {
+      // Lazy Auth: redirect to auth screen first, instructing it to come back to paywall
+      router.push({ pathname: '/auth', params: { redirect: 'paywall' } });
+      return;
+    }
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setPremium(true);
     Alert.alert(
@@ -36,6 +45,12 @@ export default function PaywallScreen() {
 
   const handlePassToHome = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (!user) {
+      // Lazy Auth: redirect to auth screen first, instructing it to go directly to tabs upon login
+      router.push({ pathname: '/auth', params: { redirect: 'tabs' } });
+      return;
+    }
+
     router.replace('/(tabs)');
   };
 
