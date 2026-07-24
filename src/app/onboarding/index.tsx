@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { router } from 'expo-router';
 import { Camera } from 'expo-camera';
 import Animated, {
@@ -1151,7 +1152,7 @@ function SwapPokerCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: bo
   // Responsive dimensions - 50%+ size increase
   const cardH = isShort ? 230 : 280;
   const containerH = isShort ? 295 : 345;
-  
+
   // Animation values for interactive fanning
   const badScale = useSharedValue(0.9);
   const badRotate = useSharedValue(-8);
@@ -1213,7 +1214,7 @@ function SwapPokerCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: bo
   return (
     <View style={{ width: cardW, height: containerH, justifyContent: 'center', alignItems: 'center' }}>
       <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'center', alignItems: 'center', position: 'relative', height: cardH + 10 }}>
-        
+
         {/* Left Card: Bad Option (Sweet Ketchup) */}
         <Animated.View
           style={[
@@ -1236,10 +1237,10 @@ function SwapPokerCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: bo
           ]}
         >
           {/* Full Card Background Image */}
-          <Image
+          <ExpoImage
             source={require('../../../assets/unhealthy_ketchup.png')}
             style={StyleSheet.absoluteFill}
-            resizeMode="cover"
+            contentFit="cover"
           />
           {/* Subtle Dark Overlay */}
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.18)' }]} />
@@ -1294,10 +1295,10 @@ function SwapPokerCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: bo
           ]}
         >
           {/* Full Card Background Image */}
-          <Image
+          <ExpoImage
             source={require('../../../assets/healthy_tomato_puree.png')}
             style={StyleSheet.absoluteFill}
-            resizeMode="cover"
+            contentFit="cover"
           />
           {/* Subtle Dark Overlay */}
           <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.18)' }]} />
@@ -1628,7 +1629,7 @@ const SLIDES: SlideData[] = [
     step: 5,
     title: 'Healthier Swaps',
     highlight: 'Healthier Swaps',
-    subtitle: 'Scan and Swap for Healthier Options',
+    subtitle: 'Scan and Find Healthier Options',
     buttonLabel: 'Continue',
     isLast: false,
     mascotState: 'happy',
