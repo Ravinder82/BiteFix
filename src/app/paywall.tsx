@@ -15,7 +15,7 @@ import { useAppStore } from '../stores/appStore';
 import { useAuthStore } from '../stores/authStore';
 import { OrbMascot } from '../components/features/OrbMascot';
 import { MagicalBackground } from '../components/features/MagicalBackground';
-import { ShieldCheck, RefreshCw, Search, ArrowRight, Check, X, Sparkles, ShieldAlert, Zap } from 'lucide-react-native';
+import { ShieldCheck, RefreshCw, Search, ArrowRight, Check, X, Sparkles, ShieldAlert, Zap, Activity } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 type PlanTier = 'weekly' | 'monthly' | 'annual';
@@ -151,7 +151,7 @@ export default function PaywallScreen() {
             borderWidth: 1.5,
             borderColor: colors.border,
             padding: 16,
-            gap: 12,
+            gap: 10,
             marginBottom: 20,
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 4 },
@@ -160,54 +160,80 @@ export default function PaywallScreen() {
             elevation: 2,
           }}
         >
-          {/* Feature 1 */}
+          {/* Feature 1: NOVA */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: 'rgba(255, 59, 48, 0.08)', alignItems: 'center', justifyContent: 'center' }}>
-              <ShieldAlert size={16} color="#FF3B30" />
+            <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(255, 149, 0, 0.08)', alignItems: 'center', justifyContent: 'center' }}>
+              <Activity size={15} color="#FF9500" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>Gut Shield Pro</Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 1 }}>
+              <Text style={{ color: colors.text, fontSize: 12.5, fontWeight: '800' }}>NOVA Processing Audit</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '500', marginTop: 0.5 }}>
+                Decodes industrial food processing levels.
+              </Text>
+            </View>
+          </View>
+
+          {/* Feature 2: Nutri-Score */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(52, 199, 89, 0.08)', alignItems: 'center', justifyContent: 'center' }}>
+              <Sparkles size={15} color="#34C759" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: colors.text, fontSize: 12.5, fontWeight: '800' }}>Nutri-Score Rating</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '500', marginTop: 0.5 }}>
+                Provides A–E traffic light food quality grade.
+              </Text>
+            </View>
+          </View>
+
+          {/* Feature 3: Gut Shield */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(255, 59, 48, 0.08)', alignItems: 'center', justifyContent: 'center' }}>
+              <ShieldAlert size={15} color="#FF3B30" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: colors.text, fontSize: 12.5, fontWeight: '800' }}>Gut Shield Pro</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '500', marginTop: 0.5 }}>
                 Flags barrier-eroding emulsifiers & gums.
               </Text>
             </View>
           </View>
 
-          {/* Feature 2 */}
+          {/* Feature 4: Additive Detective */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: 'rgba(0, 122, 255, 0.08)', alignItems: 'center', justifyContent: 'center' }}>
-              <RefreshCw size={16} color="#007AFF" />
+            <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(175, 82, 222, 0.08)', alignItems: 'center', justifyContent: 'center' }}>
+              <Search size={15} color="#AF52DE" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>Smart Swaps Engine</Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 1 }}>
-                Instantly swaps ultra-processed choices to A-grade.
+              <Text style={{ color: colors.text, fontSize: 12.5, fontWeight: '800' }}>Additive Detective</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '500', marginTop: 0.5 }}>
+                Audits synthetic food dyes (Red 40) & preservatives.
               </Text>
             </View>
           </View>
 
-          {/* Feature 3 */}
+          {/* Feature 5: Hidden Sugar */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: 'rgba(175, 82, 222, 0.08)', alignItems: 'center', justifyContent: 'center' }}>
-              <Search size={16} color="#AF52DE" />
+            <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(255, 204, 0, 0.08)', alignItems: 'center', justifyContent: 'center' }}>
+              <Zap size={15} color="#FFCC00" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>Additive Detective</Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 1 }}>
-                Alerts for Red 40, artificial sweeteners & dyes.
+              <Text style={{ color: colors.text, fontSize: 12.5, fontWeight: '800' }}>Sugar & Hidden Sugar</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '500', marginTop: 0.5 }}>
+                Unmasks hidden sugar teaspoon counts.
               </Text>
             </View>
           </View>
 
-          {/* Feature 4 */}
+          {/* Feature 6: Smart Swaps */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: 'rgba(255, 204, 0, 0.08)', alignItems: 'center', justifyContent: 'center' }}>
-              <Zap size={16} color="#FFCC00" />
+            <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(0, 122, 255, 0.08)', alignItems: 'center', justifyContent: 'center' }}>
+              <RefreshCw size={15} color="#007AFF" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>Nutri-Score, Sugar & NOVA Grades</Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 1 }}>
-                Decodes traffic light quality grades & teaspoon sugars.
+              <Text style={{ color: colors.text, fontSize: 12.5, fontWeight: '800' }}>Smart Swaps Engine</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '500', marginTop: 0.5 }}>
+                Instantly matches unhealthy items with clean options.
               </Text>
             </View>
           </View>
