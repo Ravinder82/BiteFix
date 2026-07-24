@@ -14,8 +14,7 @@ import { useTheme } from '../hooks/useTheme';
 import { useAppStore } from '../stores/appStore';
 import { OrbMascot } from '../components/features/OrbMascot';
 import { MagicalBackground } from '../components/features/MagicalBackground';
-import { ShieldCheck, RefreshCw, Search, ArrowRight, Check, X, Sparkles, AlertCircle } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { ShieldCheck, RefreshCw, Search, ArrowRight, Check, X, Sparkles, ShieldAlert, Zap } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 type PlanTier = 'weekly' | 'monthly' | 'annual';
@@ -23,7 +22,7 @@ type PlanTier = 'weekly' | 'monthly' | 'annual';
 export default function PaywallScreen() {
   const { colors, isDark } = useTheme();
   const { setPremium } = useAppStore();
-  const [selectedPlan, setSelectedPlan] = useState<PlanTier>('weekly');
+  const [selectedPlan, setSelectedPlan] = useState<PlanTier>('annual'); // Default to annual (highest value)
 
   const handleSubscribe = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -49,11 +48,14 @@ export default function PaywallScreen() {
     );
   };
 
+  // Luxury style definitions
+  const gold = '#D4AF37';
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <MagicalBackground />
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingBottom: 40 }}
+        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 20, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
         {/* ── Top Header Navigation ── */}
@@ -91,108 +93,113 @@ export default function PaywallScreen() {
             }}
           >
             <Text style={{ color: colors.success, fontSize: 12, fontWeight: '900' }}>
-              Pass to Home Screen
+              Pass to Home
             </Text>
             <ArrowRight size={14} color={colors.success} />
           </TouchableOpacity>
         </View>
 
         {/* ── Mascot & Title Banner ── */}
-        <View style={{ alignItems: 'center', marginTop: 20, marginBottom: 20 }}>
-          <View style={{ position: 'relative', alignItems: 'center', justifyContent: 'center', width: 120, height: 120 }}>
-            <OrbMascot state="happy" size={110} />
+        <View style={{ alignItems: 'center', marginTop: 24, marginBottom: 20 }}>
+          <View style={{ position: 'relative', alignItems: 'center', justifyContent: 'center', width: 100, height: 100 }}>
+            <OrbMascot state="happy" size={90} />
           </View>
 
           <View style={{
-            backgroundColor: colors.success + '20',
-            borderColor: colors.success + '60',
+            backgroundColor: 'rgba(212, 175, 55, 0.1)',
+            borderColor: gold + '40',
             borderWidth: 1,
             paddingHorizontal: 12,
             paddingVertical: 4,
             borderRadius: 12,
-            marginTop: 12,
+            marginTop: 16,
             marginBottom: 8,
           }}>
-            <Text style={{ color: colors.success, fontSize: 10, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase' }}>
-              B I T E F I X   P R E M I U M
+            <Text style={{ color: gold, fontSize: 10, fontWeight: '900', letterSpacing: 1.5, textTransform: 'uppercase' }}>
+              ✦ B I T E F I X   P R E M I U M ✦
             </Text>
           </View>
 
           <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', textAlign: 'center', letterSpacing: -0.5 }}>
-            Your Ultimate Gut Shield
+            Protect Your Gut. Scan Cleaner.
           </Text>
-          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', textAlign: 'center', marginTop: 4, maxWidth: 280 }}>
-            Protect your microbiome and swap ultra-processed items for clean upgrades.
+          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', textAlign: 'center', marginTop: 6, maxWidth: 300, lineHeight: 18 }}>
+            Instantly audit additives, detect hidden sugars, and swap to unprocessed alternatives.
           </Text>
         </View>
 
-        {/* ── Feature Highlights Card ── */}
+        {/* ── Feature Highlights Grid ── */}
         <View
           style={{
-            backgroundColor: colors.surfaceRaised,
+            backgroundColor: colors.surface,
             borderRadius: 24,
             borderWidth: 1.5,
             borderColor: colors.border,
-            padding: 18,
-            gap: 14,
-            marginBottom: 24,
+            padding: 16,
+            gap: 12,
+            marginBottom: 20,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.04,
+            shadowRadius: 12,
+            elevation: 2,
           }}
         >
           {/* Feature 1 */}
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-            <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: colors.success + '20', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.success + '40' }}>
-              <ShieldCheck size={18} color={colors.success} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: 'rgba(255, 59, 48, 0.08)', alignItems: 'center', justifyContent: 'center' }}>
+              <ShieldAlert size={16} color="#FF3B30" />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>Gut Shield Pro</Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 1, lineHeight: 15 }}>
-                Protect your mucosal lining. Audit emulsifiers like Carrageenan & Polysorbate 80.
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 1 }}>
+                Flags barrier-eroding emulsifiers & gums.
               </Text>
             </View>
           </View>
 
           {/* Feature 2 */}
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-            <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: colors.primary + '20', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.primary + '40' }}>
-              <RefreshCw size={18} color={colors.primary} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: 'rgba(0, 122, 255, 0.08)', alignItems: 'center', justifyContent: 'center' }}>
+              <RefreshCw size={16} color="#007AFF" />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>Smart Swaps Engine</Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 1, lineHeight: 15 }}>
-                Convert ultra-processed NOVA 4 choices into clean, high-scoring upgrades.
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 1 }}>
+                Instantly swaps ultra-processed choices to A-grade.
               </Text>
             </View>
           </View>
 
           {/* Feature 3 */}
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-            <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: colors.secondary + '20', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.secondary + '40' }}>
-              <Search size={18} color={colors.secondary} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: 'rgba(175, 82, 222, 0.08)', alignItems: 'center', justifyContent: 'center' }}>
+              <Search size={16} color="#AF52DE" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>Additive Detective Cards</Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 1, lineHeight: 15 }}>
-                Automatic alerts for synthetic food dyes (Red 40), artificial sweeteners, & preservatives.
+              <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>Additive Detective</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 1 }}>
+                Alerts for Red 40, artificial sweeteners & dyes.
               </Text>
             </View>
           </View>
 
-          {/* Feature 4: Nutri-Score, Sugar and Nova Score */}
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-            <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: colors.success + '20', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.success + '40' }}>
-              <Sparkles size={18} color={colors.success} />
+          {/* Feature 4 */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: 'rgba(255, 204, 0, 0.08)', alignItems: 'center', justifyContent: 'center' }}>
+              <Zap size={16} color="#FFCC00" />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>Nutri-Score, Sugar & NOVA Grades</Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 1, lineHeight: 15 }}>
-                Full breakdown of A–E food quality, daily teaspoons limits, and industrial processing level.
+              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 1 }}>
+                Decodes traffic light quality grades & teaspoon sugars.
               </Text>
             </View>
           </View>
         </View>
 
         {/* ── Plan Selection Options ── */}
-        <View style={{ gap: 10, marginBottom: 24 }}>
+        <View style={{ gap: 10, marginBottom: 20 }}>
           {/* Weekly Pass Plan */}
           <TouchableOpacity
             onPress={() => {
@@ -201,9 +208,9 @@ export default function PaywallScreen() {
             }}
             activeOpacity={0.85}
             style={{
-              backgroundColor: selectedPlan === 'weekly' ? colors.success + '15' : colors.surfaceRaised,
+              backgroundColor: selectedPlan === 'weekly' ? colors.success + '08' : colors.surfaceRaised,
               borderRadius: 18,
-              borderWidth: 2,
+              borderWidth: selectedPlan === 'weekly' ? 2 : 1.5,
               borderColor: selectedPlan === 'weekly' ? colors.success : colors.border,
               padding: 14,
               flexDirection: 'row',
@@ -245,9 +252,9 @@ export default function PaywallScreen() {
             }}
             activeOpacity={0.85}
             style={{
-              backgroundColor: selectedPlan === 'monthly' ? colors.success + '15' : colors.surfaceRaised,
+              backgroundColor: selectedPlan === 'monthly' ? colors.success + '08' : colors.surfaceRaised,
               borderRadius: 18,
-              borderWidth: 2,
+              borderWidth: selectedPlan === 'monthly' ? 2 : 1.5,
               borderColor: selectedPlan === 'monthly' ? colors.success : colors.border,
               padding: 14,
               flexDirection: 'row',
@@ -289,9 +296,9 @@ export default function PaywallScreen() {
             }}
             activeOpacity={0.85}
             style={{
-              backgroundColor: selectedPlan === 'annual' ? colors.success + '15' : colors.surfaceRaised,
+              backgroundColor: selectedPlan === 'annual' ? colors.success + '08' : colors.surfaceRaised,
               borderRadius: 18,
-              borderWidth: 2,
+              borderWidth: selectedPlan === 'annual' ? 2 : 1.5,
               borderColor: selectedPlan === 'annual' ? colors.success : colors.border,
               padding: 14,
               flexDirection: 'row',
@@ -328,7 +335,7 @@ export default function PaywallScreen() {
               >
                 {selectedPlan === 'annual' && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.success }} />}
               </View>
-              <View>
+              <View style={{ marginTop: 6 }}>
                 <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800' }}>Annual Pass</Text>
                 <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 1 }}>$3.33 / month • Billed yearly</Text>
               </View>
@@ -353,7 +360,7 @@ export default function PaywallScreen() {
             justifyContent: 'center',
             shadowColor: colors.success,
             shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.4,
+            shadowOpacity: 0.35,
             shadowRadius: 16,
             elevation: 8,
           }}
@@ -364,7 +371,7 @@ export default function PaywallScreen() {
         </TouchableOpacity>
 
         {/* ── Apple Guidelines Subscription Disclosures & Policies ── */}
-        <View style={{ marginTop: 20, gap: 10, borderTopWidth: 1.5, borderTopColor: colors.border, paddingTop: 16 }}>
+        <View style={{ marginTop: 24, gap: 10, borderTopWidth: 1.5, borderTopColor: colors.border, paddingTop: 16 }}>
           <Text style={{ color: colors.textMuted, fontSize: 9.5, textAlign: 'center', lineHeight: 14 }}>
             Payment will be charged to your iTunes Account upon purchase confirmation. Subscription automatically renews unless auto-renew is turned off at least 24 hours before the end of the current period. Manage your subscription or turn off auto-renew in your iTunes Account Settings.
           </Text>
