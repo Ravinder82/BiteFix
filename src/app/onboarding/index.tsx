@@ -337,98 +337,123 @@ function GoalCard({
 // SLIDE 3 BODY: NOVA & Nutri-Score Visual Card
 // ─────────────────────────────────────────────────────────
 function NovaNutriScoreDemoCard({ cardW, C }: { cardW: number; C: any }) {
-  const pulseAnim = useSharedValue(1);
+  const novaScale = useSharedValue(0.4);
+  const novaOpacity = useSharedValue(0);
+  const nutriScale = useSharedValue(0.4);
+  const nutriOpacity = useSharedValue(0);
 
   useEffect(() => {
-    pulseAnim.value = withRepeat(
-      withSequence(
-        withTiming(1.04, { duration: 1000 }),
-        withTiming(1.0, { duration: 1000 })
-      ),
-      -1,
-      true
-    );
+    // Nova card pops out first
+    novaScale.value = withSpring(1, { damping: 12, stiffness: 120 });
+    novaOpacity.value = withTiming(1, { duration: 300 });
+
+    // Nutri-Score card pops out with a 250ms delay
+    nutriScale.value = withDelay(250, withSpring(1, { damping: 12, stiffness: 120 }));
+    nutriOpacity.value = withDelay(250, withTiming(1, { duration: 300 }));
   }, []);
 
-  const pulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseAnim.value }],
+  const novaStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: novaScale.value }],
+    opacity: novaOpacity.value,
+  }));
+
+  const nutriStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: nutriScale.value }],
+    opacity: nutriOpacity.value,
   }));
 
   return (
     <View
       style={{
         width: cardW,
-        backgroundColor: C.card,
-        borderRadius: 22,
-        borderWidth: 1,
-        borderColor: C.cardBorder,
-        padding: 14,
-        shadowColor: '#FF9500',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.12,
-        shadowRadius: 16,
-        elevation: 6,
-        gap: 10,
+        gap: 12,
       }}
     >
-      <Text style={{ color: C.text, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 }}>
-        Food Quality Decoders
-      </Text>
-
-      {/* NOVA System UI Container */}
-      <View
-        style={{
-          backgroundColor: C.cardInner,
-          borderRadius: 14,
-          padding: 10,
-          borderWidth: 1,
-          borderColor: C.cardBorder,
-          gap: 6,
-        }}
+      {/* NOVA System UI Card */}
+      <Animated.View
+        style={[
+          {
+            backgroundColor: C.card,
+            borderRadius: 22,
+            borderWidth: 1.5,
+            borderColor: C.cardBorder,
+            padding: 16,
+            shadowColor: C.red,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.08,
+            shadowRadius: 12,
+            elevation: 4,
+            gap: 10,
+          },
+          novaStyle,
+        ]}
       >
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '800' }}>NOVA Industrial Processing:</Text>
-          <View style={{ backgroundColor: C.redLight, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
-            <Text style={{ color: C.red, fontSize: 8, fontWeight: '900' }}>NOVA 4 • ULTRA-PROCESSED</Text>
+          <Text style={{ color: C.text, fontSize: 12, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            NOVA Processing Level
+          </Text>
+          <View style={{ backgroundColor: C.redLight, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, borderWidth: 1, borderColor: C.red + '30' }}>
+            <Text style={{ color: C.red, fontSize: 9, fontWeight: '900' }}>NOVA 4</Text>
           </View>
         </View>
 
-        <View style={{ flexDirection: 'row', gap: 6 }}>
-          <View style={{ flex: 1, backgroundColor: C.greenLight, padding: 6, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 4 }}>
-            <ShieldCheck size={12} color={C.green} />
+        <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '500', lineHeight: 16 }}>
+          NOVA classifies food by its degree of industrial processing. <Text style={{ color: C.red, fontWeight: '800' }}>NOVA 4</Text> indicates ultra-processed foods loaded with chemical additives, hydrogenated oils, and flavor enhancers.
+        </Text>
+
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+          <View style={{ flex: 1, backgroundColor: C.greenLight, padding: 8, borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: C.green + '20', flexDirection: 'row', gap: 6 }}>
+            <ShieldCheck size={14} color={C.green} />
             <View>
-              <Text style={{ color: C.green, fontSize: 9, fontWeight: '900' }}>NOVA 1</Text>
-              <Text style={{ color: C.textSub, fontSize: 8, fontWeight: '600' }}>Whole Foods</Text>
+              <Text style={{ color: C.green, fontSize: 10, fontWeight: '900' }}>NOVA 1</Text>
+              <Text style={{ color: C.textSub, fontSize: 8, fontWeight: '700' }}>Whole Foods</Text>
             </View>
           </View>
-          <Animated.View style={[{ flex: 1.3, backgroundColor: C.redLight, padding: 6, borderRadius: 8, alignItems: 'center', borderWidth: 1.5, borderColor: C.red, flexDirection: 'row', justifyContent: 'center', gap: 4 }, pulseStyle]}>
-            <AlertTriangle size={12} color={C.red} />
-            <View>
-              <Text style={{ color: C.red, fontSize: 9, fontWeight: '900' }}>NOVA 4</Text>
-              <Text style={{ color: C.red, fontSize: 8, fontWeight: '700' }}>Industrial Additives</Text>
-            </View>
-          </Animated.View>
-        </View>
-      </View>
 
-      {/* Nutri-Score A-E Traffic Light Container */}
-      <View
-        style={{
-          backgroundColor: C.cardInner,
-          borderRadius: 14,
-          padding: 10,
-          borderWidth: 1,
-          borderColor: C.cardBorder,
-          gap: 6,
-        }}
+          <View style={{ flex: 1, backgroundColor: C.redLight, padding: 8, borderRadius: 10, alignItems: 'center', borderWidth: 1.5, borderColor: C.red, flexDirection: 'row', gap: 6 }}>
+            <AlertTriangle size={14} color={C.red} />
+            <View>
+              <Text style={{ color: C.red, fontSize: 10, fontWeight: '900' }}>NOVA 4</Text>
+              <Text style={{ color: C.red, fontSize: 8, fontWeight: '800' }}>Ultra-Processed</Text>
+            </View>
+          </View>
+        </View>
+      </Animated.View>
+
+      {/* Nutri-Score A-E Card */}
+      <Animated.View
+        style={[
+          {
+            backgroundColor: C.card,
+            borderRadius: 22,
+            borderWidth: 1.5,
+            borderColor: C.cardBorder,
+            padding: 16,
+            shadowColor: C.green,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.08,
+            shadowRadius: 12,
+            elevation: 4,
+            gap: 10,
+          },
+          nutriStyle,
+        ]}
       >
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '800' }}>Nutri-Score Rating:</Text>
-          <Text style={{ color: C.green, fontSize: 10, fontWeight: '900' }}>Grade A • Clean Quality</Text>
+          <Text style={{ color: C.text, fontSize: 12, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            Nutri-Score Rating
+          </Text>
+          <View style={{ backgroundColor: C.greenLight, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, borderWidth: 1, borderColor: C.green + '30' }}>
+            <Text style={{ color: C.green, fontSize: 9, fontWeight: '900' }}>GRADE A</Text>
+          </View>
         </View>
+
+        <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '500', lineHeight: 16 }}>
+          Rates the nutritional quality of products from <Text style={{ color: C.green, fontWeight: '800' }}>A (healthy/green)</Text> to <Text style={{ color: C.red, fontWeight: '800' }}>E (unhealthy/red)</Text> based on fiber, protein, sugar, and sodium density.
+        </Text>
 
         {/* Traffic light bar */}
-        <View style={{ flexDirection: 'row', gap: 4, height: 26, alignItems: 'center' }}>
+        <View style={{ flexDirection: 'row', gap: 4, height: 26, alignItems: 'center', marginTop: 4 }}>
           <View style={{ flex: 1.2, height: 26, backgroundColor: '#008B50', borderRadius: 6, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF' }}>
             <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '900' }}>A</Text>
           </View>
@@ -445,7 +470,7 @@ function NovaNutriScoreDemoCard({ cardW, C }: { cardW: number; C: any }) {
             <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '800' }}>E</Text>
           </View>
         </View>
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -892,104 +917,7 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────
-// SLIDE 3 BODY: Nova & Nutri-Score Question Card
-// ─────────────────────────────────────────────────────────
-function NovaQuestionCard({
-  cardW,
-  C,
-  showModal,
-  setShowModal,
-  onNext,
-}: {
-  cardW: number;
-  C: any;
-  showModal: boolean;
-  setShowModal: (v: boolean) => void;
-  onNext: () => void;
-}) {
-  return (
-    <View style={{ gap: 12, width: cardW }}>
-      <View
-        style={{
-          backgroundColor: C.card,
-          borderRadius: 22,
-          borderWidth: 1.5,
-          borderColor: C.cardBorder,
-          padding: 16,
-          alignItems: 'center',
-          gap: 12,
-        }}
-      >
-        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: C.amberLight, alignItems: 'center', justifyContent: 'center' }}>
-          <Sparkles size={24} color={C.amber} />
-        </View>
-        <Text style={{ color: C.text, fontSize: 15, fontWeight: '800', textAlign: 'center' }}>
-          Do you know about Nova Scoring on Packaged Products?
-        </Text>
-        <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '500', textAlign: 'center', lineHeight: 16 }}>
-          NOVA classifies food from 1 (unprocessed) to 4 (ultra-processed industrial items).
-        </Text>
 
-        {/* Choice Buttons */}
-        <View style={{ flexDirection: 'row', gap: 10, width: '100%', marginTop: 4 }}>
-          <TouchableOpacity
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              setShowModal(!showModal);
-            }}
-            activeOpacity={0.85}
-            style={{
-              flex: 1,
-              backgroundColor: showModal ? C.amber : C.amberLight,
-              borderWidth: 1.5,
-              borderColor: C.amber,
-              borderRadius: 14,
-              paddingVertical: 12,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'row',
-              gap: 6,
-            }}
-          >
-            <Check size={16} color={showModal ? '#FFFFFF' : C.amber} strokeWidth={2.5} />
-            <Text style={{ color: showModal ? '#FFFFFF' : C.amber, fontSize: 13, fontWeight: '800' }}>
-              {showModal ? 'Hide Details' : 'YES, Explain'}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onNext();
-            }}
-            activeOpacity={0.85}
-            style={{
-              flex: 1,
-              backgroundColor: C.cardInner,
-              borderWidth: 1.5,
-              borderColor: C.cardBorder,
-              borderRadius: 14,
-              paddingVertical: 12,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'row',
-              gap: 6,
-            }}
-          >
-            <Text style={{ color: C.textSub, fontSize: 13, fontWeight: '800' }}>
-              NO, Next Screen
-            </Text>
-            <ArrowRight size={14} color={C.textSub} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Expanded Modal Content if YES */}
-      {showModal && <NovaNutriScoreDemoCard cardW={cardW} C={C} />}
-    </View>
-  );
-}
 
 // ─────────────────────────────────────────────────────────
 // SLIDE 4 BODY: Gut Health & Additives Question Card
@@ -1095,7 +1023,7 @@ function GutAdditivesQuestionCard({
 // ─────────────────────────────────────────────────────────
 function SwapPokerCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: boolean }) {
   const [activeCard, setActiveCard] = useState<'bad' | 'good'>('good');
-  
+
   // Animation values for interactive fanning
   const badScale = useSharedValue(0.95);
   const badRotate = useSharedValue(-8);
@@ -1152,7 +1080,7 @@ function SwapPokerCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: bo
   return (
     <View style={{ width: cardW, height: 250, justifyContent: 'center', alignItems: 'center' }}>
       <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'center', alignItems: 'center', position: 'relative', height: 210 }}>
-        
+
         {/* Left Card: Bad Option (Sweet Ketchup) */}
         <Animated.View
           style={[
@@ -1513,9 +1441,9 @@ const SLIDES: SlideData[] = [
   },
   {
     step: 3,
-    title: 'NOVA & Nutri-Score',
-    highlight: 'NOVA & Nutri-Score',
-    subtitle: 'Do you know what NOVA & Nutri-Score on Packaged Products means?',
+    title: 'NOVA & ',
+    highlight: 'NUTRITION',
+    subtitle: 'Scan and Get Nova and Nutri-Score instantly',
     buttonLabel: 'Continue',
     isLast: false,
     mascotState: 'happy',
@@ -1912,13 +1840,7 @@ export default function OnboardingScreen() {
               <GoalCard cardW={cardW} C={C} selected={userGoals} onSelect={setUserGoals} />
             )}
             {currentCardIndex === 2 && (
-              <NovaQuestionCard
-                cardW={cardW}
-                C={C}
-                showModal={showNovaModal}
-                setShowModal={setShowNovaModal}
-                onNext={handleNext}
-              />
+              <NovaNutriScoreDemoCard cardW={cardW} C={C} />
             )}
             {currentCardIndex === 3 && (
               <GutAdditivesQuestionCard
