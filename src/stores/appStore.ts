@@ -237,6 +237,21 @@ export const useAppStore = create<AppState>()(
       storage: createJSONStorage(() => AsyncStorage),
       version: 5,
       migrate: (persistedState: any, version: number) => {
+        if (!persistedState || typeof persistedState !== 'object') {
+          return {
+            onboardingComplete: false,
+            theme: 'light',
+            sugarUnit: 'g',
+            scans: [],
+            collection: [],
+            userName: undefined,
+            userGoal: 'none',
+            allergenFilters: [],
+            strictNovaAlert: true,
+            stealthAdditivesAlert: true,
+            isPremium: false,
+          } as any;
+        }
         if (version === 0) {
           persistedState.theme = 'light';
         }

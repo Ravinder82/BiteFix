@@ -22,7 +22,7 @@ const firebaseConfig = {
   projectId: 'cutsugar-6ad0f',
   storageBucket: 'cutsugar-6ad0f.firebasestorage.app',
   messagingSenderId: '1097829102652',
-  appId: '1:1097829102652:ios:9c28d13d4a6938618b7f39',
+  appId: '1:1097829102652:ios:f810c0b88af12abc8b7f39',
 };
 
 // Initialize Firebase App (prevent duplicate initialization on hot reload)

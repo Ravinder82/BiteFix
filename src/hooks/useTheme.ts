@@ -7,7 +7,7 @@ export function useTheme() {
   const { theme, setTheme } = useAppStore();
 
   const resolvedTheme = (theme === 'system' ? (systemScheme ?? 'light') : theme) as 'light' | 'dark';
-  const colors = Colors[resolvedTheme];
+  const colors = Colors[resolvedTheme] || Colors.light;
 
   const toggleTheme = () => {
     setTheme(resolvedTheme === 'light' ? 'dark' : 'light');
