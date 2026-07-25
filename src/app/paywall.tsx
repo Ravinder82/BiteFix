@@ -32,13 +32,19 @@ export default function PaywallScreen() {
   useEffect(() => {
     // Initialize native IAP connection and check existing subscription
     const initIAP = async () => {
-      await iapService.initialize();
-      await iapService.checkSubscriptionStatus();
+      try {
+        await iapService.initialize();
+        await iapService.checkSubscriptionStatus();
+      } catch (e) {
+        console.warn('[Paywall] initIAP warning:', e);
+      }
     };
     initIAP();
 
     return () => {
-      iapService.disconnect();
+      try {
+        iapService.disconnect();
+      } catch (e) {}
     };
   }, []);
 
