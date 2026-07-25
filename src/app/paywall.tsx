@@ -30,13 +30,17 @@ export default function PaywallScreen() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    // Sync user identity with IAP service if authenticated
-    if (user?.uid) {
-      iapService.identifyUser(user.uid);
-    } else {
-      iapService.initialize();
-    }
-  }, [user?.uid]);
+    // Initialize native IAP connection and check existing subscription
+    const initIAP = async () => {
+      await iapService.initialize();
+      await iapService.checkSubscriptionStatus();
+    };
+    initIAP();
+
+    return () => {
+      iapService.disconnect();
+    };
+  }, []);
 
   const handleSubscribe = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

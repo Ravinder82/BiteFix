@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>1097829102652-j3ckq63u4imagolthtov6gvl5i2rpqof.apps.googleusercontent.com</string>
+	<string>1097829102652-jgmhd81kr0c36338ci9tlmh1n3milght.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.1097829102652-j3ckq63u4imagolthtov6gvl5i2rpqof</string>
+	<string>com.googleusercontent.apps.1097829102652-jgmhd81kr0c36338ci9tlmh1n3milght</string>
 	<key>API_KEY</key>
 	<string>AIzaSyAKaWR_eUVx8lKlElEumnPYemykPxTt0uQ</string>
 	<key>GCM_SENDER_ID</key>
@@ -13,7 +13,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.ravinderpoonia.cutsugar</string>
+	<string>com.ravinderpoonia.bitefix</string>
 	<key>PROJECT_ID</key>
 	<string>cutsugar-6ad0f</string>
 	<key>STORAGE_BUCKET</key>
@@ -29,6 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:1097829102652:ios:9c28d13d4a6938618b7f39</string>
+	<string>1:1097829102652:ios:f810c0b88af12abc8b7f39</string>
 </dict>
 </plist>

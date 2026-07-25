@@ -1,23 +1,27 @@
 // ─────────────────────────────────────────────────────────
-// BiteFix — In-App Purchase (IAP) Service (RevenueCat)
+// BiteFix — In-App Purchase (IAP) Service (Native StoreKit)
 // ─────────────────────────────────────────────────────────
-// Safe, production-ready IAP wrapper using RevenueCat SDK.
-// Handles live App Store & Google Play product pricing, receipt
-// validation, user identity sync, purchase execution, and restoration.
+// Production-ready IAP service using expo-iap (StoreKit 2).
+// No third-party subscription middleware — talks directly
+// to App Store Connect and Google Play.
 // ─────────────────────────────────────────────────────────
 
 import { Platform } from 'react-native';
 import { useAppStore } from '../stores/appStore';
-import { useAuthStore } from '../stores/authStore';
-
-// Dynamic import handle for native Purchases module
-let Purchases: any = null;
-
-try {
-  Purchases = require('react-native-purchases').default;
-} catch (e) {
-  console.warn('[IAP Service] react-native-purchases module not linked in current runtime environment. Operating in graceful fallback mode.');
-}
+import {
+  initConnection,
+  endConnection,
+  fetchProducts,
+  requestPurchase,
+  finishTransaction,
+  getAvailablePurchases,
+  hasActiveSubscriptions,
+  restorePurchases as nativeRestore,
+  purchaseUpdatedListener,
+  purchaseErrorListener,
+  type Purchase,
+} from 'expo-iap';
+import type { PurchaseError } from 'expo-iap';
 
 // ── App Store Connect Product IDs ────────────────────────
 export const IAP_PRODUCT_IDS = {
@@ -25,166 +29,278 @@ export const IAP_PRODUCT_IDS = {
   ANNUAL: 'com.ravinderpoonia.bitefix.yearly',
 };
 
-// ── RevenueCat Entitlement Identifier ────────────────────
-export const ENTITLEMENT_ID = 'premium_access';
+const ALL_SKUS = [IAP_PRODUCT_IDS.MONTHLY, IAP_PRODUCT_IDS.ANNUAL];
+
+// ── Types ────────────────────────────────────────────────
+export interface SubscriptionProduct {
+  productId: string;
+  title: string;
+  description: string;
+  localizedPrice: string;
+  price: string;
+  currency: string;
+}
 
 class IAPService {
-  private isConfigured = false;
+  private isConnected = false;
+  private purchaseUpdateSub: { remove: () => void } | null = null;
+  private purchaseErrorSub: { remove: () => void } | null = null;
+
+  // Resolve/reject for the current in-flight purchase promise
+  private purchaseResolve: ((value: { success: boolean; userCancelled?: boolean; error?: string }) => void) | null = null;
 
   /**
-   * Initialize RevenueCat SDK with user identity & API key
+   * Initialize the native IAP connection.
+   * Sets up purchase event listeners for StoreKit 2 event-based flow.
    */
-  public async initialize(userId?: string): Promise<void> {
-    if (!Purchases) return;
+  public async initialize(): Promise<void> {
+    if (this.isConnected) return;
 
     try {
-      const apiKey = Platform.select({
-        ios: process.env.EXPO_PUBLIC_REVENUECAT_APPLE_API_KEY || '',
-        android: process.env.EXPO_PUBLIC_REVENUECAT_GOOGLE_API_KEY || '',
-      });
+      await initConnection();
+      this.isConnected = true;
+      console.log('[IAP Service] Native StoreKit connection established.');
 
-      if (!apiKey) {
-        console.log('[IAP Service] No RevenueCat API key provided. Awaiting credentials.');
-        return;
+      // Set up purchase event listeners
+      this.setupListeners();
+    } catch (error) {
+      console.error('[IAP Service] Failed to connect to native store:', error);
+      this.isConnected = false;
+    }
+  }
+
+  /**
+   * Set up purchase event listeners for the StoreKit 2 event-based purchase flow.
+   */
+  private setupListeners(): void {
+    // Remove existing listeners to prevent duplicates
+    this.removeListeners();
+
+    // Listen for successful purchase events
+    this.purchaseUpdateSub = purchaseUpdatedListener(async (purchase: Purchase) => {
+      console.log('[IAP Service] Purchase updated:', purchase.productId);
+
+      try {
+        // Finish the transaction — CRITICAL for StoreKit 2
+        // Unfinished transactions replay on every app launch (iOS)
+        // Android auto-refunds after 3 days if not finished
+        await finishTransaction({ purchase, isConsumable: false });
+        console.log('[IAP Service] Transaction finished for:', purchase.productId);
+
+        // Grant premium access
+        useAppStore.getState().setPremium(true);
+
+        // Resolve the purchase promise if one is pending
+        if (this.purchaseResolve) {
+          this.purchaseResolve({ success: true });
+          this.purchaseResolve = null;
+        }
+      } catch (finishError) {
+        console.error('[IAP Service] Failed to finish transaction:', finishError);
+        if (this.purchaseResolve) {
+          this.purchaseResolve({ success: false, error: 'Failed to finalize transaction.' });
+          this.purchaseResolve = null;
+        }
       }
+    });
 
-      await Purchases.configure({
-        apiKey,
-        appUserID: userId || null,
-      });
+    // Listen for purchase error events
+    this.purchaseErrorSub = purchaseErrorListener((error: PurchaseError) => {
+      console.error('[IAP Service] Purchase error event:', error);
 
-      this.isConfigured = true;
-      console.log('[IAP Service] RevenueCat successfully configured.');
+      const isUserCancelled =
+        error.code === 'E_USER_CANCELLED' ||
+        error.code === 'E_USER_CANCELED' ||
+        error.message?.includes('cancelled') ||
+        error.message?.includes('canceled');
 
-      // Check current subscription status upon init
-      await this.checkSubscriptionStatus();
-    } catch (error) {
-      console.error('[IAP Service] Configuration error:', error);
-    }
-  }
-
-  /**
-   * Log in user identity to associate purchases with Firebase Auth UID
-   */
-  public async identifyUser(userId: string): Promise<void> {
-    if (!Purchases || !this.isConfigured) return;
-    try {
-      await Purchases.logIn(userId);
-      await this.checkSubscriptionStatus();
-    } catch (error) {
-      console.error('[IAP Service] User identify error:', error);
-    }
-  }
-
-  /**
-   * Log out user from RevenueCat session
-   */
-  public async logoutUser(): Promise<void> {
-    if (!Purchases || !this.isConfigured) return;
-    try {
-      await Purchases.logOut();
-      useAppStore.getState().setPremium(false);
-    } catch (error) {
-      console.error('[IAP Service] Logout error:', error);
-    }
-  }
-
-  /**
-   * Check if user active entitlement includes 'premium_access'
-   */
-  public async checkSubscriptionStatus(): Promise<boolean> {
-    if (!Purchases || !this.isConfigured) return false;
-
-    try {
-      const customerInfo = await Purchases.getCustomerInfo();
-      const isEntitled = customerInfo?.entitlements?.active[ENTITLEMENT_ID] !== undefined;
-
-      useAppStore.getState().setPremium(isEntitled);
-      return isEntitled;
-    } catch (error) {
-      console.error('[IAP Service] Check subscription status error:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Fetch live localized offerings from App Store Connect
-   */
-  public async getOfferings(): Promise<{ monthly?: any; annual?: any } | null> {
-    if (!Purchases || !this.isConfigured) return null;
-
-    try {
-      const offerings = await Purchases.getOfferings();
-      if (offerings.current !== null) {
-        return {
-          monthly: offerings.current.monthly,
-          annual: offerings.current.annual,
-        };
+      if (this.purchaseResolve) {
+        this.purchaseResolve({
+          success: false,
+          userCancelled: isUserCancelled,
+          error: isUserCancelled ? undefined : (error.message || 'Purchase failed.'),
+        });
+        this.purchaseResolve = null;
       }
-    } catch (error) {
-      console.error('[IAP Service] Fetch offerings error:', error);
-    }
-    return null;
+    });
   }
 
   /**
-   * Purchase a subscription plan (Monthly or Annual)
+   * Remove purchase event listeners.
+   */
+  private removeListeners(): void {
+    if (this.purchaseUpdateSub) {
+      this.purchaseUpdateSub.remove();
+      this.purchaseUpdateSub = null;
+    }
+    if (this.purchaseErrorSub) {
+      this.purchaseErrorSub.remove();
+      this.purchaseErrorSub = null;
+    }
+  }
+
+  /**
+   * Disconnect from the native store. Call on cleanup.
+   */
+  public async disconnect(): Promise<void> {
+    this.removeListeners();
+    this.purchaseResolve = null;
+
+    try {
+      await endConnection();
+      this.isConnected = false;
+      console.log('[IAP Service] Store connection closed.');
+    } catch (error) {
+      console.error('[IAP Service] Disconnect error:', error);
+    }
+  }
+
+  /**
+   * Fetch subscription products from App Store Connect / Google Play.
+   */
+  public async getSubscriptions(): Promise<SubscriptionProduct[]> {
+    if (!this.isConnected) await this.initialize();
+
+    try {
+      const products = await fetchProducts({ skus: ALL_SKUS, type: 'subs' });
+      console.log('[IAP Service] Fetched subscription products:', products?.length || 0);
+
+      if (!products || !Array.isArray(products)) return [];
+
+      return products.map((product: any) => ({
+        productId: product.productId,
+        title: product.title || product.name || product.productId,
+        description: product.description || '',
+        localizedPrice: product.localizedPrice || product.displayPrice || `$${product.price}`,
+        price: product.price || '0',
+        currency: product.currency || 'USD',
+      }));
+    } catch (error) {
+      console.error('[IAP Service] Failed to fetch subscriptions:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Purchase a subscription plan (Monthly or Annual).
+   * Uses the event-based StoreKit 2 flow — result arrives via purchaseUpdatedListener.
    */
   public async purchasePlan(tier: 'monthly' | 'annual'): Promise<{ success: boolean; userCancelled?: boolean; error?: string }> {
-    if (!Purchases || !this.isConfigured) {
-      // Fallback mode (dev simulator without API key)
-      console.log('[IAP Service] Operating in test mode. Unlocking premium state locally.');
-      useAppStore.getState().setPremium(true);
-      return { success: true };
-    }
+    if (!this.isConnected) await this.initialize();
 
-    try {
-      const offerings = await Purchases.getOfferings();
-      const currentOffering = offerings.current;
+    const sku = tier === 'monthly' ? IAP_PRODUCT_IDS.MONTHLY : IAP_PRODUCT_IDS.ANNUAL;
 
-      if (!currentOffering) {
-        throw new Error('No active offerings configured in RevenueCat/App Store Connect.');
+    return new Promise(async (resolve) => {
+      // Store the resolve function so the event listener can resolve the promise
+      this.purchaseResolve = resolve;
+
+      // Set a timeout to prevent hanging indefinitely
+      const timeout = setTimeout(() => {
+        if (this.purchaseResolve === resolve) {
+          this.purchaseResolve = null;
+          resolve({ success: false, error: 'Purchase timed out. Please try again.' });
+        }
+      }, 120000); // 2 minute timeout
+
+      try {
+        await requestPurchase({
+          request: {
+            apple: { sku },
+            google: { skus: [sku] },
+          },
+          type: 'subs',
+        });
+      } catch (error: any) {
+        clearTimeout(timeout);
+        this.purchaseResolve = null;
+
+        const isUserCancelled =
+          error.code === 'E_USER_CANCELLED' ||
+          error.code === 'E_USER_CANCELED' ||
+          error.message?.includes('cancelled') ||
+          error.message?.includes('canceled');
+
+        resolve({
+          success: false,
+          userCancelled: isUserCancelled,
+          error: isUserCancelled ? undefined : (error.message || 'Purchase failed.'),
+        });
       }
 
-      const packageToBuy = tier === 'monthly' ? currentOffering.monthly : currentOffering.annual;
-
-      if (!packageToBuy) {
-        throw new Error(`Package for tier ${tier} not found in offerings.`);
-      }
-
-      const { customerInfo } = await Purchases.purchasePackage(packageToBuy);
-      const isEntitled = customerInfo?.entitlements?.active[ENTITLEMENT_ID] !== undefined;
-
-      useAppStore.getState().setPremium(isEntitled);
-      return { success: isEntitled };
-    } catch (error: any) {
-      if (error.userCancelled) {
-        return { success: false, userCancelled: true };
-      }
-      console.error('[IAP Service] Purchase execution error:', error);
-      return { success: false, error: error.message || 'Purchase failed.' };
-    }
+      // Clear timeout when promise resolves (via event listener)
+      const originalResolve = this.purchaseResolve;
+      this.purchaseResolve = (result) => {
+        clearTimeout(timeout);
+        if (originalResolve) originalResolve(result);
+      };
+    });
   }
 
   /**
-   * Restore previous App Store purchases
+   * Restore previous purchases from App Store / Google Play.
    */
   public async restorePurchases(): Promise<{ success: boolean; isEntitled: boolean; error?: string }> {
-    if (!Purchases || !this.isConfigured) {
-      // Fallback mode
-      useAppStore.getState().setPremium(true);
-      return { success: true, isEntitled: true };
-    }
+    if (!this.isConnected) await this.initialize();
 
     try {
-      const customerInfo = await Purchases.restorePurchases();
-      const isEntitled = customerInfo?.entitlements?.active[ENTITLEMENT_ID] !== undefined;
+      // Trigger platform-native restore flow
+      await nativeRestore();
 
-      useAppStore.getState().setPremium(isEntitled);
-      return { success: true, isEntitled };
+      // Then check what purchases are available
+      const purchases = await getAvailablePurchases();
+      console.log('[IAP Service] Restored purchases:', purchases?.length || 0);
+
+      const hasActive = purchases?.some((purchase: any) =>
+        ALL_SKUS.includes(purchase.productId)
+      );
+
+      if (hasActive) {
+        // Finish any unfinished transactions
+        for (const purchase of (purchases || [])) {
+          if (ALL_SKUS.includes(purchase.productId)) {
+            try {
+              await finishTransaction({ purchase, isConsumable: false });
+            } catch {
+              // Already finished — ignore
+            }
+          }
+        }
+        useAppStore.getState().setPremium(true);
+        return { success: true, isEntitled: true };
+      }
+
+      useAppStore.getState().setPremium(false);
+      return { success: true, isEntitled: false };
     } catch (error: any) {
       console.error('[IAP Service] Restore purchases error:', error);
       return { success: false, isEntitled: false, error: error.message || 'Failed to restore purchases.' };
+    }
+  }
+
+  /**
+   * Check if user has active subscription.
+   */
+  public async checkSubscriptionStatus(): Promise<boolean> {
+    if (!this.isConnected) await this.initialize();
+
+    try {
+      // Use the built-in hasActiveSubscriptions API
+      const isActive = await hasActiveSubscriptions(ALL_SKUS);
+      useAppStore.getState().setPremium(!!isActive);
+      console.log('[IAP Service] Subscription status:', isActive ? 'ACTIVE' : 'NONE');
+      return !!isActive;
+    } catch (error) {
+      console.error('[IAP Service] Check subscription status error:', error);
+
+      // Fallback: check available purchases
+      try {
+        const purchases = await getAvailablePurchases();
+        const hasActive = purchases?.some((p: any) => ALL_SKUS.includes(p.productId));
+        useAppStore.getState().setPremium(!!hasActive);
+        return !!hasActive;
+      } catch {
+        return false;
+      }
     }
   }
 }

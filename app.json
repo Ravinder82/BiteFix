@@ -60,8 +60,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "68694ce8-b35f-4f1c-a54d-992c21869423"
+        "projectId": "c4897c47-87a9-490d-a122-a32feba96484"
       }
-    }
+    },
+    "owner": "ravindrapoonia"
   }
 }

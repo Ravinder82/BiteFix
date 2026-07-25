@@ -8,31 +8,12 @@ import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../hooks/useTheme';
 import { useFonts, Inter_300Light, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold, Inter_900Black } from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
-import { TextInput } from 'react-native';
-import { Text } from '@/components/Text';
+
 import { useAuthStore } from '../stores/authStore';
 
 SplashScreen.preventAutoHideAsync();
 
-// Apply Inter font globally
-const customTextProps = {
-  style: { fontFamily: 'Inter_500Medium' } // Made bolder by default
-};
-
-const AnyText = Text as any;
-const AnyTextInput = TextInput as any;
-
-if (AnyText.defaultProps) {
-  AnyText.defaultProps.style = [AnyText.defaultProps.style, customTextProps.style];
-} else {
-  AnyText.defaultProps = customTextProps;
-}
-
-if (AnyTextInput.defaultProps) {
-  AnyTextInput.defaultProps.style = [AnyTextInput.defaultProps.style, customTextProps.style];
-} else {
-  AnyTextInput.defaultProps = customTextProps;
-}
+// Removed unsafe defaultProps mutation. Use custom Text component for styling.
 
 export default function RootLayout() {
   const { theme, colors, isDark } = useTheme();

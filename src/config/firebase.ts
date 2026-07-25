@@ -40,7 +40,13 @@ try {
     // Auth was already initialized (e.g. during hot reload), get existing instance
     auth = getAuth(app);
   } else {
-    throw error;
+    console.error('[Firebase] Auth initialization error (safe fallback):', error);
+    try {
+      // If getReactNativePersistence is undefined in production, this fallback allows the app to still launch.
+      auth = getAuth(app);
+    } catch (fallbackError) {
+      console.error('[Firebase] Fallback getAuth failed:', fallbackError);
+    }
   }
 }
 
