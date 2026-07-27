@@ -396,8 +396,11 @@ export default function HomeScreen() {
 
   const avgNutriScore = getAvgNutriScore();
 
-  const scoreColor = getBiteFixScoreColor(avgBiteFixScore, latestNovaClass);
+  const scoreColor = basketItemCount === 0 && scans.length === 0
+    ? '#D1D5DB'
+    : getBiteFixScoreColor(avgBiteFixScore, latestNovaClass);
   const getLighterScoreColor = () => {
+    if (basketItemCount === 0 && scans.length === 0) return '#E5E7EB';
     if (avgBiteFixScore >= 76) return '#4ADE80';
     if (avgBiteFixScore >= 51) return '#2DD4BF';
     if (avgBiteFixScore >= 26) return '#FBBF24';
@@ -541,11 +544,13 @@ export default function HomeScreen() {
           {/* Card Ambient Glow Header */}
           <LinearGradient
             colors={
-              avgBiteFixScore >= 76
-                ? (isDark ? ['#064e3b20', '#022c2240'] : ['#d1fae560', '#f0fdf480'])
-                : avgBiteFixScore >= 41
-                  ? (isDark ? ['#1e1b4b10', '#0f172a20'] : ['#eff6ff60', '#f8fafc80'])
-                  : (isDark ? ['#451a0320', '#1c191740'] : ['#fee2e260', '#fef2f280'])
+              basketItemCount === 0 && scans.length === 0
+                ? (isDark ? ['#1f293720', '#11182740'] : ['#f3f4f680', '#e5e7eb80'])
+                : avgBiteFixScore >= 76
+                  ? (isDark ? ['#064e3b20', '#022c2240'] : ['#d1fae560', '#f0fdf480'])
+                  : avgBiteFixScore >= 41
+                    ? (isDark ? ['#1e1b4b10', '#0f172a20'] : ['#eff6ff60', '#f8fafc80'])
+                    : (isDark ? ['#451a0320', '#1c191740'] : ['#fee2e260', '#fef2f280'])
             }
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -593,7 +598,11 @@ export default function HomeScreen() {
                     strokeWidth="6"
                     strokeLinecap="round"
                     strokeDasharray="301.6"
-                    strokeDashoffset={301.6 * (1 - Math.max(5, avgBiteFixScore) / 100)}
+                    strokeDashoffset={
+                      basketItemCount === 0 && scans.length === 0
+                        ? 301.6
+                        : 301.6 * (1 - Math.max(5, avgBiteFixScore) / 100)
+                    }
                     transform="rotate(-90 60 60)"
                     opacity="0.2"
                   />
@@ -607,7 +616,11 @@ export default function HomeScreen() {
                     strokeWidth="3.5"
                     strokeLinecap="round"
                     strokeDasharray="301.6"
-                    strokeDashoffset={301.6 * (1 - Math.max(5, avgBiteFixScore) / 100)}
+                    strokeDashoffset={
+                      basketItemCount === 0 && scans.length === 0
+                        ? 301.6
+                        : 301.6 * (1 - Math.max(5, avgBiteFixScore) / 100)
+                    }
                     transform="rotate(-90 60 60)"
                   />
                 </Svg>
