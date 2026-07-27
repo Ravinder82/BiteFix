@@ -4,38 +4,58 @@ import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useAppStore } from '../stores/appStore';
 import { useTheme } from '../hooks/useTheme';
+import { useAuth } from '../hooks/useAuth';
 import { Trash2, ShieldAlert, ArrowLeft } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 export default function DeleteAccountScreen() {
   const { colors } = useTheme();
   const { clearAllData } = useAppStore();
+  const { deleteAccount } = useAuth();
   const [confirmText, setConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (confirmText !== 'DELETE') {
       Alert.alert('Error', 'Please type DELETE to confirm account deletion.');
       return;
     }
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    
-    // Clear all persistent data from store
-    clearAllData();
+    setIsDeleting(true);
 
-    Alert.alert(
-      'Account Deleted',
-      'Your account and all associated data have been permanently deleted from this device.',
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            // Send back to onboarding
-            router.replace('/onboarding');
+    try {
+      // 1. Delete credentials from Firebase Auth
+      await deleteAccount();
+
+      // 2. Wipe all local app stores & databases (sets isPremium to false, onboarding to false)
+      clearAllData();
+
+      Alert.alert(
+        'Account Deleted',
+        'Your account and all associated data have been permanently deleted.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              router.replace('/onboarding');
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    } catch (err: any) {
+      console.error('Account Deletion Error:', err);
+      // Apple require Re-authentication if credentials are stale before deleting a user
+      Alert.alert(
+        'Action Required',
+        'For security reasons, you must log out and sign back in to delete your account.',
+        [
+          { text: 'OK' }
+        ]
+      );
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -90,12 +110,14 @@ export default function DeleteAccountScreen() {
 
         <TouchableOpacity
           onPress={handleDelete}
-          disabled={confirmText !== 'DELETE'}
-          style={{ backgroundColor: confirmText === 'DELETE' ? colors.error : colors.border }}
+          disabled={confirmText !== 'DELETE' || isDeleting}
+          style={{ backgroundColor: confirmText === 'DELETE' && !isDeleting ? colors.error : colors.border }}
           className="w-full py-4 rounded-2xl flex-row items-center justify-center mb-6 active:opacity-90 shadow-sm"
         >
           <Trash2 size={16} color="white" className="mr-2" />
-          <Text className="text-white font-bold text-sm">Delete My Account</Text>
+          <Text className="text-white font-bold text-sm">
+            {isDeleting ? 'Deleting Account...' : 'Delete My Account'}
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

@@ -140,9 +140,11 @@ export default function PaywallScreen() {
   const initialise = useCallback(async () => {
     if (!mountedRef.current) return;
 
-    // 1. Connect to the native store and check subscription status
+    // 1. Connect to the native store
     await iapService.connect();
-    await iapService.checkSubscriptionStatus();
+    // CRITICAL: Commented out to prevent auto-restoring and bypassing the paywall on mount.
+    // The user must click the "Restore Purchases" button manually to restore an active subscription.
+    // await iapService.checkSubscriptionStatus();
 
     // 2. Fetch live pricing from App Store Connect
     if (mountedRef.current) {
