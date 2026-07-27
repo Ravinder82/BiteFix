@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { View, ScrollView, TouchableOpacity, Switch, Alert, Modal, SafeAreaView } from 'react-native';
+import { View, ScrollView, TouchableOpacity, Switch, Alert, Modal, SafeAreaView, Linking } from 'react-native';
 import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useAppStore } from '../../stores/appStore';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
-import { ChevronRight, ArrowLeft, ShieldAlert, HeartHandshake, Eye, Moon, Layers, RotateCcw, LogOut, User, ShieldCheck, Sparkles, Filter } from 'lucide-react-native';
+import { ChevronRight, ArrowLeft, ShieldAlert, HeartHandshake, Eye, Moon, Layers, RotateCcw, LogOut, User, ShieldCheck, Sparkles, Filter, CreditCard } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { iapService } from '../../services/iapService';
 
 export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   const { colors, theme, toggleTheme } = useTheme();
@@ -32,6 +33,26 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setLegalContent({ title, body });
     setLegalModalVisible(true);
+  };
+
+  const handleRestorePurchases = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      const result = await iapService.restorePurchases();
+      if (result.isEntitled) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert('Restored Successfully ✅', 'Your BiteFix Premium subscription has been restored.');
+      } else {
+        Alert.alert('No Subscription Found', 'We could not find an active subscription for this Apple ID.');
+      }
+    } catch (e) {
+      Alert.alert('Restore Failed', 'An error occurred while restoring purchases.');
+    }
+  };
+
+  const handleManageSubscription = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Linking.openURL('https://apps.apple.com/account/subscriptions');
   };
 
   const handleResetData = () => {
@@ -165,6 +186,23 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
             </View>
           </View>
         )}
+
+        {/* SUBSCRIPTION MANAGEMENT SECTION */}
+        <SettingsGroup title="Subscription" colors={colors}>
+          <SettingsRowItem
+            label="Restore Purchases"
+            icon={<Sparkles size={16} color={colors.primary} />}
+            onPress={handleRestorePurchases}
+            colors={colors}
+          />
+          <SettingsRowItem
+            label="Manage Subscription"
+            icon={<CreditCard size={16} color={colors.primary} />}
+            onPress={handleManageSubscription}
+            colors={colors}
+            isLast
+          />
+        </SettingsGroup>
 
         {/* PREFERENCES SECTION */}
         <SettingsGroup title="Preferences" colors={colors}>
