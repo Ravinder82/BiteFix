@@ -1,6 +1,6 @@
-# 🚀 CutSugar: World-Class ASO Optimization & App Store Connect Submission Blueprint
+# 🚀 BiteFix: World-Class ASO Optimization & App Store Connect Submission Blueprint
 
-This document contains the complete, ready-to-copy metadata assets and technical configuration parameters for submitting **CutSugar** to the Apple App Store. It is fully optimized for **App Store Optimization (ASO)** and compliant with the latest Apple Review Guidelines (as of July 2026).
+This document contains the complete, ready-to-copy metadata assets and technical configuration parameters for submitting **BiteFix** to the Apple App Store. It is fully optimized for **App Store Optimization (ASO)** and compliant with the latest Apple Review Guidelines (as of July 2026).
 
 ---
 
@@ -16,8 +16,8 @@ To rank #1 in the competitive "Health & Fitness" category, our metadata strategy
 
 #### 1. App Name (Max 30 Characters)
 *   **ASO Strategy**: Core brand name + primary high-volume keyword descriptor.
-*   **Copy**: `CutSugar: Sugar Counter Tracker` (29/30 Chars)
-*   *Alternative*: `CutSugar: Food Barcode Scanner` (30/30 Chars)
+*   **Copy**: `BiteFix: Sugar Counter Tracker` (29/30 Chars)
+*   *Alternative*: `BiteFix: Food Barcode Scanner` (30/30 Chars)
 
 #### 2. Subtitle (Max 30 Characters)
 *   **ASO Strategy**: Complements the App Name by highlighting the unique value proposition (teaspoons scanner) using secondary search terms.
@@ -38,12 +38,12 @@ To rank #1 in the competitive "Health & Fitness" category, our metadata strategy
 *Character Count: ~2,800 / 4,000. Optimized with clear formatting, benefit callouts, and App Store-safe medical disclaimers.*
 
 ```markdown
-Take control of your metabolic health, cut sugar, and discover exactly what’s inside your food with CutSugar—the premium, one-second food barcode scanner that translates complex nutritional labels into visual teaspoons!
+Take control of your metabolic health, cut sugar, and discover exactly what’s inside your food with BiteFix—the premium, one-second food barcode scanner that translates complex nutritional labels into visual teaspoons!
 
-Dietary sugar is hidden in 74% of packaged foods under 40+ stealth names. Whether you are managing diabetes, prediabetes, insulin resistance, looking to lose weight, or simply adopting a clean eating lifestyle, CutSugar is your ultimate grocery shopping companion.
+Dietary sugar is hidden in 74% of packaged foods under 40+ stealth names. Whether you are managing diabetes, prediabetes, insulin resistance, looking to lose weight, or simply adopting a clean eating lifestyle, BiteFix is your ultimate grocery shopping companion.
 
 *** WHY CUTSUGAR IS DIFFERENT ***
-We don’t just show you numbers in grams. CutSugar is the only app that gives you:
+We don’t just show you numbers in grams. BiteFix is the only app that gives you:
 • VISUAL TEASPOONS: Instantly understand sugar impact (1 teaspoon = 4.2g).
 • STEALTH SUGAR DETECTIVE: Automatically audits ingredients list for 40+ hidden chemical sweeteners like Maltodextrin, High Fructose Corn Syrup, Dextrose, and Agave Nectar.
 • WHO DAILY LIMIT RADIAL GAUGE: Track serving impact against World Health Organization (WHO) recommended limits (6 tsp ideal, 12 tsp maximum).
@@ -58,10 +58,10 @@ We don’t just show you numbers in grams. CutSugar is the only app that gives y
 • Proportional Serving Scaling: Instant side-by-side comparison of sugar per serving vs. full package totals.
 • Offline Search: Access previously scanned catalog items even in cellular dead zones.
 
-Join the clean food movement. Stop eating hidden sugars and start feeling the difference. Download CutSugar today!
+Join the clean food movement. Stop eating hidden sugars and start feeling the difference. Download BiteFix today!
 
 ---
-DISCLAIMER: CutSugar provides nutritional information based on public databases for educational purposes. It is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a healthcare provider for clinical diabetic management.
+DISCLAIMER: BiteFix provides nutritional information based on public databases for educational purposes. It is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a healthcare provider for clinical diabetic management.
 ```
 
 ---
@@ -99,7 +99,7 @@ A printable PDF of these barcodes can also be accessed at our developer support 
 In App Store Connect, navigate to **App Privacy** and select the following disclosures based on the app's architecture:
 
 *   **Data Collection**: **"No, we do not collect data from this app."**
-    *   *Why*: CutSugar stores all scan histories, user profile settings, and pantry collections locally on the device via `AsyncStorage` and does not transmit personal identity metrics to an external server.
+    *   *Why*: BiteFix stores all scan histories, user profile settings, and pantry collections locally on the device via `AsyncStorage` and does not transmit personal identity metrics to an external server.
 *   **Third-Party APIs**: OpenFoodFacts lookup is a anonymous query based solely on the scanned barcode number. No user identification data or location statistics are shared.
 *   **Privacy Policy URL**: Link to a simple hosted markdown page detailing that scan data is 100% private and on-device.
 
@@ -114,9 +114,9 @@ To obtain a target age rating of **4+** (maximum download availability), fill ou
 
 ## 💰 Part 4: In-App Purchase (IAP) Submission Notes
 
-When submitting the **CutSugar Pro Monthly/Yearly** subscriptions for review alongside your first app release:
+When submitting the **BiteFix Pro Monthly/Yearly** subscriptions for review alongside your first app release:
 1.  **Subscription Group Localization**:
-    *   Display Name: `CutSugar Pro`
+    *   Display Name: `BiteFix Pro`
     *   Description: `Unlock unlimited pantry collection saves, detailed sugar allowance statistics, and offline search.`
 2.  **App Store Review Notes (IAP Section)**:
     *   Enter the following text:

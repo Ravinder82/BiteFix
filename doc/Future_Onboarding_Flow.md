@@ -1,4 +1,4 @@
-# 🚀 Future Onboarding Flow Specification: CutSugar v2.0.0
+# 🚀 Future Onboarding Flow Specification: BiteFix v2.0.0
 
 This document outlines the UX layout and copywriting assets for the next-generation onboarding experience. The copy is designed like static advertisement banners: direct, visually visceral, and punchy.
 

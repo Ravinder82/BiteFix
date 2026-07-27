@@ -52,17 +52,24 @@ export default function Index() {
     );
   }
 
-  // Flow: Onboarding → Auth → Tabs
   // Step 1: If onboarding not complete, go to onboarding
   if (!onboardingComplete) {
     return <Redirect href="/onboarding" />;
   }
 
-  // Step 2: If not authenticated, go to paywall screen
+  // Step 2: If not authenticated, go to auth
   if (!user) {
+    return <Redirect href="/auth" />;
+  }
+
+
+  // Step 3: If authenticated but NOT premium, locked to paywall
+  const { isPremium } = useAppStore.getState();
+  if (!isPremium) {
     return <Redirect href="/paywall" />;
   }
 
-  // Step 3: Authenticated + onboarded → go to main tabs
+  // Step 4: Authenticated + onboarded + premium → go to main tabs
   return <Redirect href="/(tabs)" />;
 }
+

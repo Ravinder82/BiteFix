@@ -1,7 +1,7 @@
-# Product Strategy Analysis: The CutSugar Spin-Off & Niche App Strategy
+# Product Strategy Analysis: The BiteFix Spin-Off & Niche App Strategy
 
 This report evaluates the product strategy of splitting the codebase into two distinct, hyper-focused products:
-1. **CutSugar:** Retaining its dedicated metabolic focus (sugar, teaspoons, blood glucose logs).
+1. **BiteFix:** Retaining its dedicated metabolic focus (sugar, teaspoons, blood glucose logs).
 2. **BiteFix (Working Name):** A new, gamified product focused on NOVA scoring, additives, alternatives, RDA % nutrition, and a mascot-driven health score.
 
 ---
@@ -88,7 +88,7 @@ We evaluate this product strategy using four core metrics:
 | Metric | Score | Rationale |
 | :--- | :---: | :--- |
 | **Market Demand** | **95/100** | Ultra-processed food awareness is at an all-time high (spurred by books like *Ultra-Processed People* and research on gut health). Consumers are looking specifically for additive/NOVA checkers. |
-| **Brand Focus** | **96/100** | CutSugar remains clean and medically helpful for glucose tracking. BiteFix is free to be playful, gamified, and wellness-focused. |
+| **Brand Focus** | **96/100** | BiteFix remains clean and medically helpful for glucose tracking. BiteFix is free to be playful, gamified, and wellness-focused. |
 | **Growth Potential** | **90/100** | The evolving mascot provides a powerful retention loop. Users will keep scanning simply to "keep their pet glowing." |
 | **Development Feasibility**| **92/100** | Since we already have the OpenFoodFacts API parser, USDA databases, and Zustand state structures, 70% of the backend/data layer for App 2 is already written. |
 | **OVERALL RATING** | **93 / 100** | **Highly Recommended.** This spin-off creates two sharp needles instead of one blunt hammer. |
@@ -99,7 +99,7 @@ We evaluate this product strategy using four core metrics:
 
 If you decide to proceed with this spin-off strategy, here is how we will orchestrate the work:
 
-1. **Step 1: Finalize CutSugar (Current Project)**
+1. **Step 1: Finalize BiteFix (Current Project)**
    - Complete the Home Screen Bento Redesign strictly utilizing sugar and glucose logs.
    - Lock this codebase as the dedicated metabolic/diabetes tracker.
 2. **Step 2: Spin Off the Codebase**
@@ -110,5 +110,5 @@ If you decide to proceed with this spin-off strategy, here is how we will orches
    - Integrate full RDA % visual panels inside the product detail sheets (restoring and expanding the `NutritionFacts` components).
    - Implement the mascot animation controller that switches sprites/states based on the health score.
 4. **Step 4: Launch Both on the App Store**
-   - Position **CutSugar** under *Medical / Health & Fitness* (keywords: glucose log, sugar tracker, pre-diabetes).
+   - Position **BiteFix** under *Medical / Health & Fitness* (keywords: glucose log, sugar tracker, pre-diabetes).
    - Position **BiteFix** under *Food & Drink / Health & Fitness* (keywords: additive scanner, ultra-processed food, healthy shopping).

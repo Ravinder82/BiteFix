@@ -2,7 +2,7 @@
   "expo": {
     "name": "BiteFix: Food & Swap Scanner",
     "slug": "bitefix",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -31,6 +31,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-iap",
       [
         "expo-camera",
         {
@@ -52,7 +53,7 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosUrlScheme": "com.googleusercontent.apps.1097829102652-jgmhd81kr0c36338ci9tlmh1n3milght"
+          "iosUrlScheme": "com.googleusercontent.apps.1097829102652-j3ckq63u4imagolthtov6gvl5i2rpqof"
         }
       ],
       "expo-apple-authentication"
@@ -60,9 +61,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "c4897c47-87a9-490d-a122-a32feba96484"
+        "projectId": "6d2c28dd-a8d8-4820-a8c6-fa041e38c4a7"
       }
     },
-    "owner": "ravindrapoonia"
+    "owner": "sonu1294"
   }
 }

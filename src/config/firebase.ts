@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────
-// Firebase Configuration — CutSugar
+// Firebase Configuration — BiteFix
 // ─────────────────────────────────────────────────────────
 // Firebase config keys are PUBLIC by design — security is
 // enforced by Firebase Security Rules, not by hiding keys.

@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────
-// Auth Store — CutSugar
+// Auth Store — BiteFix
 // ─────────────────────────────────────────────────────────
 // Dedicated Zustand store for Firebase Authentication.
 // Handles Google, Apple, and Email sign-in flows.

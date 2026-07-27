@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────
-// useAuth Hook — CutSugar
+// useAuth Hook — BiteFix
 // ─────────────────────────────────────────────────────────
 // Convenience hook that wraps the auth store and provides
 // helper computed properties for navigation guards.

@@ -28,6 +28,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStore } from '../../stores/appStore';
+import { useAuthStore } from '../../stores/authStore';
 import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot } from '../../components/features/OrbMascot';
 import { MagicalBackground } from '../../components/features/MagicalBackground';
@@ -1788,6 +1789,7 @@ export default function OnboardingScreen() {
   const [showSwapModal, setShowSwapModal] = useState(false);
 
   const { setOnboardingComplete, setProfile } = useAppStore();
+  const { user } = useAuthStore();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
@@ -1945,14 +1947,14 @@ export default function OnboardingScreen() {
     return false;
   };
 
-  const slide = SLIDES[currentSlide];
+  const slide = SLIDES[currentSlide] || SLIDES[0];
   const isShort = height < 700;
   const isNarrow = width < 375;
   const orbSize = Math.min(Math.round(width * 0.38), 150);
   const cardW = Math.min(width - 32, 400);
 
   const renderTitle = () => {
-    const textSlide = SLIDES[currentTextIndex];
+    const textSlide = SLIDES[currentTextIndex] || SLIDES[0];
     const parts = textSlide.title.split(textSlide.highlight);
     return (
       <Text
@@ -2181,11 +2183,19 @@ export default function OnboardingScreen() {
           setRating={setRating}
           onSubmit={() => {
             setShowRatingModal(false);
-            router.replace('/paywall');
+            if (user) {
+              router.replace('/paywall');
+            } else {
+              router.replace('/auth');
+            }
           }}
           onLater={() => {
             setShowRatingModal(false);
-            router.replace('/paywall');
+            if (user) {
+              router.replace('/paywall');
+            } else {
+              router.replace('/auth');
+            }
           }}
           width={width}
         />

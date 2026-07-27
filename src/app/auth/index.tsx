@@ -1,8 +1,8 @@
 // ─────────────────────────────────────────────────────────
-// Auth Screen — CutSugar
+// Auth Screen — BiteFix
 // ─────────────────────────────────────────────────────────
 // Premium Sign In / Sign Up screen with Google, Apple,
-// and Email authentication. Uses CutSugar's warm amber
+// and Email authentication. Uses BiteFix's warm amber
 // design tokens and the OrbMascot character.
 // ─────────────────────────────────────────────────────────
 
@@ -39,6 +39,15 @@ import { router, useLocalSearchParams } from 'expo-router';
 // 2. Re-download GoogleService-Info.plist (it will now contain CLIENT_ID)
 // 3. Replace the file in the project root
 // 4. Run a new EAS development build
+const googleConfig: { webClientId?: string; iosClientId?: string } = {
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+};
+// Only pass iosClientId if it has an actual value (not empty string)
+if (process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID) {
+  googleConfig.iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+}
+GoogleSignin.configure(googleConfig);
+
 // ── Main Component ──────────────────────────────────────
 
 export default function AuthScreen() {
@@ -46,20 +55,6 @@ export default function AuthScreen() {
   const { signInWithGoogle, signInWithApple, signInWithEmail, signUpWithEmail, resetPassword } = useAuthStore();
   const { redirect } = useLocalSearchParams<{ redirect?: string }>();
   const target = (redirect === 'tabs' ? '/(tabs)' : '/paywall') as any;
-
-  React.useEffect(() => {
-    try {
-      const googleConfig: { webClientId?: string; iosClientId?: string } = {
-        webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-      };
-      if (process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID) {
-        googleConfig.iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
-      }
-      GoogleSignin.configure(googleConfig);
-    } catch (e) {
-      console.warn('[Auth] GoogleSignin configure warning:', e);
-    }
-  }, []);
 
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');

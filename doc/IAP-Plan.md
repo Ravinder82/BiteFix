@@ -1,6 +1,6 @@
 # Apple In-App Purchase (IAP) Integration Plan
 
-This document provides a step-by-step roadmap for setting up iOS-only subscriptions for **CutSugar** in the Apple Developer Portal and integrating the logic into our React Native/Expo codebase.
+This document provides a step-by-step roadmap for setting up iOS-only subscriptions for **BiteFix** in the Apple Developer Portal and integrating the logic into our React Native/Expo codebase.
 
 ---
 
@@ -10,8 +10,8 @@ We recommend launching with a single subscription group ("Pro Access") containin
 
 | Plan Option | Price (USD) | App Store Product ID (Target) | Best For |
 | :--- | :--- | :--- | :--- |
-| **Monthly Pro** | **$2.99 / month** | `com.ravinderpoonia.cutsugar.pro.monthly` | Users who want to try the premium features with zero commitment. |
-| **Annual Pro** | **$19.99 / year** | `com.ravinderpoonia.cutsugar.pro.yearly` | Users committing to long-term health (approx. 45% discount compared to monthly). |
+| **Monthly Pro** | **$2.99 / month** | `com.ravinderpoonia.bitefix.pro.monthly` | Users who want to try the premium features with zero commitment. |
+| **Annual Pro** | **$19.99 / year** | `com.ravinderpoonia.bitefix.pro.yearly` | Users committing to long-term health (approx. 45% discount compared to monthly). |
 
 ---
 
@@ -26,7 +26,7 @@ Before we write IAP code, you must configure the subscription items inside your 
 4. Fill out your **Tax Forms** and link your **Bank Account** (Apple cannot process sandboxed or live purchases until this agreement is active).
 
 ### Step 2: Create a Subscription Group
-1. Go to **Apps** and click on your **CutSugar** app.
+1. Go to **Apps** and click on your **BiteFix** app.
 2. Under the **Features** tab in the left sidebar, click **In-App Purchases** -> **Subscriptions**.
 3. Under **Subscription Groups**, click **Create**.
 4. Set the Group Name to: `Pro Group` (this ensures users can upgrade or downgrade between monthly/yearly plans).
@@ -34,13 +34,13 @@ Before we write IAP code, you must configure the subscription items inside your 
 ### Step 3: Add the Subscription Products
 Inside your new Subscription Group:
 1. Click **Create** under the Subscriptions list.
-2. Enter the **Reference Name** (e.g., `Monthly Pro`) and **Product ID** (`com.ravinderpoonia.cutsugar.pro.monthly`).
+2. Enter the **Reference Name** (e.g., `Monthly Pro`) and **Product ID** (`com.ravinderpoonia.bitefix.pro.monthly`).
 3. Set the **Duration** to `1 Month`.
 4. Define the **Pricing** (e.g., `$2.99 USD` — Apple automatically localizes this price worldwide).
-5. Add **Localization** info (App Store Display Name: `CutSugar Pro Monthly`, Description: `Access to custom collections, bento dashboards, and safety score reports`).
+5. Add **Localization** info (App Store Display Name: `BiteFix Pro Monthly`, Description: `Access to custom collections, bento dashboards, and safety score reports`).
 6. Repeat the exact same steps for your Annual product:
    - Reference Name: `Annual Pro`
-   - Product ID: `com.ravinderpoonia.cutsugar.pro.yearly`
+   - Product ID: `com.ravinderpoonia.bitefix.pro.yearly`
    - Duration: `1 Year`
    - Price: `$19.99 USD`
 
@@ -80,7 +80,7 @@ The paywall must feature direct, clickable links to:
 
 Once you have configured the products in App Store Connect, please provide:
 
-1. **Active Product IDs**: Confirm if you used the recommended IDs (`com.ravinderpoonia.cutsugar.pro.monthly` and `com.ravinderpoonia.cutsugar.pro.yearly`) or created custom ones.
+1. **Active Product IDs**: Confirm if you used the recommended IDs (`com.ravinderpoonia.bitefix.pro.monthly` and `com.ravinderpoonia.bitefix.pro.yearly`) or created custom ones.
 2. **Entitlement Gate Strategy**: Confirm which parts of the app we should lock. Our proposal is to lock:
    - The ability to save products to **My Collections** (Slide 5 on Onboarding & My Collections Screen).
 3. **Paywall Design Style**: Do you want a clean full-screen paywall modal overlay when they try to access locked items, or a sliding bento sheet?
