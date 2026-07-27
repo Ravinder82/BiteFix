@@ -340,41 +340,8 @@ function GoalCard({
 // SLIDE 3 BODY: NOVA & Nutri-Score Visual Card
 // ─────────────────────────────────────────────────────────
 function NovaNutriScoreDemoCard({ cardW, C }: { cardW: number; C: any }) {
-  const [activeTab, setActiveTab] = useState<'nova' | 'nutri'>('nova');
-  const slideAnim = useSharedValue(0);
-
-  useEffect(() => {
-    slideAnim.value = withSpring(activeTab === 'nova' ? 0 : 1, { damping: 15, stiffness: 120 });
-  }, [activeTab]);
-
-  const novaTabOpacity = useSharedValue(1);
-  const nutriTabOpacity = useSharedValue(0);
-
-  useEffect(() => {
-    if (activeTab === 'nova') {
-      novaTabOpacity.value = withTiming(1, { duration: 180 });
-      nutriTabOpacity.value = withTiming(0, { duration: 180 });
-    } else {
-      novaTabOpacity.value = withTiming(0, { duration: 180 });
-      nutriTabOpacity.value = withTiming(1, { duration: 180 });
-    }
-  }, [activeTab]);
-
-  const novaContentStyle = useAnimatedStyle(() => ({
-    opacity: novaTabOpacity.value,
-    transform: [{ scale: withSpring(activeTab === 'nova' ? 1 : 0.95, { damping: 15 }) }],
-  }));
-
-  const nutriContentStyle = useAnimatedStyle(() => ({
-    opacity: nutriTabOpacity.value,
-    transform: [{ scale: withSpring(activeTab === 'nutri' ? 1 : 0.95, { damping: 15 }) }],
-  }));
-
-  // Segmented control sliding indicator background style
-  const indicatorWidth = (cardW - 38) / 2;
-  const indicatorStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: slideAnim.value * indicatorWidth }],
-  }));
+  const { height } = useWindowDimensions();
+  const isShort = height < 700;
 
   return (
     <View
@@ -384,136 +351,94 @@ function NovaNutriScoreDemoCard({ cardW, C }: { cardW: number; C: any }) {
         borderRadius: 24,
         borderWidth: 1.5,
         borderColor: C.cardBorder,
-        padding: 16,
+        padding: 12,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.08,
+        shadowOpacity: 0.06,
         shadowRadius: 16,
         elevation: 4,
-        gap: 12,
-        height: 200, // Fixed height to keep spacing absolute and compact!
+        gap: 10,
+        height: isShort ? 230 : 270,
+        justifyContent: 'center',
       }}
     >
-      {/* ── Segmented Control Tabs ── */}
+      {/* ── Zigzag Sub-Component 1: NOVA System (Align Left) ── */}
       <View
         style={{
-          flexDirection: 'row',
+          width: '90%',
+          alignSelf: 'flex-start',
           backgroundColor: C.cardInner,
-          borderRadius: 14,
-          padding: 3,
-          position: 'relative',
-          width: '100%',
-          height: 38,
-          alignItems: 'center',
+          borderRadius: 16,
+          padding: 8,
           borderWidth: 1,
           borderColor: C.cardBorder,
+          gap: 4,
         }}
       >
-        {/* Sliding Indicator Pill */}
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              width: indicatorWidth,
-              height: 30,
-              backgroundColor: C.amber,
-              borderRadius: 11,
-              left: 3,
-              shadowColor: C.amber,
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.3,
-              shadowRadius: 4,
-              elevation: 2,
-            },
-            indicatorStyle,
-          ]}
-        />
-
-        {/* Tab 1 Trigger */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setActiveTab('nova');
-          }}
-          style={{ flex: 1, height: '100%', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}
-        >
-          <Text style={{ color: activeTab === 'nova' ? '#FFFFFF' : C.textSub, fontSize: 12, fontWeight: '800' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+          <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: C.amber + '20', alignItems: 'center', justifyContent: 'center' }}>
+            <Layers size={9} color={C.amber} />
+          </View>
+          <Text style={{ color: C.text, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
             NOVA System
           </Text>
-        </TouchableOpacity>
-
-        {/* Tab 2 Trigger */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setActiveTab('nutri');
-          }}
-          style={{ flex: 1, height: '100%', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}
-        >
-          <Text style={{ color: activeTab === 'nutri' ? '#FFFFFF' : C.textSub, fontSize: 12, fontWeight: '800' }}>
-            Nutri-Score
-          </Text>
-        </TouchableOpacity>
+        </View>
+        <Text style={{ color: C.textSub, fontSize: 9.5, fontWeight: '500', lineHeight: 13 }}>
+          Rates food processing level. <Text style={{ color: C.red, fontWeight: '800' }}>NOVA 4</Text> indicates chemical additives and ultra-processing.
+        </Text>
+        <View style={{ flexDirection: 'row', gap: 4, marginTop: 1 }}>
+          <View style={{ flex: 1, backgroundColor: C.greenLight, paddingVertical: 2, paddingHorizontal: 4, borderRadius: 5, alignItems: 'center', flexDirection: 'row', gap: 2, justifyContent: 'center' }}>
+            <ShieldCheck size={9} color={C.green} />
+            <Text style={{ color: C.green, fontSize: 7.5, fontWeight: '900' }}>NOVA 1</Text>
+          </View>
+          <View style={{ flex: 1, backgroundColor: C.redLight, paddingVertical: 2, paddingHorizontal: 4, borderRadius: 5, alignItems: 'center', flexDirection: 'row', gap: 2, justifyContent: 'center', borderWidth: 1, borderColor: C.red + '15' }}>
+            <AlertTriangle size={9} color={C.red} />
+            <Text style={{ color: C.red, fontSize: 7.5, fontWeight: '900' }}>NOVA 4</Text>
+          </View>
+        </View>
       </View>
 
-      {/* ── Active Tab Content Layer ── */}
-      <View style={{ flex: 1, position: 'relative' }}>
-        {/* NOVA Tab Content */}
-        {activeTab === 'nova' && (
-          <Animated.View style={[{ width: '100%', gap: 8, position: 'absolute', top: 0, left: 0 }, novaContentStyle]}>
-            <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '500', lineHeight: 16 }}>
-              NOVA rates food by processing level. <Text style={{ color: C.red, fontWeight: '800' }}>NOVA 4</Text> indicates ultra-processed items packed with industrial chemical additives.
-            </Text>
-
-            <View style={{ flexDirection: 'row', gap: 6, marginTop: 2 }}>
-              <View style={{ flex: 1, backgroundColor: C.greenLight, padding: 6, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 4 }}>
-                <ShieldCheck size={12} color={C.green} />
-                <View>
-                  <Text style={{ color: C.green, fontSize: 9, fontWeight: '900' }}>NOVA 1</Text>
-                  <Text style={{ color: C.textSub, fontSize: 8, fontWeight: '600' }}>Whole Foods</Text>
-                </View>
-              </View>
-
-              <View style={{ flex: 1, backgroundColor: C.redLight, padding: 6, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 4, borderWidth: 1, borderColor: C.red + '30' }}>
-                <AlertTriangle size={12} color={C.red} />
-                <View>
-                  <Text style={{ color: C.red, fontSize: 9, fontWeight: '900' }}>NOVA 4</Text>
-                  <Text style={{ color: C.red, fontSize: 8, fontWeight: '800' }}>Processed</Text>
-                </View>
-              </View>
-            </View>
-          </Animated.View>
-        )}
-
-        {/* Nutri-Score Tab Content */}
-        {activeTab === 'nutri' && (
-          <Animated.View style={[{ width: '100%', gap: 8, position: 'absolute', top: 0, left: 0 }, nutriContentStyle]}>
-            <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '500', lineHeight: 16 }}>
-              Rates overall nutritional quality from <Text style={{ color: C.green, fontWeight: '800' }}>A (healthy)</Text> to <Text style={{ color: C.red, fontWeight: '800' }}>E (unhealthy)</Text> based on fiber, sugar, sodium, and density.
-            </Text>
-
-            {/* Traffic Light Bar */}
-            <View style={{ flexDirection: 'row', gap: 4, height: 22, alignItems: 'center', marginTop: 4, width: '100%' }}>
-              <View style={{ flex: 1.2, height: 22, backgroundColor: '#008B50', borderRadius: 4, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#FFFFFF' }}>
-                <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '900' }}>A</Text>
-              </View>
-              <View style={{ flex: 1, height: 18, backgroundColor: '#80BB2D', borderRadius: 4, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
-                <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '800' }}>B</Text>
-              </View>
-              <View style={{ flex: 1, height: 18, backgroundColor: '#FFC900', borderRadius: 4, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
-                <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '800' }}>C</Text>
-              </View>
-              <View style={{ flex: 1, height: 18, backgroundColor: '#FF8000', borderRadius: 4, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
-                <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '800' }}>D</Text>
-              </View>
-              <View style={{ flex: 1, height: 18, backgroundColor: '#E63312', borderRadius: 4, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
-                <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '800' }}>E</Text>
-              </View>
-            </View>
-          </Animated.View>
-        )}
+      {/* ── Zigzag Sub-Component 2: Nutri-Score (Align Right) ── */}
+      <View
+        style={{
+          width: '90%',
+          alignSelf: 'flex-end',
+          backgroundColor: C.cardInner,
+          borderRadius: 16,
+          padding: 8,
+          borderWidth: 1,
+          borderColor: C.cardBorder,
+          gap: 4,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+          <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: C.green + '20', alignItems: 'center', justifyContent: 'center' }}>
+            <Sparkles size={9} color={C.green} />
+          </View>
+          <Text style={{ color: C.text, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+            Nutri-Score
+          </Text>
+        </View>
+        <Text style={{ color: C.textSub, fontSize: 9.5, fontWeight: '500', lineHeight: 13 }}>
+          Rates overall nutrition quality from <Text style={{ color: C.green, fontWeight: '800' }}>A (healthy)</Text> to <Text style={{ color: C.red, fontWeight: '800' }}>E (unhealthy)</Text>.
+        </Text>
+        <View style={{ flexDirection: 'row', gap: 2, height: 14, alignItems: 'center', marginTop: 1 }}>
+          <View style={{ flex: 1, height: 14, backgroundColor: '#008B50', borderRadius: 2.5, alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: '#FFFFFF' }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 7.5, fontWeight: '900' }}>A</Text>
+          </View>
+          <View style={{ flex: 0.8, height: 12, backgroundColor: '#80BB2D', borderRadius: 2.5, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 6.5, fontWeight: '800' }}>B</Text>
+          </View>
+          <View style={{ flex: 0.8, height: 12, backgroundColor: '#FFC900', borderRadius: 2.5, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 6.5, fontWeight: '800' }}>C</Text>
+          </View>
+          <View style={{ flex: 0.8, height: 12, backgroundColor: '#FF8000', borderRadius: 2.5, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 6.5, fontWeight: '800' }}>D</Text>
+          </View>
+          <View style={{ flex: 0.8, height: 12, backgroundColor: '#E63312', borderRadius: 2.5, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 6.5, fontWeight: '800' }}>E</Text>
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -858,6 +783,8 @@ function GutShieldDemoCard({ cardW, C }: { cardW: number; C: any }) {
 // SLIDE 7 BODY: Smart Clean Food Swap Card
 // ─────────────────────────────────────────────────────────
 function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
+  const { height } = useWindowDimensions();
+  const isShort = height < 700;
   const arrowPulse = useSharedValue(1);
 
   useEffect(() => {
@@ -880,81 +807,129 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
       style={{
         width: cardW,
         backgroundColor: C.card,
-        borderRadius: 22,
-        borderWidth: 1,
+        borderRadius: 24,
+        borderWidth: 1.5,
         borderColor: C.cardBorder,
-        padding: 14,
+        padding: 12,
         shadowColor: '#FF9500',
         shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.12,
+        shadowOpacity: 0.06,
         shadowRadius: 16,
-        elevation: 6,
+        elevation: 4,
         gap: 10,
+        height: isShort ? 230 : 270,
+        justifyContent: 'center',
+        position: 'relative',
       }}
     >
-      <Text style={{ color: C.text, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 }}>
-        Smart Clean Food Swap
-      </Text>
+      {/* ── Zigzag Sub-Component 1: Unhealthy Option (Align Left) ── */}
+      <View
+        style={{
+          width: '90%',
+          alignSelf: 'flex-start',
+          backgroundColor: C.cardInner,
+          borderRadius: 16,
+          padding: 8,
+          borderWidth: 1,
+          borderColor: C.cardBorder,
+          gap: 4,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+          <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: C.red + '20', alignItems: 'center', justifyContent: 'center' }}>
+            <AlertTriangle size={9} color={C.red} />
+          </View>
+          <Text style={{ color: C.red, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+            Unhealthy Option
+          </Text>
+        </View>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-        {/* Unhealthy Dirty Item */}
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: C.cardInner,
-            borderRadius: 14,
-            padding: 10,
-            borderWidth: 1.5,
-            borderColor: C.red + '35',
-            alignItems: 'center',
-            gap: 4,
-          }}
-        >
-          <Text style={{ color: C.red, fontSize: 7.5, fontWeight: '900' }}>HIGH SUGAR</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 1 }}>
           {/* Custom SVG Tin Can */}
-          <Svg width={30} height={30} viewBox="0 0 24 24" fill="none">
+          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
             <Path d="M6 18V9C6 7.34315 7.34315 6 9 6H15C16.6569 6 18 7.34315 18 9V18C18 19.6569 16.6569 21 15 21H9C7.34315 21 6 19.6569 6 18Z" stroke={C.red} strokeWidth={2} />
             <Path d="M10 6V4C10 3.44772 10.4477 3 11 3H13C13.5523 3 14 3.44772 14 4V6" stroke={C.red} strokeWidth={2} />
             <Path d="M9 11H15" stroke={C.red} strokeWidth={1.5} />
             <Path d="M9 15H15" stroke={C.red} strokeWidth={1.5} />
           </Svg>
-          <Text style={{ color: C.text, fontSize: 10, fontWeight: '800', textAlign: 'center' }} numberOfLines={1}>
-            Sweet Ketchup
+          <View style={{ flex: 1, gap: 1 }}>
+            <Text style={{ color: C.text, fontSize: 11.5, fontWeight: '800' }} numberOfLines={1}>
+              Sweet Ketchup
+            </Text>
+            <Text style={{ color: C.textSub, fontSize: 8.5, fontWeight: '500' }} numberOfLines={1}>
+              NOVA 4 • Emulsifiers
+            </Text>
+          </View>
+          <Text style={{ color: C.red, fontSize: 13, fontWeight: '900' }}>6.4 tsp</Text>
+        </View>
+      </View>
+
+      {/* Floating Zap Icon Transition overlay in the middle of the zigzag */}
+      <Animated.View
+        style={[
+          {
+            position: 'absolute',
+            top: isShort ? 99 : 119,
+            left: cardW / 2 - 14,
+            width: 28,
+            height: 28,
+            borderRadius: 14,
+            backgroundColor: C.amber,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderWidth: 2,
+            borderColor: C.card,
+            shadowColor: C.amber,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.35,
+            shadowRadius: 8,
+            elevation: 5,
+            zIndex: 10,
+          },
+          arrowStyle,
+        ]}
+      >
+        <Zap size={13} color="#FFFFFF" />
+      </Animated.View>
+
+      {/* ── Zigzag Sub-Component 2: Clean Upgrade (Align Right) ── */}
+      <View
+        style={{
+          width: '90%',
+          alignSelf: 'flex-end',
+          backgroundColor: C.cardInner,
+          borderRadius: 16,
+          padding: 8,
+          borderWidth: 1,
+          borderColor: C.cardBorder,
+          gap: 4,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+          <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: C.green + '20', alignItems: 'center', justifyContent: 'center' }}>
+            <ShieldCheck size={9} color={C.green} />
+          </View>
+          <Text style={{ color: C.green, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+            Clean Upgrade
           </Text>
-          <Text style={{ color: C.red, fontSize: 12, fontWeight: '900' }}>6.4 tsp</Text>
-          <Text style={{ color: C.textMuted, fontSize: 7, fontWeight: '600' }}>NOVA 4 • Emulsifiers</Text>
         </View>
 
-        {/* Swap Arrow */}
-        <Animated.View style={[{ alignItems: 'center' }, arrowStyle]}>
-          <Zap size={22} color={C.amber} />
-        </Animated.View>
-
-        {/* Clean Upgrade Item */}
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: C.cardInner,
-            borderRadius: 14,
-            padding: 10,
-            borderWidth: 1.5,
-            borderColor: C.green + '35',
-            alignItems: 'center',
-            gap: 4,
-          }}
-        >
-          <Text style={{ color: C.green, fontSize: 7.5, fontWeight: '900' }}>100% CLEAN</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 1 }}>
           {/* Custom SVG Fresh Tomato */}
-          <Svg width={30} height={30} viewBox="0 0 24 24" fill="none">
+          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
             <Circle cx={12} cy={13} r={7} fill={C.greenLight} stroke={C.green} strokeWidth={2} />
             <Path d="M12 6C12 4.5 11.5 3.5 10 3.5" stroke={C.green} strokeWidth={1.5} strokeLinecap="round" />
             <Path d="M12 6C13 5 13.5 5 15 4.5" stroke={C.green} strokeWidth={1.5} strokeLinecap="round" />
           </Svg>
-          <Text style={{ color: C.text, fontSize: 10, fontWeight: '800', textAlign: 'center' }} numberOfLines={1}>
-            Tomato Purée
-          </Text>
-          <Text style={{ color: C.green, fontSize: 12, fontWeight: '900' }}>0.5 tsp</Text>
-          <Text style={{ color: C.green, fontSize: 7, fontWeight: '700' }}>NOVA 1 • Whole Food</Text>
+          <View style={{ flex: 1, gap: 1 }}>
+            <Text style={{ color: C.text, fontSize: 11.5, fontWeight: '800' }} numberOfLines={1}>
+              Tomato Purée
+            </Text>
+            <Text style={{ color: C.green, fontSize: 8.5, fontWeight: '700' }} numberOfLines={1}>
+              NOVA 1 • Whole Food
+            </Text>
+          </View>
+          <Text style={{ color: C.green, fontSize: 13, fontWeight: '900' }}>0.5 tsp</Text>
         </View>
       </View>
     </View>
@@ -967,41 +942,8 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
 // SLIDE 4 BODY: Gut Health & Additives Demo Card (Segmented Control)
 // ─────────────────────────────────────────────────────────
 function GutAdditivesDemoCard({ cardW, C }: { cardW: number; C: any }) {
-  const [activeTab, setActiveTab] = useState<'gut' | 'additives'>('gut');
-  const slideAnim = useSharedValue(0);
-
-  useEffect(() => {
-    slideAnim.value = withSpring(activeTab === 'gut' ? 0 : 1, { damping: 15, stiffness: 120 });
-  }, [activeTab]);
-
-  const gutTabOpacity = useSharedValue(1);
-  const additivesTabOpacity = useSharedValue(0);
-
-  useEffect(() => {
-    if (activeTab === 'gut') {
-      gutTabOpacity.value = withTiming(1, { duration: 180 });
-      additivesTabOpacity.value = withTiming(0, { duration: 180 });
-    } else {
-      gutTabOpacity.value = withTiming(0, { duration: 180 });
-      additivesTabOpacity.value = withTiming(1, { duration: 180 });
-    }
-  }, [activeTab]);
-
-  const gutContentStyle = useAnimatedStyle(() => ({
-    opacity: gutTabOpacity.value,
-    transform: [{ scale: withSpring(activeTab === 'gut' ? 1 : 0.95, { damping: 15 }) }],
-  }));
-
-  const additivesContentStyle = useAnimatedStyle(() => ({
-    opacity: additivesTabOpacity.value,
-    transform: [{ scale: withSpring(activeTab === 'additives' ? 1 : 0.95, { damping: 15 }) }],
-  }));
-
-  // Segmented control sliding indicator background style
-  const indicatorWidth = (cardW - 38) / 2;
-  const indicatorStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: slideAnim.value * indicatorWidth }],
-  }));
+  const { height } = useWindowDimensions();
+  const isShort = height < 700;
 
   return (
     <View
@@ -1011,132 +953,86 @@ function GutAdditivesDemoCard({ cardW, C }: { cardW: number; C: any }) {
         borderRadius: 24,
         borderWidth: 1.5,
         borderColor: C.cardBorder,
-        padding: 16,
+        padding: 12,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.08,
+        shadowOpacity: 0.06,
         shadowRadius: 16,
         elevation: 4,
-        gap: 12,
-        height: 200, // Fixed height to keep spacing absolute and compact!
+        gap: 10,
+        height: isShort ? 230 : 270,
+        justifyContent: 'center',
       }}
     >
-      {/* ── Segmented Control Tabs ── */}
+      {/* ── Zigzag Sub-Component 1: Gut Shield (Align Left) ── */}
       <View
         style={{
-          flexDirection: 'row',
+          width: '90%',
+          alignSelf: 'flex-start',
           backgroundColor: C.cardInner,
-          borderRadius: 14,
-          padding: 3,
-          position: 'relative',
-          width: '100%',
-          height: 38,
-          alignItems: 'center',
+          borderRadius: 16,
+          padding: 8,
           borderWidth: 1,
           borderColor: C.cardBorder,
+          gap: 4,
         }}
       >
-        {/* Sliding Indicator Pill */}
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              width: indicatorWidth,
-              height: 30,
-              backgroundColor: C.red,
-              borderRadius: 11,
-              left: 3,
-              shadowColor: C.red,
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.3,
-              shadowRadius: 4,
-              elevation: 2,
-            },
-            indicatorStyle,
-          ]}
-        />
-
-        {/* Tab 1 Trigger */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setActiveTab('gut');
-          }}
-          style={{ flex: 1, height: '100%', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}
-        >
-          <Text style={{ color: activeTab === 'gut' ? '#FFFFFF' : C.textSub, fontSize: 12, fontWeight: '800' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+          <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: C.red + '20', alignItems: 'center', justifyContent: 'center' }}>
+            <ShieldAlert size={9} color={C.red} />
+          </View>
+          <Text style={{ color: C.text, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
             Gut Shield
           </Text>
-        </TouchableOpacity>
-
-        {/* Tab 2 Trigger */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setActiveTab('additives');
-          }}
-          style={{ flex: 1, height: '100%', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}
-        >
-          <Text style={{ color: activeTab === 'additives' ? '#FFFFFF' : C.textSub, fontSize: 12, fontWeight: '800' }}>
-            Additive Detective
-          </Text>
-        </TouchableOpacity>
+        </View>
+        <Text style={{ color: C.textSub, fontSize: 9.5, fontWeight: '500', lineHeight: 13 }}>
+          Audits foods for emulsifiers and gums that erode gut lining, triggering leaky gut.
+        </Text>
+        <View style={{ flexDirection: 'row', gap: 4, marginTop: 1 }}>
+          <View style={{ flex: 1, backgroundColor: C.redLight, paddingVertical: 2, paddingHorizontal: 4, borderRadius: 5, alignItems: 'center', flexDirection: 'row', gap: 2, justifyContent: 'center', borderWidth: 1, borderColor: C.red + '15' }}>
+            <ShieldAlert size={9} color={C.red} />
+            <Text style={{ color: C.red, fontSize: 7.5, fontWeight: '900' }}>42/100 Threat</Text>
+          </View>
+          <View style={{ flex: 1.3, backgroundColor: C.cardInner, paddingVertical: 2, paddingHorizontal: 4, borderRadius: 5, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ color: C.text, fontSize: 7.5, fontWeight: '800', textAlign: 'center' }} numberOfLines={1}>Carrageenan Found</Text>
+          </View>
+        </View>
       </View>
 
-      {/* ── Active Tab Content Layer ── */}
-      <View style={{ flex: 1, position: 'relative' }}>
-        {/* Gut Shield Tab Content */}
-        {activeTab === 'gut' && (
-          <Animated.View style={[{ width: '100%', gap: 8, position: 'absolute', top: 0, left: 0 }, gutContentStyle]}>
-            <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '500', lineHeight: 16 }}>
-              Gut Shield audits foods for emulsifiers (like polysorbates) and gums that wear away your intestinal lining, causing leaky gut and system inflammation.
-            </Text>
-
-            <View style={{ flexDirection: 'row', gap: 6, marginTop: 2 }}>
-              <View style={{ flex: 1, backgroundColor: C.redLight, padding: 6, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6, borderWidth: 1, borderColor: C.red + '20' }}>
-                <ShieldAlert size={14} color={C.red} />
-                <View>
-                  <Text style={{ color: C.red, fontSize: 9, fontWeight: '900' }}>42/100</Text>
-                  <Text style={{ color: C.textSub, fontSize: 8, fontWeight: '600' }}>Critical Threat</Text>
-                </View>
-              </View>
-
-              <View style={{ flex: 1.3, backgroundColor: C.cardInner, padding: 6, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: C.text, fontSize: 9, fontWeight: '800', textAlign: 'center' }}>Carrageenan Found</Text>
-                <Text style={{ color: C.textSub, fontSize: 7, fontWeight: '500', textAlign: 'center', marginTop: 1 }}>Erodes mucosal gut lining</Text>
-              </View>
-            </View>
-          </Animated.View>
-        )}
-
-        {/* Additive Detective Tab Content */}
-        {activeTab === 'additives' && (
-          <Animated.View style={[{ width: '100%', gap: 8, position: 'absolute', top: 0, left: 0 }, additivesContentStyle]}>
-            <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '500', lineHeight: 16 }}>
-              Additive Detective runs real-time optical audits on packaging ingredients lists, instantly catching synthetic food dyes, dangerous preservatives, and chemicals.
-            </Text>
-
-            <View style={{ flexDirection: 'row', gap: 6, marginTop: 2 }}>
-              <View style={{ flex: 1, backgroundColor: C.redLight, padding: 5, borderRadius: 8, alignItems: 'center', flexDirection: 'row', gap: 4, borderWidth: 1, borderColor: C.red + '20' }}>
-                <AlertTriangle size={12} color={C.red} />
-                <View>
-                  <Text style={{ color: C.text, fontSize: 8.5, fontWeight: '800' }} numberOfLines={1}>Red 40 Dye</Text>
-                  <Text style={{ color: C.textMuted, fontSize: 7 }} numberOfLines={1}>Hyperactivity risk</Text>
-                </View>
-              </View>
-
-              <View style={{ flex: 1, backgroundColor: C.redLight, padding: 5, borderRadius: 8, alignItems: 'center', flexDirection: 'row', gap: 4, borderWidth: 1, borderColor: C.red + '20' }}>
-                <AlertTriangle size={12} color={C.red} />
-                <View>
-                  <Text style={{ color: C.text, fontSize: 8.5, fontWeight: '800' }} numberOfLines={1}>Titanium Dioxide</Text>
-                  <Text style={{ color: C.red, fontSize: 7, fontWeight: '700' }} numberOfLines={1}>Banned in EU</Text>
-                </View>
-              </View>
-            </View>
-          </Animated.View>
-        )}
+      {/* ── Zigzag Sub-Component 2: Additive Detective (Align Right) ── */}
+      <View
+        style={{
+          width: '90%',
+          alignSelf: 'flex-end',
+          backgroundColor: C.cardInner,
+          borderRadius: 16,
+          padding: 8,
+          borderWidth: 1,
+          borderColor: C.cardBorder,
+          gap: 4,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+          <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: C.amber + '20', alignItems: 'center', justifyContent: 'center' }}>
+            <Search size={9} color={C.amber} />
+          </View>
+          <Text style={{ color: C.text, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+            Additive Detective
+          </Text>
+        </View>
+        <Text style={{ color: C.textSub, fontSize: 9.5, fontWeight: '500', lineHeight: 13 }}>
+          Catches synthetic dyes, dangerous preservatives, and forbidden chemicals.
+        </Text>
+        <View style={{ flexDirection: 'row', gap: 4, marginTop: 1 }}>
+          <View style={{ flex: 1, backgroundColor: C.redLight, paddingVertical: 2, paddingHorizontal: 4, borderRadius: 5, alignItems: 'center', flexDirection: 'row', gap: 2, justifyContent: 'center', borderWidth: 1, borderColor: C.red + '15' }}>
+            <AlertTriangle size={9} color={C.red} />
+            <Text style={{ color: C.text, fontSize: 7.5, fontWeight: '800' }} numberOfLines={1}>Red 40 Dye</Text>
+          </View>
+          <View style={{ flex: 1.1, backgroundColor: C.redLight, paddingVertical: 2, paddingHorizontal: 4, borderRadius: 5, alignItems: 'center', flexDirection: 'row', gap: 2, justifyContent: 'center', borderWidth: 1, borderColor: C.red + '15' }}>
+            <AlertTriangle size={9} color={C.red} />
+            <Text style={{ color: C.text, fontSize: 7.5, fontWeight: '800' }} numberOfLines={1}>Titanium Dioxide</Text>
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -1833,7 +1729,7 @@ export default function OnboardingScreen() {
           }}
         >
           {/* ── 1. TOP SECTION: Mascot floating container & Mascot Think Message ── */}
-          <View style={{ height: orbSize + 25, justifyContent: 'center', marginTop: isShort ? 45 : 70, zIndex: 10 }}>
+          <View style={{ height: orbSize + 25, justifyContent: 'center', marginTop: isShort ? 25 : 45, zIndex: 10 }}>
             <MagicalBackground />
             <Animated.View style={[{ alignSelf: 'center', position: 'relative' }, mascotAnimStyle]}>
               <OrbMascot state={slide.mascotState} size={orbSize} />
@@ -1853,7 +1749,7 @@ export default function OnboardingScreen() {
           </View>
 
           {/* ── 2. UPPER-MIDDLE SECTION: Title and Subtitle Below Mascot ── */}
-          <Animated.View style={[textAnimStyle, { minHeight: 60, justifyContent: 'center', marginTop: isShort ? 28 : 52, marginBottom: isShort ? 4 : 8 }]}>
+          <Animated.View style={[textAnimStyle, { minHeight: 60, justifyContent: 'center', marginTop: isShort ? 8 : 16, marginBottom: isShort ? 4 : 8 }]}>
             {renderTitle()}
             <Text
               style={{
