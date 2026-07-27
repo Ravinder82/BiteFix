@@ -358,7 +358,7 @@ function NovaNutriScoreDemoCard({ cardW, C }: { cardW: number; C: any }) {
         shadowRadius: 16,
         elevation: 4,
         gap: 12,
-        height: isShort ? 230 : 270,
+        height: isShort ? 260 : 310,
         justifyContent: 'center',
       }}
     >
@@ -368,10 +368,10 @@ function NovaNutriScoreDemoCard({ cardW, C }: { cardW: number; C: any }) {
           width: '100%',
           backgroundColor: C.cardInner,
           borderRadius: 16,
-          padding: 10,
+          padding: 12,
           borderWidth: 1.5,
           borderColor: C.cardBorder,
-          gap: 5,
+          gap: 6,
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -382,17 +382,17 @@ function NovaNutriScoreDemoCard({ cardW, C }: { cardW: number; C: any }) {
             NOVA System
           </Text>
         </View>
-        <Text style={{ color: C.textSub, fontSize: 10.5, fontWeight: '500', lineHeight: 14 }}>
-          Rates food processing level. <Text style={{ color: C.red, fontWeight: '800' }}>NOVA 4</Text> indicates chemical additives and ultra-processing.
+        <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '700', lineHeight: 15 }}>
+          Rates food processing level. <Text style={{ color: C.red, fontWeight: '900' }}>NOVA 4</Text> indicates chemical additives and ultra-processing.
         </Text>
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 2 }}>
-          <View style={{ flex: 1, backgroundColor: C.greenLight, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 6, alignItems: 'center', flexDirection: 'row', gap: 3, justifyContent: 'center' }}>
+          <View style={{ flex: 1, backgroundColor: C.greenLight, paddingVertical: 4, paddingHorizontal: 6, borderRadius: 6, alignItems: 'center', flexDirection: 'row', gap: 3, justifyContent: 'center' }}>
             <ShieldCheck size={10} color={C.green} />
-            <Text style={{ color: C.green, fontSize: 8, fontWeight: '900' }}>NOVA 1</Text>
+            <Text style={{ color: C.green, fontSize: 8.5, fontWeight: '900' }}>NOVA 1</Text>
           </View>
-          <View style={{ flex: 1, backgroundColor: C.redLight, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 6, alignItems: 'center', flexDirection: 'row', gap: 3, justifyContent: 'center', borderWidth: 1, borderColor: C.red + '15' }}>
+          <View style={{ flex: 1, backgroundColor: C.redLight, paddingVertical: 4, paddingHorizontal: 6, borderRadius: 6, alignItems: 'center', flexDirection: 'row', gap: 3, justifyContent: 'center', borderWidth: 1, borderColor: C.red + '15' }}>
             <AlertTriangle size={10} color={C.red} />
-            <Text style={{ color: C.red, fontSize: 8, fontWeight: '900' }}>NOVA 4</Text>
+            <Text style={{ color: C.red, fontSize: 8.5, fontWeight: '900' }}>NOVA 4</Text>
           </View>
         </View>
       </View>
@@ -403,10 +403,10 @@ function NovaNutriScoreDemoCard({ cardW, C }: { cardW: number; C: any }) {
           width: '100%',
           backgroundColor: C.cardInner,
           borderRadius: 16,
-          padding: 10,
+          padding: 12,
           borderWidth: 1.5,
           borderColor: C.cardBorder,
-          gap: 5,
+          gap: 6,
         }}
       >
         <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: 6 }}>
@@ -417,24 +417,24 @@ function NovaNutriScoreDemoCard({ cardW, C }: { cardW: number; C: any }) {
             Nutri-Score
           </Text>
         </View>
-        <Text style={{ color: C.textSub, fontSize: 10.5, fontWeight: '500', lineHeight: 14, textAlign: 'right' }}>
-          Rates overall nutrition quality from <Text style={{ color: C.green, fontWeight: '800' }}>A (healthy)</Text> to <Text style={{ color: C.red, fontWeight: '800' }}>E (unhealthy)</Text>.
+        <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '700', lineHeight: 15, textAlign: 'right' }}>
+          Rates overall nutrition quality from <Text style={{ color: C.green, fontWeight: '900' }}>A (healthy)</Text> to <Text style={{ color: C.red, fontWeight: '900' }}>E (unhealthy)</Text>.
         </Text>
         <View style={{ flexDirection: 'row', gap: 3, height: 16, alignItems: 'center', marginTop: 2 }}>
           <View style={{ flex: 1, height: 16, backgroundColor: '#008B50', borderRadius: 3.5, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#FFFFFF' }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '900' }}>A</Text>
+            <Text style={{ color: '#FFFFFF', fontSize: 9.5, fontWeight: '900' }}>A</Text>
           </View>
           <View style={{ flex: 0.8, height: 14, backgroundColor: '#80BB2D', borderRadius: 3.5, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 7.5, fontWeight: '800' }}>B</Text>
+            <Text style={{ color: '#FFFFFF', fontSize: 8, fontWeight: '800' }}>B</Text>
           </View>
           <View style={{ flex: 0.8, height: 14, backgroundColor: '#FFC900', borderRadius: 3.5, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 7.5, fontWeight: '800' }}>C</Text>
+            <Text style={{ color: '#FFFFFF', fontSize: 8, fontWeight: '800' }}>C</Text>
           </View>
           <View style={{ flex: 0.8, height: 14, backgroundColor: '#FF8000', borderRadius: 3.5, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 7.5, fontWeight: '800' }}>D</Text>
+            <Text style={{ color: '#FFFFFF', fontSize: 8, fontWeight: '800' }}>D</Text>
           </View>
           <View style={{ flex: 0.8, height: 14, backgroundColor: '#E63312', borderRadius: 3.5, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 7.5, fontWeight: '800' }}>E</Text>
+            <Text style={{ color: '#FFFFFF', fontSize: 8, fontWeight: '800' }}>E</Text>
           </View>
         </View>
       </View>
@@ -815,7 +815,7 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
         shadowRadius: 16,
         elevation: 4,
         gap: 12,
-        height: isShort ? 230 : 270,
+        height: isShort ? 260 : 310,
         justifyContent: 'center',
         position: 'relative',
       }}
@@ -826,10 +826,10 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
           width: '100%',
           backgroundColor: C.cardInner,
           borderRadius: 16,
-          padding: 10,
+          padding: 12,
           borderWidth: 1.5,
           borderColor: C.cardBorder,
-          gap: 5,
+          gap: 6,
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -850,14 +850,14 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
             <Path d="M9 15H15" stroke={C.red} strokeWidth={1.5} />
           </Svg>
           <View style={{ flex: 1, gap: 1 }}>
-            <Text style={{ color: C.text, fontSize: 12, fontWeight: '800' }} numberOfLines={1}>
+            <Text style={{ color: C.text, fontSize: 12, fontWeight: '900' }} numberOfLines={1}>
               Sweet Ketchup
             </Text>
-            <Text style={{ color: C.textSub, fontSize: 9, fontWeight: '500' }} numberOfLines={1}>
+            <Text style={{ color: C.textSub, fontSize: 9.5, fontWeight: '700' }} numberOfLines={1}>
               NOVA 4 • Emulsifiers
             </Text>
           </View>
-          <Text style={{ color: C.red, fontSize: 14, fontWeight: '900' }}>6.4 tsp sugar</Text>
+          <Text style={{ color: C.red, fontSize: 14, fontWeight: '950' }}>6.4 tsp sugar</Text>
         </View>
       </View>
 
@@ -866,7 +866,7 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
         style={[
           {
             position: 'absolute',
-            top: isShort ? 101 : 121,
+            top: isShort ? 116 : 136,
             right: 28,
             width: 28,
             height: 28,
@@ -895,10 +895,10 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
           width: '100%',
           backgroundColor: C.cardInner,
           borderRadius: 16,
-          padding: 10,
+          padding: 12,
           borderWidth: 1.5,
           borderColor: C.cardBorder,
-          gap: 5,
+          gap: 6,
         }}
       >
         <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: 6 }}>
@@ -918,14 +918,14 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
             <Path d="M12 6C13 5 13.5 5 15 4.5" stroke={C.green} strokeWidth={1.5} strokeLinecap="round" />
           </Svg>
           <View style={{ flex: 1, gap: 1 }}>
-            <Text style={{ color: C.text, fontSize: 12, fontWeight: '800' }} numberOfLines={1}>
+            <Text style={{ color: C.text, fontSize: 12, fontWeight: '900' }} numberOfLines={1}>
               Tomato Purée
             </Text>
-            <Text style={{ color: C.green, fontSize: 9, fontWeight: '700' }} numberOfLines={1}>
+            <Text style={{ color: C.green, fontSize: 9.5, fontWeight: '800' }} numberOfLines={1}>
               NOVA 1 • Whole Food
             </Text>
           </View>
-          <Text style={{ color: C.green, fontSize: 14, fontWeight: '900' }}>0.5 tsp sugar</Text>
+          <Text style={{ color: C.green, fontSize: 14, fontWeight: '950' }}>0.5 tsp sugar</Text>
         </View>
       </View>
     </View>
@@ -956,7 +956,7 @@ function GutAdditivesDemoCard({ cardW, C }: { cardW: number; C: any }) {
         shadowRadius: 16,
         elevation: 4,
         gap: 12,
-        height: isShort ? 230 : 270,
+        height: isShort ? 260 : 310,
         justifyContent: 'center',
       }}
     >
@@ -966,10 +966,10 @@ function GutAdditivesDemoCard({ cardW, C }: { cardW: number; C: any }) {
           width: '100%',
           backgroundColor: C.cardInner,
           borderRadius: 16,
-          padding: 10,
+          padding: 12,
           borderWidth: 1.5,
           borderColor: C.cardBorder,
-          gap: 5,
+          gap: 6,
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -980,16 +980,16 @@ function GutAdditivesDemoCard({ cardW, C }: { cardW: number; C: any }) {
             Gut Shield
           </Text>
         </View>
-        <Text style={{ color: C.textSub, fontSize: 10.5, fontWeight: '500', lineHeight: 14 }}>
+        <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '700', lineHeight: 15 }}>
           Audits foods for emulsifiers and gums that erode gut lining, triggering leaky gut.
         </Text>
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 2 }}>
-          <View style={{ flex: 1, backgroundColor: C.redLight, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 6, alignItems: 'center', flexDirection: 'row', gap: 3, justifyContent: 'center', borderWidth: 1, borderColor: C.red + '15' }}>
+          <View style={{ flex: 1, backgroundColor: C.redLight, paddingVertical: 4, paddingHorizontal: 6, borderRadius: 6, alignItems: 'center', flexDirection: 'row', gap: 3, justifyContent: 'center', borderWidth: 1, borderColor: C.red + '15' }}>
             <ShieldAlert size={10} color={C.red} />
-            <Text style={{ color: C.red, fontSize: 8, fontWeight: '900' }}>42/100 Threat</Text>
+            <Text style={{ color: C.red, fontSize: 8.5, fontWeight: '900' }}>42/100 Threat</Text>
           </View>
-          <View style={{ flex: 1.3, backgroundColor: C.cardInner, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 6, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: C.text, fontSize: 8, fontWeight: '800', textAlign: 'center' }} numberOfLines={1}>Carrageenan Found</Text>
+          <View style={{ flex: 1.3, backgroundColor: C.cardInner, paddingVertical: 4, paddingHorizontal: 6, borderRadius: 6, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ color: C.text, fontSize: 8.5, fontWeight: '800', textAlign: 'center' }} numberOfLines={1}>Carrageenan Found</Text>
           </View>
         </View>
       </View>
@@ -1000,10 +1000,10 @@ function GutAdditivesDemoCard({ cardW, C }: { cardW: number; C: any }) {
           width: '100%',
           backgroundColor: C.cardInner,
           borderRadius: 16,
-          padding: 10,
+          padding: 12,
           borderWidth: 1.5,
           borderColor: C.cardBorder,
-          gap: 5,
+          gap: 6,
         }}
       >
         <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: 6 }}>
@@ -1014,17 +1014,17 @@ function GutAdditivesDemoCard({ cardW, C }: { cardW: number; C: any }) {
             Additive Detective
           </Text>
         </View>
-        <Text style={{ color: C.textSub, fontSize: 10.5, fontWeight: '500', lineHeight: 14, textAlign: 'right' }}>
+        <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '700', lineHeight: 15, textAlign: 'right' }}>
           Catches synthetic dyes, dangerous preservatives, and forbidden chemicals.
         </Text>
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 2 }}>
-          <View style={{ flex: 1, backgroundColor: C.redLight, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 6, alignItems: 'center', flexDirection: 'row', gap: 3, justifyContent: 'center', borderWidth: 1, borderColor: C.red + '15' }}>
+          <View style={{ flex: 1, backgroundColor: C.redLight, paddingVertical: 4, paddingHorizontal: 6, borderRadius: 6, alignItems: 'center', flexDirection: 'row', gap: 3, justifyContent: 'center', borderWidth: 1, borderColor: C.red + '15' }}>
             <AlertTriangle size={10} color={C.red} />
-            <Text style={{ color: C.text, fontSize: 8, fontWeight: '800' }} numberOfLines={1}>Red 40 Dye</Text>
+            <Text style={{ color: C.text, fontSize: 8.5, fontWeight: '800' }} numberOfLines={1}>Red 40 Dye</Text>
           </View>
-          <View style={{ flex: 1.1, backgroundColor: C.redLight, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 6, alignItems: 'center', flexDirection: 'row', gap: 3, justifyContent: 'center', borderWidth: 1, borderColor: C.red + '15' }}>
+          <View style={{ flex: 1.1, backgroundColor: C.redLight, paddingVertical: 4, paddingHorizontal: 6, borderRadius: 6, alignItems: 'center', flexDirection: 'row', gap: 3, justifyContent: 'center', borderWidth: 1, borderColor: C.red + '15' }}>
             <AlertTriangle size={10} color={C.red} />
-            <Text style={{ color: C.text, fontSize: 8, fontWeight: '800' }} numberOfLines={1}>Titanium Dioxide</Text>
+            <Text style={{ color: C.text, fontSize: 8.5, fontWeight: '800' }} numberOfLines={1}>Titanium Dioxide</Text>
           </View>
         </View>
       </View>
