@@ -32,7 +32,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot } from '../../components/features/OrbMascot';
 import { MagicalBackground } from '../../components/features/MagicalBackground';
-import { ArrowRight, Check, Search, AlertTriangle, ShieldCheck, ShieldAlert, Activity, Sparkles, RefreshCw, Zap, Star, X } from 'lucide-react-native';
+import { ArrowRight, Check, Search, AlertTriangle, ShieldCheck, ShieldAlert, Activity, Sparkles, RefreshCw, Zap, Star, X, Layers } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, {
   Line,
