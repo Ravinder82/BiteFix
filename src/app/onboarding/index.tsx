@@ -351,92 +351,90 @@ function NovaNutriScoreDemoCard({ cardW, C }: { cardW: number; C: any }) {
         borderRadius: 24,
         borderWidth: 1.5,
         borderColor: C.cardBorder,
-        padding: 12,
+        padding: 16,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.06,
         shadowRadius: 16,
         elevation: 4,
-        gap: 10,
+        gap: 12,
         height: isShort ? 230 : 270,
         justifyContent: 'center',
       }}
     >
-      {/* ── Zigzag Sub-Component 1: NOVA System (Align Left) ── */}
+      {/* ── Sub-Component 1: NOVA System (Full Width, Left-Aligned Header) ── */}
       <View
         style={{
-          width: '90%',
-          alignSelf: 'flex-start',
+          width: '100%',
           backgroundColor: C.cardInner,
           borderRadius: 16,
-          padding: 8,
-          borderWidth: 1,
+          padding: 10,
+          borderWidth: 1.5,
           borderColor: C.cardBorder,
-          gap: 4,
+          gap: 5,
         }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-          <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: C.amber + '20', alignItems: 'center', justifyContent: 'center' }}>
-            <Layers size={9} color={C.amber} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.amber + '20', alignItems: 'center', justifyContent: 'center' }}>
+            <Layers size={10} color={C.amber} />
           </View>
-          <Text style={{ color: C.text, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+          <Text style={{ color: C.text, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
             NOVA System
           </Text>
         </View>
-        <Text style={{ color: C.textSub, fontSize: 9.5, fontWeight: '500', lineHeight: 13 }}>
+        <Text style={{ color: C.textSub, fontSize: 10.5, fontWeight: '500', lineHeight: 14 }}>
           Rates food processing level. <Text style={{ color: C.red, fontWeight: '800' }}>NOVA 4</Text> indicates chemical additives and ultra-processing.
         </Text>
-        <View style={{ flexDirection: 'row', gap: 4, marginTop: 1 }}>
-          <View style={{ flex: 1, backgroundColor: C.greenLight, paddingVertical: 2, paddingHorizontal: 4, borderRadius: 5, alignItems: 'center', flexDirection: 'row', gap: 2, justifyContent: 'center' }}>
-            <ShieldCheck size={9} color={C.green} />
-            <Text style={{ color: C.green, fontSize: 7.5, fontWeight: '900' }}>NOVA 1</Text>
+        <View style={{ flexDirection: 'row', gap: 6, marginTop: 2 }}>
+          <View style={{ flex: 1, backgroundColor: C.greenLight, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 6, alignItems: 'center', flexDirection: 'row', gap: 3, justifyContent: 'center' }}>
+            <ShieldCheck size={10} color={C.green} />
+            <Text style={{ color: C.green, fontSize: 8, fontWeight: '900' }}>NOVA 1</Text>
           </View>
-          <View style={{ flex: 1, backgroundColor: C.redLight, paddingVertical: 2, paddingHorizontal: 4, borderRadius: 5, alignItems: 'center', flexDirection: 'row', gap: 2, justifyContent: 'center', borderWidth: 1, borderColor: C.red + '15' }}>
-            <AlertTriangle size={9} color={C.red} />
-            <Text style={{ color: C.red, fontSize: 7.5, fontWeight: '900' }}>NOVA 4</Text>
+          <View style={{ flex: 1, backgroundColor: C.redLight, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 6, alignItems: 'center', flexDirection: 'row', gap: 3, justifyContent: 'center', borderWidth: 1, borderColor: C.red + '15' }}>
+            <AlertTriangle size={10} color={C.red} />
+            <Text style={{ color: C.red, fontSize: 8, fontWeight: '900' }}>NOVA 4</Text>
           </View>
         </View>
       </View>
 
-      {/* ── Zigzag Sub-Component 2: Nutri-Score (Align Right) ── */}
+      {/* ── Sub-Component 2: Nutri-Score (Full Width, Right-Aligned Header for Zigzag) ── */}
       <View
         style={{
-          width: '90%',
-          alignSelf: 'flex-end',
+          width: '100%',
           backgroundColor: C.cardInner,
           borderRadius: 16,
-          padding: 8,
-          borderWidth: 1,
+          padding: 10,
+          borderWidth: 1.5,
           borderColor: C.cardBorder,
-          gap: 4,
+          gap: 5,
         }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-          <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: C.green + '20', alignItems: 'center', justifyContent: 'center' }}>
-            <Sparkles size={9} color={C.green} />
+        <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: 6 }}>
+          <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.green + '20', alignItems: 'center', justifyContent: 'center' }}>
+            <Sparkles size={10} color={C.green} />
           </View>
-          <Text style={{ color: C.text, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+          <Text style={{ color: C.text, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
             Nutri-Score
           </Text>
         </View>
-        <Text style={{ color: C.textSub, fontSize: 9.5, fontWeight: '500', lineHeight: 13 }}>
+        <Text style={{ color: C.textSub, fontSize: 10.5, fontWeight: '500', lineHeight: 14, textAlign: 'right' }}>
           Rates overall nutrition quality from <Text style={{ color: C.green, fontWeight: '800' }}>A (healthy)</Text> to <Text style={{ color: C.red, fontWeight: '800' }}>E (unhealthy)</Text>.
         </Text>
-        <View style={{ flexDirection: 'row', gap: 2, height: 14, alignItems: 'center', marginTop: 1 }}>
-          <View style={{ flex: 1, height: 14, backgroundColor: '#008B50', borderRadius: 2.5, alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: '#FFFFFF' }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 7.5, fontWeight: '900' }}>A</Text>
+        <View style={{ flexDirection: 'row', gap: 3, height: 16, alignItems: 'center', marginTop: 2 }}>
+          <View style={{ flex: 1, height: 16, backgroundColor: '#008B50', borderRadius: 3.5, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#FFFFFF' }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '900' }}>A</Text>
           </View>
-          <View style={{ flex: 0.8, height: 12, backgroundColor: '#80BB2D', borderRadius: 2.5, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 6.5, fontWeight: '800' }}>B</Text>
+          <View style={{ flex: 0.8, height: 14, backgroundColor: '#80BB2D', borderRadius: 3.5, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 7.5, fontWeight: '800' }}>B</Text>
           </View>
-          <View style={{ flex: 0.8, height: 12, backgroundColor: '#FFC900', borderRadius: 2.5, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 6.5, fontWeight: '800' }}>C</Text>
+          <View style={{ flex: 0.8, height: 14, backgroundColor: '#FFC900', borderRadius: 3.5, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 7.5, fontWeight: '800' }}>C</Text>
           </View>
-          <View style={{ flex: 0.8, height: 12, backgroundColor: '#FF8000', borderRadius: 2.5, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 6.5, fontWeight: '800' }}>D</Text>
+          <View style={{ flex: 0.8, height: 14, backgroundColor: '#FF8000', borderRadius: 3.5, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 7.5, fontWeight: '800' }}>D</Text>
           </View>
-          <View style={{ flex: 0.8, height: 12, backgroundColor: '#E63312', borderRadius: 2.5, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
-            <Text style={{ color: '#FFFFFF', fontSize: 6.5, fontWeight: '800' }}>E</Text>
+          <View style={{ flex: 0.8, height: 14, backgroundColor: '#E63312', borderRadius: 3.5, alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 7.5, fontWeight: '800' }}>E</Text>
           </View>
         </View>
       </View>
@@ -810,67 +808,66 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
         borderRadius: 24,
         borderWidth: 1.5,
         borderColor: C.cardBorder,
-        padding: 12,
+        padding: 16,
         shadowColor: '#FF9500',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.06,
         shadowRadius: 16,
         elevation: 4,
-        gap: 10,
+        gap: 12,
         height: isShort ? 230 : 270,
         justifyContent: 'center',
         position: 'relative',
       }}
     >
-      {/* ── Zigzag Sub-Component 1: Unhealthy Option (Align Left) ── */}
+      {/* ── Sub-Component 1: Unhealthy Option (Full Width, Left-Aligned Header) ── */}
       <View
         style={{
-          width: '90%',
-          alignSelf: 'flex-start',
+          width: '100%',
           backgroundColor: C.cardInner,
           borderRadius: 16,
-          padding: 8,
-          borderWidth: 1,
+          padding: 10,
+          borderWidth: 1.5,
           borderColor: C.cardBorder,
-          gap: 4,
+          gap: 5,
         }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-          <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: C.red + '20', alignItems: 'center', justifyContent: 'center' }}>
-            <AlertTriangle size={9} color={C.red} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.red + '20', alignItems: 'center', justifyContent: 'center' }}>
+            <AlertTriangle size={10} color={C.red} />
           </View>
-          <Text style={{ color: C.red, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+          <Text style={{ color: C.red, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
             Unhealthy Option
           </Text>
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 1 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 2 }}>
           {/* Custom SVG Tin Can */}
-          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+          <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
             <Path d="M6 18V9C6 7.34315 7.34315 6 9 6H15C16.6569 6 18 7.34315 18 9V18C18 19.6569 16.6569 21 15 21H9C7.34315 21 6 19.6569 6 18Z" stroke={C.red} strokeWidth={2} />
             <Path d="M10 6V4C10 3.44772 10.4477 3 11 3H13C13.5523 3 14 3.44772 14 4V6" stroke={C.red} strokeWidth={2} />
             <Path d="M9 11H15" stroke={C.red} strokeWidth={1.5} />
             <Path d="M9 15H15" stroke={C.red} strokeWidth={1.5} />
           </Svg>
           <View style={{ flex: 1, gap: 1 }}>
-            <Text style={{ color: C.text, fontSize: 11.5, fontWeight: '800' }} numberOfLines={1}>
+            <Text style={{ color: C.text, fontSize: 12, fontWeight: '800' }} numberOfLines={1}>
               Sweet Ketchup
             </Text>
-            <Text style={{ color: C.textSub, fontSize: 8.5, fontWeight: '500' }} numberOfLines={1}>
+            <Text style={{ color: C.textSub, fontSize: 9, fontWeight: '500' }} numberOfLines={1}>
               NOVA 4 • Emulsifiers
             </Text>
           </View>
-          <Text style={{ color: C.red, fontSize: 13, fontWeight: '900' }}>6.4 tsp</Text>
+          <Text style={{ color: C.red, fontSize: 14, fontWeight: '900' }}>6.4 tsp sugar</Text>
         </View>
       </View>
 
-      {/* Floating Zap Icon Transition overlay in the middle of the zigzag */}
+      {/* Floating Zap Icon Transition overlay in the middle */}
       <Animated.View
         style={[
           {
             position: 'absolute',
-            top: isShort ? 99 : 119,
-            left: cardW / 2 - 14,
+            top: isShort ? 101 : 121,
+            right: 28,
             width: 28,
             height: 28,
             borderRadius: 14,
@@ -892,44 +889,43 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
         <Zap size={13} color="#FFFFFF" />
       </Animated.View>
 
-      {/* ── Zigzag Sub-Component 2: Clean Upgrade (Align Right) ── */}
+      {/* ── Sub-Component 2: Clean Upgrade (Full Width, Right-Aligned Header for Zigzag) ── */}
       <View
         style={{
-          width: '90%',
-          alignSelf: 'flex-end',
+          width: '100%',
           backgroundColor: C.cardInner,
           borderRadius: 16,
-          padding: 8,
-          borderWidth: 1,
+          padding: 10,
+          borderWidth: 1.5,
           borderColor: C.cardBorder,
-          gap: 4,
+          gap: 5,
         }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-          <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: C.green + '20', alignItems: 'center', justifyContent: 'center' }}>
-            <ShieldCheck size={9} color={C.green} />
+        <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: 6 }}>
+          <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.green + '20', alignItems: 'center', justifyContent: 'center' }}>
+            <ShieldCheck size={10} color={C.green} />
           </View>
-          <Text style={{ color: C.green, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+          <Text style={{ color: C.green, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
             Clean Upgrade
           </Text>
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 1 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 2 }}>
           {/* Custom SVG Fresh Tomato */}
-          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+          <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
             <Circle cx={12} cy={13} r={7} fill={C.greenLight} stroke={C.green} strokeWidth={2} />
             <Path d="M12 6C12 4.5 11.5 3.5 10 3.5" stroke={C.green} strokeWidth={1.5} strokeLinecap="round" />
             <Path d="M12 6C13 5 13.5 5 15 4.5" stroke={C.green} strokeWidth={1.5} strokeLinecap="round" />
           </Svg>
           <View style={{ flex: 1, gap: 1 }}>
-            <Text style={{ color: C.text, fontSize: 11.5, fontWeight: '800' }} numberOfLines={1}>
+            <Text style={{ color: C.text, fontSize: 12, fontWeight: '800' }} numberOfLines={1}>
               Tomato Purée
             </Text>
-            <Text style={{ color: C.green, fontSize: 8.5, fontWeight: '700' }} numberOfLines={1}>
+            <Text style={{ color: C.green, fontSize: 9, fontWeight: '700' }} numberOfLines={1}>
               NOVA 1 • Whole Food
             </Text>
           </View>
-          <Text style={{ color: C.green, fontSize: 13, fontWeight: '900' }}>0.5 tsp</Text>
+          <Text style={{ color: C.green, fontSize: 14, fontWeight: '900' }}>0.5 tsp sugar</Text>
         </View>
       </View>
     </View>
@@ -953,84 +949,82 @@ function GutAdditivesDemoCard({ cardW, C }: { cardW: number; C: any }) {
         borderRadius: 24,
         borderWidth: 1.5,
         borderColor: C.cardBorder,
-        padding: 12,
+        padding: 16,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.06,
         shadowRadius: 16,
         elevation: 4,
-        gap: 10,
+        gap: 12,
         height: isShort ? 230 : 270,
         justifyContent: 'center',
       }}
     >
-      {/* ── Zigzag Sub-Component 1: Gut Shield (Align Left) ── */}
+      {/* ── Sub-Component 1: Gut Shield (Full Width, Left-Aligned Header) ── */}
       <View
         style={{
-          width: '90%',
-          alignSelf: 'flex-start',
+          width: '100%',
           backgroundColor: C.cardInner,
           borderRadius: 16,
-          padding: 8,
-          borderWidth: 1,
+          padding: 10,
+          borderWidth: 1.5,
           borderColor: C.cardBorder,
-          gap: 4,
+          gap: 5,
         }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-          <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: C.red + '20', alignItems: 'center', justifyContent: 'center' }}>
-            <ShieldAlert size={9} color={C.red} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.red + '20', alignItems: 'center', justifyContent: 'center' }}>
+            <ShieldAlert size={10} color={C.red} />
           </View>
-          <Text style={{ color: C.text, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+          <Text style={{ color: C.text, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
             Gut Shield
           </Text>
         </View>
-        <Text style={{ color: C.textSub, fontSize: 9.5, fontWeight: '500', lineHeight: 13 }}>
+        <Text style={{ color: C.textSub, fontSize: 10.5, fontWeight: '500', lineHeight: 14 }}>
           Audits foods for emulsifiers and gums that erode gut lining, triggering leaky gut.
         </Text>
-        <View style={{ flexDirection: 'row', gap: 4, marginTop: 1 }}>
-          <View style={{ flex: 1, backgroundColor: C.redLight, paddingVertical: 2, paddingHorizontal: 4, borderRadius: 5, alignItems: 'center', flexDirection: 'row', gap: 2, justifyContent: 'center', borderWidth: 1, borderColor: C.red + '15' }}>
-            <ShieldAlert size={9} color={C.red} />
-            <Text style={{ color: C.red, fontSize: 7.5, fontWeight: '900' }}>42/100 Threat</Text>
+        <View style={{ flexDirection: 'row', gap: 6, marginTop: 2 }}>
+          <View style={{ flex: 1, backgroundColor: C.redLight, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 6, alignItems: 'center', flexDirection: 'row', gap: 3, justifyContent: 'center', borderWidth: 1, borderColor: C.red + '15' }}>
+            <ShieldAlert size={10} color={C.red} />
+            <Text style={{ color: C.red, fontSize: 8, fontWeight: '900' }}>42/100 Threat</Text>
           </View>
-          <View style={{ flex: 1.3, backgroundColor: C.cardInner, paddingVertical: 2, paddingHorizontal: 4, borderRadius: 5, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: C.text, fontSize: 7.5, fontWeight: '800', textAlign: 'center' }} numberOfLines={1}>Carrageenan Found</Text>
+          <View style={{ flex: 1.3, backgroundColor: C.cardInner, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 6, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ color: C.text, fontSize: 8, fontWeight: '800', textAlign: 'center' }} numberOfLines={1}>Carrageenan Found</Text>
           </View>
         </View>
       </View>
 
-      {/* ── Zigzag Sub-Component 2: Additive Detective (Align Right) ── */}
+      {/* ── Sub-Component 2: Additive Detective (Full Width, Right-Aligned Header for Zigzag) ── */}
       <View
         style={{
-          width: '90%',
-          alignSelf: 'flex-end',
+          width: '100%',
           backgroundColor: C.cardInner,
           borderRadius: 16,
-          padding: 8,
-          borderWidth: 1,
+          padding: 10,
+          borderWidth: 1.5,
           borderColor: C.cardBorder,
-          gap: 4,
+          gap: 5,
         }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-          <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: C.amber + '20', alignItems: 'center', justifyContent: 'center' }}>
-            <Search size={9} color={C.amber} />
+        <View style={{ flexDirection: 'row-reverse', alignItems: 'center', gap: 6 }}>
+          <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.amber + '20', alignItems: 'center', justifyContent: 'center' }}>
+            <Search size={10} color={C.amber} />
           </View>
-          <Text style={{ color: C.text, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+          <Text style={{ color: C.text, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
             Additive Detective
           </Text>
         </View>
-        <Text style={{ color: C.textSub, fontSize: 9.5, fontWeight: '500', lineHeight: 13 }}>
+        <Text style={{ color: C.textSub, fontSize: 10.5, fontWeight: '500', lineHeight: 14, textAlign: 'right' }}>
           Catches synthetic dyes, dangerous preservatives, and forbidden chemicals.
         </Text>
-        <View style={{ flexDirection: 'row', gap: 4, marginTop: 1 }}>
-          <View style={{ flex: 1, backgroundColor: C.redLight, paddingVertical: 2, paddingHorizontal: 4, borderRadius: 5, alignItems: 'center', flexDirection: 'row', gap: 2, justifyContent: 'center', borderWidth: 1, borderColor: C.red + '15' }}>
-            <AlertTriangle size={9} color={C.red} />
-            <Text style={{ color: C.text, fontSize: 7.5, fontWeight: '800' }} numberOfLines={1}>Red 40 Dye</Text>
+        <View style={{ flexDirection: 'row', gap: 6, marginTop: 2 }}>
+          <View style={{ flex: 1, backgroundColor: C.redLight, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 6, alignItems: 'center', flexDirection: 'row', gap: 3, justifyContent: 'center', borderWidth: 1, borderColor: C.red + '15' }}>
+            <AlertTriangle size={10} color={C.red} />
+            <Text style={{ color: C.text, fontSize: 8, fontWeight: '800' }} numberOfLines={1}>Red 40 Dye</Text>
           </View>
-          <View style={{ flex: 1.1, backgroundColor: C.redLight, paddingVertical: 2, paddingHorizontal: 4, borderRadius: 5, alignItems: 'center', flexDirection: 'row', gap: 2, justifyContent: 'center', borderWidth: 1, borderColor: C.red + '15' }}>
-            <AlertTriangle size={9} color={C.red} />
-            <Text style={{ color: C.text, fontSize: 7.5, fontWeight: '800' }} numberOfLines={1}>Titanium Dioxide</Text>
+          <View style={{ flex: 1.1, backgroundColor: C.redLight, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 6, alignItems: 'center', flexDirection: 'row', gap: 3, justifyContent: 'center', borderWidth: 1, borderColor: C.red + '15' }}>
+            <AlertTriangle size={10} color={C.red} />
+            <Text style={{ color: C.text, fontSize: 8, fontWeight: '800' }} numberOfLines={1}>Titanium Dioxide</Text>
           </View>
         </View>
       </View>
