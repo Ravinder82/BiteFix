@@ -857,7 +857,7 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
               NOVA 4 • Emulsifiers
             </Text>
           </View>
-          <Text style={{ color: C.red, fontSize: 14, fontWeight: '950' }}>6.4 tsp sugar</Text>
+          <Text style={{ color: C.red, fontSize: 14, fontWeight: '900' }}>6.4 tsp sugar</Text>
         </View>
       </View>
 
@@ -925,7 +925,7 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
               NOVA 1 • Whole Food
             </Text>
           </View>
-          <Text style={{ color: C.green, fontSize: 14, fontWeight: '950' }}>0.5 tsp sugar</Text>
+          <Text style={{ color: C.green, fontSize: 14, fontWeight: '900' }}>0.5 tsp sugar</Text>
         </View>
       </View>
     </View>
