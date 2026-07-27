@@ -169,7 +169,7 @@ function NameCard({
         gap: 14,
       }}
     >
-      <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+      <Text style={{ color: C.textSub, fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8 }}>
         Personal Account Profile
       </Text>
 
@@ -216,7 +216,7 @@ function NameCard({
         }}
       >
         <Sparkles size={16} color={C.amber} />
-        <Text style={{ color: C.text, fontSize: 11, fontWeight: '700', flex: 1 }}>
+        <Text style={{ color: C.text, fontSize: 13, fontWeight: '700', flex: 1 }}>
           {value.trim() ? `Welcome, ${value.trim()}! Ready to fix your bites?` : 'Type your name above to personalize your scanner!'}
         </Text>
       </View>
@@ -297,7 +297,7 @@ function GoalCard({
                 {opt.icon}
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: C.text, fontSize: 12, fontWeight: '800' }}>{opt.label}</Text>
+                <Text style={{ color: C.text, fontSize: 14, fontWeight: '800' }}>{opt.label}</Text>
                 <View
                   style={{
                     backgroundColor: isSelected ? C.amber + '25' : 'rgba(0,0,0,0.05)',
@@ -357,8 +357,8 @@ function NovaNutriScoreDemoCard({ cardW, C }: { cardW: number; C: any }) {
         shadowOpacity: 0.06,
         shadowRadius: 16,
         elevation: 4,
-        gap: 12,
-        height: isShort ? 260 : 310,
+        gap: 10,
+        height: isShort ? 300 : 300,
         justifyContent: 'center',
       }}
     >
@@ -368,7 +368,7 @@ function NovaNutriScoreDemoCard({ cardW, C }: { cardW: number; C: any }) {
           width: '100%',
           backgroundColor: C.cardInner,
           borderRadius: 16,
-          padding: 12,
+          padding: 28,
           borderWidth: 1.5,
           borderColor: C.cardBorder,
           gap: 6,
@@ -378,11 +378,11 @@ function NovaNutriScoreDemoCard({ cardW, C }: { cardW: number; C: any }) {
           <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.amber + '20', alignItems: 'center', justifyContent: 'center' }}>
             <Layers size={10} color={C.amber} />
           </View>
-          <Text style={{ color: C.text, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+          <Text style={{ color: C.text, fontSize: 13, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
             NOVA System
           </Text>
         </View>
-        <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '700', lineHeight: 15 }}>
+        <Text style={{ color: C.textSub, fontSize: 13, fontWeight: '700', lineHeight: 15 }}>
           Rates food processing level. <Text style={{ color: C.red, fontWeight: '900' }}>NOVA 4</Text> indicates chemical additives and ultra-processing.
         </Text>
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 2 }}>
@@ -403,7 +403,7 @@ function NovaNutriScoreDemoCard({ cardW, C }: { cardW: number; C: any }) {
           width: '100%',
           backgroundColor: C.cardInner,
           borderRadius: 16,
-          padding: 12,
+          padding: 18,
           borderWidth: 1.5,
           borderColor: C.cardBorder,
           gap: 6,
@@ -413,11 +413,11 @@ function NovaNutriScoreDemoCard({ cardW, C }: { cardW: number; C: any }) {
           <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.green + '20', alignItems: 'center', justifyContent: 'center' }}>
             <Sparkles size={10} color={C.green} />
           </View>
-          <Text style={{ color: C.text, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+          <Text style={{ color: C.text, fontSize: 13, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
             Nutri-Score
           </Text>
         </View>
-        <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '700', lineHeight: 15, textAlign: 'right' }}>
+        <Text style={{ color: C.textSub, fontSize: 13, fontWeight: '700', lineHeight: 15, textAlign: 'right' }}>
           Rates overall nutrition quality from <Text style={{ color: C.green, fontWeight: '900' }}>A (healthy)</Text> to <Text style={{ color: C.red, fontWeight: '900' }}>E (unhealthy)</Text>.
         </Text>
         <View style={{ flexDirection: 'row', gap: 3, height: 16, alignItems: 'center', marginTop: 2 }}>
@@ -492,7 +492,7 @@ function SugarLiquidPourCard({ cardW, C }: { cardW: number; C: any }) {
       }}
     >
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={{ color: C.text, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+        <Text style={{ color: C.text, fontSize: 13, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 }}>
           Hidden Sugar Detector
         </Text>
         <View style={{ backgroundColor: C.redLight, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
@@ -557,7 +557,7 @@ function SugarLiquidPourCard({ cardW, C }: { cardW: number; C: any }) {
       <View style={{ width: '100%', gap: 2 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '700' }}>Sugar in Single Soda:</Text>
-          <Text style={{ color: C.red, fontSize: 11, fontWeight: '900' }}>9.3 Teaspoons</Text>
+          <Text style={{ color: C.red, fontSize: 13, fontWeight: '900' }}>9.3 Teaspoons</Text>
         </View>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
           <Text style={{ color: C.textMuted, fontSize: 9, fontWeight: '600' }}>WHO Daily Max:</Text>
@@ -610,7 +610,7 @@ function AdditiveDetectiveDemoCard({ cardW, C }: { cardW: number; C: any }) {
       }}
     >
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={{ color: C.text, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+        <Text style={{ color: C.text, fontSize: 13, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 }}>
           Additive & Dye Detective
         </Text>
         <View style={{ backgroundColor: C.redLight, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
@@ -726,7 +726,7 @@ function GutShieldDemoCard({ cardW, C }: { cardW: number; C: any }) {
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <ShieldAlert size={16} color={C.red} />
-          <Text style={{ color: C.text, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+          <Text style={{ color: C.text, fontSize: 13, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 }}>
             Gut Shield Auditor
           </Text>
         </View>
@@ -826,7 +826,7 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
           width: '100%',
           backgroundColor: C.cardInner,
           borderRadius: 16,
-          padding: 12,
+          padding: 18,
           borderWidth: 1.5,
           borderColor: C.cardBorder,
           gap: 6,
@@ -836,7 +836,7 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
           <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.red + '20', alignItems: 'center', justifyContent: 'center' }}>
             <AlertTriangle size={10} color={C.red} />
           </View>
-          <Text style={{ color: C.red, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+          <Text style={{ color: C.red, fontSize: 13, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
             Unhealthy Option
           </Text>
         </View>
@@ -850,7 +850,7 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
             <Path d="M9 15H15" stroke={C.red} strokeWidth={1.5} />
           </Svg>
           <View style={{ flex: 1, gap: 1 }}>
-            <Text style={{ color: C.text, fontSize: 12, fontWeight: '900' }} numberOfLines={1}>
+            <Text style={{ color: C.text, fontSize: 14, fontWeight: '900' }} numberOfLines={1}>
               Sweet Ketchup
             </Text>
             <Text style={{ color: C.textSub, fontSize: 9.5, fontWeight: '700' }} numberOfLines={1}>
@@ -895,7 +895,7 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
           width: '100%',
           backgroundColor: C.cardInner,
           borderRadius: 16,
-          padding: 12,
+          padding: 18,
           borderWidth: 1.5,
           borderColor: C.cardBorder,
           gap: 6,
@@ -905,7 +905,7 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
           <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.green + '20', alignItems: 'center', justifyContent: 'center' }}>
             <ShieldCheck size={10} color={C.green} />
           </View>
-          <Text style={{ color: C.green, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+          <Text style={{ color: C.green, fontSize: 13, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
             Clean Upgrade
           </Text>
         </View>
@@ -918,7 +918,7 @@ function FoodSwapDemoCard({ cardW, C }: { cardW: number; C: any }) {
             <Path d="M12 6C13 5 13.5 5 15 4.5" stroke={C.green} strokeWidth={1.5} strokeLinecap="round" />
           </Svg>
           <View style={{ flex: 1, gap: 1 }}>
-            <Text style={{ color: C.text, fontSize: 12, fontWeight: '900' }} numberOfLines={1}>
+            <Text style={{ color: C.text, fontSize: 14, fontWeight: '900' }} numberOfLines={1}>
               Tomato Purée
             </Text>
             <Text style={{ color: C.green, fontSize: 9.5, fontWeight: '800' }} numberOfLines={1}>
@@ -966,7 +966,7 @@ function GutAdditivesDemoCard({ cardW, C }: { cardW: number; C: any }) {
           width: '100%',
           backgroundColor: C.cardInner,
           borderRadius: 16,
-          padding: 12,
+          padding: 18,
           borderWidth: 1.5,
           borderColor: C.cardBorder,
           gap: 6,
@@ -976,11 +976,11 @@ function GutAdditivesDemoCard({ cardW, C }: { cardW: number; C: any }) {
           <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.red + '20', alignItems: 'center', justifyContent: 'center' }}>
             <ShieldAlert size={10} color={C.red} />
           </View>
-          <Text style={{ color: C.text, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+          <Text style={{ color: C.text, fontSize: 13, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
             Gut Shield
           </Text>
         </View>
-        <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '700', lineHeight: 15 }}>
+        <Text style={{ color: C.textSub, fontSize: 13, fontWeight: '700', lineHeight: 15 }}>
           Audits foods for emulsifiers and gums that erode gut lining, triggering leaky gut.
         </Text>
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 2 }}>
@@ -1000,7 +1000,7 @@ function GutAdditivesDemoCard({ cardW, C }: { cardW: number; C: any }) {
           width: '100%',
           backgroundColor: C.cardInner,
           borderRadius: 16,
-          padding: 12,
+          padding: 18,
           borderWidth: 1.5,
           borderColor: C.cardBorder,
           gap: 6,
@@ -1010,11 +1010,11 @@ function GutAdditivesDemoCard({ cardW, C }: { cardW: number; C: any }) {
           <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: C.amber + '20', alignItems: 'center', justifyContent: 'center' }}>
             <Search size={10} color={C.amber} />
           </View>
-          <Text style={{ color: C.text, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+          <Text style={{ color: C.text, fontSize: 13, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.4 }}>
             Additive Detective
           </Text>
         </View>
-        <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '700', lineHeight: 15, textAlign: 'right' }}>
+        <Text style={{ color: C.textSub, fontSize: 13, fontWeight: '700', lineHeight: 15, textAlign: 'right' }}>
           Catches synthetic dyes, dangerous preservatives, and forbidden chemicals.
         </Text>
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 2 }}>
@@ -1054,7 +1054,7 @@ function InstantResultSummaryCard({ cardW, C, isDark }: { cardW: number; C: any;
 
   useEffect(() => {
     const config = { damping: 14, stiffness: 120 };
-    
+
     scale1.value = withDelay(0, withSpring(1, config));
     opacity1.value = withDelay(0, withTiming(1, { duration: 250 }));
 
