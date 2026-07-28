@@ -903,14 +903,14 @@ export default function OnboardingScreen() {
 
   const slide = SLIDES[currentSlide] || SLIDES[0];
   const isShort = height < 700;
-  const orbSize = Math.min(Math.round(width * 0.42), 160);
+  const orbSize = Math.min(Math.round(width * 0.50), 200);
   const cardW = Math.min(width - 32, 380);
 
   const renderTitle = () => {
     const textSlide = SLIDES[currentTextIndex] || SLIDES[0];
     const parts = textSlide.title.split(textSlide.highlight);
     return (
-      <Text style={{ color: C.text, fontSize: isShort ? 19 : 22, fontWeight: '900', textAlign: 'center', letterSpacing: -0.5 }}>
+      <Text style={{ color: C.text, fontSize: isShort ? 22 : 26, fontWeight: '900', textAlign: 'center', letterSpacing: -0.5 }}>
         {parts[0]}
         {textSlide.highlight ? <Text style={{ color: C.amber }}>{textSlide.highlight}</Text> : null}
         {parts[1] || ''}
@@ -971,7 +971,7 @@ export default function OnboardingScreen() {
 
             <Animated.View style={[{ alignItems: 'center', gap: 4, marginTop: 4 }, textAnimStyle]}>
               {renderTitle()}
-              <Text style={{ color: C.textSub, fontSize: isShort ? 12 : 13.5, fontWeight: '600', textAlign: 'center' }}>
+              <Text style={{ color: C.textSub, fontSize: isShort ? 13.5 : 15.5, fontWeight: '600', textAlign: 'center' }}>
                 {SLIDES[currentTextIndex].subtitle}
               </Text>
             </Animated.View>
