@@ -2,9 +2,9 @@ export type ColorScheme = 'light' | 'dark';
 
 export const Colors = {
   light: {
-    primary:        '#0D9668',   // Deep Emerald Green
-    primaryLight:   '#E6F7F0',   // Mint Tint
-    primaryDark:    '#087A54',   // Forest Emerald
+    primary:        '#22C55E',   // Vibrant CTA Green
+    primaryLight:   '#F0FDF4',   // Very Light Green Tint
+    primaryDark:    '#16A34A',   // Slightly darker for active states
     secondary:      '#3BB5A0',   // Teal Accent
 
     // Backgrounds
