@@ -1083,7 +1083,8 @@ export default function OnboardingScreen() {
       return;
     }
 
-    if (currentSlide === 3) {
+    // Request camera permission on Step 11 (Scan Intelligence) and Step 12 (Paywall Transition)
+    if (currentSlide === 10 || currentSlide === 11) {
       try {
         await Camera.requestCameraPermissionsAsync();
       } catch (_) {}
