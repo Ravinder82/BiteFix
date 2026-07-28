@@ -1,4 +1,4 @@
-# Privacy Policy for BiteFix: Food & Swap Scanner
+# Privacy Policy for BiteFix: Food Scanner
 
 **Effective Date:** June 1, 2026  
 **Last Updated:** July 28, 2026
