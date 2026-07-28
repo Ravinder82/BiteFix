@@ -903,7 +903,7 @@ export default function OnboardingScreen() {
 
   const slide = SLIDES[currentSlide] || SLIDES[0];
   const isShort = height < 700;
-  const orbSize = Math.min(Math.round(width * 0.28), 110);
+  const orbSize = Math.min(Math.round(width * 0.42), 160);
   const cardW = Math.min(width - 32, 380);
 
   const renderTitle = () => {
@@ -930,19 +930,9 @@ export default function OnboardingScreen() {
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.bg }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <MagicalBackground />
 
-      <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-          justifyContent: 'center',
-          paddingTop: insets.top + 12,
-          paddingBottom: insets.bottom + 16,
-          paddingHorizontal: 16,
-        }}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Header Bar */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: isShort ? 12 : 20 }}>
+      <View style={{ flex: 1, paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16, paddingHorizontal: 16 }}>
+        {/* Pinned Header Bar */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 40, marginBottom: 8 }}>
           <Text style={{ color: C.textMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1 }}>
             STEP {currentSlide + 1} OF 12
           </Text>
@@ -960,42 +950,55 @@ export default function OnboardingScreen() {
           )}
         </View>
 
-        {/* Mascot + Title Stacked Block */}
-        <View style={{ alignItems: 'center', gap: 6, marginBottom: isShort ? 16 : 24 }}>
-          <Animated.View style={mascotAnimStyle}>
-            <OrbMascot state={slide.mascotState} size={orbSize} />
-          </Animated.View>
-          <MascotShadow size={orbSize} scaleStyle={{}} />
+        {/* Scrollable Middle Content Section */}
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingVertical: 12,
+          }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Mascot + Title Stacked Block */}
+          <View style={{ alignItems: 'center', gap: 6, marginBottom: isShort ? 14 : 20 }}>
+            <Animated.View style={mascotAnimStyle}>
+              <OrbMascot state={slide.mascotState} size={orbSize} />
+            </Animated.View>
+            <MascotShadow size={orbSize} scaleStyle={{}} />
 
-          <Animated.View style={[{ alignItems: 'center', gap: 4, marginTop: 4 }, textAnimStyle]}>
-            {renderTitle()}
-            <Text style={{ color: C.textSub, fontSize: isShort ? 12 : 13.5, fontWeight: '600', textAlign: 'center' }}>
-              {SLIDES[currentTextIndex].subtitle}
-            </Text>
-          </Animated.View>
-        </View>
+            <Animated.View style={[{ alignItems: 'center', gap: 4, marginTop: 4 }, textAnimStyle]}>
+              {renderTitle()}
+              <Text style={{ color: C.textSub, fontSize: isShort ? 12 : 13.5, fontWeight: '600', textAlign: 'center' }}>
+                {SLIDES[currentTextIndex].subtitle}
+              </Text>
+            </Animated.View>
+          </View>
 
-        {/* Card Component Slot */}
-        <View style={{ width: '100%', alignItems: 'center', marginBottom: isShort ? 16 : 24 }}>
-          <Animated.View style={cardAnimStyle}>
-            {currentCardIndex === 0 && <NameCard cardW={cardW} C={C} value={userName} onChange={setUserName} />}
-            {currentCardIndex === 1 && <GoalCard cardW={cardW} C={C} selected={userGoals} onSelect={setUserGoals} />}
-            {currentCardIndex === 2 && <FoodSourcingCard cardW={cardW} C={C} value={foodSourcing} onSelect={setFoodSourcing} />}
-            {currentCardIndex === 3 && <SymptomAuditCard cardW={cardW} C={C} selected={symptoms} onToggle={toggleSymptom} />}
-            {currentCardIndex === 4 && <NovaWakeUpCard cardW={cardW} C={C} />}
-            {currentCardIndex === 5 && <AdditivePrioritiesCard cardW={cardW} C={C} selected={additives} onToggle={toggleAdditive} />}
-            {currentCardIndex === 6 && <AllergenDefenseCard cardW={cardW} C={C} selected={allergenFilters} onToggle={toggleAllergenFilter} />}
-            {currentCardIndex === 7 && <CommitmentLevelCard cardW={cardW} C={C} value={commitment} onSelect={setCommitment} />}
-            {currentCardIndex === 8 && <SocialProofCard cardW={cardW} C={C} />}
-            {currentCardIndex === 9 && <HealthAnalysisCalculationCard cardW={cardW} C={C} onComplete={() => setCurrentSlide(10)} />}
-            {currentCardIndex === 10 && <InstantResultSummaryCard cardW={cardW} C={C} isDark={isDark} />}
-            {currentCardIndex === 11 && <PaywallTransitionCard cardW={cardW} C={C} />}
-          </Animated.View>
-        </View>
+          {/* Card Component Slot */}
+          <View style={{ width: '100%', alignItems: 'center' }}>
+            <Animated.View style={cardAnimStyle}>
+              {currentCardIndex === 0 && <NameCard cardW={cardW} C={C} value={userName} onChange={setUserName} />}
+              {currentCardIndex === 1 && <GoalCard cardW={cardW} C={C} selected={userGoals} onSelect={setUserGoals} />}
+              {currentCardIndex === 2 && <FoodSourcingCard cardW={cardW} C={C} value={foodSourcing} onSelect={setFoodSourcing} />}
+              {currentCardIndex === 3 && <SymptomAuditCard cardW={cardW} C={C} selected={symptoms} onToggle={toggleSymptom} />}
+              {currentCardIndex === 4 && <NovaWakeUpCard cardW={cardW} C={C} />}
+              {currentCardIndex === 5 && <AdditivePrioritiesCard cardW={cardW} C={C} selected={additives} onToggle={toggleAdditive} />}
+              {currentCardIndex === 6 && <AllergenDefenseCard cardW={cardW} C={C} selected={allergenFilters} onToggle={toggleAllergenFilter} />}
+              {currentCardIndex === 7 && <CommitmentLevelCard cardW={cardW} C={C} value={commitment} onSelect={setCommitment} />}
+              {currentCardIndex === 8 && <SocialProofCard cardW={cardW} C={C} />}
+              {currentCardIndex === 9 && <HealthAnalysisCalculationCard cardW={cardW} C={C} onComplete={() => setCurrentSlide(10)} />}
+              {currentCardIndex === 10 && <InstantResultSummaryCard cardW={cardW} C={C} isDark={isDark} />}
+              {currentCardIndex === 11 && <PaywallTransitionCard cardW={cardW} C={C} />}
+            </Animated.View>
+          </View>
+        </ScrollView>
 
-        {/* Pagination Dots & CTA Button */}
+        {/* Pinned Bottom Bar */}
         {currentCardIndex !== 9 && (
-          <View style={{ gap: 12, marginTop: 4 }}>
+          <View style={{ gap: 12, marginTop: 8 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 5 }}>
               {SLIDES.map((_, idx) => (
                 <DotIndicator key={idx} active={currentSlide === idx} C={C} />
@@ -1031,7 +1034,7 @@ export default function OnboardingScreen() {
             </Animated.View>
           </View>
         )}
-      </ScrollView>
+      </View>
     </KeyboardAvoidingView>
   );
 }
