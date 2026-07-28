@@ -41,8 +41,8 @@ export function MagicalBackground() {
         <Svg width={width} height={width} viewBox={`0 0 ${width} ${width}`}>
           <Defs>
             <RadialGradient id="ambientGlow" cx="50%" cy="50%" rx="50%" ry="50%">
-              <Stop offset="0%" stopColor="#FF9500" stopOpacity="0.4" />
-              <Stop offset="40%" stopColor="#E8820C" stopOpacity="0.15" />
+              <Stop offset="0%" stopColor="#0D9668" stopOpacity="0.4" />
+              <Stop offset="40%" stopColor="#10B981" stopOpacity="0.15" />
               <Stop offset="100%" stopColor="#000000" stopOpacity="0" />
             </RadialGradient>
           </Defs>

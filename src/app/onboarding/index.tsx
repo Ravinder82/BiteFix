@@ -229,7 +229,7 @@ function NameCard({ cardW, C, value, onChange }: { cardW: number; C: any; value:
           flexDirection: 'row',
           alignItems: 'center',
           borderWidth: 1.5,
-          borderColor: value.trim() ? C.amber : C.cardBorder,
+          borderColor: value.trim() ? C.primary : C.cardBorder,
           borderRadius: 16,
           paddingHorizontal: 16,
           paddingVertical: Platform.OS === 'ios' ? 14 : 10,
@@ -255,17 +255,17 @@ function NameCard({ cardW, C, value, onChange }: { cardW: number; C: any; value:
 
       <View
         style={{
-          backgroundColor: C.amberLight,
+          backgroundColor: C.primaryLight,
           borderRadius: 14,
           padding: 12,
           borderWidth: 1,
-          borderColor: C.amber + '25',
+          borderColor: C.primary + '25',
           flexDirection: 'row',
           alignItems: 'center',
           gap: 10,
         }}
       >
-        <Sparkles size={16} color={C.amber} />
+        <Sparkles size={16} color={C.primary} />
         <Text style={{ color: C.text, fontSize: 13, fontWeight: '800', flex: 1, lineHeight: 16 }}>
           {value.trim() ? `Welcome, ${value.trim()}! Ready to fix your food?` : 'Type your name above to personalize your scanner!'}
         </Text>
@@ -317,8 +317,8 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
       <View
         style={{
           alignSelf: 'center',
-          backgroundColor: C.amberLight,
-          borderColor: C.amber + '30',
+          backgroundColor: C.primaryLight,
+          borderColor: C.primary + '30',
           borderWidth: 1,
           borderRadius: 20,
           paddingHorizontal: 12,
@@ -326,7 +326,7 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
           marginBottom: 6,
         }}
       >
-        <Text style={{ color: C.amber, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+        <Text style={{ color: C.primary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
           💡 Select as many as you want
         </Text>
       </View>
@@ -342,8 +342,8 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
-              backgroundColor: isSelected ? C.amberLight : C.cardInner,
-              borderColor: isSelected ? C.amber : C.cardBorder,
+              backgroundColor: isSelected ? C.primaryLight : C.cardInner,
+              borderColor: isSelected ? C.primary : C.cardBorder,
               borderWidth: 1.5,
               borderRadius: 16,
               paddingHorizontal: 14,
@@ -365,10 +365,10 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
                 height: 20,
                 borderRadius: 10,
                 borderWidth: 1.5,
-                borderColor: isSelected ? C.amber : C.textMuted,
+                borderColor: isSelected ? C.primary : C.textMuted,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: isSelected ? C.amber : 'transparent',
+                backgroundColor: isSelected ? C.primary : 'transparent',
               }}
             >
               {isSelected && <Check size={12} color="#FFFFFF" strokeWidth={3.5} />}
@@ -386,7 +386,7 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
 function FoodSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any; value: string; onSelect: (v: string) => void }) {
   const options = [
     { label: 'Every single day', desc: 'Lots of packaged snacks, boxed meals, or canned foods', val: 'daily', color: C.red },
-    { label: 'A few times a week', desc: 'Some home cooking mixed with store-bought snacks', val: 'weekly', color: C.amber },
+    { label: 'A few times a week', desc: 'Some home cooking mixed with store-bought snacks', val: 'weekly', color: C.primary },
     { label: 'Rarely / Whole foods only', desc: 'Eat fresh and cook almost everything from scratch', val: 'rarely', color: C.green },
   ];
 
@@ -403,8 +403,8 @@ function FoodSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any
             }}
             activeOpacity={0.85}
             style={{
-              backgroundColor: isSelected ? C.amberLight : C.cardInner,
-              borderColor: isSelected ? C.amber : C.cardBorder,
+              backgroundColor: isSelected ? C.primaryLight : C.cardInner,
+              borderColor: isSelected ? C.primary : C.cardBorder,
               borderWidth: 1.5,
               borderRadius: 16,
               padding: 14,
@@ -428,11 +428,11 @@ function FoodSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any
 // ─────────────────────────────────────────────────────────
 function SymptomAuditCard({ cardW, C, selected, onToggle }: { cardW: number; C: any; selected: string[]; onToggle: (s: string) => void }) {
   const symptoms: { id: string; label: string; icon: React.ReactNode }[] = [
-    { id: 'slumps', label: 'Tired in the afternoon', icon: <SymptomSlumpIcon /> },
-    { id: 'bloating', label: 'Stomach bloat after eating', icon: <SymptomBloatIcon /> },
-    { id: 'brainfog', label: 'Trouble focusing / fog', icon: <SymptomFogIcon /> },
-    { id: 'cravings', label: 'Strong sugar cravings', icon: <SymptomCravingIcon /> },
-    { id: 'skin', label: 'Skin flares or irritation', icon: <SymptomFlareIcon /> },
+    { id: 'slumps', label: 'Afternoon energy crashes', icon: <SymptomSlumpIcon /> },
+    { id: 'bloating', label: 'Bloating & tummy pain', icon: <SymptomBloatIcon /> },
+    { id: 'brainfog', label: 'Hard to focus / brain fog', icon: <SymptomFogIcon /> },
+    { id: 'cravings', label: 'Can\'t stop craving sugar', icon: <SymptomCravingIcon /> },
+    { id: 'skin', label: 'Skin breakouts or redness', icon: <SymptomFlareIcon /> },
   ];
 
   return (
@@ -546,13 +546,13 @@ function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
       </View>
 
       <Text style={{ color: C.text, fontSize: 13.5, fontWeight: '800', textAlign: 'center', lineHeight: 18 }}>
-        Are heavily processed in factories with chemical ingredients you can't buy in a normal store.
+        Are made in factories using cheap ingredients you would never keep in your own kitchen.
       </Text>
 
       {/* Core Highlights */}
       <View style={{ width: '100%', gap: 8, marginTop: 4 }}>
         {[
-          'Chemical mixing agents that irritate your gut',
+          'Harsh ingredients that upset your stomach',
           'Artificial colors that affect kids\' focus & behavior',
           'Fake sugars that confuse your body\'s metabolism',
         ].map((point, idx) => (
@@ -571,10 +571,10 @@ function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
 // ─────────────────────────────────────────────────────────
 function AdditivePrioritiesCard({ cardW, C, selected, onToggle }: { cardW: number; C: any; selected: string[]; onToggle: (a: string) => void }) {
   const additives = [
-    { id: 'dyes', label: 'Artificial Food Colors', desc: 'Red 40, Yellow 5, Blue 1, etc.' },
-    { id: 'hfcs', label: 'Cheap Sugars & Syrups', desc: 'High fructose corn syrup & fake sweeteners' },
-    { id: 'emulsifiers', label: 'Chemical Thickeners & Gums', desc: 'Agents that can upset your stomach' },
-    { id: 'oils', label: 'Processed Seed Oils', desc: 'Canola oil, soybean oil, palm oil' },
+    { id: 'dyes', label: 'Fake Colors & Dyes', desc: 'Red 40, Yellow 5, Blue 1' },
+    { id: 'hfcs', label: 'Cheap Sugars', desc: 'Fake sweeteners & corn syrups' },
+    { id: 'emulsifiers', label: 'Stomach Upsetters', desc: 'Thickeners that cause bloating' },
+    { id: 'oils', label: 'Greasy Factory Oils', desc: 'Canola, palm, and soybean oils' },
   ];
 
   return (
@@ -589,8 +589,8 @@ function AdditivePrioritiesCard({ cardW, C, selected, onToggle }: { cardW: numbe
               onToggle(item.id);
             }}
             style={{
-              backgroundColor: active ? C.amberLight : C.cardInner,
-              borderColor: active ? C.amber : C.cardBorder,
+              backgroundColor: active ? C.primaryLight : C.cardInner,
+              borderColor: active ? C.primary : C.cardBorder,
               borderWidth: 1.5,
               borderRadius: 14,
               padding: 12,
@@ -603,7 +603,7 @@ function AdditivePrioritiesCard({ cardW, C, selected, onToggle }: { cardW: numbe
               <Text style={{ color: C.text, fontSize: 13.5, fontWeight: '800' }}>{item.label}</Text>
               <Text style={{ color: C.textMuted, fontSize: 10.5, fontWeight: '600' }}>{item.desc}</Text>
             </View>
-            <View style={{ width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, borderColor: active ? C.amber : C.textMuted, backgroundColor: active ? C.amber : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, borderColor: active ? C.primary : C.textMuted, backgroundColor: active ? C.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
               {active && <Check size={10} color="#FFF" strokeWidth={3} />}
             </View>
           </TouchableOpacity>
@@ -676,8 +676,8 @@ function CommitmentLevelCard({ cardW, C, value, onSelect }: { cardW: number; C: 
               onSelect(lvl.id);
             }}
             style={{
-              backgroundColor: active ? C.amberLight : C.cardInner,
-              borderColor: active ? C.amber : C.cardBorder,
+              backgroundColor: active ? C.primaryLight : C.cardInner,
+              borderColor: active ? C.primary : C.cardBorder,
               borderWidth: 1.5,
               borderRadius: 16,
               padding: 14,
@@ -706,7 +706,7 @@ function SocialProofCard({ cardW, C }: { cardW: number; C: any }) {
       <Text style={{ color: C.text, fontSize: 13.5, fontWeight: '800', textAlign: 'center', lineHeight: 18 }}>
         "BiteFix warned me about hidden factory chemicals in my favorite protein bar. I found a clean alternative in one second!"
       </Text>
-      <Text style={{ color: C.amber, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+      <Text style={{ color: C.primary, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
         — Sarah M., Verified User
       </Text>
       <View style={{ backgroundColor: C.cardInner, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: C.cardBorder }}>
@@ -721,25 +721,41 @@ function SocialProofCard({ cardW, C }: { cardW: number; C: any }) {
 // ─────────────────────────────────────────────────────────
 function HealthAnalysisCalculationCard({ cardW, C, onComplete }: { cardW: number; C: any; onComplete: () => void }) {
   const [progress, setProgress] = useState(0);
-  const [stepText, setStepText] = useState('Analyzing your goals...');
+  const [stepText, setStepText] = useState('Building your profile...');
+  
+  const pulseScale = useSharedValue(0.9);
+  const pulseOpacity = useSharedValue(0.8);
 
   useEffect(() => {
-    const t1 = setTimeout(() => { setProgress(35); setStepText('Setting up processing alerts...'); }, 800);
-    const t2 = setTimeout(() => { setProgress(70); setStepText('Calibrating gut warning triggers...'); }, 1800);
-    const t3 = setTimeout(() => { setProgress(100); setStepText('Finding clean upgrades for your foods...'); }, 2800);
+    pulseScale.value = withRepeat(withTiming(1.15, { duration: 1000 }), -1, true);
+    pulseOpacity.value = withRepeat(withTiming(0.2, { duration: 1000 }), -1, true);
+
+    const t1 = setTimeout(() => { setProgress(35); setStepText('Loading custom ingredient alerts...'); }, 800);
+    const t2 = setTimeout(() => { setProgress(70); setStepText('Preparing your clean food swaps...'); }, 1800);
+    const t3 = setTimeout(() => { setProgress(100); setStepText('Profile complete. Ready to scan!'); }, 2800);
     const t4 = setTimeout(() => { onComplete(); }, 3500);
 
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
   }, []);
 
+  const animatedPulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
+    opacity: pulseOpacity.value,
+  }));
+
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.amber, padding: 24, gap: 16, alignItems: 'center' }}>
-      <ActivityIndicator size="large" color={C.amber} />
-      <Text style={{ color: C.text, fontSize: 15, fontWeight: '900', textAlign: 'center' }}>{stepText}</Text>
-      <View style={{ width: '100%', height: 8, backgroundColor: C.cardInner, borderRadius: 4, overflow: 'hidden' }}>
-        <View style={{ width: `${progress}%`, height: '100%', backgroundColor: C.amber, borderRadius: 4 }} />
+    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.primary, padding: 32, gap: 24, alignItems: 'center' }}>
+      <View style={{ width: 100, height: 100, justifyContent: 'center', alignItems: 'center' }}>
+        <Animated.View style={[{ position: 'absolute', width: 100, height: 100, borderRadius: 50, backgroundColor: C.primary }, animatedPulseStyle]} />
+        <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: C.primary, justifyContent: 'center', alignItems: 'center', shadowColor: C.primary, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.6, shadowRadius: 15 }}>
+          <Activity size={32} color="#FFF" />
+        </View>
       </View>
-      <Text style={{ color: C.amber, fontSize: 13, fontWeight: '900' }}>{progress}% Completed</Text>
+      <Text style={{ color: C.text, fontSize: 16, fontWeight: '900', textAlign: 'center', letterSpacing: 0.2 }}>{stepText}</Text>
+      <View style={{ width: '100%', height: 6, backgroundColor: C.cardInner, borderRadius: 3, overflow: 'hidden' }}>
+        <View style={{ width: `${progress}%`, height: '100%', backgroundColor: C.primary, borderRadius: 3 }} />
+      </View>
+      <Text style={{ color: C.primary, fontSize: 12, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 }}>{progress}% Loading</Text>
     </View>
   );
 }
@@ -758,8 +774,8 @@ function InstantResultSummaryCard({ cardW, C, isDark }: { cardW: number; C: any;
   ];
 
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.amber, padding: 14, gap: 10 }}>
-      <Text style={{ color: C.amber, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', textAlign: 'center', letterSpacing: 0.5 }}>
+    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.primary, padding: 14, gap: 10 }}>
+      <Text style={{ color: C.primary, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', textAlign: 'center', letterSpacing: 0.5 }}>
         Your Scanner Features
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'space-between' }}>
@@ -782,9 +798,9 @@ function InstantResultSummaryCard({ cardW, C, isDark }: { cardW: number; C: any;
 // ─────────────────────────────────────────────────────────
 function PaywallTransitionCard({ cardW, C }: { cardW: number; C: any }) {
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.amber, padding: 20, gap: 12, alignItems: 'center' }}>
-      <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: C.amberLight, alignItems: 'center', justifyContent: 'center' }}>
-        <Award size={24} color={C.amber} />
+    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.primary, padding: 20, gap: 12, alignItems: 'center' }}>
+      <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: C.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
+        <Award size={24} color={C.primary} />
       </View>
       <Text style={{ color: C.text, fontSize: 16, fontWeight: '900', textAlign: 'center' }}>
         Your Custom Food Shield is Ready!
@@ -851,7 +867,7 @@ function RatingModal({ C, isDark, rating, setRating, onSubmit, onLater, width }:
         ]}
       >
         {/* Mascot Header */}
-        <View style={{ width: 90, height: 90, borderRadius: 45, backgroundColor: C.amberLight, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.amber + '40', marginBottom: 4 }}>
+        <View style={{ width: 90, height: 90, borderRadius: 45, backgroundColor: C.primaryLight, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.primary + '40', marginBottom: 4 }}>
           <OrbMascot state="happy" size={80} />
         </View>
 
@@ -897,12 +913,12 @@ function RatingModal({ C, isDark, rating, setRating, onSubmit, onLater, width }:
             activeOpacity={0.88}
             style={{
               width: '100%',
-              backgroundColor: C.amber,
+              backgroundColor: C.primary,
               borderRadius: 18,
               paddingVertical: 14,
               alignItems: 'center',
               justifyContent: 'center',
-              shadowColor: C.amber,
+              shadowColor: C.primary,
               shadowOffset: { width: 0, height: 6 },
               shadowOpacity: 0.3,
               shadowRadius: 10,
@@ -961,7 +977,7 @@ const SLIDES: SlideData[] = [
 function DotIndicator({ active, C }: { active: boolean; C: any }) {
   const dotAnimStyle = useAnimatedStyle(() => ({
     width: withSpring(active ? 18 : 5, { damping: 15, stiffness: 150 }),
-    backgroundColor: withTiming(active ? C.amber : C.cardBorder, { duration: 200 }),
+    backgroundColor: withTiming(active ? C.primary : C.cardBorder, { duration: 200 }),
   }), [active, C]);
 
   return <Animated.View style={[{ height: 5, borderRadius: 3 }, dotAnimStyle]} />;
@@ -982,9 +998,9 @@ export default function OnboardingScreen() {
     card: colors.surface,
     cardInner: isDark ? '#1F2937' : '#F9FAFB',
     cardBorder: colors.border,
-    amber: '#FF9500',
-    amberLight: isDark ? 'rgba(255, 149, 0, 0.15)' : '#FFFBEB',
-    amberMid: '#F59E0B',
+    primary: '#0D9668',
+    primaryLight: isDark ? 'rgba(13, 150, 104, 0.15)' : '#E6F4EF',
+    primaryMid: '#10B981',
     red: '#FB7185',
     redLight: isDark ? 'rgba(251, 113, 133, 0.15)' : '#FFF1F2',
     green: '#10B981',
@@ -1002,11 +1018,11 @@ export default function OnboardingScreen() {
 
   // User State
   const [userName, setUserName] = useState('');
-  const [userGoals, setUserGoals] = useState<GoalOption[]>(['energy']);
-  const [foodSourcing, setFoodSourcing] = useState('weekly');
-  const [symptoms, setSymptoms] = useState<string[]>(['slumps', 'bloating']);
-  const [additives, setAdditives] = useState<string[]>(['dyes', 'emulsifiers']);
-  const [commitment, setCommitment] = useState('moderate');
+  const [userGoals, setUserGoals] = useState<GoalOption[]>([]);
+  const [foodSourcing, setFoodSourcing] = useState('');
+  const [symptoms, setSymptoms] = useState<string[]>([]);
+  const [additives, setAdditives] = useState<string[]>([]);
+  const [commitment, setCommitment] = useState('');
 
   // Mascot Floating Animation
   const mascotFloatY = useSharedValue(0);
@@ -1037,24 +1053,23 @@ export default function OnboardingScreen() {
 
   useEffect(() => {
     if (currentSlide !== currentCardIndex) {
-      cardOpacity.value = withTiming(0, { duration: 150 });
-      cardScale.value = withTiming(0.93, { duration: 150 });
-      cardTranslateX.value = withTiming(-35, { duration: 150 }, () => {
+      cardOpacity.value = withTiming(0, { duration: 180 });
+      cardScale.value = withTiming(0.95, { duration: 180 });
+      cardTranslateX.value = withTiming(0, { duration: 180 }, () => {
         runOnJS(setCurrentCardIndex)(currentSlide);
-        cardTranslateX.value = 35;
-        cardOpacity.value = withTiming(1, { duration: 250 });
-        cardScale.value = withTiming(1, { duration: 250 });
-        cardTranslateX.value = withSpring(0, { damping: 13, stiffness: 120 });
+        cardScale.value = 1.05;
+        cardOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.exp) });
+        cardScale.value = withSpring(1, { damping: 15, stiffness: 100 });
       });
     }
 
     if (currentSlide !== currentTextIndex) {
       textOpacity.value = withTiming(0, { duration: 150 });
-      textTranslateY.value = withTiming(15, { duration: 150 }, () => {
+      textTranslateY.value = withTiming(10, { duration: 150 }, () => {
         runOnJS(setCurrentTextIndex)(currentSlide);
-        textTranslateY.value = -15;
-        textOpacity.value = withTiming(1, { duration: 220 });
-        textTranslateY.value = withSpring(0, { damping: 13, stiffness: 120 });
+        textTranslateY.value = -10;
+        textOpacity.value = withTiming(1, { duration: 250, easing: Easing.out(Easing.exp) });
+        textTranslateY.value = withSpring(0, { damping: 15, stiffness: 100 });
       });
     }
   }, [currentSlide]);
@@ -1111,6 +1126,12 @@ export default function OnboardingScreen() {
 
   const isNextDisabled = () => {
     if (currentSlide === 0 && !userName.trim()) return true;
+    if (currentSlide === 1 && userGoals.length === 0) return true;
+    if (currentSlide === 2 && !foodSourcing) return true;
+    if (currentSlide === 3 && symptoms.length === 0) return true;
+    if (currentSlide === 5 && additives.length === 0) return true;
+    if (currentSlide === 6 && allergenFilters.length === 0) return true;
+    if (currentSlide === 7 && !commitment) return true;
     return false;
   };
 
@@ -1125,7 +1146,7 @@ export default function OnboardingScreen() {
     return (
       <Text style={{ color: C.text, fontSize: isShort ? 22 : 26, fontWeight: '900', textAlign: 'center', letterSpacing: -0.5 }}>
         {parts[0]}
-        {textSlide.highlight ? <Text style={{ color: C.amber }}>{textSlide.highlight}</Text> : null}
+        {textSlide.highlight ? <Text style={{ color: C.primary }}>{textSlide.highlight}</Text> : null}
         {parts[1] || ''}
       </Text>
     );
@@ -1225,14 +1246,14 @@ export default function OnboardingScreen() {
                 activeOpacity={0.9}
                 style={{
                   width: '100%',
-                  backgroundColor: C.amber,
+                  backgroundColor: C.primary,
                   borderRadius: 22,
                   paddingVertical: isShort ? 15 : 18,
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 10,
-                  shadowColor: C.amber,
+                  shadowColor: C.primary,
                   shadowOffset: { width: 0, height: 8 },
                   shadowOpacity: 0.35,
                   shadowRadius: 14,
