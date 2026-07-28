@@ -574,6 +574,21 @@ export default function HomeScreen() {
             {/* Center Info Panel */}
             <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 20, width: '100%' }}>
               {/* Animated Mascot Orb Container */}
+              <View style={{ width: '100%', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                
+                {/* Vertical LED Street Light (Nutri-Score) */}
+                <View style={{ position: 'absolute', left: 0, top: 20, bottom: 20, justifyContent: 'space-between', alignItems: 'center', width: 28, paddingVertical: 16, backgroundColor: isDark ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.8)', borderRadius: 14, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.1, shadowRadius: 12, zIndex: 10 }}>
+                  {['A', 'B', 'C', 'D', 'E'].map((grade) => {
+                    const isActive = avgNutriScore?.toUpperCase() === grade;
+                    const ledColor = grade === 'A' || grade === 'B' ? colors.primary : grade === 'C' ? '#FBBF24' : '#EF4444';
+                    return (
+                      <View key={grade} style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: isActive ? ledColor : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'), shadowColor: isActive ? ledColor : 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: isActive ? 0.9 : 0, shadowRadius: isActive ? 8 : 0, borderWidth: 1.5, borderColor: isActive ? 'rgba(255,255,255,0.6)' : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                        {isActive && <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#FFF' }} />}
+                      </View>
+                    );
+                  })}
+                </View>
+
               <View style={{ width: 220, height: 220, alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
 
                 {/* 1. Static track and premium progress arc */}
@@ -663,20 +678,16 @@ export default function HomeScreen() {
                 </View>
               </View>
             
-            {/* New Metrics Row: Avg Nutri-Score & Total Sugar */}
-            <View style={{ flexDirection: 'row', gap: 12, marginTop: 12, width: '100%', paddingHorizontal: 16 }}>
-              <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#F9FAFB', borderRadius: 20, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB', padding: 14, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8 }}>
-                <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', marginBottom: 4, textAlign: 'center' }}>AVG NUTRI-SCORE</Text>
-                <Text style={{ color: avgNutriScore === 'a' || avgNutriScore === 'b' ? colors.primary : avgNutriScore === 'c' ? '#F5A623' : '#EF4444', fontSize: 24, fontWeight: '900' }}>
-                  {avgNutriScore ? avgNutriScore.toUpperCase() : '-'}
-                </Text>
+            </View>
+            {/* Sleek Pill Bar: Total Sugar */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, width: '100%', backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F9FAFB', borderRadius: 999, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB', paddingHorizontal: 22, paddingVertical: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.08, shadowRadius: 12 }}>
+              <View style={{ flexDirection: 'column' }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Basket Total Sugar</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '600', marginTop: 2 }}>1 tsp = 4.2g (WHO Standard)</Text>
               </View>
-
-              <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#F9FAFB', borderRadius: 20, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB', padding: 14, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8 }}>
-                <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', marginBottom: 4, textAlign: 'center' }}>TOTAL SUGAR</Text>
-                <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900' }}>
-                  {totalSugarTeaspoons.toFixed(1)} <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textMuted }}>tsp</Text>
-                </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+                <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900' }}>{totalSugarTeaspoons.toFixed(1)}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '700' }}>tsp / serving</Text>
               </View>
             </View>
           </View>
@@ -872,7 +883,7 @@ export default function HomeScreen() {
                   alignItems: 'center',
                   gap: 4,
                 }}>
-                  <ShieldCheck size={11} color={avgGutHealthScore >= 75 ? '#10B981' : avgGutHealthScore >= 50 ? '#F59E0B' : '#EF4444'} />
+                  <ShieldCheck size={11} color={avgGutHealthScore >= 75 ? '#A855F7' : avgGutHealthScore >= 50 ? '#D946EF' : '#F43F5E'} />
                   <Text style={{ color: colors.text, fontSize: 10, fontWeight: '900' }}>
                     SCORE: {avgGutHealthScore}%
                   </Text>
@@ -900,7 +911,7 @@ export default function HomeScreen() {
                     backgroundColor: isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.01)',
                     borderRadius: 12,
                     borderWidth: 1.5,
-                    borderColor: avgGutHealthScore >= 75 ? '#10B981' : avgGutHealthScore >= 50 ? '#F59E0B' : '#EF4444',
+                    borderColor: avgGutHealthScore >= 75 ? '#A855F7' : avgGutHealthScore >= 50 ? '#D946EF' : '#F43F5E',
                     overflow: 'hidden',
                     position: 'relative',
                   }}
@@ -922,7 +933,7 @@ export default function HomeScreen() {
                     <Svg width={800} height={26} viewBox="0 0 800 26" preserveAspectRatio="none">
                       <Path
                         d="M 0 10 Q 50 1, 100 10 T 200 10 T 300 10 T 400 10 T 500 10 T 600 10 T 700 10 T 800 10 V 26 H 0 Z"
-                        fill={avgGutHealthScore >= 75 ? '#10B981' : avgGutHealthScore >= 50 ? '#F59E0B' : '#EF4444'}
+                        fill={avgGutHealthScore >= 75 ? '#A855F7' : avgGutHealthScore >= 50 ? '#D946EF' : '#F43F5E'}
                       />
                     </Svg>
                   </AnimatedReanimated.View>
@@ -943,7 +954,7 @@ export default function HomeScreen() {
                     <Svg width={800} height={26} viewBox="0 0 800 26" preserveAspectRatio="none">
                       <Path
                         d="M 0 13 Q 50 2, 100 13 T 200 13 T 300 13 T 400 13 T 500 13 T 600 13 T 700 13 T 800 13 V 26 H 0 Z"
-                        fill={avgGutHealthScore >= 75 ? '#10B981' : avgGutHealthScore >= 50 ? '#F59E0B' : '#EF4444'}
+                        fill={avgGutHealthScore >= 75 ? '#A855F7' : avgGutHealthScore >= 50 ? '#D946EF' : '#F43F5E'}
                       />
                     </Svg>
                   </AnimatedReanimated.View>
@@ -957,7 +968,7 @@ export default function HomeScreen() {
                       bottom: 0,
                       width: 3,
                       backgroundColor: '#FFFFFF',
-                      shadowColor: avgGutHealthScore >= 75 ? '#10B981' : avgGutHealthScore >= 50 ? '#F59E0B' : '#EF4444',
+                      shadowColor: avgGutHealthScore >= 75 ? '#A855F7' : avgGutHealthScore >= 50 ? '#D946EF' : '#F43F5E',
                       shadowOffset: { width: -2, height: 0 },
                       shadowOpacity: 0.8,
                       shadowRadius: 4,
