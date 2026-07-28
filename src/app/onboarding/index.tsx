@@ -10,7 +10,6 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
-  Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Camera } from 'expo-camera';
@@ -43,112 +42,88 @@ import {
   RefreshCw,
   Zap,
   Star,
-  X,
   Layers,
   Heart,
   Flame,
   Award,
-  ShoppingCart,
-  Smile,
-  CheckCircle2,
 } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import Svg, {
-  Line,
-  Text as SvgText,
-  Circle,
-  Path,
-  Defs,
-  LinearGradient as SvgLinearGradient,
-  RadialGradient as SvgRadialGradient,
-  Stop,
-} from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
+import Svg, { Circle, Path, Defs, RadialGradient as SvgRadialGradient, Stop, LinearGradient as SvgLinearGradient } from 'react-native-svg';
+
+// ─────────────────────────────────────────────────────────
+// Premium Custom Luxury Icons (Apple Developer Inspired)
+// ─────────────────────────────────────────────────────────
+function LuxuryEnergyIcon() {
+  return (
+    <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <Defs>
+        <SvgLinearGradient id="energyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#FFB300" />
+          <Stop offset="100%" stopColor="#FF6D00" />
+        </SvgLinearGradient>
+      </Defs>
+      <Path d="M13 10V3L4 14H11V21L20 10H13Z" fill="url(#energyGrad)" />
+    </Svg>
+  );
+}
+
+function LuxuryGutIcon() {
+  return (
+    <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <Defs>
+        <SvgLinearGradient id="gutGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#00E676" />
+          <Stop offset="100%" stopColor="#00B0FF" />
+        </SvgLinearGradient>
+      </Defs>
+      <Path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" fill="url(#gutGrad)" />
+    </Svg>
+  );
+}
+
+function LuxuryWeightIcon() {
+  return (
+    <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <Defs>
+        <SvgLinearGradient id="weightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#E040FB" />
+          <Stop offset="100%" stopColor="#651FFF" />
+        </SvgLinearGradient>
+      </Defs>
+      <Path d="M12 3C7.03 3 3 7.03 3 12C3 16.97 7.03 21 12 21C16.97 21 21 16.97 21 12C21 7.03 16.97 3 12 3ZM12 18C8.69 18 6 15.31 6 12C6 8.69 8.69 6 12 6C15.31 6 18 8.69 18 12C18 15.31 15.31 18 12 18Z" fill="url(#weightGrad)" />
+    </Svg>
+  );
+}
+
+function LuxurySafetyIcon() {
+  return (
+    <Svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <Defs>
+        <SvgLinearGradient id="safetyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#FF1744" />
+          <Stop offset="100%" stopColor="#D500F9" />
+        </SvgLinearGradient>
+      </Defs>
+      <Path d="M12 21.35L10.55 20.03C5.4 15.36 2 12.28 2 8.5C2 5.42 4.42 3 7.5 3C9.24 3 10.91 3.81 12 5.09C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.42 22 8.5C22 12.28 18.6 15.36 13.45 20.04L12 21.35Z" fill="url(#safetyGrad)" />
+    </Svg>
+  );
+}
 
 // ─────────────────────────────────────────────────────────
 // Animated Mascot Shadow Component
 // ─────────────────────────────────────────────────────────
 function MascotShadow({ size, scaleStyle }: { size: number; scaleStyle: any }) {
   return (
-    <Animated.View style={[{ width: size, height: size * 0.15, alignSelf: 'center' }, scaleStyle]}>
+    <Animated.View style={[{ width: size, height: size * 0.12, alignSelf: 'center' }, scaleStyle]}>
       <Svg width="100%" height="100%" viewBox="0 0 100 15">
         <Defs>
           <SvgRadialGradient id="shadowG" cx="50%" cy="50%" rx="50%" ry="50%">
-            <Stop offset="0%" stopColor="#000000" stopOpacity="0.15" />
+            <Stop offset="0%" stopColor="#000000" stopOpacity="0.16" />
             <Stop offset="100%" stopColor="#000000" stopOpacity="0" />
           </SvgRadialGradient>
         </Defs>
         <Circle cx="50" cy="7.5" r="50" fill="url(#shadowG)" />
       </Svg>
-    </Animated.View>
-  );
-}
-
-// ─────────────────────────────────────────────────────────
-// Mascot Thought Bubble ("Think Message")
-// ─────────────────────────────────────────────────────────
-function ThoughtBubble({ text, visible }: { text: string; visible: boolean }) {
-  const scale = useSharedValue(0);
-  const opacity = useSharedValue(0);
-
-  useEffect(() => {
-    if (visible && text) {
-      scale.value = withDelay(250, withSpring(1, { damping: 14, stiffness: 200 }));
-      opacity.value = withDelay(250, withTiming(1, { duration: 250 }));
-    } else {
-      scale.value = withTiming(0, { duration: 180 });
-      opacity.value = withTiming(0, { duration: 180 });
-    }
-  }, [visible, text]);
-
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
-  }));
-
-  if (!text) return null;
-
-  return (
-    <Animated.View
-      style={[
-        {
-          position: 'absolute',
-          right: -58,
-          top: -46,
-          width: 140,
-          backgroundColor: '#FFFFFF',
-          borderRadius: 16,
-          paddingHorizontal: 10,
-          paddingVertical: 9,
-          shadowColor: '#FF9500',
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.22,
-          shadowRadius: 14,
-          elevation: 9,
-          borderWidth: 1.5,
-          borderColor: '#FFD54F',
-          zIndex: 100,
-        },
-        animStyle,
-      ]}
-    >
-      <Text style={{ fontSize: 10.5, fontWeight: '700', color: '#8C4A00', lineHeight: 14, textAlign: 'center' }}>
-        {text}
-      </Text>
-      <View
-        style={{
-          position: 'absolute',
-          bottom: -6,
-          left: 28,
-          width: 11,
-          height: 11,
-          backgroundColor: '#FFFFFF',
-          borderBottomWidth: 1.5,
-          borderRightWidth: 1.5,
-          borderColor: '#FFD54F',
-          transform: [{ rotate: '45deg' }],
-        }}
-      />
     </Animated.View>
   );
 }
@@ -162,19 +137,19 @@ function NameCard({ cardW, C, value, onChange }: { cardW: number; C: any; value:
       style={{
         width: cardW,
         backgroundColor: C.card,
-        borderRadius: 22,
-        borderWidth: 1,
+        borderRadius: 24,
+        borderWidth: 1.5,
         borderColor: C.cardBorder,
-        padding: 18,
+        padding: 20,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.1,
-        shadowRadius: 16,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.08,
+        shadowRadius: 20,
         elevation: 6,
-        gap: 14,
+        gap: 16,
       }}
     >
-      <Text style={{ color: C.textSub, fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+      <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2 }}>
         Personal Account Profile
       </Text>
 
@@ -184,9 +159,9 @@ function NameCard({ cardW, C, value, onChange }: { cardW: number; C: any; value:
           alignItems: 'center',
           borderWidth: 1.5,
           borderColor: value.trim() ? C.amber : C.cardBorder,
-          borderRadius: 14,
-          paddingHorizontal: 14,
-          paddingVertical: Platform.OS === 'ios' ? 12 : 8,
+          borderRadius: 16,
+          paddingHorizontal: 16,
+          paddingVertical: Platform.OS === 'ios' ? 14 : 10,
           backgroundColor: C.cardInner,
         }}
       >
@@ -210,17 +185,17 @@ function NameCard({ cardW, C, value, onChange }: { cardW: number; C: any; value:
       <View
         style={{
           backgroundColor: C.amberLight,
-          borderRadius: 12,
-          padding: 10,
+          borderRadius: 14,
+          padding: 12,
           borderWidth: 1,
-          borderColor: C.amber + '30',
+          borderColor: C.amber + '25',
           flexDirection: 'row',
           alignItems: 'center',
-          gap: 8,
+          gap: 10,
         }}
       >
         <Sparkles size={16} color={C.amber} />
-        <Text style={{ color: C.text, fontSize: 13, fontWeight: '700', flex: 1 }}>
+        <Text style={{ color: C.text, fontSize: 13, fontWeight: '800', flex: 1, lineHeight: 16 }}>
           {value.trim() ? `Welcome, ${value.trim()}! Ready to fix your food?` : 'Type your name above to personalize your scanner!'}
         </Text>
       </View>
@@ -229,16 +204,16 @@ function NameCard({ cardW, C, value, onChange }: { cardW: number; C: any; value:
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 2: Primary Health Goal Card
+// STEP 2: Primary Health Goal Card (Multi-Select)
 // ─────────────────────────────────────────────────────────
 type GoalOption = 'energy' | 'gut_microbiome' | 'weight_management' | 'family_safety';
 
 function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; selected: GoalOption[]; onSelect: (vals: GoalOption[]) => void }) {
   const options: { label: string; tag: string; icon: React.ReactNode; value: GoalOption }[] = [
-    { label: 'Increase Daily Energy', tag: 'Reduce Fatigue', icon: <Flame size={18} color={C.amber} />, value: 'energy' },
-    { label: 'Improve Gut Microbiome', tag: 'Stop Bloating', icon: <ShieldCheck size={18} color={C.green} />, value: 'gut_microbiome' },
-    { label: 'Weight Management', tag: 'Cut Hidden Sugar', icon: <Activity size={18} color="#AF52DE" />, value: 'weight_management' },
-    { label: 'Family Food Safety', tag: 'Avoid Synthetic Dyes', icon: <Heart size={18} color={C.red} />, value: 'family_safety' },
+    { label: 'Increase Daily Energy', tag: 'Reduce Fatigue & Slumps', icon: <LuxuryEnergyIcon />, value: 'energy' },
+    { label: 'Improve Gut Microbiome', tag: 'Stop Bloating & Gas', icon: <LuxuryGutIcon />, value: 'gut_microbiome' },
+    { label: 'Weight Management', tag: 'Cut Hidden Sugars & Carbs', icon: <LuxuryWeightIcon />, value: 'weight_management' },
+    { label: 'Family Food Safety', tag: 'Avoid Chemical Additives', icon: <LuxurySafetyIcon />, value: 'family_safety' },
   ];
 
   const handleToggle = (val: GoalOption) => {
@@ -246,7 +221,7 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
     if (selected.includes(val)) {
       onSelect(selected.filter((item) => item !== val));
     } else {
-      onSelect([val]); // Single select preferred for goal
+      onSelect([...selected, val]);
     }
   };
 
@@ -255,13 +230,36 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
       style={{
         width: cardW,
         backgroundColor: C.card,
-        borderRadius: 22,
-        borderWidth: 1,
+        borderRadius: 24,
+        borderWidth: 1.5,
         borderColor: C.cardBorder,
-        padding: 14,
-        gap: 8,
+        padding: 18,
+        gap: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.08,
+        shadowRadius: 20,
+        elevation: 6,
       }}
     >
+      {/* Multi-Select Info Pill */}
+      <View
+        style={{
+          alignSelf: 'center',
+          backgroundColor: C.amberLight,
+          borderColor: C.amber + '30',
+          borderWidth: 1,
+          borderRadius: 20,
+          paddingHorizontal: 12,
+          paddingVertical: 4,
+          marginBottom: 6,
+        }}
+      >
+        <Text style={{ color: C.amber, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+          💡 Multiple Selection Enabled
+        </Text>
+      </View>
+
       {options.map((opt) => {
         const isSelected = selected.includes(opt.value);
         return (
@@ -276,25 +274,25 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
               backgroundColor: isSelected ? C.amberLight : C.cardInner,
               borderColor: isSelected ? C.amber : C.cardBorder,
               borderWidth: 1.5,
-              borderRadius: 14,
-              paddingHorizontal: 12,
-              paddingVertical: 10,
+              borderRadius: 16,
+              paddingHorizontal: 14,
+              paddingVertical: 12,
             }}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-              <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: isSelected ? 'transparent' : C.card, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+              <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: isSelected ? 'transparent' : C.card, alignItems: 'center', justifyContent: 'center' }}>
                 {opt.icon}
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: C.text, fontSize: 13.5, fontWeight: '800' }}>{opt.label}</Text>
-                <Text style={{ color: C.textMuted, fontSize: 10, fontWeight: '600', marginTop: 1 }}>{opt.tag}</Text>
+                <Text style={{ color: C.text, fontSize: 14, fontWeight: '800' }}>{opt.label}</Text>
+                <Text style={{ color: C.textMuted, fontSize: 10.5, fontWeight: '600', marginTop: 2 }}>{opt.tag}</Text>
               </View>
             </View>
             <View
               style={{
-                width: 18,
-                height: 18,
-                borderRadius: 9,
+                width: 20,
+                height: 20,
+                borderRadius: 10,
                 borderWidth: 1.5,
                 borderColor: isSelected ? C.amber : C.textMuted,
                 alignItems: 'center',
@@ -317,12 +315,12 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
 function FoodSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any; value: string; onSelect: (v: string) => void }) {
   const options = [
     { label: 'Daily / Multiple times a day', desc: 'Rely heavily on packaged snacks & meals', val: 'daily', color: C.red },
-    { label: '3 to 4 times a week', desc: 'Mix of home-cooked foods and packaged snacks', val: 'weekly', color: C.amber },
+    { label: '3 to 4 times a week', desc: 'Mix of fresh foods and grocery snacks', val: 'weekly', color: C.amber },
     { label: 'Rarely / Whole Foods', desc: 'Cook almost everything fresh from scratch', val: 'rarely', color: C.green },
   ];
 
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 22, borderWidth: 1, borderColor: C.cardBorder, padding: 14, gap: 10 }}>
+    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.cardBorder, padding: 16, gap: 10 }}>
       {options.map((opt) => {
         const isSelected = value === opt.val;
         return (
@@ -337,16 +335,16 @@ function FoodSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any
               backgroundColor: isSelected ? C.amberLight : C.cardInner,
               borderColor: isSelected ? C.amber : C.cardBorder,
               borderWidth: 1.5,
-              borderRadius: 14,
-              padding: 12,
+              borderRadius: 16,
+              padding: 14,
               gap: 4,
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={{ color: C.text, fontSize: 13.5, fontWeight: '800' }}>{opt.label}</Text>
+              <Text style={{ color: C.text, fontSize: 14, fontWeight: '800' }}>{opt.label}</Text>
               <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: opt.color }} />
             </View>
-            <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '500' }}>{opt.desc}</Text>
+            <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600', lineHeight: 14 }}>{opt.desc}</Text>
           </TouchableOpacity>
         );
       })}
@@ -355,66 +353,139 @@ function FoodSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 4: Symptom & Energy Audit Card
+// STEP 4: Symptom & Energy Audit Card (Luxury List)
 // ─────────────────────────────────────────────────────────
 function SymptomAuditCard({ cardW, C, selected, onToggle }: { cardW: number; C: any; selected: string[]; onToggle: (s: string) => void }) {
   const symptoms = [
-    { id: 'slumps', label: '🥱 Afternoon slumps' },
+    { id: 'slumps', label: '🥱 Afternoon energy slumps' },
     { id: 'bloating', label: '💨 Post-meal bloating' },
-    { id: 'brainfog', label: '🧠 Brain fog' },
-    { id: 'cravings', label: '🍫 Intense sugar cravings' },
-    { id: 'skin', label: '🧴 Skin breakouts' },
+    { id: 'brainfog', label: '🧠 Frequent brain fog' },
+    { id: 'cravings', label: '🍫 Sugar & snack cravings' },
+    { id: 'skin', label: '🧴 Skin flares & inflammation' },
   ];
 
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 22, borderWidth: 1, borderColor: C.cardBorder, padding: 14, gap: 10 }}>
-      <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '700' }}>Select symptoms you experience frequently:</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {symptoms.map((s) => {
-          const active = selected.includes(s.id);
-          return (
-            <TouchableOpacity
-              key={s.id}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                onToggle(s.id);
-              }}
+    <View
+      style={{
+        width: cardW,
+        backgroundColor: C.card,
+        borderRadius: 24,
+        borderWidth: 1.5,
+        borderColor: C.cardBorder,
+        padding: 16,
+        gap: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.08,
+        shadowRadius: 20,
+        elevation: 6,
+      }}
+    >
+      <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '800', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+        Check symptoms you experience:
+      </Text>
+
+      {symptoms.map((s) => {
+        const active = selected.includes(s.id);
+        return (
+          <TouchableOpacity
+            key={s.id}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onToggle(s.id);
+            }}
+            activeOpacity={0.85}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              backgroundColor: active ? C.redLight : C.cardInner,
+              borderColor: active ? C.red : C.cardBorder,
+              borderWidth: 1.5,
+              borderRadius: 14,
+              paddingHorizontal: 14,
+              paddingVertical: 12,
+            }}
+          >
+            <Text style={{ color: active ? C.red : C.text, fontSize: 13.5, fontWeight: '800' }}>
+              {s.label}
+            </Text>
+            <View
               style={{
-                backgroundColor: active ? C.redLight : C.cardInner,
-                borderColor: active ? C.red : C.cardBorder,
+                width: 18,
+                height: 18,
+                borderRadius: 9,
                 borderWidth: 1.5,
-                borderRadius: 12,
-                paddingHorizontal: 12,
-                paddingVertical: 8,
+                borderColor: active ? C.red : C.textMuted,
+                backgroundColor: active ? C.red : 'transparent',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <Text style={{ color: active ? C.red : C.text, fontSize: 12, fontWeight: active ? '800' : '600' }}>
-                {s.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+              {active && <Check size={12} color="#FFFFFF" strokeWidth={3.5} />}
+            </View>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 5: NOVA 4 Wake-Up Call Graphic Card
+// STEP 5: NOVA 4 Wake-Up Call Alert Dashboard
 // ─────────────────────────────────────────────────────────
 function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 22, borderWidth: 1.5, borderColor: C.red + '40', padding: 18, gap: 12, alignItems: 'center' }}>
-      <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: C.redLight, alignItems: 'center', justifyContent: 'center' }}>
-        <AlertTriangle size={24} color={C.red} />
+    <View
+      style={{
+        width: cardW,
+        backgroundColor: C.card,
+        borderRadius: 24,
+        borderWidth: 1.5,
+        borderColor: C.red + '40',
+        padding: 20,
+        gap: 16,
+        shadowColor: C.red,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.06,
+        shadowRadius: 20,
+        elevation: 6,
+        alignItems: 'center',
+      }}
+    >
+      {/* Custom Alert Badge */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.redLight, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: C.red + '30' }}>
+        <AlertTriangle size={14} color={C.red} />
+        <Text style={{ color: C.red, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+          HIGH SENSITIVITY ALERT
+        </Text>
       </View>
-      <Text style={{ color: C.red, fontSize: 26, fontWeight: '900', letterSpacing: -0.5 }}>73%</Text>
-      <Text style={{ color: C.text, fontSize: 13, fontWeight: '800', textAlign: 'center', lineHeight: 17 }}>
-        of grocery foods in North America are NOVA 4 Ultra-Processed.
+
+      {/* Massive Graphic Callout */}
+      <View style={{ alignItems: 'center' }}>
+        <Text style={{ color: C.red, fontSize: 42, fontWeight: '950', letterSpacing: -1.5 }}>73%</Text>
+        <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: -2 }}>
+          OF PACKAGED FOODS
+        </Text>
+      </View>
+
+      <Text style={{ color: C.text, fontSize: 13.5, fontWeight: '800', textAlign: 'center', lineHeight: 18 }}>
+        Classified as <Text style={{ color: C.red, fontWeight: '900' }}>NOVA 4 Ultra-Processed</Text> with chemical agents not found in normal diets.
       </Text>
-      <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '500', textAlign: 'center', lineHeight: 15 }}>
-        Loaded with synthetic emulsifiers, gums, and artificial preservatives engineered for hyper-palatability.
-      </Text>
+
+      {/* Core Highlights */}
+      <View style={{ width: '100%', gap: 8, marginTop: 4 }}>
+        {[
+          'Industrial emulsifiers damaging gut barrier',
+          'Synthetic dyes triggering attention issues',
+          'Artificial sweeteners harming digestion',
+        ].map((point, idx) => (
+          <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.cardInner, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: C.cardBorder }}>
+            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.red }} />
+            <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '600', flex: 1 }}>{point}</Text>
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
@@ -425,13 +496,13 @@ function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
 function AdditivePrioritiesCard({ cardW, C, selected, onToggle }: { cardW: number; C: any; selected: string[]; onToggle: (a: string) => void }) {
   const additives = [
     { id: 'dyes', label: 'Synthetic Food Dyes', desc: 'Red 40, Yellow 5, Blue 1' },
-    { id: 'hfcs', label: 'High Fructose Corn Syrup', desc: 'Artificial sweeteners & syrups' },
-    { id: 'emulsifiers', label: 'Microbiome Emulsifiers', desc: 'Polysorbate 80, Carboxymethylcellulose' },
-    { id: 'oils', label: 'Refined Industrial Seed Oils', desc: 'Canola, Soybean, Palm Oil' },
+    { id: 'hfcs', label: 'High Fructose Corn Syrup', desc: 'Processed sugars & syrups' },
+    { id: 'emulsifiers', label: 'Gut Emulsifiers & Gums', desc: 'Polysorbate 80, Xanthan Gum' },
+    { id: 'oils', label: 'Refined Seed Oils', desc: 'Canola, Soybean, Palm Oil' },
   ];
 
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 22, borderWidth: 1, borderColor: C.cardBorder, padding: 14, gap: 8 }}>
+    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.cardBorder, padding: 16, gap: 10 }}>
       {additives.map((item) => {
         const active = selected.includes(item.id);
         return (
@@ -445,18 +516,18 @@ function AdditivePrioritiesCard({ cardW, C, selected, onToggle }: { cardW: numbe
               backgroundColor: active ? C.amberLight : C.cardInner,
               borderColor: active ? C.amber : C.cardBorder,
               borderWidth: 1.5,
-              borderRadius: 12,
-              padding: 10,
+              borderRadius: 14,
+              padding: 12,
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
             }}
           >
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: C.text, fontSize: 13, fontWeight: '800' }}>{item.label}</Text>
-              <Text style={{ color: C.textMuted, fontSize: 10, fontWeight: '500' }}>{item.desc}</Text>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={{ color: C.text, fontSize: 13.5, fontWeight: '800' }}>{item.label}</Text>
+              <Text style={{ color: C.textMuted, fontSize: 10.5, fontWeight: '600' }}>{item.desc}</Text>
             </View>
-            <View style={{ width: 16, height: 16, borderRadius: 8, borderWidth: 1.5, borderColor: active ? C.amber : C.textMuted, backgroundColor: active ? C.amber : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, borderColor: active ? C.amber : C.textMuted, backgroundColor: active ? C.amber : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
               {active && <Check size={10} color="#FFF" strokeWidth={3} />}
             </View>
           </TouchableOpacity>
@@ -473,8 +544,10 @@ function AllergenDefenseCard({ cardW, C, selected, onToggle }: { cardW: number; 
   const allergens = ['Gluten', 'Dairy', 'Soy', 'Nuts', 'Eggs', 'Palm Oil'];
 
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 22, borderWidth: 1, borderColor: C.cardBorder, padding: 16, gap: 12 }}>
-      <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '700' }}>Tap to activate RED shield alerts:</Text>
+    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.cardBorder, padding: 18, gap: 14 }}>
+      <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+        Enable Red Alerts on Scans:
+      </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {allergens.map((item) => {
           const active = selected.includes(item);
@@ -486,15 +559,15 @@ function AllergenDefenseCard({ cardW, C, selected, onToggle }: { cardW: number; 
                 onToggle(item);
               }}
               style={{
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                borderRadius: 12,
+                paddingHorizontal: 14,
+                paddingVertical: 10,
+                borderRadius: 14,
                 backgroundColor: active ? C.redLight : C.cardInner,
                 borderWidth: 1.5,
                 borderColor: active ? C.red : C.cardBorder,
               }}
             >
-              <Text style={{ color: active ? C.red : C.text, fontSize: 12, fontWeight: active ? '900' : '700' }}>
+              <Text style={{ color: active ? C.red : C.text, fontSize: 13, fontWeight: active ? '900' : '700' }}>
                 {active ? `🚨 ${item}` : item}
               </Text>
             </TouchableOpacity>
@@ -510,13 +583,13 @@ function AllergenDefenseCard({ cardW, C, selected, onToggle }: { cardW: number; 
 // ─────────────────────────────────────────────────────────
 function CommitmentLevelCard({ cardW, C, value, onSelect }: { cardW: number; C: any; value: string; onSelect: (v: string) => void }) {
   const levels = [
-    { id: 'curious', title: 'Curious & Learning', desc: 'Want to scan & see what is inside food' },
-    { id: 'moderate', title: 'Moderate Clean Swaps', desc: 'Ready to replace bad snacks with clean ones' },
-    { id: 'committed', title: '100% Ultra-Clean Commitment', desc: 'Eliminate ultra-processed foods entirely' },
+    { id: 'curious', title: 'Curious & Learning', desc: 'Scan and review nutritional facts' },
+    { id: 'moderate', title: 'Moderate Clean Swaps', desc: 'Replace moderate ingredient alerts' },
+    { id: 'committed', title: '100% Whole Foods Clean', desc: 'Commit to zero ultra-processed items' },
   ];
 
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 22, borderWidth: 1, borderColor: C.cardBorder, padding: 14, gap: 10 }}>
+    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.cardBorder, padding: 16, gap: 10 }}>
       {levels.map((lvl) => {
         const active = value === lvl.id;
         return (
@@ -530,12 +603,12 @@ function CommitmentLevelCard({ cardW, C, value, onSelect }: { cardW: number; C: 
               backgroundColor: active ? C.amberLight : C.cardInner,
               borderColor: active ? C.amber : C.cardBorder,
               borderWidth: 1.5,
-              borderRadius: 14,
-              padding: 12,
+              borderRadius: 16,
+              padding: 14,
             }}
           >
-            <Text style={{ color: C.text, fontSize: 13.5, fontWeight: '800' }}>{lvl.title}</Text>
-            <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '500', marginTop: 2 }}>{lvl.desc}</Text>
+            <Text style={{ color: C.text, fontSize: 14, fontWeight: '800' }}>{lvl.title}</Text>
+            <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600', marginTop: 2, lineHeight: 14 }}>{lvl.desc}</Text>
           </TouchableOpacity>
         );
       })}
@@ -548,18 +621,20 @@ function CommitmentLevelCard({ cardW, C, value, onSelect }: { cardW: number; C: 
 // ─────────────────────────────────────────────────────────
 function SocialProofCard({ cardW, C }: { cardW: number; C: any }) {
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 22, borderWidth: 1, borderColor: C.cardBorder, padding: 16, gap: 12, alignItems: 'center' }}>
+    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.cardBorder, padding: 20, gap: 14, alignItems: 'center' }}>
       <View style={{ flexDirection: 'row', gap: 4 }}>
         {[1, 2, 3, 4, 5].map((i) => (
           <Star key={i} size={18} color="#FFCC00" fill="#FFCC00" />
         ))}
       </View>
-      <Text style={{ color: C.text, fontSize: 13, fontWeight: '800', textAlign: 'center', lineHeight: 17 }}>
-        "BiteFix unmasked hidden ultra-processed dyes in my daily protein bar. Found an A-Grade clean swap instantly!"
+      <Text style={{ color: C.text, fontSize: 13.5, fontWeight: '800', textAlign: 'center', lineHeight: 18 }}>
+        "BiteFix unmasked hidden ultra-processed food dyes in my daily protein bar. Found an A-Grade clean swap instantly!"
       </Text>
-      <Text style={{ color: C.amber, fontSize: 11, fontWeight: '800' }}>— Sarah M., Verified User</Text>
-      <View style={{ backgroundColor: C.cardInner, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: C.cardBorder }}>
-        <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '700' }}>Backed by Open Food Facts Science</Text>
+      <Text style={{ color: C.amber, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+        — Sarah M., Verified User
+      </Text>
+      <View style={{ backgroundColor: C.cardInner, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: C.cardBorder }}>
+        <Text style={{ color: C.textSub, fontSize: 10.5, fontWeight: '800' }}>Backed by Open Food Facts Science</Text>
       </View>
     </View>
   );
@@ -584,11 +659,11 @@ function HealthAnalysisCalculationCard({ cardW, C, onComplete }: { cardW: number
   return (
     <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.amber, padding: 24, gap: 16, alignItems: 'center' }}>
       <ActivityIndicator size="large" color={C.amber} />
-      <Text style={{ color: C.text, fontSize: 16, fontWeight: '900', textAlign: 'center' }}>{stepText}</Text>
+      <Text style={{ color: C.text, fontSize: 15, fontWeight: '900', textAlign: 'center' }}>{stepText}</Text>
       <View style={{ width: '100%', height: 8, backgroundColor: C.cardInner, borderRadius: 4, overflow: 'hidden' }}>
         <View style={{ width: `${progress}%`, height: '100%', backgroundColor: C.amber, borderRadius: 4 }} />
       </View>
-      <Text style={{ color: C.amber, fontSize: 13, fontWeight: '800' }}>{progress}% Completed</Text>
+      <Text style={{ color: C.amber, fontSize: 13, fontWeight: '900' }}>{progress}% Completed</Text>
     </View>
   );
 }
@@ -607,7 +682,7 @@ function InstantResultSummaryCard({ cardW, C, isDark }: { cardW: number; C: any;
   ];
 
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 22, borderWidth: 1.5, borderColor: C.amber, padding: 14, gap: 8 }}>
+    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.amber, padding: 14, gap: 10 }}>
       <Text style={{ color: C.amber, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', textAlign: 'center', letterSpacing: 0.5 }}>
         6-Point Instant Scan Matrix
       </Text>
@@ -631,14 +706,14 @@ function InstantResultSummaryCard({ cardW, C, isDark }: { cardW: number; C: any;
 // ─────────────────────────────────────────────────────────
 function PaywallTransitionCard({ cardW, C }: { cardW: number; C: any }) {
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 22, borderWidth: 1.5, borderColor: C.amber, padding: 16, gap: 10, alignItems: 'center' }}>
-      <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: C.amberLight, alignItems: 'center', justifyContent: 'center' }}>
-        <Award size={22} color={C.amber} />
+    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.amber, padding: 20, gap: 12, alignItems: 'center' }}>
+      <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: C.amberLight, alignItems: 'center', justifyContent: 'center' }}>
+        <Award size={24} color={C.amber} />
       </View>
       <Text style={{ color: C.text, fontSize: 16, fontWeight: '900', textAlign: 'center' }}>
         Your Custom Food Shield is Ready!
       </Text>
-      <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '600', textAlign: 'center', lineHeight: 15 }}>
+      <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '600', textAlign: 'center', lineHeight: 16 }}>
         Unlock unlimited barcode scanning, full additive alerts, and clean food swaps.
       </Text>
     </View>
@@ -660,10 +735,10 @@ interface SlideData {
 
 const SLIDES: SlideData[] = [
   { step: 1, title: 'Welcome to BiteFix', highlight: 'BiteFix', subtitle: "Let's personalize your food scanner.", buttonLabel: 'Continue', isLast: false, mascotState: 'happy' },
-  { step: 2, title: 'Select Primary Goal', highlight: 'Primary Goal', subtitle: 'Tailor your scanner to focus on what matters.', buttonLabel: 'Continue', isLast: false, mascotState: 'idle' },
+  { step: 2, title: 'Select Primary Goals', highlight: 'Primary Goals', subtitle: 'Tailor your scanner to focus on what matters.', buttonLabel: 'Continue', isLast: false, mascotState: 'idle' },
   { step: 3, title: 'Food Sourcing Baseline', highlight: 'Food Sourcing', subtitle: 'How often do you consume pre-packaged foods?', buttonLabel: 'Continue', isLast: false, mascotState: 'idle' },
-  { step: 4, title: 'Energy & Gut Audit', highlight: 'Energy & Gut', subtitle: 'Select any symptoms you experience frequently:', buttonLabel: 'Continue', isLast: false, mascotState: 'shocked' },
-  { step: 5, title: 'NOVA 4 Wake-Up Call', highlight: 'NOVA 4', subtitle: '73%+ of grocery foods are Ultra-Processed.', buttonLabel: 'I Want to Protect Myself', isLast: false, mascotState: 'shocked' },
+  { step: 4, title: 'Energy & Gut Audit', highlight: 'Energy & Gut', subtitle: 'Select symptoms you experience frequently:', buttonLabel: 'Continue', isLast: false, mascotState: 'shocked' },
+  { step: 5, title: 'NOVA 4 Wake-Up Call', highlight: 'NOVA 4', subtitle: 'Most grocery foods are Ultra-Processed.', buttonLabel: 'I Want to Protect Myself', isLast: false, mascotState: 'shocked' },
   { step: 6, title: 'Additive Priorities', highlight: 'Additive Priorities', subtitle: 'Select hidden ingredients to flag instantly:', buttonLabel: 'Continue', isLast: false, mascotState: 'idle' },
   { step: 7, title: 'Personal Allergen Defense', highlight: 'Allergen Defense', subtitle: 'Lock ingredients with high-priority RED shields:', buttonLabel: 'Continue', isLast: false, mascotState: 'happy' },
   { step: 8, title: 'Commitment Level', highlight: 'Commitment', subtitle: 'How committed are you to clean eating?', buttonLabel: 'Continue', isLast: false, mascotState: 'happy' },
@@ -806,6 +881,7 @@ export default function OnboardingScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       setCurrentSlide((s) => s + 1);
     } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       const mappedGoal =
         userGoals[0] === 'energy' || userGoals[0] === 'gut_microbiome' ? 'healthy_habits' :
         userGoals[0] === 'weight_management' ? 'clean_swaps' :
@@ -827,7 +903,7 @@ export default function OnboardingScreen() {
 
   const slide = SLIDES[currentSlide] || SLIDES[0];
   const isShort = height < 700;
-  const orbSize = Math.min(Math.round(width * 0.32), 130);
+  const orbSize = Math.min(Math.round(width * 0.28), 110);
   const cardW = Math.min(width - 32, 380);
 
   const renderTitle = () => {
@@ -854,9 +930,19 @@ export default function OnboardingScreen() {
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.bg }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <MagicalBackground />
 
-      <ScrollView contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: 'center',
+          paddingTop: insets.top + 12,
+          paddingBottom: insets.bottom + 16,
+          paddingHorizontal: 16,
+        }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Header Bar */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: isShort ? 4 : 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: isShort ? 12 : 20 }}>
           <Text style={{ color: C.textMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1 }}>
             STEP {currentSlide + 1} OF 12
           </Text>
@@ -874,24 +960,23 @@ export default function OnboardingScreen() {
           )}
         </View>
 
-        {/* Mascot Header */}
-        <View style={{ alignItems: 'center', marginVertical: isShort ? 4 : 8, position: 'relative' }}>
+        {/* Mascot + Title Stacked Block */}
+        <View style={{ alignItems: 'center', gap: 6, marginBottom: isShort ? 16 : 24 }}>
           <Animated.View style={mascotAnimStyle}>
             <OrbMascot state={slide.mascotState} size={orbSize} />
           </Animated.View>
           <MascotShadow size={orbSize} scaleStyle={{}} />
+
+          <Animated.View style={[{ alignItems: 'center', gap: 4, marginTop: 4 }, textAnimStyle]}>
+            {renderTitle()}
+            <Text style={{ color: C.textSub, fontSize: isShort ? 12 : 13.5, fontWeight: '600', textAlign: 'center' }}>
+              {SLIDES[currentTextIndex].subtitle}
+            </Text>
+          </Animated.View>
         </View>
 
-        {/* Title & Subtitle */}
-        <Animated.View style={[{ alignItems: 'center', marginVertical: isShort ? 4 : 8, gap: 4 }, textAnimStyle]}>
-          {renderTitle()}
-          <Text style={{ color: C.textSub, fontSize: isShort ? 11.5 : 13, fontWeight: '600', textAlign: 'center' }}>
-            {SLIDES[currentTextIndex].subtitle}
-          </Text>
-        </Animated.View>
-
         {/* Card Component Slot */}
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginVertical: 8 }}>
+        <View style={{ width: '100%', alignItems: 'center', marginBottom: isShort ? 16 : 24 }}>
           <Animated.View style={cardAnimStyle}>
             {currentCardIndex === 0 && <NameCard cardW={cardW} C={C} value={userName} onChange={setUserName} />}
             {currentCardIndex === 1 && <GoalCard cardW={cardW} C={C} selected={userGoals} onSelect={setUserGoals} />}
@@ -910,7 +995,7 @@ export default function OnboardingScreen() {
 
         {/* Pagination Dots & CTA Button */}
         {currentCardIndex !== 9 && (
-          <View style={{ gap: 12, marginTop: 8 }}>
+          <View style={{ gap: 12, marginTop: 4 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 5 }}>
               {SLIDES.map((_, idx) => (
                 <DotIndicator key={idx} active={currentSlide === idx} C={C} />
