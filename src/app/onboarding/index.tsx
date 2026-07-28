@@ -797,6 +797,140 @@ function PaywallTransitionCard({ cardW, C }: { cardW: number; C: any }) {
 }
 
 // ─────────────────────────────────────────────────────────
+// Premium App Store Rating Modal Overlay
+// ─────────────────────────────────────────────────────────
+interface RatingModalProps {
+  C: any;
+  isDark: boolean;
+  rating: number;
+  setRating: (r: number) => void;
+  onSubmit: () => void;
+  onLater: () => void;
+  width: number;
+}
+
+function RatingModal({ C, isDark, rating, setRating, onSubmit, onLater, width }: RatingModalProps) {
+  const modalScale = useSharedValue(0.85);
+  const modalOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    modalScale.value = withSpring(1, { damping: 15, stiffness: 180 });
+    modalOpacity.value = withTiming(1, { duration: 250 });
+  }, []);
+
+  const modalStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: modalScale.value }],
+    opacity: modalOpacity.value,
+  }));
+
+  const handleStarPress = (r: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setRating(r);
+  };
+
+  return (
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.65)', justifyContent: 'center', alignItems: 'center', zIndex: 999, paddingHorizontal: 20 }]}>
+      <Animated.View
+        style={[
+          {
+            width: Math.min(width - 40, 360),
+            backgroundColor: C.card,
+            borderRadius: 28,
+            borderWidth: 1.5,
+            borderColor: C.cardBorder,
+            padding: 24,
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 12 },
+            shadowOpacity: 0.3,
+            shadowRadius: 24,
+            elevation: 10,
+            gap: 16,
+          },
+          modalStyle,
+        ]}
+      >
+        {/* Mascot Header */}
+        <View style={{ width: 90, height: 90, borderRadius: 45, backgroundColor: C.amberLight, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.amber + '40', marginBottom: 4 }}>
+          <OrbMascot state="happy" size={80} />
+        </View>
+
+        <Text style={{ color: C.text, fontSize: 20, fontWeight: '900', textAlign: 'center', letterSpacing: -0.5 }}>
+          Enjoying BiteFix?
+        </Text>
+
+        <Text style={{ color: C.textSub, fontSize: 13, fontWeight: '600', textAlign: 'center', lineHeight: 18, paddingHorizontal: 8 }}>
+          If you love clean food swaps & additive alerts, please take a moment to rate us on the App Store!
+        </Text>
+
+        {/* 5-Star Rating Indicators */}
+        <View style={{ flexDirection: 'row', gap: 10, marginVertical: 8 }}>
+          {[1, 2, 3, 4, 5].map((star) => {
+            const active = star <= rating;
+            return (
+              <TouchableOpacity
+                key={star}
+                onPress={() => handleStarPress(star)}
+                activeOpacity={0.7}
+                style={{
+                  width: 42,
+                  height: 42,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Star
+                  size={36}
+                  color={active ? '#FFC107' : C.cardBorder}
+                  fill={active ? '#FFC107' : 'transparent'}
+                  strokeWidth={2}
+                />
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Action Buttons */}
+        <View style={{ width: '100%', gap: 10, marginTop: 8 }}>
+          <TouchableOpacity
+            onPress={onSubmit}
+            activeOpacity={0.88}
+            style={{
+              width: '100%',
+              backgroundColor: C.amber,
+              borderRadius: 18,
+              paddingVertical: 14,
+              alignItems: 'center',
+              justifyContent: 'center',
+              shadowColor: C.amber,
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.3,
+              shadowRadius: 10,
+              elevation: 6,
+            }}
+          >
+            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900' }}>Submit Rating</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={onLater}
+            activeOpacity={0.7}
+            style={{
+              width: '100%',
+              paddingVertical: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ color: C.textMuted, fontSize: 13, fontWeight: '700' }}>Maybe Later</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    </View>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
 // SLIDES DATA CONFIGURATION (12 STEPS)
 // ─────────────────────────────────────────────────────────
 interface SlideData {
@@ -851,8 +985,8 @@ export default function OnboardingScreen() {
     amber: '#FF9500',
     amberLight: isDark ? 'rgba(255, 149, 0, 0.15)' : '#FFFBEB',
     amberMid: '#F59E0B',
-    red: '#EF4444',
-    redLight: isDark ? 'rgba(239, 68, 68, 0.15)' : '#FEF2F2',
+    red: '#FB7185',
+    redLight: isDark ? 'rgba(251, 113, 133, 0.15)' : '#FFF1F2',
     green: '#10B981',
     greenLight: isDark ? 'rgba(16, 185, 129, 0.15)' : '#ECFDF5',
     text: colors.text,
@@ -863,6 +997,8 @@ export default function OnboardingScreen() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [rating, setRating] = useState(5);
 
   // User State
   const [userName, setUserName] = useState('');
@@ -968,7 +1104,7 @@ export default function OnboardingScreen() {
         userGoal: mappedGoal,
       });
       setOnboardingComplete(true);
-      router.replace(user ? '/paywall' : '/auth');
+      setShowRatingModal(true);
     }
   };
 
@@ -1089,28 +1225,47 @@ export default function OnboardingScreen() {
                 style={{
                   width: '100%',
                   backgroundColor: C.amber,
-                  borderRadius: 18,
-                  paddingVertical: isShort ? 13 : 15,
+                  borderRadius: 22,
+                  paddingVertical: isShort ? 15 : 18,
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 8,
+                  gap: 10,
                   shadowColor: C.amber,
-                  shadowOffset: { width: 0, height: 6 },
-                  shadowOpacity: 0.25,
-                  shadowRadius: 12,
-                  elevation: 6,
+                  shadowOffset: { width: 0, height: 8 },
+                  shadowOpacity: 0.35,
+                  shadowRadius: 14,
+                  elevation: 8,
                 }}
               >
-                <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '800' }}>
+                <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '900', letterSpacing: 0.2 }}>
                   {slide.buttonLabel}
                 </Text>
-                {slide.isLast ? <Check size={16} color="#FFF" strokeWidth={3} /> : <ArrowRight size={16} color="#FFF" strokeWidth={2.5} />}
+                {slide.isLast ? <Check size={18} color="#FFF" strokeWidth={3} /> : <ArrowRight size={18} color="#FFF" strokeWidth={3} />}
               </TouchableOpacity>
             </Animated.View>
           </View>
         )}
       </View>
+
+      {/* App Store Rating Modal Overlay */}
+      {showRatingModal && (
+        <RatingModal
+          C={C}
+          isDark={isDark}
+          rating={rating}
+          setRating={setRating}
+          onSubmit={() => {
+            setShowRatingModal(false);
+            router.replace(user ? '/paywall' : '/auth');
+          }}
+          onLater={() => {
+            setShowRatingModal(false);
+            router.replace(user ? '/paywall' : '/auth');
+          }}
+          width={width}
+        />
+      )}
     </KeyboardAvoidingView>
   );
 }
