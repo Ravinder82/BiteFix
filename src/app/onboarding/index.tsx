@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
-import { Camera } from 'expo-camera';
+import { Camera, useCameraPermissions } from 'expo-camera';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -765,29 +765,50 @@ function HealthAnalysisCalculationCard({ cardW, C, onComplete }: { cardW: number
 // ─────────────────────────────────────────────────────────
 function InstantResultSummaryCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: boolean }) {
   const features = [
-    { title: 'Food Processing Level', desc: 'Is it natural or factory-made?', icon: <Activity size={12} color="#FF9500" /> },
-    { title: 'Overall Health Grade', desc: 'Easy A to E safety rating', icon: <Sparkles size={12} color="#34C759" /> },
-    { title: 'Gut Safety Shield', desc: 'Warns you about stomach irritants', icon: <ShieldAlert size={12} color="#FF3B30" /> },
-    { title: 'Artificial Color Finder', desc: 'Flags chemicals like Red 40', icon: <Search size={12} color="#AF52DE" /> },
-    { title: 'Hidden Sugar Alert', desc: 'Tells you sugar in teaspoons', icon: <Zap size={12} color="#FFCC00" /> },
-    { title: 'Healthy Swaps', desc: 'Better alternatives in 1 tap', icon: <RefreshCw size={12} color="#007AFF" /> },
+    { title: 'Processing Level', desc: 'Is it natural or factory-made?', icon: <Activity size={16} color="#FF9500" /> },
+    { title: 'Health Grade', desc: 'Easy A to E safety rating', icon: <Sparkles size={16} color="#34C759" /> },
+    { title: 'Gut Shield', desc: 'Warns about stomach irritants', icon: <ShieldAlert size={16} color="#FF3B30" /> },
+    { title: 'Color Finder', desc: 'Flags chemicals like Red 40', icon: <Search size={16} color="#AF52DE" /> },
+    { title: 'Sugar Alert', desc: 'Tells you sugar in teaspoons', icon: <Zap size={16} color="#FFCC00" /> },
+    { title: 'Healthy Swaps', desc: 'Better alternatives in 1 tap', icon: <RefreshCw size={16} color="#007AFF" /> },
   ];
 
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.primary, padding: 14, gap: 10 }}>
-      <Text style={{ color: C.primary, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', textAlign: 'center', letterSpacing: 0.5 }}>
-        Your Scanner Features
+    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 28, borderWidth: 2, borderColor: C.primary, padding: 18, gap: 14, overflow: 'hidden', shadowColor: C.primary, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 10 }}>
+      {/* Dynamic Background Glow */}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
+      
+      <Text style={{ color: C.primary, fontSize: 13, fontWeight: '900', textTransform: 'uppercase', textAlign: 'center', letterSpacing: 1 }}>
+        Unlocked Scanner Features
       </Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'space-between' }}>
-        {features.map((f, i) => (
-          <View key={i} style={{ width: '48%', backgroundColor: C.cardInner, borderRadius: 12, padding: 8, borderWidth: 1, borderColor: C.cardBorder, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            {f.icon}
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: C.text, fontSize: 11, fontWeight: '800' }}>{f.title}</Text>
-              <Text style={{ color: C.textMuted, fontSize: 8.5, fontWeight: '600' }}>{f.desc}</Text>
-            </View>
-          </View>
-        ))}
+      
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between' }}>
+        {features.map((f, i) => {
+          // Add micro-animation delays for staggering effect
+          const slideIn = useSharedValue(20);
+          const fade = useSharedValue(0);
+          useEffect(() => {
+            slideIn.value = withDelay(i * 100, withSpring(0, { damping: 12, stiffness: 100 }));
+            fade.value = withDelay(i * 100, withTiming(1, { duration: 400 }));
+          }, []);
+          
+          const animStyle = useAnimatedStyle(() => ({
+            transform: [{ translateY: slideIn.value }],
+            opacity: fade.value,
+          }));
+
+          return (
+            <Animated.View key={i} style={[{ width: '48%', backgroundColor: C.cardInner, borderRadius: 16, padding: 12, borderWidth: 1, borderColor: C.cardBorder, gap: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8 }, animStyle]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View style={{ padding: 6, backgroundColor: C.card, borderRadius: 10, borderWidth: 1, borderColor: C.cardBorder }}>
+                  {f.icon}
+                </View>
+                <Text style={{ color: C.text, fontSize: 12, fontWeight: '900', flex: 1, lineHeight: 14 }}>{f.title}</Text>
+              </View>
+              <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '700', lineHeight: 12 }}>{f.desc}</Text>
+            </Animated.View>
+          );
+        })}
       </View>
     </View>
   );
@@ -797,16 +818,35 @@ function InstantResultSummaryCard({ cardW, C, isDark }: { cardW: number; C: any;
 // STEP 12: Paywall Transition Summary Card
 // ─────────────────────────────────────────────────────────
 function PaywallTransitionCard({ cardW, C }: { cardW: number; C: any }) {
+  const shieldScale = useSharedValue(0.8);
+  const glowOpacity = useSharedValue(0.4);
+
+  useEffect(() => {
+    shieldScale.value = withSpring(1, { damping: 10, stiffness: 80 });
+    glowOpacity.value = withRepeat(withTiming(0.8, { duration: 1500, easing: Easing.inOut(Easing.sin) }), -1, true);
+  }, []);
+
+  const shieldAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: shieldScale.value }],
+  }));
+  const glowAnimStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
+  }));
+
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.primary, padding: 20, gap: 12, alignItems: 'center' }}>
-      <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: C.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
-        <Award size={24} color={C.primary} />
-      </View>
-      <Text style={{ color: C.text, fontSize: 16, fontWeight: '900', textAlign: 'center' }}>
+    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 32, borderWidth: 2, borderColor: C.primary, padding: 24, gap: 16, alignItems: 'center', overflow: 'hidden', shadowColor: C.primary, shadowOffset: { width: 0, height: 16 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 12 }}>
+      {/* Background ambient gradient */}
+      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary }, glowAnimStyle]} />
+      
+      <Animated.View style={[{ width: 90, height: 90, borderRadius: 45, backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.15, shadowRadius: 15 }, shieldAnimStyle]}>
+        <ShieldCheck size={50} color={C.primary} strokeWidth={2.5} />
+      </Animated.View>
+
+      <Text style={{ color: '#FFF', fontSize: 22, fontWeight: '900', textAlign: 'center', letterSpacing: -0.5, marginTop: 4 }}>
         Your Custom Food Shield is Ready!
       </Text>
-      <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '600', textAlign: 'center', lineHeight: 16 }}>
-        Get unlimited barcode scans, instant chemical warnings, and healthy swaps.
+      <Text style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: 14, fontWeight: '700', textAlign: 'center', lineHeight: 20, paddingHorizontal: 10 }}>
+        Get unlimited barcode scans, instant chemical warnings, and personalized healthy swaps.
       </Text>
     </View>
   );
@@ -992,6 +1032,7 @@ export default function OnboardingScreen() {
   const { colors, isDark } = useTheme();
   const { setProfile, setOnboardingComplete, toggleAllergenFilter, allergenFilters } = useAppStore();
   const { user } = useAuthStore();
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
   const C = {
     bg: colors.background,
@@ -1100,9 +1141,11 @@ export default function OnboardingScreen() {
 
     // Request camera permission on Step 11 (Scan Intelligence) and Step 12 (Paywall Transition)
     if (currentSlide === 10 || currentSlide === 11) {
-      try {
-        await Camera.requestCameraPermissionsAsync();
-      } catch (_) {}
+      if (!cameraPermission?.granted && cameraPermission?.canAskAgain) {
+        try {
+          await requestCameraPermission();
+        } catch (_) {}
+      }
     }
 
     if (currentSlide < SLIDES.length - 1) {
