@@ -11,7 +11,7 @@ import * as Haptics from 'expo-haptics';
 export default function DeleteAccountScreen() {
   const { colors } = useTheme();
   const { clearAllData } = useAppStore();
-  const { deleteAccount } = useAuth();
+  const { deleteAccount, signOut } = useAuth();
   const [confirmText, setConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -45,14 +45,26 @@ export default function DeleteAccountScreen() {
       );
     } catch (err: any) {
       console.error('Account Deletion Error:', err);
-      // Apple require Re-authentication if credentials are stale before deleting a user
-      Alert.alert(
-        'Action Required',
-        'For security reasons, you must log out and sign back in to delete your account.',
-        [
-          { text: 'OK' }
-        ]
-      );
+      
+      if (err.code === 'auth/requires-recent-login' || (err.message && err.message.includes('auth/requires-recent-login'))) {
+        Alert.alert(
+          'Re-authentication Required',
+          'For security reasons, you must log in again to delete your account. Do you want to log out now?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { 
+              text: 'Log Out', 
+              onPress: async () => {
+                await signOut();
+                router.replace('/auth');
+              },
+              style: 'destructive'
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Error', err.message || 'Failed to delete account. Please try again.');
+      }
     } finally {
       setIsDeleting(false);
     }
