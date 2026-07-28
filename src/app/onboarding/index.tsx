@@ -109,6 +109,77 @@ function LuxurySafetyIcon() {
   );
 }
 
+function SymptomSlumpIcon() {
+  return (
+    <Svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <Defs>
+        <SvgLinearGradient id="slumpGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#9E9E9E" />
+          <Stop offset="100%" stopColor="#424242" />
+        </SvgLinearGradient>
+      </Defs>
+      <Path d="M17 5H3C1.9 5 1 5.9 1 7V17C1 18.1 1.9 19 3 19H17C18.1 19 19 18.1 19 17V7C19 5.9 18.1 5 17 5ZM17 17H3V7H17V17ZM21 9H23V15H21V9Z" fill="url(#slumpGrad)" />
+      <Path d="M5 9H9V15H5V9Z" fill="#EF4444" />
+    </Svg>
+  );
+}
+
+function SymptomBloatIcon() {
+  return (
+    <Svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <Defs>
+        <SvgLinearGradient id="bloatGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#FF8A80" />
+          <Stop offset="100%" stopColor="#FF5252" />
+        </SvgLinearGradient>
+      </Defs>
+      <Path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM13 7H11V13H17V11H13V7Z" fill="url(#bloatGrad)" />
+    </Svg>
+  );
+}
+
+function SymptomFogIcon() {
+  return (
+    <Svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <Defs>
+        <SvgLinearGradient id="fogGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#80DEEA" />
+          <Stop offset="100%" stopColor="#00ACC1" />
+        </SvgLinearGradient>
+      </Defs>
+      <Path d="M19.35 10.04C18.67 6.59 15.64 4 12 4C9.11 4 6.6 5.64 5.35 8.04C2.34 8.36 0 10.91 0 14C0 17.31 2.69 20 6 20H19C21.76 20 24 17.76 24 15C24 12.36 21.95 10.22 19.35 10.04ZM19 18H6C3.79 18 2 16.21 2 14C2 11.95 3.53 10.24 5.56 10.03L6.63 9.92L7.13 8.97C8.08 7.14 9.94 6 12 6C14.89 6 17.39 8.01 17.85 10.86L18.06 12.16L19.35 12.25C20.89 12.36 22 13.59 22 15C22 16.65 20.65 18 19 18Z" fill="url(#fogGrad)" />
+    </Svg>
+  );
+}
+
+function SymptomCravingIcon() {
+  return (
+    <Svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <Defs>
+        <SvgLinearGradient id="cravingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#FFE082" />
+          <Stop offset="100%" stopColor="#FFB300" />
+        </SvgLinearGradient>
+      </Defs>
+      <Path d="M12 2L2 12L12 22L22 12L12 2ZM12 4.83L19.17 12L12 19.17L4.83 12L12 4.83Z" fill="url(#cravingGrad)" />
+    </Svg>
+  );
+}
+
+function SymptomFlareIcon() {
+  return (
+    <Svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <Defs>
+        <SvgLinearGradient id="flareGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <Stop offset="0%" stopColor="#FFAB91" />
+          <Stop offset="100%" stopColor="#D84315" />
+        </SvgLinearGradient>
+      </Defs>
+      <Path d="M12 2C6.49 2 2 6.49 2 12C2 17.51 6.49 22 12 22C17.51 22 22 17.51 22 12C22 6.49 17.51 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM11 7H13V9H11V7ZM11 11H13V17H11V11Z" fill="url(#flareGrad)" />
+    </Svg>
+  );
+}
+
 // ─────────────────────────────────────────────────────────
 // Animated Mascot Shadow Component
 // ─────────────────────────────────────────────────────────
@@ -356,12 +427,12 @@ function FoodSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any
 // STEP 4: Symptom & Energy Audit Card (Luxury List)
 // ─────────────────────────────────────────────────────────
 function SymptomAuditCard({ cardW, C, selected, onToggle }: { cardW: number; C: any; selected: string[]; onToggle: (s: string) => void }) {
-  const symptoms = [
-    { id: 'slumps', label: '🥱 Afternoon energy slumps' },
-    { id: 'bloating', label: '💨 Post-meal bloating' },
-    { id: 'brainfog', label: '🧠 Frequent brain fog' },
-    { id: 'cravings', label: '🍫 Sugar & snack cravings' },
-    { id: 'skin', label: '🧴 Skin flares & inflammation' },
+  const symptoms: { id: string; label: string; icon: React.ReactNode }[] = [
+    { id: 'slumps', label: 'Afternoon energy slumps', icon: <SymptomSlumpIcon /> },
+    { id: 'bloating', label: 'Post-meal bloating', icon: <SymptomBloatIcon /> },
+    { id: 'brainfog', label: 'Frequent brain fog', icon: <SymptomFogIcon /> },
+    { id: 'cravings', label: 'Sugar & snack cravings', icon: <SymptomCravingIcon /> },
+    { id: 'skin', label: 'Skin flares & inflammation', icon: <SymptomFlareIcon /> },
   ];
 
   return (
@@ -407,9 +478,14 @@ function SymptomAuditCard({ cardW, C, selected, onToggle }: { cardW: number; C: 
               paddingVertical: 12,
             }}
           >
-            <Text style={{ color: active ? C.red : C.text, fontSize: 13.5, fontWeight: '800' }}>
-              {s.label}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+              <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: active ? 'transparent' : C.card, alignItems: 'center', justifyContent: 'center' }}>
+                {s.icon}
+              </View>
+              <Text style={{ color: active ? C.red : C.text, fontSize: 13.5, fontWeight: '800', flex: 1 }}>
+                {s.label}
+              </Text>
+            </View>
             <View
               style={{
                 width: 18,
