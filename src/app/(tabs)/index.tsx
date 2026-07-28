@@ -619,7 +619,7 @@ export default function HomeScreen() {
 
 
                 {/* 5. Mascot */}
-                <Mascot state={mascotState} size={148} />
+                <Mascot state={mascotState} size={115} />
 
                 {/* 6. Score pill badge */}
                 <View style={{
@@ -658,7 +658,7 @@ export default function HomeScreen() {
               </View>
 
             {/* Sleek Pill Bar: Total Sugar */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, width: '100%', backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : '#F9FAFB', borderRadius: 16, borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.06)' : '#E5E7EB', paddingHorizontal: 16, paddingVertical: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 36, width: '100%', backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : '#F9FAFB', borderRadius: 16, borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.06)' : '#E5E7EB', paddingHorizontal: 16, paddingVertical: 10 }}>
               <View style={{ flexDirection: 'column' }}>
                 <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>Total Sugar</Text>
                 <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '500', marginTop: 2 }}>1 tsp = 4.2g (WHO)</Text>
