@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { useAppStore } from '../../stores/appStore';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
-import { ChevronRight, ArrowLeft, ShieldAlert, HeartHandshake, Eye, Moon, Layers, RotateCcw, LogOut, User, ShieldCheck, Sparkles, Filter, CreditCard } from 'lucide-react-native';
+import { ChevronRight, ArrowLeft, ShieldAlert, HeartHandshake, Eye, Moon, Layers, RotateCcw, LogOut, User, ShieldCheck, Sparkles, Filter, CreditCard, Mail, MessageSquare } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { iapService } from '../../services/iapService';
 import Constants from 'expo-constants';
@@ -56,29 +56,10 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
     Linking.openURL('https://apps.apple.com/account/subscriptions');
   };
 
-  const handleResetData = () => {
-    Alert.alert(
-      'Reset All Data',
-      'This will erase all your scanned food history. This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset',
-          style: 'destructive',
-          onPress: () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            clearAllData();
-            Alert.alert('Data Reset', 'All local data has been successfully cleared.');
-          },
-        },
-      ]
-    );
-  };
-
   const handleClearScans = () => {
     Alert.alert(
       'Clear Scan History',
-      'Are you sure you want to clear your scanned foods history?',
+      'Are you sure you want to clear all your scanned food history?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -86,7 +67,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
           style: 'destructive',
           onPress: () => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            clearScans();
+            clearAllData();
             Alert.alert('Scans Cleared', 'Your scan history has been successfully cleared.');
           },
         },
@@ -342,6 +323,23 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
           </View>
         </SettingsGroup>
 
+        {/* SUPPORT & FEEDBACK SECTION */}
+        <SettingsGroup title="Support & Feedback" colors={colors}>
+          <SettingsRowItem
+            label="Contact Support"
+            icon={<Mail size={16} color={colors.primary} />}
+            onPress={() => Linking.openURL('mailto:support@bitefixapp.com?subject=BiteFix%20Support%20Request')}
+            colors={colors}
+          />
+          <SettingsRowItem
+            label="Send App Feedback"
+            icon={<MessageSquare size={16} color={colors.primary} />}
+            onPress={() => Linking.openURL('mailto:feedback@bitefixapp.com?subject=BiteFix%20App%20Feedback')}
+            colors={colors}
+            isLast
+          />
+        </SettingsGroup>
+
         {/* COMPLIANCE & LEGAL SECTION */}
         <SettingsGroup title="Legal & Compliance" colors={colors}>
           <SettingsRowItem
@@ -371,13 +369,6 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
             label="Clear Scan History"
             icon={<RotateCcw size={16} color={colors.secondary} />}
             onPress={handleClearScans}
-            colors={colors}
-          />
-          <SettingsRowItem
-            label="Reset App Data"
-            icon={<RotateCcw size={16} color={colors.error} />}
-            onPress={handleResetData}
-            textColor="red"
             colors={colors}
             isLast
           />
