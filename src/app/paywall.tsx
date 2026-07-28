@@ -24,7 +24,9 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
+  StyleSheet
 } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useTheme } from '../hooks/useTheme';
@@ -110,6 +112,24 @@ const FEATURES = [
 ] as const;
 
 // ─────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────
+// Animated List Item for Staggered Micro-Animations
+// ─────────────────────────────────────────────────────────
+function AnimatedListItem({ children, index, style }: { children: React.ReactNode; index: number; style?: any }) {
+  const slideIn = useSharedValue(20);
+  const fade = useSharedValue(0);
+  useEffect(() => {
+    slideIn.value = withDelay(index * 80, withSpring(0, { damping: 12, stiffness: 100 }));
+    fade.value = withDelay(index * 80, withTiming(1, { duration: 400 }));
+  }, []);
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: slideIn.value }],
+    opacity: fade.value,
+  }));
+  return <Animated.View style={[style, animStyle]}>{children}</Animated.View>;
+}
+
 export default function PaywallScreen() {
   const { colors } = useTheme();
   const { isPremium } = useAppStore();
@@ -363,30 +383,34 @@ export default function PaywallScreen() {
         {/* ── Feature List ─────────────────────────────────── */}
         <View style={{
           backgroundColor: colors.surface,
-          borderRadius: 24,
-          borderWidth: 1.5,
-          borderColor: colors.border,
-          padding: 16,
-          gap: 12,
+          borderRadius: 28,
+          borderWidth: 2,
+          borderColor: colors.success,
+          padding: 24,
+          gap: 16,
           marginBottom: 24,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.06,
-          shadowRadius: 12,
-          elevation: 2,
+          shadowColor: colors.success,
+          shadowOffset: { width: 0, height: 12 },
+          shadowOpacity: 0.2,
+          shadowRadius: 24,
+          elevation: 10,
+          overflow: 'hidden',
         }}>
-          {FEATURES.map((f) => {
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.success, opacity: 0.05 }]} />
+          {FEATURES.map((f, idx) => {
             const Icon = f.icon;
             return (
-              <View key={f.title} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <View style={{ width: 30, height: 30, borderRadius: 9, backgroundColor: f.bg, alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon size={16} color={f.color} />
+              <AnimatedListItem key={f.title} index={idx}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: f.bg, alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon size={16} color={f.color} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.text, fontSize: 12.5, fontWeight: '800' }}>{f.title}</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '600', marginTop: 2 }}>{f.subtitle}</Text>
+                  </View>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: colors.text, fontSize: 12.5, fontWeight: '800' }}>{f.title}</Text>
-                  <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '500', marginTop: 1 }}>{f.subtitle}</Text>
-                </View>
-              </View>
+              </AnimatedListItem>
             );
           })}
         </View>
@@ -519,17 +543,23 @@ function PlanCard({ title, displayPrice, subtitle, badge, isSelected, onPress, c
       activeOpacity={0.85}
       style={{
         backgroundColor: isSelected ? colors.success + '0A' : colors.surfaceRaised,
-        borderRadius: 18,
-        borderWidth: isSelected ? 2 : 1.5,
+        borderRadius: 24,
+        borderWidth: 2,
         borderColor: isSelected ? colors.success : colors.border,
-        padding: 14,
+        padding: 18,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         overflow: 'hidden',
         position: 'relative',
+        shadowColor: isSelected ? colors.success : '#000',
+        shadowOffset: { width: 0, height: isSelected ? 8 : 4 },
+        shadowOpacity: isSelected ? 0.15 : 0.05,
+        shadowRadius: isSelected ? 16 : 8,
+        elevation: isSelected ? 6 : 2,
       }}
     >
+      {isSelected && <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.success, opacity: 0.05 }]} />}
       {/* Discount badge */}
       {badge && (
         <View style={{
