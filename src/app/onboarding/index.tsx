@@ -1102,6 +1102,17 @@ export default function OnboardingScreen() {
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [rating, setRating] = useState(5);
 
+  const hasRequestedCamera = React.useRef(false);
+
+  useEffect(() => {
+    if ((currentSlide === 10 || currentSlide === 11) && !hasRequestedCamera.current) {
+      if (cameraPermission && !cameraPermission.granted && cameraPermission.canAskAgain) {
+        hasRequestedCamera.current = true;
+        requestCameraPermission().catch(() => {});
+      }
+    }
+  }, [currentSlide, cameraPermission]);
+
   // User State
   const [userName, setUserName] = useState('');
   const [userGoals, setUserGoals] = useState<GoalOption[]>([]);
@@ -1182,15 +1193,6 @@ export default function OnboardingScreen() {
     if (currentSlide === 0 && !userName.trim()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
-    }
-
-    // Request camera permission on Step 11 (Scan Intelligence) and Step 12 (Paywall Transition)
-    if (currentSlide === 10 || currentSlide === 11) {
-      if (!cameraPermission?.granted && cameraPermission?.canAskAgain) {
-        try {
-          await requestCameraPermission();
-        } catch (_) {}
-      }
     }
 
     if (currentSlide < SLIDES.length - 1) {
