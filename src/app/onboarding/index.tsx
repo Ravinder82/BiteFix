@@ -979,7 +979,7 @@ export default function OnboardingScreen() {
 
   const slide = SLIDES[currentSlide] || SLIDES[0];
   const isShort = height < 700;
-  const orbSize = Math.min(Math.round(width * 0.50), 200);
+  const orbSize = Math.min(Math.round(width * 0.38), 150);
   const cardW = Math.min(width - 32, 380);
 
   const renderTitle = () => {
