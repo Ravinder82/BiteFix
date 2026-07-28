@@ -54,8 +54,8 @@ const GOLD = '#D4AF37';
 // ── Static price fallbacks (shown before store loads) ─────
 // These match what you set in App Store Connect.
 const FALLBACK_PRICES: Record<PlanTier, { displayPrice: string; subtitle: string }> = {
-  monthly: { displayPrice: '$5.99', subtitle: 'Billed monthly · Flexible' },
-  annual:  { displayPrice: '$17.99', subtitle: '$1.50 / month · Billed yearly' },
+  monthly: { displayPrice: '$5.99', subtitle: 'Billed monthly · Cancel Anytime' },
+  annual: { displayPrice: '$17.99', subtitle: '$1.50 / month · Billed yearly · Cancel Anytime' },
 };
 
 // ── Feature list ─────────────────────────────────────────
@@ -475,8 +475,8 @@ export default function PaywallScreen() {
           {isProcessing
             ? <ActivityIndicator color="#FFFFFF" size="small" />
             : <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 0.6 }}>
-                SUBSCRIBE NOW
-              </Text>
+              SUBSCRIBE NOW
+            </Text>
           }
         </TouchableOpacity>
 

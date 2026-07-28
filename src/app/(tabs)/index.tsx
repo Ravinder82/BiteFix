@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { View, ScrollView, TouchableOpacity, SafeAreaView, Animated, StyleSheet, Modal, PanResponder, Alert } from 'react-native';
+import { View, ScrollView, TouchableOpacity, SafeAreaView, Animated, Modal, PanResponder, Alert } from 'react-native';
 import { Text } from '@/components/Text';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
@@ -10,10 +10,10 @@ import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
 import ProductHeroCardDashboard from '../../components/features/ProductHeroCardDashboard';
-import { ScanBarcode, ArrowRight, Settings, Bookmark, ArrowUpRight, Trash2, X, Sparkles, RefreshCw, ShieldCheck } from 'lucide-react-native';
+import { ScanBarcode, ArrowRight, Settings, Bookmark, ArrowUpRight, Trash2, X, ShieldCheck } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { getBiteFixScoreColor, formatWeight, getNovaColor } from '../../utils/format';
-import Svg, { Circle, Path, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop, G } from 'react-native-svg';
+import Svg, { Circle, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop, G } from 'react-native-svg';
 import { CollectionItem } from '../../types/app.types';
 import { mapToBiteFixCategory } from '../../utils/categoryMapper';
 
@@ -241,31 +241,6 @@ export default function HomeScreen() {
   const latestScan = scans[0];
   const shineX = useSharedValue(-220);
 
-  // Animated rotation for the Food Alchemist Card orbital ring
-  const orbitRotation1 = useSharedValue(0);
-  const orbitRotation2 = useSharedValue(0);
-
-  useEffect(() => {
-    orbitRotation1.value = withRepeat(
-      withTiming(360, { duration: 12000, easing: Easing.linear }),
-      -1,
-      false
-    );
-    orbitRotation2.value = withRepeat(
-      withTiming(-360, { duration: 20000, easing: Easing.linear }),
-      -1,
-      false
-    );
-  }, []);
-
-  const rotateStyle1 = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${orbitRotation1.value}deg` }],
-  }));
-
-  const rotateStyle2 = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${orbitRotation2.value}deg` }],
-  }));
-
   useEffect(() => {
     shineX.value = withRepeat(
       withSequence(
@@ -276,31 +251,6 @@ export default function HomeScreen() {
       false
     );
   }, []);
-
-  // Potion and wave animation shared values for Gut Health progress bar
-  const gutWave1 = useSharedValue(0);
-  const gutWave2 = useSharedValue(0);
-
-  useEffect(() => {
-    gutWave1.value = withRepeat(
-      withTiming(-200, { duration: 3000, easing: Easing.linear }),
-      -1,
-      false
-    );
-    gutWave2.value = withRepeat(
-      withTiming(200, { duration: 4500, easing: Easing.linear }),
-      -1,
-      false
-    );
-  }, []);
-
-  const gutWaveStyle1 = useAnimatedStyle(() => ({
-    transform: [{ translateX: gutWave1.value }],
-  }));
-
-  const gutWaveStyle2 = useAnimatedStyle(() => ({
-    transform: [{ translateX: gutWave2.value - 200 }],
-  }));
 
 
 
