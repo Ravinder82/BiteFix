@@ -463,7 +463,7 @@ function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
 
       {/* Massive Graphic Callout */}
       <View style={{ alignItems: 'center' }}>
-        <Text style={{ color: C.red, fontSize: 42, fontWeight: '950', letterSpacing: -1.5 }}>73%</Text>
+        <Text style={{ color: C.red, fontSize: 42, fontWeight: '900', letterSpacing: -1.5 }}>73%</Text>
         <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: -2 }}>
           OF PACKAGED FOODS
         </Text>
