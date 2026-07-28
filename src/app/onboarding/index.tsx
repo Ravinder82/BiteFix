@@ -806,10 +806,14 @@ export default function OnboardingScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       setCurrentSlide((s) => s + 1);
     } else {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const mappedGoal =
+        userGoals[0] === 'energy' || userGoals[0] === 'gut_microbiome' ? 'healthy_habits' :
+        userGoals[0] === 'weight_management' ? 'clean_swaps' :
+        userGoals[0] === 'family_safety' ? 'ultra_processed' : 'none';
+
       setProfile({
         userName: userName.trim() || 'Friend',
-        userGoal: userGoals[0] || 'energy',
+        userGoal: mappedGoal,
       });
       setOnboardingComplete(true);
       router.replace(user ? '/paywall' : '/auth');
