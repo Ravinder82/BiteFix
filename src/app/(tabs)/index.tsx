@@ -741,7 +741,7 @@ export default function HomeScreen() {
 
             {/* Sleek Shimmering Pill Bar: Total Sugar */}
             <LinearGradient
-              colors={isDark ? ['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.02)'] : ['#FFFFFF', '#F0FDF4']}
+              colors={isDark ? ['rgba(255,255,255,0.15)', 'rgba(240, 255, 231, 0.02)'] : ['#FFFFFF', '#F0FDF4']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={{
@@ -911,10 +911,7 @@ export default function HomeScreen() {
                   style={{
                     height: '100%',
                     width: `${Math.max(10, avgGutHealthScore)}%`,
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.01)',
-                    borderRadius: 12,
-                    borderWidth: 1.5,
-                    borderColor: avgGutHealthScore >= 75 ? '#A855F7' : avgGutHealthScore >= 50 ? '#D946EF' : '#F43F5E',
+                    borderRadius: 13,
                     overflow: 'hidden',
                     position: 'relative',
                   }}
@@ -953,7 +950,7 @@ export default function HomeScreen() {
                     }}
                   />
 
-                  {/* Glowing vertical marker outline at the right edge of fill */}
+                  {avgGutHealthScore < 100 && (
                   <View
                     style={{
                       position: 'absolute',
@@ -970,6 +967,7 @@ export default function HomeScreen() {
                       zIndex: 20,
                     }}
                   />
+                  )}
                 </View>
               </View>
 
