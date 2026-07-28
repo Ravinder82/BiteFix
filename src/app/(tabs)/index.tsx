@@ -664,23 +664,21 @@ export default function HomeScreen() {
               </View>
             
             {/* New Metrics Row: Avg Nutri-Score & Total Sugar */}
-            {basketItemCount > 0 && (
-              <View style={{ flexDirection: 'row', gap: 12, marginTop: 12, width: '100%', paddingHorizontal: 16 }}>
-                <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#F9FAFB', borderRadius: 20, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB', padding: 14, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8 }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', marginBottom: 4, textAlign: 'center' }}>AVG NUTRI-SCORE</Text>
-                  <Text style={{ color: avgNutriScore === 'a' || avgNutriScore === 'b' ? colors.primary : avgNutriScore === 'c' ? '#F5A623' : '#EF4444', fontSize: 24, fontWeight: '900' }}>
-                    {avgNutriScore ? avgNutriScore.toUpperCase() : '-'}
-                  </Text>
-                </View>
-
-                <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#F9FAFB', borderRadius: 20, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB', padding: 14, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8 }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', marginBottom: 4, textAlign: 'center' }}>TOTAL SUGAR</Text>
-                  <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900' }}>
-                    {totalSugarTeaspoons.toFixed(1)} <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textMuted }}>tsp</Text>
-                  </Text>
-                </View>
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 12, width: '100%', paddingHorizontal: 16 }}>
+              <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#F9FAFB', borderRadius: 20, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB', padding: 14, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8 }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', marginBottom: 4, textAlign: 'center' }}>AVG NUTRI-SCORE</Text>
+                <Text style={{ color: avgNutriScore === 'a' || avgNutriScore === 'b' ? colors.primary : avgNutriScore === 'c' ? '#F5A623' : '#EF4444', fontSize: 24, fontWeight: '900' }}>
+                  {avgNutriScore ? avgNutriScore.toUpperCase() : '-'}
+                </Text>
               </View>
-            )}
+
+              <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#F9FAFB', borderRadius: 20, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB', padding: 14, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8 }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', marginBottom: 4, textAlign: 'center' }}>TOTAL SUGAR</Text>
+                <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900' }}>
+                  {totalSugarTeaspoons.toFixed(1)} <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textMuted }}>tsp</Text>
+                </Text>
+              </View>
+            </View>
           </View>
 
 
