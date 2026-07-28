@@ -281,10 +281,10 @@ type GoalOption = 'energy' | 'gut_microbiome' | 'weight_management' | 'family_sa
 
 function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; selected: GoalOption[]; onSelect: (vals: GoalOption[]) => void }) {
   const options: { label: string; tag: string; icon: React.ReactNode; value: GoalOption }[] = [
-    { label: 'Increase Daily Energy', tag: 'Reduce Fatigue & Slumps', icon: <LuxuryEnergyIcon />, value: 'energy' },
-    { label: 'Improve Gut Microbiome', tag: 'Stop Bloating & Gas', icon: <LuxuryGutIcon />, value: 'gut_microbiome' },
-    { label: 'Weight Management', tag: 'Cut Hidden Sugars & Carbs', icon: <LuxuryWeightIcon />, value: 'weight_management' },
-    { label: 'Family Food Safety', tag: 'Avoid Chemical Additives', icon: <LuxurySafetyIcon />, value: 'family_safety' },
+    { label: 'Feel more energized', tag: 'Avoid foods that cause afternoon slumps', icon: <LuxuryEnergyIcon />, value: 'energy' },
+    { label: 'Better digestion', tag: 'Stay away from gut-irritating additives', icon: <LuxuryGutIcon />, value: 'gut_microbiome' },
+    { label: 'Manage weight easily', tag: 'Flag hidden sugars and cheap syrups', icon: <LuxuryWeightIcon />, value: 'weight_management' },
+    { label: 'Protect family health', tag: 'Keep artificial colors out of your kitchen', icon: <LuxurySafetyIcon />, value: 'family_safety' },
   ];
 
   const handleToggle = (val: GoalOption) => {
@@ -327,7 +327,7 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
         }}
       >
         <Text style={{ color: C.amber, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-          💡 Multiple Selection Enabled
+          💡 Select as many as you want
         </Text>
       </View>
 
@@ -385,9 +385,9 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
 // ─────────────────────────────────────────────────────────
 function FoodSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any; value: string; onSelect: (v: string) => void }) {
   const options = [
-    { label: 'Daily / Multiple times a day', desc: 'Rely heavily on packaged snacks & meals', val: 'daily', color: C.red },
-    { label: '3 to 4 times a week', desc: 'Mix of fresh foods and grocery snacks', val: 'weekly', color: C.amber },
-    { label: 'Rarely / Whole Foods', desc: 'Cook almost everything fresh from scratch', val: 'rarely', color: C.green },
+    { label: 'Every single day', desc: 'Lots of packaged snacks, boxed meals, or canned foods', val: 'daily', color: C.red },
+    { label: 'A few times a week', desc: 'Some home cooking mixed with store-bought snacks', val: 'weekly', color: C.amber },
+    { label: 'Rarely / Whole foods only', desc: 'Eat fresh and cook almost everything from scratch', val: 'rarely', color: C.green },
   ];
 
   return (
@@ -428,11 +428,11 @@ function FoodSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any
 // ─────────────────────────────────────────────────────────
 function SymptomAuditCard({ cardW, C, selected, onToggle }: { cardW: number; C: any; selected: string[]; onToggle: (s: string) => void }) {
   const symptoms: { id: string; label: string; icon: React.ReactNode }[] = [
-    { id: 'slumps', label: 'Afternoon energy slumps', icon: <SymptomSlumpIcon /> },
-    { id: 'bloating', label: 'Post-meal bloating', icon: <SymptomBloatIcon /> },
-    { id: 'brainfog', label: 'Frequent brain fog', icon: <SymptomFogIcon /> },
-    { id: 'cravings', label: 'Sugar & snack cravings', icon: <SymptomCravingIcon /> },
-    { id: 'skin', label: 'Skin flares & inflammation', icon: <SymptomFlareIcon /> },
+    { id: 'slumps', label: 'Tired in the afternoon', icon: <SymptomSlumpIcon /> },
+    { id: 'bloating', label: 'Stomach bloat after eating', icon: <SymptomBloatIcon /> },
+    { id: 'brainfog', label: 'Trouble focusing / fog', icon: <SymptomFogIcon /> },
+    { id: 'cravings', label: 'Strong sugar cravings', icon: <SymptomCravingIcon /> },
+    { id: 'skin', label: 'Skin flares or irritation', icon: <SymptomFlareIcon /> },
   ];
 
   return (
@@ -453,7 +453,7 @@ function SymptomAuditCard({ cardW, C, selected, onToggle }: { cardW: number; C: 
       }}
     >
       <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '800', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-        Check symptoms you experience:
+        Check the things you want to fix:
       </Text>
 
       {symptoms.map((s) => {
@@ -533,7 +533,7 @@ function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.redLight, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: C.red + '30' }}>
         <AlertTriangle size={14} color={C.red} />
         <Text style={{ color: C.red, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-          HIGH SENSITIVITY ALERT
+          WARNING
         </Text>
       </View>
 
@@ -541,20 +541,20 @@ function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
       <View style={{ alignItems: 'center' }}>
         <Text style={{ color: C.red, fontSize: 42, fontWeight: '900', letterSpacing: -1.5 }}>73%</Text>
         <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: -2 }}>
-          OF PACKAGED FOODS
+          OF STORE FOODS
         </Text>
       </View>
 
       <Text style={{ color: C.text, fontSize: 13.5, fontWeight: '800', textAlign: 'center', lineHeight: 18 }}>
-        Classified as <Text style={{ color: C.red, fontWeight: '900' }}>NOVA 4 Ultra-Processed</Text> with chemical agents not found in normal diets.
+        Are heavily processed in factories with chemical ingredients you can't buy in a normal store.
       </Text>
 
       {/* Core Highlights */}
       <View style={{ width: '100%', gap: 8, marginTop: 4 }}>
         {[
-          'Industrial emulsifiers damaging gut barrier',
-          'Synthetic dyes triggering attention issues',
-          'Artificial sweeteners harming digestion',
+          'Chemical mixing agents that irritate your gut',
+          'Artificial colors that affect kids\' focus & behavior',
+          'Fake sugars that confuse your body\'s metabolism',
         ].map((point, idx) => (
           <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.cardInner, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: C.cardBorder }}>
             <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.red }} />
@@ -571,10 +571,10 @@ function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
 // ─────────────────────────────────────────────────────────
 function AdditivePrioritiesCard({ cardW, C, selected, onToggle }: { cardW: number; C: any; selected: string[]; onToggle: (a: string) => void }) {
   const additives = [
-    { id: 'dyes', label: 'Synthetic Food Dyes', desc: 'Red 40, Yellow 5, Blue 1' },
-    { id: 'hfcs', label: 'High Fructose Corn Syrup', desc: 'Processed sugars & syrups' },
-    { id: 'emulsifiers', label: 'Gut Emulsifiers & Gums', desc: 'Polysorbate 80, Xanthan Gum' },
-    { id: 'oils', label: 'Refined Seed Oils', desc: 'Canola, Soybean, Palm Oil' },
+    { id: 'dyes', label: 'Artificial Food Colors', desc: 'Red 40, Yellow 5, Blue 1, etc.' },
+    { id: 'hfcs', label: 'Cheap Sugars & Syrups', desc: 'High fructose corn syrup & fake sweeteners' },
+    { id: 'emulsifiers', label: 'Chemical Thickeners & Gums', desc: 'Agents that can upset your stomach' },
+    { id: 'oils', label: 'Processed Seed Oils', desc: 'Canola oil, soybean oil, palm oil' },
   ];
 
   return (
@@ -622,7 +622,7 @@ function AllergenDefenseCard({ cardW, C, selected, onToggle }: { cardW: number; 
   return (
     <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.cardBorder, padding: 18, gap: 14 }}>
       <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-        Enable Red Alerts on Scans:
+        Choose what you must stay away from:
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {allergens.map((item) => {
@@ -659,9 +659,9 @@ function AllergenDefenseCard({ cardW, C, selected, onToggle }: { cardW: number; 
 // ─────────────────────────────────────────────────────────
 function CommitmentLevelCard({ cardW, C, value, onSelect }: { cardW: number; C: any; value: string; onSelect: (v: string) => void }) {
   const levels = [
-    { id: 'curious', title: 'Curious & Learning', desc: 'Scan and review nutritional facts' },
-    { id: 'moderate', title: 'Moderate Clean Swaps', desc: 'Replace moderate ingredient alerts' },
-    { id: 'committed', title: '100% Whole Foods Clean', desc: 'Commit to zero ultra-processed items' },
+    { id: 'curious', title: 'Just curious', desc: 'I want to scan and learn what is inside my food' },
+    { id: 'moderate', title: 'Ready for easy swaps', desc: 'I want to replace bad foods with better options' },
+    { id: 'committed', title: '100% committed', desc: 'I want to completely cut out processed junk food' },
   ];
 
   return (
@@ -704,13 +704,13 @@ function SocialProofCard({ cardW, C }: { cardW: number; C: any }) {
         ))}
       </View>
       <Text style={{ color: C.text, fontSize: 13.5, fontWeight: '800', textAlign: 'center', lineHeight: 18 }}>
-        "BiteFix unmasked hidden ultra-processed food dyes in my daily protein bar. Found an A-Grade clean swap instantly!"
+        "BiteFix warned me about hidden factory chemicals in my favorite protein bar. I found a clean alternative in one second!"
       </Text>
       <Text style={{ color: C.amber, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
         — Sarah M., Verified User
       </Text>
       <View style={{ backgroundColor: C.cardInner, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: C.cardBorder }}>
-        <Text style={{ color: C.textSub, fontSize: 10.5, fontWeight: '800' }}>Backed by Open Food Facts Science</Text>
+        <Text style={{ color: C.textSub, fontSize: 10.5, fontWeight: '800' }}>Powered by the world's largest open food database</Text>
       </View>
     </View>
   );
@@ -721,12 +721,12 @@ function SocialProofCard({ cardW, C }: { cardW: number; C: any }) {
 // ─────────────────────────────────────────────────────────
 function HealthAnalysisCalculationCard({ cardW, C, onComplete }: { cardW: number; C: any; onComplete: () => void }) {
   const [progress, setProgress] = useState(0);
-  const [stepText, setStepText] = useState('Analyzing health goals...');
+  const [stepText, setStepText] = useState('Analyzing your goals...');
 
   useEffect(() => {
-    const t1 = setTimeout(() => { setProgress(35); setStepText('Calibrating NOVA 4 sensitivity...'); }, 800);
-    const t2 = setTimeout(() => { setProgress(70); setStepText('Setting up Gut Shield alerts...'); }, 1800);
-    const t3 = setTimeout(() => { setProgress(100); setStepText('Generating Clean Swap Matrix...'); }, 2800);
+    const t1 = setTimeout(() => { setProgress(35); setStepText('Setting up processing alerts...'); }, 800);
+    const t2 = setTimeout(() => { setProgress(70); setStepText('Calibrating gut warning triggers...'); }, 1800);
+    const t3 = setTimeout(() => { setProgress(100); setStepText('Finding clean upgrades for your foods...'); }, 2800);
     const t4 = setTimeout(() => { onComplete(); }, 3500);
 
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
@@ -749,18 +749,18 @@ function HealthAnalysisCalculationCard({ cardW, C, onComplete }: { cardW: number
 // ─────────────────────────────────────────────────────────
 function InstantResultSummaryCard({ cardW, C, isDark }: { cardW: number; C: any; isDark: boolean }) {
   const features = [
-    { title: 'NOVA Class', desc: 'Processing audit', icon: <Activity size={12} color="#FF9500" /> },
-    { title: 'Nutri-Score', desc: 'Traffic light grade', icon: <Sparkles size={12} color="#34C759" /> },
-    { title: 'Gut Shield', desc: 'Barrier alert', icon: <ShieldAlert size={12} color="#FF3B30" /> },
-    { title: 'Dye Detective', desc: 'Synthetic dyes', icon: <Search size={12} color="#AF52DE" /> },
-    { title: 'Hidden Sugar', desc: 'Teaspoon converter', icon: <Zap size={12} color="#FFCC00" /> },
-    { title: 'Smart Swaps', desc: 'Clean A-Grade match', icon: <RefreshCw size={12} color="#007AFF" /> },
+    { title: 'Food Processing Level', desc: 'Is it natural or factory-made?', icon: <Activity size={12} color="#FF9500" /> },
+    { title: 'Overall Health Grade', desc: 'Easy A to E safety rating', icon: <Sparkles size={12} color="#34C759" /> },
+    { title: 'Gut Safety Shield', desc: 'Warns you about stomach irritants', icon: <ShieldAlert size={12} color="#FF3B30" /> },
+    { title: 'Artificial Color Finder', desc: 'Flags chemicals like Red 40', icon: <Search size={12} color="#AF52DE" /> },
+    { title: 'Hidden Sugar Alert', desc: 'Tells you sugar in teaspoons', icon: <Zap size={12} color="#FFCC00" /> },
+    { title: 'Healthy Swaps', desc: 'Better alternatives in 1 tap', icon: <RefreshCw size={12} color="#007AFF" /> },
   ];
 
   return (
     <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.amber, padding: 14, gap: 10 }}>
       <Text style={{ color: C.amber, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', textAlign: 'center', letterSpacing: 0.5 }}>
-        6-Point Instant Scan Matrix
+        Your Scanner Features
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'space-between' }}>
         {features.map((f, i) => (
@@ -790,7 +790,7 @@ function PaywallTransitionCard({ cardW, C }: { cardW: number; C: any }) {
         Your Custom Food Shield is Ready!
       </Text>
       <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '600', textAlign: 'center', lineHeight: 16 }}>
-        Unlock unlimited barcode scanning, full additive alerts, and clean food swaps.
+        Get unlimited barcode scans, instant chemical warnings, and healthy swaps.
       </Text>
     </View>
   );
@@ -944,18 +944,18 @@ interface SlideData {
 }
 
 const SLIDES: SlideData[] = [
-  { step: 1, title: 'Welcome to BiteFix', highlight: 'BiteFix', subtitle: "Let's personalize your food scanner.", buttonLabel: 'Continue', isLast: false, mascotState: 'happy' },
-  { step: 2, title: 'Select Primary Goals', highlight: 'Primary Goals', subtitle: 'Tailor your scanner to focus on what matters.', buttonLabel: 'Continue', isLast: false, mascotState: 'idle' },
-  { step: 3, title: 'Food Sourcing Baseline', highlight: 'Food Sourcing', subtitle: 'How often do you consume pre-packaged foods?', buttonLabel: 'Continue', isLast: false, mascotState: 'idle' },
-  { step: 4, title: 'Energy & Gut Audit', highlight: 'Energy & Gut', subtitle: 'Select symptoms you experience frequently:', buttonLabel: 'Continue', isLast: false, mascotState: 'shocked' },
-  { step: 5, title: 'NOVA 4 Wake-Up Call', highlight: 'NOVA 4', subtitle: 'Most grocery foods are Ultra-Processed.', buttonLabel: 'I Want to Protect Myself', isLast: false, mascotState: 'shocked' },
-  { step: 6, title: 'Additive Priorities', highlight: 'Additive Priorities', subtitle: 'Select hidden ingredients to flag instantly:', buttonLabel: 'Continue', isLast: false, mascotState: 'idle' },
-  { step: 7, title: 'Personal Allergen Defense', highlight: 'Allergen Defense', subtitle: 'Lock ingredients with high-priority RED shields:', buttonLabel: 'Continue', isLast: false, mascotState: 'happy' },
-  { step: 8, title: 'Commitment Level', highlight: 'Commitment', subtitle: 'How committed are you to clean eating?', buttonLabel: 'Continue', isLast: false, mascotState: 'happy' },
-  { step: 9, title: 'Join 50,000+ Clean Eaters', highlight: '50,000+', subtitle: 'Backed by Open Food Facts Science.', buttonLabel: 'Build My Food Shield', isLast: false, mascotState: 'happy' },
-  { step: 10, title: 'Analyzing Health Profile...', highlight: 'Analyzing', subtitle: 'Calibrating custom Gut Shield & Clean Swap Matrix.', buttonLabel: 'Analyzing...', isLast: false, mascotState: 'happy' },
-  { step: 11, title: 'Instant Scan Intelligence', highlight: 'Scan Intelligence', subtitle: 'Your personalized 6-point scanner is ready.', buttonLabel: 'Unlock Full Access', isLast: false, mascotState: 'happy' },
-  { step: 12, title: 'Your Clean Journey Begins', highlight: 'Clean Journey', subtitle: 'Start your unlimited food scanning experience.', buttonLabel: 'Start My Clean Journey', isLast: true, mascotState: 'happy' },
+  { step: 1, title: 'Welcome to BiteFix', highlight: 'BiteFix', subtitle: "Let's set up your custom food scanner.", buttonLabel: 'Continue', isLast: false, mascotState: 'happy' },
+  { step: 2, title: 'What is your main goal?', highlight: 'main goal?', subtitle: 'We will customize the scanner just for you.', buttonLabel: 'Continue', isLast: false, mascotState: 'idle' },
+  { step: 3, title: 'Eating Habits Check', highlight: 'Eating Habits', subtitle: 'How often do you eat out or buy packaged food?', buttonLabel: 'Continue', isLast: false, mascotState: 'idle' },
+  { step: 4, title: 'Any daily struggles?', highlight: 'daily struggles?', subtitle: 'Select any options that you want to fix:', buttonLabel: 'Continue', isLast: false, mascotState: 'shocked' },
+  { step: 5, title: 'The Grocery Truth', highlight: 'Grocery Truth', subtitle: 'Most store-bought food is highly factory-made.', buttonLabel: 'I Want to Protect Myself', isLast: false, mascotState: 'shocked' },
+  { step: 6, title: 'Things to Avoid', highlight: 'Things to Avoid', subtitle: 'Choose what you want the app to warn you about:', buttonLabel: 'Continue', isLast: false, mascotState: 'idle' },
+  { step: 7, title: 'Personal Food Alerts', highlight: 'Food Alerts', subtitle: 'Select any ingredients you must stay away from:', buttonLabel: 'Continue', isLast: false, mascotState: 'happy' },
+  { step: 8, title: 'How ready are you?', highlight: 'ready are you?', subtitle: 'Choose the pace that feels right for you:', buttonLabel: 'Continue', isLast: false, mascotState: 'happy' },
+  { step: 9, title: 'Join 50,000+ Clean Eaters', highlight: '50,000+', subtitle: 'Start scanning groceries with confidence.', buttonLabel: 'Build My Food Shield', isLast: false, mascotState: 'happy' },
+  { step: 10, title: 'Creating Your Profile...', highlight: 'Creating', subtitle: 'Customizing your gut safety and swap options.', buttonLabel: 'Analyzing...', isLast: false, mascotState: 'happy' },
+  { step: 11, title: 'Your Scanner is Ready!', highlight: 'Scanner is Ready!', subtitle: 'Here is what we will show you on every scan:', buttonLabel: 'Unlock Full Access', isLast: false, mascotState: 'happy' },
+  { step: 12, title: 'Start Eating Cleaner', highlight: 'Eating Cleaner', subtitle: 'Say goodbye to chemical junk and hidden ingredients.', buttonLabel: 'Start My Clean Journey', isLast: true, mascotState: 'happy' },
 ];
 
 function DotIndicator({ active, C }: { active: boolean; C: any }) {
