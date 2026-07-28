@@ -199,6 +199,24 @@ function MascotShadow({ size, scaleStyle }: { size: number; scaleStyle: any }) {
   );
 }
 
+
+// ─────────────────────────────────────────────────────────
+// Animated List Item for Staggered Micro-Animations
+// ─────────────────────────────────────────────────────────
+function AnimatedListItem({ children, index, style }: { children: React.ReactNode; index: number; style?: any }) {
+  const slideIn = useSharedValue(20);
+  const fade = useSharedValue(0);
+  useEffect(() => {
+    slideIn.value = withDelay(index * 80, withSpring(0, { damping: 12, stiffness: 100 }));
+    fade.value = withDelay(index * 80, withTiming(1, { duration: 400 }));
+  }, []);
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: slideIn.value }],
+    opacity: fade.value,
+  }));
+  return <Animated.View style={[style, animStyle]}>{children}</Animated.View>;
+}
+
 // ─────────────────────────────────────────────────────────
 // STEP 1: Name Personalization Card
 // ─────────────────────────────────────────────────────────
@@ -208,18 +226,20 @@ function NameCard({ cardW, C, value, onChange }: { cardW: number; C: any; value:
       style={{
         width: cardW,
         backgroundColor: C.card,
-        borderRadius: 24,
-        borderWidth: 1.5,
-        borderColor: C.cardBorder,
-        padding: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.08,
-        shadowRadius: 20,
-        elevation: 6,
+        borderRadius: 28,
+        borderWidth: 2,
+        borderColor: C.primary,
+        padding: 24,
+        shadowColor: C.primary,
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.2,
+        shadowRadius: 24,
+        elevation: 10,
+        overflow: 'hidden',
         gap: 16,
       }}
     >
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
       <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2 }}>
         Personal Account Profile
       </Text>
@@ -301,18 +321,20 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
       style={{
         width: cardW,
         backgroundColor: C.card,
-        borderRadius: 24,
-        borderWidth: 1.5,
-        borderColor: C.cardBorder,
-        padding: 18,
-        gap: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.08,
-        shadowRadius: 20,
-        elevation: 6,
+        borderRadius: 28,
+        borderWidth: 2,
+        borderColor: C.primary,
+        padding: 20,
+        gap: 12,
+        shadowColor: C.primary,
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.2,
+        shadowRadius: 24,
+        elevation: 10,
+        overflow: 'hidden',
       }}
     >
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
       {/* Multi-Select Info Pill */}
       <View
         style={{
@@ -331,9 +353,10 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
         </Text>
       </View>
 
-      {options.map((opt) => {
+      {options.map((opt, idx) => {
         const isSelected = selected.includes(opt.value);
         return (
+          <AnimatedListItem key={opt.value} index={idx}>
           <TouchableOpacity
             key={opt.value}
             onPress={() => handleToggle(opt.value)}
@@ -374,6 +397,7 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
               {isSelected && <Check size={12} color="#FFFFFF" strokeWidth={3.5} />}
             </View>
           </TouchableOpacity>
+          </AnimatedListItem>
         );
       })}
     </View>
@@ -391,10 +415,12 @@ function FoodSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any
   ];
 
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.cardBorder, padding: 16, gap: 10 }}>
-      {options.map((opt) => {
+    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 28, borderWidth: 2, borderColor: C.primary, padding: 20, gap: 12, shadowColor: C.primary, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 10, overflow: 'hidden' }}>
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
+      {options.map((opt, idx) => {
         const isSelected = value === opt.val;
         return (
+          <AnimatedListItem key={opt.val} index={idx}>
           <TouchableOpacity
             key={opt.val}
             onPress={() => {
@@ -417,6 +443,7 @@ function FoodSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any
             </View>
             <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600', lineHeight: 14 }}>{opt.desc}</Text>
           </TouchableOpacity>
+          </AnimatedListItem>
         );
       })}
     </View>
@@ -440,25 +467,28 @@ function SymptomAuditCard({ cardW, C, selected, onToggle }: { cardW: number; C: 
       style={{
         width: cardW,
         backgroundColor: C.card,
-        borderRadius: 24,
-        borderWidth: 1.5,
-        borderColor: C.cardBorder,
-        padding: 16,
-        gap: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.08,
-        shadowRadius: 20,
-        elevation: 6,
+        borderRadius: 28,
+        borderWidth: 2,
+        borderColor: C.primary,
+        padding: 20,
+        gap: 12,
+        shadowColor: C.primary,
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.2,
+        shadowRadius: 24,
+        elevation: 10,
+        overflow: 'hidden',
       }}
     >
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
       <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '800', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
         Check the things you want to fix:
       </Text>
 
-      {symptoms.map((s) => {
+      {symptoms.map((s, idx) => {
         const active = selected.includes(s.id);
         return (
+          <AnimatedListItem key={s.id} index={idx}>
           <TouchableOpacity
             key={s.id}
             onPress={() => {
@@ -501,6 +531,7 @@ function SymptomAuditCard({ cardW, C, selected, onToggle }: { cardW: number; C: 
               {active && <Check size={12} color="#FFFFFF" strokeWidth={3.5} />}
             </View>
           </TouchableOpacity>
+          </AnimatedListItem>
         );
       })}
     </View>
@@ -516,19 +547,21 @@ function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
       style={{
         width: cardW,
         backgroundColor: C.card,
-        borderRadius: 24,
-        borderWidth: 1.5,
-        borderColor: C.red + '40',
-        padding: 20,
-        gap: 16,
+        borderRadius: 28,
+        borderWidth: 2,
+        borderColor: C.red,
+        padding: 24,
+        gap: 18,
         shadowColor: C.red,
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.06,
-        shadowRadius: 20,
-        elevation: 6,
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.25,
+        shadowRadius: 24,
+        elevation: 10,
         alignItems: 'center',
+        overflow: 'hidden',
       }}
     >
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.red, opacity: 0.04 }]} />
       {/* Custom Alert Badge */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.redLight, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: C.red + '30' }}>
         <AlertTriangle size={14} color={C.red} />
@@ -556,10 +589,12 @@ function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
           'Artificial colors that affect kids\' focus & behavior',
           'Fake sugars that confuse your body\'s metabolism',
         ].map((point, idx) => (
-          <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.cardInner, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: C.cardBorder }}>
+          <AnimatedListItem key={idx} index={idx}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.cardInner, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: C.cardBorder }}>
             <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.red }} />
             <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '600', flex: 1 }}>{point}</Text>
           </View>
+          </AnimatedListItem>
         ))}
       </View>
     </View>
@@ -578,10 +613,12 @@ function AdditivePrioritiesCard({ cardW, C, selected, onToggle }: { cardW: numbe
   ];
 
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.cardBorder, padding: 16, gap: 10 }}>
-      {additives.map((item) => {
+    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 28, borderWidth: 2, borderColor: C.primary, padding: 20, gap: 12, shadowColor: C.primary, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 10, overflow: 'hidden' }}>
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
+      {additives.map((item, idx) => {
         const active = selected.includes(item.id);
         return (
+          <AnimatedListItem key={item.id} index={idx}>
           <TouchableOpacity
             key={item.id}
             onPress={() => {
@@ -607,6 +644,7 @@ function AdditivePrioritiesCard({ cardW, C, selected, onToggle }: { cardW: numbe
               {active && <Check size={10} color="#FFF" strokeWidth={3} />}
             </View>
           </TouchableOpacity>
+          </AnimatedListItem>
         );
       })}
     </View>
@@ -620,14 +658,16 @@ function AllergenDefenseCard({ cardW, C, selected, onToggle }: { cardW: number; 
   const allergens = ['Gluten', 'Dairy', 'Soy', 'Nuts', 'Eggs', 'Palm Oil'];
 
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.cardBorder, padding: 18, gap: 14 }}>
+    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 28, borderWidth: 2, borderColor: C.primary, padding: 22, gap: 16, shadowColor: C.primary, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 10, overflow: 'hidden' }}>
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
       <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
         Choose what you must stay away from:
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {allergens.map((item) => {
+        {allergens.map((item, idx) => {
           const active = selected.includes(item);
           return (
+            <AnimatedListItem key={item} index={idx}>
             <TouchableOpacity
               key={item}
               onPress={() => {
@@ -647,6 +687,7 @@ function AllergenDefenseCard({ cardW, C, selected, onToggle }: { cardW: number; 
                 {active ? `🚨 ${item}` : item}
               </Text>
             </TouchableOpacity>
+            </AnimatedListItem>
           );
         })}
       </View>
@@ -665,10 +706,12 @@ function CommitmentLevelCard({ cardW, C, value, onSelect }: { cardW: number; C: 
   ];
 
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.cardBorder, padding: 16, gap: 10 }}>
-      {levels.map((lvl) => {
+    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 28, borderWidth: 2, borderColor: C.primary, padding: 20, gap: 12, shadowColor: C.primary, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 10, overflow: 'hidden' }}>
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
+      {levels.map((lvl, idx) => {
         const active = value === lvl.id;
         return (
+          <AnimatedListItem key={lvl.id} index={idx}>
           <TouchableOpacity
             key={lvl.id}
             onPress={() => {
@@ -686,6 +729,7 @@ function CommitmentLevelCard({ cardW, C, value, onSelect }: { cardW: number; C: 
             <Text style={{ color: C.text, fontSize: 14, fontWeight: '800' }}>{lvl.title}</Text>
             <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600', marginTop: 2, lineHeight: 14 }}>{lvl.desc}</Text>
           </TouchableOpacity>
+          </AnimatedListItem>
         );
       })}
     </View>
@@ -697,7 +741,8 @@ function CommitmentLevelCard({ cardW, C, value, onSelect }: { cardW: number; C: 
 // ─────────────────────────────────────────────────────────
 function SocialProofCard({ cardW, C }: { cardW: number; C: any }) {
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.cardBorder, padding: 20, gap: 14, alignItems: 'center' }}>
+    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 28, borderWidth: 2, borderColor: C.primary, padding: 24, gap: 16, alignItems: 'center', shadowColor: C.primary, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 10, overflow: 'hidden' }}>
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
       <View style={{ flexDirection: 'row', gap: 4 }}>
         {[1, 2, 3, 4, 5].map((i) => (
           <Star key={i} size={18} color="#FFCC00" fill="#FFCC00" />
