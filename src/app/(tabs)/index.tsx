@@ -741,7 +741,7 @@ export default function HomeScreen() {
 
             {/* Sleek Shimmering Pill Bar: Total Sugar */}
             <LinearGradient
-              colors={isDark ? ['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.02)'] : ['#FFFFFF', '#F3F4F6']}
+              colors={isDark ? ['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.02)'] : ['#FFFFFF', '#F0FDF4']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={{
@@ -753,14 +753,14 @@ export default function HomeScreen() {
                 paddingBottom: 12,
                 width: '100%',
                 borderRadius: 16,
-                borderWidth: 1,
-                borderColor: isDark ? 'rgba(255,255,255,0.2)' : '#FFFFFF',
+                borderWidth: 2,
+                borderColor: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.8)',
                 paddingHorizontal: 16,
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: isDark ? 0.2 : 0.05,
-                shadowRadius: 8,
-                elevation: 2,
+                shadowOpacity: isDark ? 0.25 : 0.08,
+                shadowRadius: 12,
+                elevation: 3,
               }}
             >
               <View style={{ flexDirection: 'column' }}>
@@ -919,48 +919,39 @@ export default function HomeScreen() {
                     position: 'relative',
                   }}
                 >
-                  {/* Back Wave (Oscillating) */}
-                  <AnimatedReanimated.View
-                    style={[
-                      {
-                        position: 'absolute',
-                        top: 0,
-                        bottom: 0,
-                        width: 800,
-                        height: 26,
-                        opacity: 0.45,
-                      },
-                      gutWaveStyle2,
-                    ]}
-                  >
-                    <Svg width={800} height={26} viewBox="0 0 800 26" preserveAspectRatio="none">
-                      <Path
-                        d="M 0 10 Q 50 1, 100 10 T 200 10 T 300 10 T 400 10 T 500 10 T 600 10 T 700 10 T 800 10 V 26 H 0 Z"
-                        fill={avgGutHealthScore >= 75 ? '#A855F7' : avgGutHealthScore >= 50 ? '#D946EF' : '#F43F5E'}
-                      />
-                    </Svg>
-                  </AnimatedReanimated.View>
-
-                  {/* Front Wave (Oscillating in opposite phase) */}
-                  <AnimatedReanimated.View
-                    style={[
-                      {
-                        position: 'absolute',
-                        top: 0,
-                        bottom: 0,
-                        width: 800,
-                        height: 26,
-                      },
-                      gutWaveStyle1,
-                    ]}
-                  >
-                    <Svg width={800} height={26} viewBox="0 0 800 26" preserveAspectRatio="none">
-                      <Path
-                        d="M 0 13 Q 50 2, 100 13 T 200 13 T 300 13 T 400 13 T 500 13 T 600 13 T 700 13 T 800 13 V 26 H 0 Z"
-                        fill={avgGutHealthScore >= 75 ? '#A855F7' : avgGutHealthScore >= 50 ? '#D946EF' : '#F43F5E'}
-                      />
-                    </Svg>
-                  </AnimatedReanimated.View>
+                  {/* Glowing core instead of animated waves */}
+                  <LinearGradient
+                    colors={
+                      avgGutHealthScore >= 75
+                        ? ['rgba(168, 85, 247, 0.4)', '#A855F7']
+                        : avgGutHealthScore >= 50
+                        ? ['rgba(217, 70, 239, 0.4)', '#D946EF']
+                        : ['rgba(244, 63, 94, 0.4)', '#F43F5E']
+                    }
+                    start={{ x: 0, y: 0.5 }}
+                    end={{ x: 1, y: 0.5 }}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                    }}
+                  />
+                  
+                  {/* Outer glassy shine */}
+                  <LinearGradient
+                    colors={['rgba(255,255,255,0.4)', 'transparent']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 0, y: 1 }}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      bottom: '50%',
+                      left: 0,
+                      right: 0,
+                    }}
+                  />
 
                   {/* Glowing vertical marker outline at the right edge of fill */}
                   <View
