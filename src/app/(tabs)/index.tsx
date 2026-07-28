@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { View, ScrollView, TouchableOpacity, SafeAreaView, Animated, StyleSheet, Modal, PanResponder, Alert } from 'react-native';
 import { Text } from '@/components/Text';
 import { Image } from 'expo-image';
@@ -396,6 +396,11 @@ export default function HomeScreen() {
 
   const avgNutriScore = getAvgNutriScore();
 
+  const totalSugarTeaspoons = useMemo(() => {
+    if (basketItemCount === 0) return 0;
+    return collection.reduce((acc, item) => acc + (item.sugarTeaspoons || 0), 0);
+  }, [collection, basketItemCount]);
+
   const scoreColor = basketItemCount === 0 && scans.length === 0
     ? '#D1D5DB'
     : getBiteFixScoreColor(avgBiteFixScore, latestNovaClass);
@@ -496,7 +501,7 @@ export default function HomeScreen() {
             <Text
               style={{ color: colors.primary, fontSize: 9.5, fontWeight: '800', letterSpacing: 1.6 }}
             >
-              Food Scanner & Swap Finder
+              Scan.Swap.Eat Clean
             </Text>
           </View>
         </View>
@@ -571,12 +576,12 @@ export default function HomeScreen() {
               {/* Animated Mascot Orb Container */}
               <View style={{ width: 220, height: 220, alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
 
-                {/* 1. Static track and progress arc */}
+                {/* 1. Static track and premium progress arc */}
                 <Svg width={220} height={220} viewBox="0 0 120 120" style={{ position: 'absolute' }}>
                   <Defs>
                     <RadialGradient id="ringGlow" cx="50%" cy="50%" rx="50%" ry="50%">
-                      <Stop offset="0%" stopColor={scoreColor} stopOpacity="0.25" />
-                      <Stop offset="70%" stopColor={scoreColor} stopOpacity="0.05" />
+                      <Stop offset="0%" stopColor={scoreColor} stopOpacity="0.4" />
+                      <Stop offset="70%" stopColor={scoreColor} stopOpacity="0.1" />
                       <Stop offset="100%" stopColor={scoreColor} stopOpacity="0" />
                     </RadialGradient>
                     <SvgLinearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -586,34 +591,20 @@ export default function HomeScreen() {
                   </Defs>
                   {/* Ambient halo glow */}
                   <Circle cx="60" cy="60" r="54" fill="url(#ringGlow)" />
-                  {/* Background progress track */}
-                  <Circle cx="60" cy="60" r="48" fill="none" stroke={isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)'} strokeWidth="3.5" />
-                  {/* Inner glow progress arc */}
-                  <Circle
-                    cx="60"
-                    cy="60"
-                    r="48"
-                    fill="none"
-                    stroke={scoreColor}
-                    strokeWidth="6"
-                    strokeLinecap="round"
-                    strokeDasharray="301.6"
-                    strokeDashoffset={
-                      basketItemCount === 0 && scans.length === 0
-                        ? 301.6
-                        : 301.6 * (1 - Math.max(5, avgBiteFixScore) / 100)
-                    }
-                    transform="rotate(-90 60 60)"
-                    opacity="0.2"
-                  />
-                  {/* Main progress arc */}
+                  {/* Background thick progress track */}
+                  <Circle cx="60" cy="60" r="48" fill="none" stroke={isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)'} strokeWidth="12" />
+                  {/* Outer premium glass border */}
+                  <Circle cx="60" cy="60" r="56" fill="none" stroke={scoreColor} strokeWidth="1.5" opacity="0.25" />
+                  <Circle cx="60" cy="60" r="40" fill="none" stroke={scoreColor} strokeWidth="1.5" opacity="0.15" />
+                  
+                  {/* Main thick progress arc */}
                   <Circle
                     cx="60"
                     cy="60"
                     r="48"
                     fill="none"
                     stroke="url(#progressGrad)"
-                    strokeWidth="3.5"
+                    strokeWidth="12"
                     strokeLinecap="round"
                     strokeDasharray="301.6"
                     strokeDashoffset={
@@ -625,50 +616,11 @@ export default function HomeScreen() {
                   />
                 </Svg>
 
-                {/* 2. Outer dashed ring rotating counter-clockwise */}
-                <AnimatedReanimated.View style={[{ position: 'absolute', width: 220, height: 220 }, rotateStyle2]} pointerEvents="none">
-                  <Svg width="100%" height="100%" viewBox="0 0 120 120">
-                    <Circle
-                      cx="60"
-                      cy="60"
-                      r="54"
-                      fill="none"
-                      stroke={scoreColor}
-                      strokeWidth="0.8"
-                      strokeDasharray="6, 12"
-                      opacity="0.18"
-                    />
-                  </Svg>
-                </AnimatedReanimated.View>
-
-                {/* 3. Inner dashed ring rotating clockwise */}
+                {/* 2. Orbiting thick particle (Clockwise) */}
                 <AnimatedReanimated.View style={[{ position: 'absolute', width: 220, height: 220 }, rotateStyle1]} pointerEvents="none">
                   <Svg width="100%" height="100%" viewBox="0 0 120 120">
-                    <Circle
-                      cx="60"
-                      cy="60"
-                      r="42"
-                      fill="none"
-                      stroke={scoreColor}
-                      strokeWidth="0.6"
-                      strokeDasharray="3, 8"
-                      opacity="0.25"
-                    />
-                  </Svg>
-                </AnimatedReanimated.View>
-
-                {/* 4. Glowing orbiting particle trailing system (Clockwise) */}
-                <AnimatedReanimated.View style={[{ position: 'absolute', width: 220, height: 220 }, rotateStyle1]} pointerEvents="none">
-                  <Svg width="100%" height="100%" viewBox="0 0 120 120">
-                    {/* Lead particle */}
-                    <Circle cx="60" cy="12" r="3.5" fill={scoreColor} />
-                    <Circle cx="60" cy="12" r="7.5" fill={scoreColor} opacity={0.25} />
-                    {/* Tail particle 1 */}
-                    <Circle cx="55" cy="12.2" r="2.5" fill={scoreColor} opacity={0.65} />
-                    {/* Tail particle 2 */}
-                    <Circle cx="50.2" cy="13.1" r="1.8" fill={scoreColor} opacity={0.4} />
-                    {/* Tail particle 3 */}
-                    <Circle cx="45.6" cy="14.8" r="1.2" fill={scoreColor} opacity={0.2} />
+                    <Circle cx="60" cy="12" r="6" fill="#FFFFFF" />
+                    <Circle cx="60" cy="12" r="10" fill={scoreColor} opacity={0.6} />
                   </Svg>
                 </AnimatedReanimated.View>
 
@@ -710,7 +662,26 @@ export default function HomeScreen() {
                   </Text>
                 </View>
               </View>
-            </View>
+            
+            {/* New Metrics Row: Avg Nutri-Score & Total Sugar */}
+            {basketItemCount > 0 && (
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 12, width: '100%', paddingHorizontal: 16 }}>
+                <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#F9FAFB', borderRadius: 20, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB', padding: 14, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8 }}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', marginBottom: 4, textAlign: 'center' }}>AVG NUTRI-SCORE</Text>
+                  <Text style={{ color: avgNutriScore === 'a' || avgNutriScore === 'b' ? colors.primary : avgNutriScore === 'c' ? '#F5A623' : '#EF4444', fontSize: 24, fontWeight: '900' }}>
+                    {avgNutriScore ? avgNutriScore.toUpperCase() : '-'}
+                  </Text>
+                </View>
+
+                <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#F9FAFB', borderRadius: 20, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB', padding: 14, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8 }}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', marginBottom: 4, textAlign: 'center' }}>TOTAL SUGAR</Text>
+                  <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900' }}>
+                    {totalSugarTeaspoons.toFixed(1)} <Text style={{ fontSize: 14, fontWeight: '600', color: colors.textMuted }}>tsp</Text>
+                  </Text>
+                </View>
+              </View>
+            )}
+          </View>
 
 
 
@@ -1114,7 +1085,7 @@ export default function HomeScreen() {
                 Your Basket is Empty
               </Text>
               <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 4, textAlign: 'center', lineHeight: 16, maxWidth: 240 }}>
-                Tap "Save" on any scan result to add products to your basket and calculate your aggregate scores.
+                Tap "Save" on any scan result or swap result to add products to your basket and calculate your aggregate scores.
               </Text>
             </View>
           ) : (
