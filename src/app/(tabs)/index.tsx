@@ -574,21 +574,6 @@ export default function HomeScreen() {
             {/* Center Info Panel */}
             <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 20, width: '100%' }}>
               {/* Animated Mascot Orb Container */}
-              <View style={{ width: '100%', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                
-                {/* Vertical LED Street Light (Nutri-Score) */}
-                <View style={{ position: 'absolute', left: 0, top: 20, bottom: 20, justifyContent: 'space-between', alignItems: 'center', width: 28, paddingVertical: 16, backgroundColor: isDark ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.8)', borderRadius: 14, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.1, shadowRadius: 12, zIndex: 10 }}>
-                  {['A', 'B', 'C', 'D', 'E'].map((grade) => {
-                    const isActive = avgNutriScore?.toUpperCase() === grade;
-                    const ledColor = grade === 'A' || grade === 'B' ? colors.primary : grade === 'C' ? '#FBBF24' : '#EF4444';
-                    return (
-                      <View key={grade} style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: isActive ? ledColor : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'), shadowColor: isActive ? ledColor : 'transparent', shadowOffset: { width: 0, height: 0 }, shadowOpacity: isActive ? 0.9 : 0, shadowRadius: isActive ? 8 : 0, borderWidth: 1.5, borderColor: isActive ? 'rgba(255,255,255,0.6)' : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                        {isActive && <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#FFF' }} />}
-                      </View>
-                    );
-                  })}
-                </View>
-
               <View style={{ width: 220, height: 220, alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
 
                 {/* 1. Static track and premium progress arc */}
@@ -631,13 +616,7 @@ export default function HomeScreen() {
                   />
                 </Svg>
 
-                {/* 2. Orbiting thick particle (Clockwise) */}
-                <AnimatedReanimated.View style={[{ position: 'absolute', width: 220, height: 220 }, rotateStyle1]} pointerEvents="none">
-                  <Svg width="100%" height="100%" viewBox="0 0 120 120">
-                    <Circle cx="60" cy="12" r="6" fill="#FFFFFF" />
-                    <Circle cx="60" cy="12" r="10" fill={scoreColor} opacity={0.6} />
-                  </Svg>
-                </AnimatedReanimated.View>
+
 
                 {/* 5. Mascot */}
                 <Mascot state={mascotState} size={148} />
@@ -677,17 +656,16 @@ export default function HomeScreen() {
                   </Text>
                 </View>
               </View>
-            
-            </View>
+
             {/* Sleek Pill Bar: Total Sugar */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, width: '100%', backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F9FAFB', borderRadius: 999, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB', paddingHorizontal: 22, paddingVertical: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.08, shadowRadius: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, width: '100%', backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : '#F9FAFB', borderRadius: 16, borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.06)' : '#E5E7EB', paddingHorizontal: 16, paddingVertical: 10 }}>
               <View style={{ flexDirection: 'column' }}>
-                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>Basket Total Sugar</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '600', marginTop: 2 }}>1 tsp = 4.2g (WHO Standard)</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>Total Sugar</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '500', marginTop: 2 }}>1 tsp = 4.2g (WHO)</Text>
               </View>
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-                <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900' }}>{totalSugarTeaspoons.toFixed(1)}</Text>
-                <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '700' }}>tsp / serving</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 3 }}>
+                <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>{totalSugarTeaspoons.toFixed(1)}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600' }}>tsp / serving</Text>
               </View>
             </View>
           </View>
