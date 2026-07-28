@@ -8,6 +8,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { ChevronRight, ArrowLeft, ShieldAlert, HeartHandshake, Eye, Moon, Layers, RotateCcw, LogOut, User, ShieldCheck, Sparkles, Filter, CreditCard } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { iapService } from '../../services/iapService';
+import Constants from 'expo-constants';
 
 export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   const { colors, theme, toggleTheme } = useTheme();
@@ -435,7 +436,9 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
 
         {/* Version */}
         <View className="mb-16 items-center">
-          <Text style={{ color: colors.textMuted }} className="text-[10px] font-black uppercase tracking-wider">BiteFix v1.0.0</Text>
+          <Text style={{ color: colors.textMuted }} className="text-[10px] font-black uppercase tracking-wider">
+            BiteFix v{Constants.expoConfig?.version ?? '2.0.0'}
+          </Text>
         </View>
       </ScrollView>
 
