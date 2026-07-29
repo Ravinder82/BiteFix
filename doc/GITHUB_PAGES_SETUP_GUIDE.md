@@ -17,8 +17,6 @@ We will copy your markdown files into a public `docs/` folder in your repository
 2. Move/copy the markdown files or HTML wrappers into `docs/`:
    - `docs/index.html` (Landing page / Support center)
    - `docs/privacy.html` (Privacy Policy)
-   - `docs/terms.html` (Terms of Service)
-   - `docs/eula.html` (End User License Agreement)
 
 *(We have created styled HTML files for you so they render with modern, clean typography in web browsers!)*
 
@@ -58,13 +56,6 @@ GitHub will automatically publish your pages in about 60 seconds. Your live prod
 * 📜 **Terms of Service URL:**  
   `https://ravinder82.github.io/BiteFix/terms.html`
 
-* ⚖️ **EULA URL:**  
-  `https://ravinder82.github.io/BiteFix/eula.html`
-
-* 📬 **Support & Feedback URL:**  
-  `https://ravinder82.github.io/BiteFix/` (or `https://ravinder82.github.io/BiteFix/support.html`)
-
----
 
 ## Step 5: Paste URLs into App Store Connect
 
