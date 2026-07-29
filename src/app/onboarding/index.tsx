@@ -1405,9 +1405,7 @@ export default function OnboardingScreen() {
       <View style={{ flex: 1, paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16, paddingHorizontal: 16 }}>
         {/* Pinned Header Bar */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 40, marginBottom: 8 }}>
-          <Text style={{ color: C.textMuted, fontSize: 11, fontWeight: '800', letterSpacing: 1 }}>
-            STEP {currentSlide + 1} OF 12
-          </Text>
+          <View />
 
           {currentSlide > 0 && currentSlide !== 9 && (
             <TouchableOpacity
