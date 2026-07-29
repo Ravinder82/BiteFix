@@ -13,7 +13,7 @@ import Constants from 'expo-constants';
 export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   const { colors, theme, toggleTheme, isDark } = useTheme();
   const { 
-    sugarUnit, setSugarUnit, clearScans, clearAllData, userName, userGoal,
+    sugarUnit, setSugarUnit, clearScans, clearCollection, clearAllData, userName, userGoal,
     allergenFilters, toggleAllergenFilter, strictNovaAlert, setStrictNovaAlert, stealthAdditivesAlert, setStealthAdditivesAlert, isPremium 
   } = useAppStore();
   const { user, displayName, providerLabel, signOut, deleteAccount } = useAuth();
@@ -100,7 +100,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   const handleClearScans = () => {
     Alert.alert(
       'Clear Scan History',
-      'Are you sure you want to clear all your scanned food history?',
+      'Are you sure you want to clear all your scanned food history and saved items?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -108,7 +108,8 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
           style: 'destructive',
           onPress: () => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            clearAllData();
+            clearScans();
+            clearCollection();
             Alert.alert('Scans Cleared', 'Your scan history has been successfully cleared.');
           },
         },
