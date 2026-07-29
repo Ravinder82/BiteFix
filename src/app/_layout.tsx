@@ -1,10 +1,11 @@
 import '../global.css';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Stack } from 'expo-router';
 import { ThemeProvider, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { AppState, type AppStateStatus } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
 import { useFonts, Inter_300Light, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold, Inter_900Black } from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
@@ -80,6 +81,37 @@ export default function RootLayout() {
   useEffect(() => {
     const unsubscribe = useAuthStore.getState().initialize();
     return () => unsubscribe();
+  }, []);
+
+  // ── Foreground-resume subscription check ──────────────────────────────
+  // When the user returns from background (e.g. they went to Apple Settings
+  // to cancel their subscription, or a subscription just renewed), we
+  // re-verify with StoreKit. This is the standard App Store best practice.
+  //
+  // Handles:
+  //   • Cancelled subscription still in grace period → stays premium ✅
+  //   • Subscription expires → isPremium flips to false → root gate redirects ✅
+  //   • Subscription auto-renewed successfully → isPremium stays true ✅
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', async (nextState: AppStateStatus) => {
+      const wasBackground = appStateRef.current.match(/inactive|background/);
+      const isForeground = nextState === 'active';
+      appStateRef.current = nextState;
+
+      if (wasBackground && isForeground) {
+        try {
+          const { getLoadedIapService } = await import('../services/iapLoader');
+          const service = getLoadedIapService();
+          if (service) {
+            await service.checkSubscriptionStatus();
+          }
+        } catch {
+          // Best-effort — don't crash the app
+        }
+      }
+    });
+    return () => subscription.remove();
   }, []);
 
   if (!fontsLoaded && !fontError) {

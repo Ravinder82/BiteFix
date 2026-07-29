@@ -174,20 +174,20 @@ export default function DeleteAccountScreen() {
       // IAP cleanup is best-effort — don't block the deletion flow
     }
 
-    // 5. Wipe all local app data
-    //    Keep onboardingComplete: true so re-registering users skip onboarding.
+    // 5. Wipe all local app data (onboardingComplete resets to false via clearAllData)
+    //    This means re-registering users will start from the Onboarding Flow,
+    //    which is the correct behaviour per the app's user journey spec.
     clearAllData();
-    useAppStore.getState().setOnboardingComplete(true);
 
-    // 6. Navigate to auth screen (not onboarding — they've already done that)
+    // 6. Navigate to onboarding — full fresh start after account deletion
     Alert.alert(
       'Account Deleted',
-      'Your BiteFix account and all local data have been permanently deleted.\n\nYour App Store subscription must be cancelled separately in Settings → Apple ID → Subscriptions.',
+      'Your BiteFix account and all local data have been permanently deleted.\n\nNote: Your App Store subscription must be cancelled separately in Settings → Apple ID → Subscriptions.',
       [
         {
           text: 'OK',
           onPress: () => {
-            router.replace('/auth');
+            router.replace('/onboarding');
           },
         },
       ]
