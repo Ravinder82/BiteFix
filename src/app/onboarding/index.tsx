@@ -23,6 +23,9 @@ import Animated, {
   withDelay,
   Easing,
   runOnJS,
+  FadeInRight,
+  FadeOutLeft,
+  FadeInDown,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStore } from '../../stores/appStore';
@@ -361,7 +364,7 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
       {options.map((opt, idx) => {
         const isSelected = selected.includes(opt.value);
         return (
-          <AnimatedListItem key={opt.value} index={idx} animate={false}>
+          <AnimatedListItem key={opt.value} index={idx}>
           <TouchableOpacity
             key={opt.value}
             onPress={() => handleToggle(opt.value)}
@@ -425,7 +428,7 @@ function FoodSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any
       {options.map((opt, idx) => {
         const isSelected = value === opt.val;
         return (
-          <AnimatedListItem key={opt.val} index={idx} animate={false}>
+          <AnimatedListItem key={opt.val} index={idx}>
           <TouchableOpacity
             key={opt.val}
             onPress={() => {
@@ -493,7 +496,7 @@ function SymptomAuditCard({ cardW, C, selected, onToggle }: { cardW: number; C: 
       {symptoms.map((s, idx) => {
         const active = selected.includes(s.id);
         return (
-          <AnimatedListItem key={s.id} index={idx} animate={false}>
+          <AnimatedListItem key={s.id} index={idx}>
           <TouchableOpacity
             key={s.id}
             onPress={() => {
@@ -1112,20 +1115,12 @@ export default function OnboardingScreen() {
   const [additives, setAdditives] = useState<string[]>([]);
   const [commitment, setCommitment] = useState('');
 
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [currentTextIndex, setCurrentTextIndex] = useState(0);
-
-  // Mascot Floating Animation (Step 6 onwards)
+  // Mascot Floating Animation (Step 2 onwards)
   const mascotFloatY = useSharedValue(0);
-  const cardTranslateX = useSharedValue(0);
-  const cardOpacity = useSharedValue(1);
-  const cardScale = useSharedValue(1);
-  const textTranslateY = useSharedValue(0);
-  const textOpacity = useSharedValue(1);
 
   useEffect(() => {
-    // Only float mascot if we're on step 6 onwards
-    if (currentSlide >= 5) {
+    // float mascot constantly from step 2 (index 1) onwards
+    if (currentSlide >= 1) {
       mascotFloatY.value = withRepeat(
         withSequence(
           withTiming(-8, { duration: 1600, easing: Easing.inOut(Easing.quad) }),
@@ -1139,56 +1134,8 @@ export default function OnboardingScreen() {
     }
   }, [currentSlide]);
 
-  useEffect(() => {
-    const shouldAnimate = currentSlide >= 5 || currentCardIndex >= 5;
-    if (currentSlide !== currentCardIndex) {
-      if (shouldAnimate) {
-        cardOpacity.value = withTiming(0, { duration: 180 });
-        cardScale.value = withTiming(0.95, { duration: 180 });
-        cardTranslateX.value = withTiming(0, { duration: 180 }, () => {
-          runOnJS(setCurrentCardIndex)(currentSlide);
-          cardScale.value = 1.05;
-          cardOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.exp) });
-          cardScale.value = withSpring(1, { damping: 15, stiffness: 100 });
-        });
-      } else {
-        setCurrentCardIndex(currentSlide);
-        cardOpacity.value = 1;
-        cardScale.value = 1;
-        cardTranslateX.value = 0;
-      }
-    }
-
-    const shouldAnimateText = currentSlide >= 5 || currentTextIndex >= 5;
-    if (currentSlide !== currentTextIndex) {
-      if (shouldAnimateText) {
-        textOpacity.value = withTiming(0, { duration: 150 });
-        textTranslateY.value = withTiming(10, { duration: 150 }, () => {
-          runOnJS(setCurrentTextIndex)(currentSlide);
-          textTranslateY.value = -10;
-          textOpacity.value = withTiming(1, { duration: 250, easing: Easing.out(Easing.exp) });
-          textTranslateY.value = withSpring(0, { damping: 15, stiffness: 100 });
-        });
-      } else {
-        setCurrentTextIndex(currentSlide);
-        textOpacity.value = 1;
-        textTranslateY.value = 0;
-      }
-    }
-  }, [currentSlide]);
-
   const mascotAnimStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: mascotFloatY.value }],
-  }));
-
-  const cardAnimStyle = useAnimatedStyle(() => ({
-    opacity: cardOpacity.value,
-    transform: [{ translateX: cardTranslateX.value }, { scale: cardScale.value }],
-  }));
-
-  const textAnimStyle = useAnimatedStyle(() => ({
-    opacity: textOpacity.value,
-    transform: [{ translateY: textTranslateY.value }],
   }));
 
   const handleNext = async () => {
@@ -1295,35 +1242,45 @@ export default function OnboardingScreen() {
             </Animated.View>
             <MascotShadow size={orbSize} />
 
-            <Animated.View style={[{ alignItems: 'center', gap: 4, marginTop: 4 }, textAnimStyle]}>
+            <Animated.View
+              key={`text-${currentSlide}`}
+              entering={FadeInRight.duration(300)}
+              exiting={FadeOutLeft.duration(300)}
+              style={{ alignItems: 'center', gap: 4, marginTop: 4 }}
+            >
               {renderTitle()}
               <Text style={{ color: C.textSub, fontSize: isShort ? 13.5 : 15.5, fontWeight: '600', textAlign: 'center' }}>
-                {SLIDES[currentTextIndex].subtitle}
+                {SLIDES[currentSlide].subtitle}
               </Text>
             </Animated.View>
           </View>
 
           {/* Card Component Slot */}
           <View style={{ width: '100%', alignItems: 'center' }}>
-            <Animated.View style={cardAnimStyle}>
-              {currentCardIndex === 0 && <NameCard cardW={cardW} C={C} value={userName} onChange={setUserName} />}
-              {currentCardIndex === 1 && <GoalCard cardW={cardW} C={C} selected={userGoals} onSelect={setUserGoals} />}
-              {currentCardIndex === 2 && <FoodSourcingCard cardW={cardW} C={C} value={foodSourcing} onSelect={setFoodSourcing} />}
-              {currentCardIndex === 3 && <SymptomAuditCard cardW={cardW} C={C} selected={symptoms} onToggle={toggleSymptom} />}
-              {currentCardIndex === 4 && <NovaWakeUpCard cardW={cardW} C={C} />}
-              {currentCardIndex === 5 && <AdditivePrioritiesCard cardW={cardW} C={C} selected={additives} onToggle={toggleAdditive} />}
-              {currentCardIndex === 6 && <AllergenDefenseCard cardW={cardW} C={C} selected={allergenFilters} onToggle={toggleAllergenFilter} />}
-              {currentCardIndex === 7 && <CommitmentLevelCard cardW={cardW} C={C} value={commitment} onSelect={setCommitment} />}
-              {currentCardIndex === 8 && <SocialProofCard cardW={cardW} C={C} />}
-              {currentCardIndex === 9 && <HealthAnalysisCalculationCard cardW={cardW} C={C} onComplete={() => setCurrentSlide(10)} />}
-              {currentCardIndex === 10 && <InstantResultSummaryCard cardW={cardW} C={C} isDark={isDark} />}
-              {currentCardIndex === 11 && <PaywallTransitionCard cardW={cardW} C={C} />}
+            <Animated.View
+              key={`card-${currentSlide}`}
+              entering={FadeInRight.springify().damping(16).stiffness(120)}
+              exiting={FadeOutLeft.springify().damping(16).stiffness(120)}
+              style={{ width: '100%', alignItems: 'center' }}
+            >
+              {currentSlide === 0 && <NameCard cardW={cardW} C={C} value={userName} onChange={setUserName} />}
+              {currentSlide === 1 && <GoalCard cardW={cardW} C={C} selected={userGoals} onSelect={setUserGoals} />}
+              {currentSlide === 2 && <FoodSourcingCard cardW={cardW} C={C} value={foodSourcing} onSelect={setFoodSourcing} />}
+              {currentSlide === 3 && <SymptomAuditCard cardW={cardW} C={C} selected={symptoms} onToggle={toggleSymptom} />}
+              {currentSlide === 4 && <NovaWakeUpCard cardW={cardW} C={C} />}
+              {currentSlide === 5 && <AdditivePrioritiesCard cardW={cardW} C={C} selected={additives} onToggle={toggleAdditive} />}
+              {currentSlide === 6 && <AllergenDefenseCard cardW={cardW} C={C} selected={allergenFilters} onToggle={toggleAllergenFilter} />}
+              {currentSlide === 7 && <CommitmentLevelCard cardW={cardW} C={C} value={commitment} onSelect={setCommitment} />}
+              {currentSlide === 8 && <SocialProofCard cardW={cardW} C={C} />}
+              {currentSlide === 9 && <HealthAnalysisCalculationCard cardW={cardW} C={C} onComplete={() => setCurrentSlide(10)} />}
+              {currentSlide === 10 && <InstantResultSummaryCard cardW={cardW} C={C} isDark={isDark} />}
+              {currentSlide === 11 && <PaywallTransitionCard cardW={cardW} C={C} />}
             </Animated.View>
           </View>
         </ScrollView>
 
         {/* Pinned Bottom Bar */}
-        {currentCardIndex !== 9 && (
+        {currentSlide !== 9 && (
           <View style={{ gap: 12, marginTop: 8 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 5 }}>
               {SLIDES.map((_, idx) => (
