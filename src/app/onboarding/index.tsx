@@ -13,6 +13,17 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { Camera, useCameraPermissions } from 'expo-camera';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  withRepeat,
+  withSequence,
+  withDelay,
+  Easing,
+  runOnJS,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStore } from '../../stores/appStore';
 import { useAuthStore } from '../../stores/authStore';
@@ -189,10 +200,26 @@ function MascotShadow({ size }: { size: number }) {
 
 
 // ─────────────────────────────────────────────────────────
-// Animated List Item for Staggered Micro-Animations (Animation Removed)
+// Animated List Item for Staggered Micro-Animations
 // ─────────────────────────────────────────────────────────
-function AnimatedListItem({ children, index, style }: { children: React.ReactNode; index: number; style?: any }) {
-  return <View style={style}>{children}</View>;
+function AnimatedListItem({ children, index, style, animate = true }: { children: React.ReactNode; index: number; style?: any; animate?: boolean }) {
+  if (!animate) {
+    return <View style={style}>{children}</View>;
+  }
+
+  const slideIn = useSharedValue(20);
+  const fade = useSharedValue(0);
+  useEffect(() => {
+    slideIn.value = withDelay(index * 80, withSpring(0, { damping: 12, stiffness: 100 }));
+    fade.value = withDelay(index * 80, withTiming(1, { duration: 400 }));
+  }, [index]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: slideIn.value }],
+    opacity: fade.value,
+  }));
+
+  return <Animated.View style={[style, animStyle]}>{children}</Animated.View>;
 }
 
 // ─────────────────────────────────────────────────────────
@@ -334,7 +361,7 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
       {options.map((opt, idx) => {
         const isSelected = selected.includes(opt.value);
         return (
-          <AnimatedListItem key={opt.value} index={idx}>
+          <AnimatedListItem key={opt.value} index={idx} animate={false}>
           <TouchableOpacity
             key={opt.value}
             onPress={() => handleToggle(opt.value)}
@@ -398,7 +425,7 @@ function FoodSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any
       {options.map((opt, idx) => {
         const isSelected = value === opt.val;
         return (
-          <AnimatedListItem key={opt.val} index={idx}>
+          <AnimatedListItem key={opt.val} index={idx} animate={false}>
           <TouchableOpacity
             key={opt.val}
             onPress={() => {
@@ -466,7 +493,7 @@ function SymptomAuditCard({ cardW, C, selected, onToggle }: { cardW: number; C: 
       {symptoms.map((s, idx) => {
         const active = selected.includes(s.id);
         return (
-          <AnimatedListItem key={s.id} index={idx}>
+          <AnimatedListItem key={s.id} index={idx} animate={false}>
           <TouchableOpacity
             key={s.id}
             onPress={() => {
@@ -795,8 +822,21 @@ function InstantResultSummaryCard({ cardW, C, isDark }: { cardW: number; C: any;
       
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between' }}>
         {features.map((f, i) => {
+          // Add micro-animation delays for staggering effect
+          const slideIn = useSharedValue(20);
+          const fade = useSharedValue(0);
+          useEffect(() => {
+            slideIn.value = withDelay(i * 100, withSpring(0, { damping: 12, stiffness: 100 }));
+            fade.value = withDelay(i * 100, withTiming(1, { duration: 400 }));
+          }, [i]);
+          
+          const animStyle = useAnimatedStyle(() => ({
+            transform: [{ translateY: slideIn.value }],
+            opacity: fade.value,
+          }));
+
           return (
-            <View key={i} style={[{ width: '48%', backgroundColor: C.cardInner, borderRadius: 16, padding: 12, borderWidth: 1, borderColor: C.cardBorder, gap: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8 }]}>
+            <Animated.View key={i} style={[{ width: '48%', backgroundColor: C.cardInner, borderRadius: 16, padding: 12, borderWidth: 1, borderColor: C.cardBorder, gap: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 8 }, animStyle]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <View style={{ padding: 6, backgroundColor: C.card, borderRadius: 10, borderWidth: 1, borderColor: C.cardBorder }}>
                   {f.icon}
@@ -804,7 +844,7 @@ function InstantResultSummaryCard({ cardW, C, isDark }: { cardW: number; C: any;
                 <Text style={{ color: C.text, fontSize: 12, fontWeight: '900', flex: 1, lineHeight: 14 }}>{f.title}</Text>
               </View>
               <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '700', lineHeight: 12 }}>{f.desc}</Text>
-            </View>
+            </Animated.View>
           );
         })}
       </View>
@@ -816,14 +856,29 @@ function InstantResultSummaryCard({ cardW, C, isDark }: { cardW: number; C: any;
 // STEP 12: Paywall Transition Summary Card
 // ─────────────────────────────────────────────────────────
 function PaywallTransitionCard({ cardW, C }: { cardW: number; C: any }) {
+  const shieldScale = useSharedValue(0.8);
+  const glowOpacity = useSharedValue(0.4);
+
+  useEffect(() => {
+    shieldScale.value = withSpring(1, { damping: 10, stiffness: 80 });
+    glowOpacity.value = withRepeat(withTiming(0.8, { duration: 1500, easing: Easing.inOut(Easing.sin) }), -1, true);
+  }, []);
+
+  const shieldAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: shieldScale.value }],
+  }));
+  const glowAnimStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
+  }));
+
   return (
     <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 32, borderWidth: 2, borderColor: C.primary, padding: 24, gap: 16, alignItems: 'center', overflow: 'hidden', shadowColor: C.primary, shadowOffset: { width: 0, height: 16 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 12 }}>
       {/* Background ambient gradient */}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.4 }]} />
+      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary }, glowAnimStyle]} />
       
-      <View style={{ width: 90, height: 90, borderRadius: 45, backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.15, shadowRadius: 15 }}>
+      <Animated.View style={[{ width: 90, height: 90, borderRadius: 45, backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.15, shadowRadius: 15 }, shieldAnimStyle]}>
         <ShieldCheck size={50} color={C.primary} strokeWidth={2.5} />
-      </View>
+      </Animated.View>
 
       <Text style={{ color: '#FFF', fontSize: 22, fontWeight: '900', textAlign: 'center', letterSpacing: -0.5, marginTop: 4 }}>
         Your Custom Food Shield is Ready!
@@ -849,6 +904,19 @@ interface RatingModalProps {
 }
 
 function RatingModal({ C, isDark, rating, setRating, onSubmit, onLater, width }: RatingModalProps) {
+  const modalScale = useSharedValue(0.85);
+  const modalOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    modalScale.value = withSpring(1, { damping: 15, stiffness: 180 });
+    modalOpacity.value = withTiming(1, { duration: 250 });
+  }, []);
+
+  const modalStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: modalScale.value }],
+    opacity: modalOpacity.value,
+  }));
+
   const handleStarPress = (r: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setRating(r);
@@ -856,7 +924,7 @@ function RatingModal({ C, isDark, rating, setRating, onSubmit, onLater, width }:
 
   return (
     <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.65)', justifyContent: 'center', alignItems: 'center', zIndex: 999, paddingHorizontal: 20 }]}>
-      <View
+      <Animated.View
         style={[
           {
             width: Math.min(width - 40, 360),
@@ -873,6 +941,7 @@ function RatingModal({ C, isDark, rating, setRating, onSubmit, onLater, width }:
             elevation: 10,
             gap: 16,
           },
+          modalStyle,
         ]}
       >
         {/* Mascot Header */}
@@ -950,7 +1019,7 @@ function RatingModal({ C, isDark, rating, setRating, onSubmit, onLater, width }:
             <Text style={{ color: C.textMuted, fontSize: 13, fontWeight: '700' }}>Maybe Later</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -984,16 +1053,12 @@ const SLIDES: SlideData[] = [
 ];
 
 function DotIndicator({ active, C }: { active: boolean; C: any }) {
-  return (
-    <View
-      style={{
-        height: 5,
-        borderRadius: 3,
-        width: active ? 18 : 5,
-        backgroundColor: active ? C.primary : C.cardBorder,
-      }}
-    />
-  );
+  const dotAnimStyle = useAnimatedStyle(() => ({
+    width: withSpring(active ? 18 : 5, { damping: 15, stiffness: 150 }),
+    backgroundColor: withTiming(active ? C.primary : C.cardBorder, { duration: 200 }),
+  }), [active, C]);
+
+  return <Animated.View style={[{ height: 5, borderRadius: 3 }, dotAnimStyle]} />;
 }
 
 // ─────────────────────────────────────────────────────────
@@ -1046,6 +1111,85 @@ export default function OnboardingScreen() {
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [additives, setAdditives] = useState<string[]>([]);
   const [commitment, setCommitment] = useState('');
+
+  const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [currentTextIndex, setCurrentTextIndex] = useState(0);
+
+  // Mascot Floating Animation (Step 6 onwards)
+  const mascotFloatY = useSharedValue(0);
+  const cardTranslateX = useSharedValue(0);
+  const cardOpacity = useSharedValue(1);
+  const cardScale = useSharedValue(1);
+  const textTranslateY = useSharedValue(0);
+  const textOpacity = useSharedValue(1);
+
+  useEffect(() => {
+    // Only float mascot if we're on step 6 onwards
+    if (currentSlide >= 5) {
+      mascotFloatY.value = withRepeat(
+        withSequence(
+          withTiming(-8, { duration: 1600, easing: Easing.inOut(Easing.quad) }),
+          withTiming(0, { duration: 1600, easing: Easing.inOut(Easing.quad) })
+        ),
+        -1,
+        true
+      );
+    } else {
+      mascotFloatY.value = 0;
+    }
+  }, [currentSlide]);
+
+  useEffect(() => {
+    const shouldAnimate = currentSlide >= 5 || currentCardIndex >= 5;
+    if (currentSlide !== currentCardIndex) {
+      if (shouldAnimate) {
+        cardOpacity.value = withTiming(0, { duration: 180 });
+        cardScale.value = withTiming(0.95, { duration: 180 });
+        cardTranslateX.value = withTiming(0, { duration: 180 }, () => {
+          runOnJS(setCurrentCardIndex)(currentSlide);
+          cardScale.value = 1.05;
+          cardOpacity.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.exp) });
+          cardScale.value = withSpring(1, { damping: 15, stiffness: 100 });
+        });
+      } else {
+        setCurrentCardIndex(currentSlide);
+        cardOpacity.value = 1;
+        cardScale.value = 1;
+        cardTranslateX.value = 0;
+      }
+    }
+
+    const shouldAnimateText = currentSlide >= 5 || currentTextIndex >= 5;
+    if (currentSlide !== currentTextIndex) {
+      if (shouldAnimateText) {
+        textOpacity.value = withTiming(0, { duration: 150 });
+        textTranslateY.value = withTiming(10, { duration: 150 }, () => {
+          runOnJS(setCurrentTextIndex)(currentSlide);
+          textTranslateY.value = -10;
+          textOpacity.value = withTiming(1, { duration: 250, easing: Easing.out(Easing.exp) });
+          textTranslateY.value = withSpring(0, { damping: 15, stiffness: 100 });
+        });
+      } else {
+        setCurrentTextIndex(currentSlide);
+        textOpacity.value = 1;
+        textTranslateY.value = 0;
+      }
+    }
+  }, [currentSlide]);
+
+  const mascotAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: mascotFloatY.value }],
+  }));
+
+  const cardAnimStyle = useAnimatedStyle(() => ({
+    opacity: cardOpacity.value,
+    transform: [{ translateX: cardTranslateX.value }, { scale: cardScale.value }],
+  }));
+
+  const textAnimStyle = useAnimatedStyle(() => ({
+    opacity: textOpacity.value,
+    transform: [{ translateY: textTranslateY.value }],
+  }));
 
   const handleNext = async () => {
     if (currentSlide === 0 && !userName.trim()) {
@@ -1146,40 +1290,40 @@ export default function OnboardingScreen() {
         >
           {/* Mascot + Title Stacked Block */}
           <View style={{ alignItems: 'center', gap: 6, marginBottom: isShort ? 14 : 20 }}>
-            <View>
+            <Animated.View style={mascotAnimStyle}>
               <OrbMascot state={slide.mascotState} size={orbSize} />
-            </View>
+            </Animated.View>
             <MascotShadow size={orbSize} />
 
-            <View style={{ alignItems: 'center', gap: 4, marginTop: 4 }}>
+            <Animated.View style={[{ alignItems: 'center', gap: 4, marginTop: 4 }, textAnimStyle]}>
               {renderTitle()}
               <Text style={{ color: C.textSub, fontSize: isShort ? 13.5 : 15.5, fontWeight: '600', textAlign: 'center' }}>
-                {SLIDES[currentSlide].subtitle}
+                {SLIDES[currentTextIndex].subtitle}
               </Text>
-            </View>
+            </Animated.View>
           </View>
 
           {/* Card Component Slot */}
           <View style={{ width: '100%', alignItems: 'center' }}>
-            <View style={{ width: '100%', alignItems: 'center' }}>
-              {currentSlide === 0 && <NameCard cardW={cardW} C={C} value={userName} onChange={setUserName} />}
-              {currentSlide === 1 && <GoalCard cardW={cardW} C={C} selected={userGoals} onSelect={setUserGoals} />}
-              {currentSlide === 2 && <FoodSourcingCard cardW={cardW} C={C} value={foodSourcing} onSelect={setFoodSourcing} />}
-              {currentSlide === 3 && <SymptomAuditCard cardW={cardW} C={C} selected={symptoms} onToggle={toggleSymptom} />}
-              {currentSlide === 4 && <NovaWakeUpCard cardW={cardW} C={C} />}
-              {currentSlide === 5 && <AdditivePrioritiesCard cardW={cardW} C={C} selected={additives} onToggle={toggleAdditive} />}
-              {currentSlide === 6 && <AllergenDefenseCard cardW={cardW} C={C} selected={allergenFilters} onToggle={toggleAllergenFilter} />}
-              {currentSlide === 7 && <CommitmentLevelCard cardW={cardW} C={C} value={commitment} onSelect={setCommitment} />}
-              {currentSlide === 8 && <SocialProofCard cardW={cardW} C={C} />}
-              {currentSlide === 9 && <HealthAnalysisCalculationCard cardW={cardW} C={C} onComplete={() => setCurrentSlide(10)} />}
-              {currentSlide === 10 && <InstantResultSummaryCard cardW={cardW} C={C} isDark={isDark} />}
-              {currentSlide === 11 && <PaywallTransitionCard cardW={cardW} C={C} />}
-            </View>
+            <Animated.View style={cardAnimStyle}>
+              {currentCardIndex === 0 && <NameCard cardW={cardW} C={C} value={userName} onChange={setUserName} />}
+              {currentCardIndex === 1 && <GoalCard cardW={cardW} C={C} selected={userGoals} onSelect={setUserGoals} />}
+              {currentCardIndex === 2 && <FoodSourcingCard cardW={cardW} C={C} value={foodSourcing} onSelect={setFoodSourcing} />}
+              {currentCardIndex === 3 && <SymptomAuditCard cardW={cardW} C={C} selected={symptoms} onToggle={toggleSymptom} />}
+              {currentCardIndex === 4 && <NovaWakeUpCard cardW={cardW} C={C} />}
+              {currentCardIndex === 5 && <AdditivePrioritiesCard cardW={cardW} C={C} selected={additives} onToggle={toggleAdditive} />}
+              {currentCardIndex === 6 && <AllergenDefenseCard cardW={cardW} C={C} selected={allergenFilters} onToggle={toggleAllergenFilter} />}
+              {currentCardIndex === 7 && <CommitmentLevelCard cardW={cardW} C={C} value={commitment} onSelect={setCommitment} />}
+              {currentCardIndex === 8 && <SocialProofCard cardW={cardW} C={C} />}
+              {currentCardIndex === 9 && <HealthAnalysisCalculationCard cardW={cardW} C={C} onComplete={() => setCurrentSlide(10)} />}
+              {currentCardIndex === 10 && <InstantResultSummaryCard cardW={cardW} C={C} isDark={isDark} />}
+              {currentCardIndex === 11 && <PaywallTransitionCard cardW={cardW} C={C} />}
+            </Animated.View>
           </View>
         </ScrollView>
 
         {/* Pinned Bottom Bar */}
-        {currentSlide !== 9 && (
+        {currentCardIndex !== 9 && (
           <View style={{ gap: 12, marginTop: 8 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 5 }}>
               {SLIDES.map((_, idx) => (
