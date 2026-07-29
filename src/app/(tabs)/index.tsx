@@ -451,7 +451,7 @@ export default function HomeScreen() {
             <Text
               style={{ color: colors.primary, fontSize: 9.5, fontWeight: '800', letterSpacing: 1.6 }}
             >
-              Scan.Swap.Eat Clean
+              BiteFix: Scan.Swap.Eat Clean
             </Text>
           </View>
         </View>
