@@ -33,41 +33,17 @@ import {
 } from 'expo-iap';
 import type { ExpoPurchaseError } from 'expo-iap';
 import { useAppStore } from '../stores/appStore';
+import {
+  ALL_PRODUCT_SKUS,
+  PRODUCT_IDS,
+  type IAPProduct,
+  type PlanTier,
+  type PurchaseResult,
+  type RestoreResult,
+} from './iapProducts';
 
-// ── Product ID Registry ───────────────────────────────────
-// These MUST exactly match App Store Connect and ios/BiteFix.storekit.
-export const PRODUCT_IDS = {
-  MONTHLY: 'com.ravinderpoonia.bitefix.sub.monthly',
-  ANNUAL:  'com.ravinderpoonia.bitefix.sub.yearly',
-} as const;
-
-
-// Flat array for fetching all subscriptions at once
-const ALL_PRODUCT_SKUS: string[] = [PRODUCT_IDS.MONTHLY, PRODUCT_IDS.ANNUAL];
-
-// ── Types ─────────────────────────────────────────────────
-export type PlanTier = 'monthly' | 'annual';
-
-export interface IAPProduct {
-  productId: string;
-  title: string;
-  description: string;
-  displayPrice: string; // Localised, e.g. "$5.99"
-  price: number;        // Raw numeric price
-  currency: string;     // ISO 4217, e.g. "USD"
-}
-
-export interface PurchaseResult {
-  success: boolean;
-  userCancelled?: boolean;
-  error?: string;
-}
-
-export interface RestoreResult {
-  success: boolean;
-  isEntitled: boolean;
-  error?: string;
-}
+export { PRODUCT_IDS };
+export type { IAPProduct, PlanTier, PurchaseResult, RestoreResult };
 
 // ── Error Classification ──────────────────────────────────
 const USER_CANCELLED_CODES = new Set([

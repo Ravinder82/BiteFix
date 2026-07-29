@@ -2,6 +2,7 @@
   "expo": {
     "name": "BiteFix: Food Scanner",
     "slug": "bitefix",
+    "scheme": "bitefix",
     "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -53,7 +54,7 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosUrlScheme": "com.googleusercontent.apps.1097829102652-j3ckq63u4imagolthtov6gvl5i2rpqof"
+          "iosUrlScheme": "com.googleusercontent.apps.1097829102652-jgmhd81kr0c36338ci9tlmh1n3milght"
         }
       ],
       "expo-apple-authentication"

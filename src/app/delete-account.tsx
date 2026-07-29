@@ -8,7 +8,7 @@
 // ─────────────────────────────────────────────────────────
 
 import React, { useState } from 'react';
-import { View, TouchableOpacity, TextInput, SafeAreaView, Alert, ActivityIndicator, Platform } from 'react-native';
+import { View, TouchableOpacity, TextInput, SafeAreaView, Alert, ActivityIndicator, Platform, Linking } from 'react-native';
 import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useAppStore } from '../stores/appStore';
@@ -18,7 +18,8 @@ import { Trash2, ShieldAlert, ArrowLeft, Mail, Shield } from 'lucide-react-nativ
 import * as Haptics from 'expo-haptics';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { getIapService } from '../services/iapLoader';
+import { signInWithGoogleIdToken } from '../config/googleSignIn';
 
 export default function DeleteAccountScreen() {
   const { colors, isDark } = useTheme();
@@ -41,10 +42,7 @@ export default function DeleteAccountScreen() {
   const performReauth = async (): Promise<boolean> => {
     try {
       if (user?.provider === 'google') {
-        await GoogleSignin.hasPlayServices();
-        const response = await GoogleSignin.signIn();
-        const idToken = response?.data?.idToken;
-        if (!idToken) throw new Error('Google sign-in failed — no ID token');
+        const idToken = await signInWithGoogleIdToken();
         await reauthWithGoogle(idToken);
         return true;
       }
@@ -148,7 +146,7 @@ export default function DeleteAccountScreen() {
         {
           text: 'OK',
           onPress: () => {
-            router.replace('/auth');
+            router.replace('/onboarding');
           },
         },
       ]
@@ -215,11 +213,11 @@ export default function DeleteAccountScreen() {
               >
                 <Mail size={20} color={colors.textSecondary} />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700' }}>
+              <View style={{ flex: 1, flexShrink: 1 }}>
+                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '700', flexWrap: 'wrap' }}>
                   {user?.email || 'No email found'}
                 </Text>
-                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 2 }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 2, flexWrap: 'wrap' }}>
                   {providerIcon} Signed in via {user?.provider === 'google' ? 'Google' : user?.provider === 'apple' ? 'Apple' : user?.provider === 'email' ? 'Email' : 'Unknown'}
                 </Text>
               </View>
@@ -234,19 +232,95 @@ export default function DeleteAccountScreen() {
                 borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : '#E5E7EB',
                 flexDirection: 'row',
                 alignItems: 'center',
+                flexWrap: 'wrap',
                 gap: 8,
               }}
             >
-              <Shield size={14} color={isPremium ? '#10B981' : colors.textMuted} />
-              <Text style={{ color: isPremium ? '#10B981' : colors.textMuted, fontSize: 11, fontWeight: '700' }}>
-                {isPremium ? 'Premium Active' : 'Free Plan'}
-              </Text>
-              {isPremium && (
-                <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '500' }}>
-                  · Purchases can be restored after re-registering
+              <Shield size={14} color={isPremium ? '#10B981' : colors.textMuted} style={{ flexShrink: 0 }} />
+              <View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 4 }}>
+                <Text style={{ color: isPremium ? '#10B981' : colors.textMuted, fontSize: 11, fontWeight: '700' }}>
+                  {isPremium ? 'Premium Active' : 'Free Plan'}
                 </Text>
+                {isPremium && (
+                  <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '500' }}>
+                    · Purchases can be restored after re-registering
+                  </Text>
+                )}
+              </View>
+              {!isPremium && (
+                <TouchableOpacity
+                  onPress={async () => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    try {
+                      const service = await getIapService();
+                      if (!service) {
+                        Alert.alert('Store Unavailable', 'Unable to load the App Store purchase system. Please restart the app and try again.');
+                        return;
+                      }
+
+                      const result = await service.restorePurchases();
+                      if (result.isEntitled) {
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        Alert.alert('Restored Successfully ✅', 'Your BiteFix Premium subscription has been restored.');
+                      } else {
+                        Alert.alert('No Subscription Found', 'We could not find an active subscription for this Apple ID.');
+                      }
+                    } catch (e) {
+                      Alert.alert('Restore Failed', 'An error occurred while restoring purchases.');
+                    }
+                  }}
+                  style={{
+                    backgroundColor: colors.primary + '15',
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                    borderRadius: 8,
+                  }}
+                >
+                  <Text style={{ color: colors.primary, fontSize: 11, fontWeight: '700' }}>Restore</Text>
+                </TouchableOpacity>
               )}
             </View>
+          </View>
+
+          {/* Apple App Store Guideline 5.1.1(v) Subscription Notice */}
+          <View
+            style={{
+              backgroundColor: isDark ? 'rgba(245,158,11,0.1)' : '#FFFBEB',
+              borderColor: 'rgba(245,158,11,0.3)',
+              borderWidth: 1,
+              padding: 16,
+              borderRadius: 16,
+              marginBottom: 16,
+            }}
+          >
+            <Text style={{ color: '#D97706', fontSize: 12, fontWeight: '800', marginBottom: 4 }}>
+              ⚠️ Important Subscription Notice
+            </Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 11, lineHeight: 16, marginBottom: 10 }}>
+              Deleting your BiteFix app account will NOT automatically cancel an active App Store / iTunes subscription.
+              Apple manages all billing directly through your Apple ID settings.
+            </Text>
+            <TouchableOpacity
+              onPress={async () => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                try {
+                  await Linking.openURL('https://apps.apple.com/account/subscriptions');
+                } catch (e) {
+                  Alert.alert('Manage Subscriptions', 'Open your iPhone Settings > Apple ID > Subscriptions to manage or cancel active subscriptions.');
+                }
+              }}
+              style={{
+                backgroundColor: '#F59E0B',
+                paddingVertical: 8,
+                paddingHorizontal: 12,
+                borderRadius: 10,
+                alignSelf: 'flex-start',
+              }}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '800' }}>
+                Manage App Store Subscriptions
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {/* Warning Card */}
@@ -267,7 +341,6 @@ export default function DeleteAccountScreen() {
               <Text style={{ color: colors.error || '#EF4444', fontSize: 14, fontWeight: '700' }}>Permanent Action</Text>
               <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 18, marginTop: 6 }}>
                 This will permanently delete your account, all scanned foods, basket items, and settings from this device.
-                {isPremium ? '\n\nYour subscription purchases are linked to your App Store / Play Store account and can be restored via the Paywall screen after re-registering.' : ''}
               </Text>
             </View>
           </View>

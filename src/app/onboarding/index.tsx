@@ -210,19 +210,14 @@ function AnimatedListItem({ children, index, style, animate = true }: { children
     return <View style={style}>{children}</View>;
   }
 
-  const slideIn = useSharedValue(20);
-  const fade = useSharedValue(0);
-  useEffect(() => {
-    slideIn.value = withDelay(index * 80, withSpring(0, { damping: 12, stiffness: 100 }));
-    fade.value = withDelay(index * 80, withTiming(1, { duration: 400 }));
-  }, [index]);
-
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: slideIn.value }],
-    opacity: fade.value,
-  }));
-
-  return <Animated.View style={[style, animStyle]}>{children}</Animated.View>;
+  return (
+    <Animated.View
+      entering={FadeInDown.delay(index * 120).springify().damping(16).stiffness(120)}
+      style={style}
+    >
+      {children}
+    </Animated.View>
+  );
 }
 
 // ─────────────────────────────────────────────────────────
@@ -344,6 +339,7 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
     >
       <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
       {/* Multi-Select Info Pill */}
+      <AnimatedListItem index={0}>
       <View
         style={{
           alignSelf: 'center',
@@ -360,11 +356,12 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
           💡 Select as many as you want
         </Text>
       </View>
+      </AnimatedListItem>
 
       {options.map((opt, idx) => {
         const isSelected = selected.includes(opt.value);
         return (
-          <AnimatedListItem key={opt.value} index={idx}>
+          <AnimatedListItem key={opt.value} index={idx + 1}>
           <TouchableOpacity
             key={opt.value}
             onPress={() => handleToggle(opt.value)}
@@ -489,14 +486,16 @@ function SymptomAuditCard({ cardW, C, selected, onToggle }: { cardW: number; C: 
       }}
     >
       <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
+      <AnimatedListItem index={0}>
       <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '800', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
         Check the things you want to fix:
       </Text>
+      </AnimatedListItem>
 
       {symptoms.map((s, idx) => {
         const active = selected.includes(s.id);
         return (
-          <AnimatedListItem key={s.id} index={idx}>
+          <AnimatedListItem key={s.id} index={idx + 1}>
           <TouchableOpacity
             key={s.id}
             onPress={() => {
@@ -571,24 +570,30 @@ function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
     >
       <View style={[StyleSheet.absoluteFill, { backgroundColor: C.red, opacity: 0.04 }]} />
       {/* Custom Alert Badge */}
+      <AnimatedListItem index={0}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.redLight, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: C.red + '30' }}>
         <AlertTriangle size={14} color={C.red} />
         <Text style={{ color: C.red, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
           WARNING
         </Text>
       </View>
+      </AnimatedListItem>
 
       {/* Massive Graphic Callout */}
+      <AnimatedListItem index={1}>
       <View style={{ alignItems: 'center' }}>
         <Text style={{ color: C.red, fontSize: 42, fontWeight: '900', letterSpacing: -1.5 }}>73%</Text>
         <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: -2 }}>
           OF STORE FOODS
         </Text>
       </View>
+      </AnimatedListItem>
 
+      <AnimatedListItem index={2}>
       <Text style={{ color: C.text, fontSize: 13.5, fontWeight: '800', textAlign: 'center', lineHeight: 18 }}>
         Are made in factories using cheap ingredients you would never keep in your own kitchen.
       </Text>
+      </AnimatedListItem>
 
       {/* Core Highlights */}
       <View style={{ width: '100%', gap: 8, marginTop: 4 }}>
@@ -597,7 +602,7 @@ function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
           'Artificial colors that affect kids\' focus & behavior',
           'Fake sugars that confuse your body\'s metabolism',
         ].map((point, idx) => (
-          <AnimatedListItem key={idx} index={idx}>
+          <AnimatedListItem key={idx} index={idx + 3}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.cardInner, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: C.cardBorder }}>
             <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.red }} />
             <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '600', flex: 1 }}>{point}</Text>
@@ -790,6 +795,102 @@ function SocialProofCard({ cardW, C }: { cardW: number; C: any }) {
   const { isDark } = useTheme();
   const [activeIndex, setActiveIndex] = useState(0);
 
+  // Reanimated shared values for 4 absolute-positioned cards in the stack
+  // Initial values match activeIndex = 0 state to ensure immediate 3D rendering
+  const transX0 = useSharedValue(0);
+  const transY0 = useSharedValue(0);
+  const scale0 = useSharedValue(1);
+  const rotate0 = useSharedValue('0deg');
+  const opacity0 = useSharedValue(1);
+
+  const transX1 = useSharedValue(cardW * 0.15);
+  const transY1 = useSharedValue(15);
+  const scale1 = useSharedValue(0.9);
+  const rotate1 = useSharedValue('5deg');
+  const opacity1 = useSharedValue(0.8);
+
+  const transX2 = useSharedValue(cardW * 0.3);
+  const transY2 = useSharedValue(30);
+  const scale2 = useSharedValue(0.8);
+  const rotate2 = useSharedValue('10deg');
+  const opacity2 = useSharedValue(0.5);
+
+  const transX3 = useSharedValue(cardW * 0.45);
+  const transY3 = useSharedValue(45);
+  const scale3 = useSharedValue(0.7);
+  const rotate3 = useSharedValue('15deg');
+  const opacity3 = useSharedValue(0);
+
+  const cardsAnim = [
+    { transX: transX0, transY: transY0, scale: scale0, rotate: rotate0, opacity: opacity0 },
+    { transX: transX1, transY: transY1, scale: scale1, rotate: rotate1, opacity: opacity1 },
+    { transX: transX2, transY: transY2, scale: scale2, rotate: rotate2, opacity: opacity2 },
+    { transX: transX3, transY: transY3, scale: scale3, rotate: rotate3, opacity: opacity3 },
+  ];
+
+  useEffect(() => {
+    for (let i = 0; i < REVIEWS.length; i++) {
+      const pos = (i - activeIndex + REVIEWS.length) % REVIEWS.length;
+      const anim = cardsAnim[i];
+
+      if (pos === REVIEWS.length - 1) {
+        // Swiping away (fly off to the left)
+        anim.transX.value = withTiming(-cardW * 1.5, { duration: 400 });
+        anim.transY.value = withTiming(0, { duration: 400 });
+        anim.scale.value = withTiming(0.8, { duration: 400 });
+        anim.rotate.value = withTiming('-15deg', { duration: 400 });
+        anim.opacity.value = withTiming(0, { duration: 300 });
+      } else if (pos === 0) {
+        // Active top card
+        anim.transX.value = withSpring(0, { damping: 16, stiffness: 100 });
+        anim.transY.value = withSpring(0, { damping: 16, stiffness: 100 });
+        anim.scale.value = withSpring(1, { damping: 16, stiffness: 100 });
+        anim.rotate.value = withSpring('0deg', { damping: 16, stiffness: 100 });
+        anim.opacity.value = withSpring(1, { damping: 16, stiffness: 100 });
+      } else if (pos === 1) {
+        // Second card (peeking from the right)
+        anim.transX.value = withSpring(cardW * 0.15, { damping: 16, stiffness: 100 });
+        anim.transY.value = withSpring(15, { damping: 16, stiffness: 100 });
+        anim.scale.value = withSpring(0.9, { damping: 16, stiffness: 100 });
+        anim.rotate.value = withSpring('5deg', { damping: 16, stiffness: 100 });
+        anim.opacity.value = withSpring(0.8, { damping: 16, stiffness: 100 });
+      } else if (pos === 2) {
+        // Third card
+        anim.transX.value = withSpring(cardW * 0.3, { damping: 16, stiffness: 100 });
+        anim.transY.value = withSpring(30, { damping: 16, stiffness: 100 });
+        anim.scale.value = withSpring(0.8, { damping: 16, stiffness: 100 });
+        anim.rotate.value = withSpring('10deg', { damping: 16, stiffness: 100 });
+        anim.opacity.value = withSpring(0.5, { damping: 16, stiffness: 100 });
+      } else {
+        // Hidden cards
+        anim.transX.value = withSpring(cardW * 0.45, { damping: 16, stiffness: 100 });
+        anim.transY.value = withSpring(45, { damping: 16, stiffness: 100 });
+        anim.scale.value = withSpring(0.7, { damping: 16, stiffness: 100 });
+        anim.rotate.value = withSpring('15deg', { damping: 16, stiffness: 100 });
+        anim.opacity.value = withTiming(0, { duration: 200 });
+      }
+    }
+  }, [activeIndex]);
+
+  const animStyle0 = useAnimatedStyle(() => ({
+    transform: [{ translateX: transX0.value }, { translateY: transY0.value }, { scale: scale0.value }, { rotate: rotate0.value }],
+    opacity: opacity0.value,
+  }));
+  const animStyle1 = useAnimatedStyle(() => ({
+    transform: [{ translateX: transX1.value }, { translateY: transY1.value }, { scale: scale1.value }, { rotate: rotate1.value }],
+    opacity: opacity1.value,
+  }));
+  const animStyle2 = useAnimatedStyle(() => ({
+    transform: [{ translateX: transX2.value }, { translateY: transY2.value }, { scale: scale2.value }, { rotate: rotate2.value }],
+    opacity: opacity2.value,
+  }));
+  const animStyle3 = useAnimatedStyle(() => ({
+    transform: [{ translateX: transX3.value }, { translateY: transY3.value }, { scale: scale3.value }, { rotate: rotate3.value }],
+    opacity: opacity3.value,
+  }));
+
+  const animStyles = [animStyle0, animStyle1, animStyle2, animStyle3];
+
   useEffect(() => {
     const timer = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % REVIEWS.length);
@@ -797,7 +898,12 @@ function SocialProofCard({ cardW, C }: { cardW: number; C: any }) {
     return () => clearInterval(timer);
   }, []);
 
-  const activeReview = REVIEWS[activeIndex];
+  const getZIndex = (i: number) => {
+    const pos = (i - activeIndex + REVIEWS.length) % REVIEWS.length;
+    // Exiting card stays on top
+    if (pos === REVIEWS.length - 1) return 5;
+    return REVIEWS.length - pos;
+  };
 
   return (
     <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 32, borderWidth: 2, borderColor: C.primary, padding: 20, gap: 16, alignItems: 'center', shadowColor: C.primary, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 10, overflow: 'hidden' }}>
@@ -820,49 +926,72 @@ function SocialProofCard({ cardW, C }: { cardW: number; C: any }) {
         </View>
       </View>
 
-      {/* Review Box Wrapper with layout transition key */}
-      <View style={{ width: '100%', minHeight: 140, justifyContent: 'center' }}>
-        <Animated.View
-          key={activeIndex}
-          entering={FadeInRight.duration(350)}
-          exiting={FadeOutLeft.duration(350)}
-          style={{ width: '100%', gap: 12 }}
-        >
-          {/* User Details Row */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            {/* Avatar Initials with matching color */}
-            <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: activeReview.avatarBg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#FFFFFF' }}>
-              <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '900' }}>
-                {activeReview.initials}
-              </Text>
-            </View>
-
-            <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={{ color: C.text, fontSize: 13, fontWeight: '900' }}>{activeReview.name}</Text>
-                <View style={{ backgroundColor: C.primaryLight, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-                  <ShieldCheck size={10} color={C.primary} strokeWidth={3} />
-                  <Text style={{ color: C.primary, fontSize: 8.5, fontWeight: '800', textTransform: 'uppercase' }}>Verified</Text>
+      {/* 3D Stacked Review Container */}
+      <View style={{ width: '100%', height: 200, position: 'relative' }}>
+        {REVIEWS.map((rev, i) => {
+          const zIndex = getZIndex(i);
+          return (
+            <Animated.View
+              key={i}
+              style={[
+                {
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 160,
+                  backgroundColor: C.cardInner,
+                  borderRadius: 20,
+                  borderWidth: 1.5,
+                  borderColor: C.cardBorder,
+                  padding: 16,
+                  gap: 10,
+                  zIndex,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 8 },
+                  shadowOpacity: 0.08,
+                  shadowRadius: 12,
+                  elevation: 4,
+                },
+                animStyles[i]
+              ]}
+            >
+              {/* User Details Row */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: rev.avatarBg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#FFFFFF' }}>
+                  <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '900' }}>
+                    {rev.initials}
+                  </Text>
                 </View>
+
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={{ color: C.text, fontSize: 12.5, fontWeight: '900' }}>{rev.name}</Text>
+                    <View style={{ backgroundColor: C.primaryLight, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                      <ShieldCheck size={10} color={C.primary} strokeWidth={3} />
+                      <Text style={{ color: C.primary, fontSize: 8, fontWeight: '800', textTransform: 'uppercase' }}>Verified</Text>
+                    </View>
+                  </View>
+                  <Text style={{ color: C.textSub, fontSize: 10.5, fontWeight: '700' }}>{rev.location}</Text>
+                </View>
+
+                <Text style={{ color: C.textMuted, fontSize: 10, fontWeight: '600' }}>{rev.date}</Text>
               </View>
-              <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '700' }}>{activeReview.location}</Text>
-            </View>
 
-            <Text style={{ color: C.textMuted, fontSize: 10.5, fontWeight: '600' }}>{activeReview.date}</Text>
-          </View>
+              {/* Stars */}
+              <View style={{ flexDirection: 'row', gap: 3 }}>
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star key={s} size={12} color="#FBBF24" fill="#FBBF24" />
+                ))}
+              </View>
 
-          {/* Stars */}
-          <View style={{ flexDirection: 'row', gap: 3 }}>
-            {[1, 2, 3, 4, 5].map((s) => (
-              <Star key={s} size={13} color="#FBBF24" fill="#FBBF24" />
-            ))}
-          </View>
-
-          {/* Review Text */}
-          <Text style={{ color: C.text, fontSize: 12.5, fontWeight: '700', lineHeight: 17, fontStyle: 'italic' }}>
-            "{activeReview.text}"
-          </Text>
-        </Animated.View>
+              {/* Review Text */}
+              <Text style={{ color: C.text, fontSize: 11.5, fontWeight: '700', lineHeight: 15.5, fontStyle: 'italic' }} numberOfLines={3}>
+                "{rev.text}"
+              </Text>
+            </Animated.View>
+          );
+        })}
       </View>
 
       {/* Mini Rotation Indicator Dots */}

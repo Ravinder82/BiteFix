@@ -32,9 +32,13 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 // Wrap in try/catch to handle "auth/already-initialized" on hot reload.
 let auth: any;
 try {
-  auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(AsyncStorage),
-  });
+  if (typeof getReactNativePersistence === 'function') {
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage),
+    });
+  } else {
+    auth = getAuth(app);
+  }
 } catch (error: any) {
   if (error.code === 'auth/already-initialized') {
     // Auth was already initialized (e.g. during hot reload), get existing instance
@@ -42,7 +46,6 @@ try {
   } else {
     console.error('[Firebase] Auth initialization error (safe fallback):', error);
     try {
-      // If getReactNativePersistence is undefined in production, this fallback allows the app to still launch.
       auth = getAuth(app);
     } catch (fallbackError) {
       console.error('[Firebase] Fallback getAuth failed:', fallbackError);

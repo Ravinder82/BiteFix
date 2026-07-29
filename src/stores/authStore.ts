@@ -88,22 +88,36 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ user: null, isLoading: false, isInitialized: true });
       return () => {};
     }
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (firebaseUser) {
-        set({
-          user: mapFirebaseUser(firebaseUser),
-          isLoading: false,
-          isInitialized: true,
-        });
-      } else {
-        set({
-          user: null,
-          isLoading: false,
-          isInitialized: true,
-        });
-      }
-    });
-    return unsubscribe;
+
+    try {
+      const unsubscribe = onAuthStateChanged(
+        auth,
+        (firebaseUser) => {
+          if (firebaseUser) {
+            set({
+              user: mapFirebaseUser(firebaseUser),
+              isLoading: false,
+              isInitialized: true,
+            });
+          } else {
+            set({
+              user: null,
+              isLoading: false,
+              isInitialized: true,
+            });
+          }
+        },
+        (error) => {
+          console.error('[AuthStore] Auth state listener failed:', error);
+          set({ user: null, isLoading: false, isInitialized: true });
+        }
+      );
+      return unsubscribe;
+    } catch (error) {
+      console.error('[AuthStore] Failed to initialize auth listener:', error);
+      set({ user: null, isLoading: false, isInitialized: true });
+      return () => {};
+    }
   },
 
   // ── Google Sign-In ──────────────────────────────────

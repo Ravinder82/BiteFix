@@ -6,7 +6,7 @@
 // design tokens and the OrbMascot character.
 // ─────────────────────────────────────────────────────────
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -27,9 +27,9 @@ import { Mail, Lock, User, Eye, EyeOff, ArrowRight } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import Svg, { Path } from 'react-native-svg';
 import { router, useLocalSearchParams } from 'expo-router';
+import { configureGoogleSignIn, signInWithGoogleIdToken } from '../../config/googleSignIn';
 
 // ── Configure Google Sign-In ─────────────────────────────
 // Note: iosClientId is only passed when explicitly set.
@@ -39,15 +39,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 // 2. Re-download GoogleService-Info.plist (it will now contain CLIENT_ID)
 // 3. Replace the file in the project root
 // 4. Run a new EAS development build
-const googleConfig: { webClientId?: string; iosClientId?: string } = {
-  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-};
-// Only pass iosClientId if it has an actual value (not empty string)
-if (process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID) {
-  googleConfig.iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
-}
-GoogleSignin.configure(googleConfig);
-
 // ── Main Component ──────────────────────────────────────
 
 export default function AuthScreen() {
@@ -55,6 +46,11 @@ export default function AuthScreen() {
   const { signInWithGoogle, signInWithApple, signInWithEmail, signUpWithEmail, resetPassword } = useAuthStore();
   const { redirect } = useLocalSearchParams<{ redirect?: string }>();
   const target = (redirect === 'tabs' ? '/(tabs)' : '/paywall') as any;
+
+  // Safely configure Google Sign-In inside lifecycle hook
+  useEffect(() => {
+    configureGoogleSignIn();
+  }, []);
 
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
@@ -89,10 +85,7 @@ export default function AuthScreen() {
     setIsLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-      await GoogleSignin.hasPlayServices();
-      const response = await GoogleSignin.signIn();
-      const idToken = response.data?.idToken;
-      if (!idToken) throw new Error('No ID token received from Google');
+      const idToken = await signInWithGoogleIdToken();
       await signInWithGoogle(idToken);
       Alert.alert(
         'Success',

@@ -24,7 +24,8 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
-  StyleSheet
+  StyleSheet,
+  Linking
 } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import { Text } from '@/components/Text';
@@ -46,7 +47,8 @@ import {
   RotateCcw,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { iapService, PRODUCT_IDS, type IAPProduct, type PlanTier } from '../services/iapService';
+import { getIapService, getLoadedIapService } from '../services/iapLoader';
+import { PRODUCT_IDS, type IAPProduct, type PlanTier } from '../services/iapProducts';
 
 // ── Gold accent colour for premium branding ───────────────
 const GOLD = '#D4AF37';
@@ -160,20 +162,32 @@ export default function PaywallScreen() {
   const initialise = useCallback(async () => {
     if (!mountedRef.current) return;
 
-    // 1. Connect to the native store
-    await iapService.connect();
-    // CRITICAL: Commented out to prevent auto-restoring and bypassing the paywall on mount.
-    // The user must click the "Restore Purchases" button manually to restore an active subscription.
-    // await iapService.checkSubscriptionStatus();
-
-    // 2. Fetch live pricing from App Store Connect
     if (mountedRef.current) {
       setIsFetchingProducts(true);
     }
-    const fetched = await iapService.fetchSubscriptions();
-    if (mountedRef.current) {
-      setProducts(fetched);
-      setIsFetchingProducts(false);
+
+    try {
+      const service = await getIapService();
+      if (!service) {
+        return;
+      }
+
+      // 1. Connect to the native store
+      await service.connect();
+      // CRITICAL: Do not auto-restore on mount. The user must click "Restore Purchases".
+      // await service.checkSubscriptionStatus();
+
+      // 2. Fetch live pricing from App Store Connect
+      const fetched = await service.fetchSubscriptions();
+      if (mountedRef.current) {
+        setProducts(fetched);
+      }
+    } catch (error) {
+      console.error('[Paywall] Failed to initialize IAP:', error);
+    } finally {
+      if (mountedRef.current) {
+        setIsFetchingProducts(false);
+      }
     }
   }, []);
 
@@ -183,8 +197,10 @@ export default function PaywallScreen() {
 
     return () => {
       mountedRef.current = false;
-      // Disconnect from the store when this screen unmounts
-      iapService.disconnect();
+      // Only disconnect if the native bridge was already loaded.
+      getLoadedIapService()?.disconnect().catch((error) => {
+        console.warn('[Paywall] IAP disconnect warning:', error);
+      });
     };
   }, [initialise]);
 
@@ -213,7 +229,13 @@ export default function PaywallScreen() {
 
     setIsProcessing(true);
     try {
-      const result = await iapService.purchasePlan(selectedPlan);
+      const service = await getIapService();
+      if (!service) {
+        Alert.alert('Store Unavailable', 'Unable to load the App Store purchase system. Please restart the app and try again.');
+        return;
+      }
+
+      const result = await service.purchasePlan(selectedPlan);
 
       if (!mountedRef.current) return;
 
@@ -246,7 +268,13 @@ export default function PaywallScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setIsProcessing(true);
     try {
-      const result = await iapService.restorePurchases();
+      const service = await getIapService();
+      if (!service) {
+        Alert.alert('Store Unavailable', 'Unable to load the App Store purchase system. Please restart the app and try again.');
+        return;
+      }
+
+      const result = await service.restorePurchases();
 
       if (!mountedRef.current) return;
 
@@ -275,26 +303,40 @@ export default function PaywallScreen() {
     }
   };
 
+  const handleOpenPrivacyPolicy = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const url = 'https://bitefix.app/privacy';
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Privacy Policy', 'Privacy Policy is available at https://bitefix.app/privacy');
+      }
+    } catch (e) {
+      Alert.alert('Privacy Policy', 'Privacy Policy is available at https://bitefix.app/privacy');
+    }
+  };
+
+  const handleOpenTermsOfUse = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const url = 'https://www.apple.com/legal/internet-services/itunes/dev/stgula/';
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Terms of Use', 'Standard Apple EULA applies: https://www.apple.com/legal/internet-services/itunes/dev/stgula/');
+      }
+    } catch (e) {
+      Alert.alert('Terms of Use', 'Standard Apple EULA applies: https://www.apple.com/legal/internet-services/itunes/dev/stgula/');
+    }
+  };
+
   const handleDismiss = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (!user) {
-      router.push({ pathname: '/auth', params: { redirect: 'paywall' } });
-    } else if (!isPremium) {
-      Alert.alert(
-        'Subscription Required',
-        'BiteFix Premium is required to access the app. Please subscribe to continue, or sign out to switch accounts.',
-        [
-          {
-            text: 'Sign Out',
-            style: 'destructive',
-            onPress: async () => {
-              await useAuthStore.getState().signOut();
-              router.replace('/auth');
-            },
-          },
-          { text: 'OK', style: 'cancel' },
-        ]
-      );
+    if (router.canGoBack()) {
+      router.back();
     } else {
       router.replace('/(tabs)');
     }
@@ -483,14 +525,15 @@ export default function PaywallScreen() {
         {/* ── Legal & Policies ──────────────────────────────── */}
         <View style={{ marginTop: 20, gap: 10, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 16 }}>
           <Text style={{ color: colors.textMuted, fontSize: 9.5, textAlign: 'center', lineHeight: 14 }}>
-            Payment will be charged to your iTunes Account at confirmation of purchase. Subscription
+            Payment will be charged to your Apple ID account at confirmation of purchase. Subscription
             automatically renews unless auto-renew is turned off at least 24 hours before the end of
-            the current period. Manage or cancel in your iTunes Account Settings.
+            the current period. Account will be charged for renewal within 24 hours prior to the end of
+            the current period. Manage or cancel in your App Store Account Settings.
           </Text>
 
           <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 4 }}>
             <TouchableOpacity
-              onPress={() => Alert.alert('Privacy Policy', 'We value your privacy. All data is encrypted and never sold.')}
+              onPress={handleOpenPrivacyPolicy}
               accessibilityLabel="Privacy Policy"
             >
               <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '700', textDecorationLine: 'underline' }}>
@@ -499,7 +542,7 @@ export default function PaywallScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => Alert.alert('Terms of Use', 'Standard Apple EULA governs the use of this application.')}
+              onPress={handleOpenTermsOfUse}
               accessibilityLabel="Terms of Use"
             >
               <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '700', textDecorationLine: 'underline' }}>

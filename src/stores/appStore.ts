@@ -75,6 +75,62 @@ interface AppState {
 
 const SUGAR_CONVERSION_GRAMS_PER_TEASPOON = 4.2; // 1 teaspoon = 4.2 grams of sugar
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+const THEMES = ['light', 'dark', 'system'] as const;
+const SUGAR_UNITS = ['g', 'oz'] as const;
+const USER_GOALS = ['ultra_processed', 'nutri_score', 'clean_swaps', 'healthy_habits', 'none'] as const;
+
+function normalizeObjectArray<T>(value: unknown): T[] {
+  return Array.isArray(value)
+    ? value.filter((item) => item && typeof item === 'object') as T[]
+    : [];
+}
+
+function normalizePersistedState(persistedState: unknown, version: number): Partial<AppState> {
+  const state = persistedState && typeof persistedState === 'object'
+    ? { ...(persistedState as Record<string, any>) }
+    : {};
+
+  if (version === 0) {
+    state.theme = 'light';
+  }
+  if (version < 2) {
+    state.sugarUnit = 'g';
+  }
+  if (version < 3) {
+    state.collection = [];
+  }
+  if (version < 4 && Array.isArray(state.scans)) {
+    state.scans = state.scans.map((scan: any) => ({
+      ...scan,
+      novaClass: scan.novaClass ?? undefined,
+      additives: scan.additives ?? [],
+      additiveCount: scan.additiveCount ?? 0,
+      allergens: scan.allergens ?? [],
+      nutriScore: scan.nutriScore ?? undefined,
+      biteFixScore: scan.biteFixScore ?? 50,
+    }));
+  }
+  if (version < 5) {
+    state.allergenFilters = state.allergenFilters ?? [];
+    state.strictNovaAlert = state.strictNovaAlert ?? true;
+    state.stealthAdditivesAlert = state.stealthAdditivesAlert ?? true;
+  }
+
+  return {
+    ...state,
+    onboardingComplete: typeof state.onboardingComplete === 'boolean' ? state.onboardingComplete : false,
+    theme: THEMES.includes(state.theme) ? state.theme : 'light',
+    sugarUnit: SUGAR_UNITS.includes(state.sugarUnit) ? state.sugarUnit : 'g',
+    scans: normalizeObjectArray<ScanHistoryItem>(state.scans),
+    collection: normalizeObjectArray<CollectionItem>(state.collection),
+    userName: typeof state.userName === 'string' ? state.userName : undefined,
+    userGoal: USER_GOALS.includes(state.userGoal) ? state.userGoal : 'none',
+    allergenFilters: Array.isArray(state.allergenFilters) ? state.allergenFilters.filter((item: unknown) => typeof item === 'string') : [],
+    strictNovaAlert: typeof state.strictNovaAlert === 'boolean' ? state.strictNovaAlert : true,
+    stealthAdditivesAlert: typeof state.stealthAdditivesAlert === 'boolean' ? state.stealthAdditivesAlert : true,
+    isPremium: typeof state.isPremium === 'boolean' ? state.isPremium : false,
+  };
+}
 
 export const useAppStore = create<AppState>()(
   persist(
@@ -236,36 +292,18 @@ export const useAppStore = create<AppState>()(
       name: '@bitefix-storage',
       storage: createJSONStorage(() => AsyncStorage),
       version: 5,
-      migrate: (persistedState: any, version: number) => {
-        if (version === 0) {
-          persistedState.theme = 'light';
+      migrate: normalizePersistedState,
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...normalizePersistedState(persistedState, 5),
+      }),
+      onRehydrateStorage: () => (_state, error) => {
+        if (error) {
+          console.error('[AppStore] Failed to hydrate persisted state. Clearing local storage:', error);
+          AsyncStorage.removeItem('@bitefix-storage').catch((removeError) => {
+            console.error('[AppStore] Failed to clear corrupted local storage:', removeError);
+          });
         }
-        if (version < 2) {
-          persistedState.sugarUnit = 'g';
-        }
-        if (version < 3) {
-          persistedState.collection = [];
-        }
-        if (version < 4) {
-          // BiteFix migration: add default BiteFix fields to existing scans
-          if (Array.isArray(persistedState.scans)) {
-            persistedState.scans = persistedState.scans.map((scan: any) => ({
-              ...scan,
-              novaClass: scan.novaClass ?? undefined,
-              additives: scan.additives ?? [],
-              additiveCount: scan.additiveCount ?? 0,
-              allergens: scan.allergens ?? [],
-              nutriScore: scan.nutriScore ?? undefined,
-              biteFixScore: scan.biteFixScore ?? 50,
-            }));
-          }
-        }
-        if (version < 5) {
-          persistedState.allergenFilters = persistedState.allergenFilters ?? [];
-          persistedState.strictNovaAlert = persistedState.strictNovaAlert ?? true;
-          persistedState.stealthAdditivesAlert = persistedState.stealthAdditivesAlert ?? true;
-        }
-        return persistedState as AppState;
       },
     }
   )

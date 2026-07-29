@@ -9,7 +9,7 @@ import { useTheme } from '../hooks/useTheme';
 let isFirstLoad = true;
 
 export default function Index() {
-  const { onboardingComplete } = useAppStore();
+  const { onboardingComplete, isPremium } = useAppStore();
   const { user, isInitialized } = useAuthStore();
   const { colors } = useTheme();
   const [hydrated, setHydrated] = useState(false);
@@ -27,19 +27,27 @@ export default function Index() {
   }, [hydrated, isInitialized, user]);
 
   useEffect(() => {
+    let mounted = true;
     const handleHydration = () => {
-      setHydrated(true);
+      if (mounted) setHydrated(true);
     };
 
-    // Check if the store has already hydrated from AsyncStorage
-    if (useAppStore.persist.hasHydrated()) {
+    // Check if store already hydrated
+    if (useAppStore.persist?.hasHydrated?.()) {
       handleHydration();
-    } else {
-      // If not, subscribe to the finish event
+    } else if (useAppStore.persist?.onFinishHydration) {
       const unsub = useAppStore.persist.onFinishHydration(() => {
         handleHydration();
       });
-      return () => unsub();
+      // Safety timeout: guarantee hydration after 500ms max
+      const timer = setTimeout(handleHydration, 500);
+      return () => {
+        mounted = false;
+        unsub();
+        clearTimeout(timer);
+      };
+    } else {
+      handleHydration();
     }
   }, []);
 
@@ -62,9 +70,7 @@ export default function Index() {
     return <Redirect href="/auth" />;
   }
 
-
   // Step 3: If authenticated but NOT premium, locked to paywall
-  const { isPremium } = useAppStore.getState();
   if (!isPremium) {
     return <Redirect href="/paywall" />;
   }
