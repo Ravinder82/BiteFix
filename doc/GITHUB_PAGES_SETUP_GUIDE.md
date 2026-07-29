@@ -1,74 +1,69 @@
-# Step-by-Step Guide: Hosting Legal & Support Docs on GitHub Pages
+# BiteFix: App Store Connect legal URLs & Webpage Setup Guide
 
-Apple requires a public live Web URL for your **Privacy Policy** and **Support Page** when submitting an app to App Store Connect. 
+To meet Apple App Store Guidelines (Section 5.1.1 for Privacy and Section 3.1.2 for Subscriptions), your app must point to live, public URLs for the **Privacy Policy**, **EULA/Terms**, and **Support/Contact Page**.
 
-Using **GitHub Pages**, you can host all these documents for **100% free** under your repository (`https://ravinder82.github.io/BiteFix/`).
-
-Follow these step-by-step instructions to deploy them in less than 3 minutes!
+The necessary pages are created inside the `docs/` folder of your repository. Once hosted on GitHub Pages, they will serve as your official app legal site.
 
 ---
 
-## Step 1: Create an `docs/` Folder for Web Hosting
+## 🌎 Part 1: How to Enable GitHub Pages (Step-by-Step)
 
-We will copy your markdown files into a public `docs/` folder in your repository, converting them or adding simple HTML files for clean browser rendering.
+Follow these steps to host your legal pages for free directly from your GitHub repository:
 
-### Quick Setup:
-1. In your project root (`/Users/ravinderpoonia/BiteFix`), create a folder named `docs`.
-2. Move/copy the markdown files or HTML wrappers into `docs/`:
-   - `docs/index.html` (Landing page / Support center)
-   - `docs/privacy.html` (Privacy Policy)
+1. **Go to GitHub**:
+   Open your browser and navigate to your repository page:
+   👉 [https://github.com/Ravinder82/BiteFix](https://github.com/Ravinder82/BiteFix)
 
-*(We have created styled HTML files for you so they render with modern, clean typography in web browsers!)*
+2. **Navigate to Settings**:
+   Click on the **Settings** tab (the gear icon ⚙️) in the top menu bar of your repository.
 
----
+3. **Open Pages Section**:
+   On the left-side navigation sidebar, scroll down to the **Code and automation** section and click on **Pages**.
 
-## Step 2: Push the `docs/` Folder to GitHub
+4. **Configure Build and Deployment**:
+   * **Source**: Select **Deploy from a branch** from the dropdown menu.
+   * **Branch**: 
+     * Select `main` from the branch dropdown.
+     * Select `/docs` from the folder dropdown (this tells GitHub to serve files from the `docs` folder we just populated).
+     * Click **Save**.
 
-Open your terminal and run:
-```bash
-git add .
-git commit -m "docs: add public legal and support web pages for GitHub Pages deployment"
-git push origin main
-```
-
----
-
-## Step 3: Enable GitHub Pages in your Repository
-
-1. Open your browser and go to your GitHub repository:  
-   👉 **https://github.com/Ravinder82/BiteFix**
-2. Click **Settings** (tab on the far right of the top menu bar).
-3. In the left-hand sidebar, under **Code and automation**, click **Pages**.
-4. Under **Build and deployment**:
-   * **Source**: Select **Deploy from a branch**.
-   * **Branch**: Select **`main`** and set the folder to **`/docs`** (instead of `/ (root)`).
-5. Click **Save**.
+5. **Wait for Deployment**:
+   GitHub will trigger an automated workflow to deploy the site. Within **1 to 2 minutes**, refresh the Page. A banner will appear at the top saying:
+   > "Your site is live at `https://ravinder82.github.io/BiteFix/`"
 
 ---
 
-## Step 4: Access Your Live Public URLs!
+## 🔗 Part 2: Final Legal URLs for App Store Connect
 
-GitHub will automatically publish your pages in about 60 seconds. Your live production URLs will be:
+Once your GitHub Pages site is live, use these exact URLs when submitting the app in **App Store Connect**:
 
-* 🛡️ **Privacy Policy URL:**  
+* **Support URL (Marketing & Support page)**:
+  `https://ravinder82.github.io/BiteFix/`
+* **Privacy Policy URL**:
   `https://ravinder82.github.io/BiteFix/privacy.html`
-
-* 📜 **Terms of Service URL:**  
-  `https://ravinder82.github.io/BiteFix/terms.html`
-
-
-## Step 5: Paste URLs into App Store Connect
-
-Now you can copy these live URLs directly into App Store Connect:
-
-1. Log in to [App Store Connect](https://appstoreconnect.apple.com/).
-2. Select your app: **BiteFix: Food & Swap Scanner**.
-3. Under **App Store** -> **App Information**:
-   * Paste `https://ravinder82.github.io/BiteFix/privacy.html` into **Privacy Policy URL**.
-4. Under **App Store** -> **[Version 2.0.0 Prepare for Submission]**:
-   * Paste `https://ravinder82.github.io/BiteFix/` into **Support URL**.
-5. Click **Save** on the top right.
+* **Terms of Service / EULA URL**:
+  `https://ravinder82.github.io/BiteFix/eula.html`
 
 ---
 
-🎉 **Done! Your legal and support URLs are now live, professional, and fully compliant with Apple App Store Guidelines!**
+## 📧 Part 3: Setting Up Your App's Email Links
+
+The app's support flow is configured to use `support@bitefixapp.com` and `feedback@bitefixapp.com`. To ensure emails sent by users are received correctly, you have three options to set up these addresses:
+
+### Option A: Email Forwarding (Recommended - Free)
+If you own the domain name `bitefixapp.com` (e.g. registered on Namecheap, GoDaddy, Google Domains/Squarespace):
+1. Log in to your Domain Registrar console.
+2. Go to **DNS Settings** -> **Email Forwarding**.
+3. Create a redirect rule:
+   * **Alias**: `support` -> **Forwards to**: *your personal email* (e.g., `ravinderpoonia@gmail.com`)
+   * **Alias**: `feedback` -> **Forwards to**: *your personal email*
+4. Incoming support emails will land instantly in your personal inbox for free.
+
+### Option B: Professional Workspace (Paid)
+If you want to reply directly from your professional address (e.g., `support@bitefixapp.com`):
+1. Sign up for **Google Workspace** or **Microsoft 365** using your domain name.
+2. Verify domain ownership by adding the required **MX records** in your Domain Registrar's DNS panel.
+3. Create individual mailboxes or a shared inbox alias for `support` and `feedback`.
+
+### Option C: Fallback Web Contact
+In the event that a user does not have a native email client configured on their iPhone (or uses a third-party app), we added a **Web Support Portal** button in the app settings. This button opens `https://ravinder82.github.io/BiteFix/` in Safari, which provides a web link to click and send support requests.
