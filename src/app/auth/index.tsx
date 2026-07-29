@@ -45,7 +45,7 @@ export default function AuthScreen() {
   const { colors, isDark } = useTheme();
   const { signInWithGoogle, signInWithApple, signInWithEmail, signUpWithEmail, resetPassword } = useAuthStore();
   const { redirect } = useLocalSearchParams<{ redirect?: string }>();
-  const target = (redirect === 'tabs' ? '/(tabs)' : '/paywall') as any;
+  const target = (redirect === 'tabs' ? '/(tabs)' : (redirect === 'paywall' ? '/paywall' : '/')) as any;
 
   // Safely configure Google Sign-In inside lifecycle hook
   useEffect(() => {
