@@ -747,23 +747,140 @@ function CommitmentLevelCard({ cardW, C, value, onSelect }: { cardW: number; C: 
 // ─────────────────────────────────────────────────────────
 // STEP 9: Social Proof Card
 // ─────────────────────────────────────────────────────────
+const REVIEWS = [
+  {
+    name: "Sarah Miller",
+    location: "Chicago, USA 🇺🇸",
+    avatarBg: "#FB7185",
+    initials: "SM",
+    rating: 5,
+    date: "2 days ago",
+    text: "BiteFix warned me about hidden factory chemicals in my favorite protein bar. I found a clean alternative in one second! Incredible app."
+  },
+  {
+    name: "Oliver Davies",
+    location: "London, UK 🇬🇧",
+    avatarBg: "#38BDF8",
+    initials: "OD",
+    rating: 5,
+    date: "Yesterday",
+    text: "Exactly what I was looking for. The scanner is super fast and chemical warnings are crystal clear. My gut health is already thanking me!"
+  },
+  {
+    name: "Maximilian Schmidt",
+    location: "Munich, Germany 🇩🇪",
+    avatarBg: "#FBBF24",
+    initials: "MS",
+    rating: 5,
+    date: "3 days ago",
+    text: "Sehr gut! It has saved me from buying so many high-processed items. The swap suggestions are fantastic and healthy."
+  },
+  {
+    name: "Chloé Dubois",
+    location: "Paris, France 🇫🇷",
+    avatarBg: "#34D399",
+    initials: "CD",
+    rating: 5,
+    date: "Just now",
+    text: "Superbe application! The database is absolutely huge and ingredient analysis works flawlessly in Europe. A must-have."
+  }
+];
+
 function SocialProofCard({ cardW, C }: { cardW: number; C: any }) {
+  const { isDark } = useTheme();
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % REVIEWS.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const activeReview = REVIEWS[activeIndex];
+
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 28, borderWidth: 2, borderColor: C.primary, padding: 24, gap: 16, alignItems: 'center', shadowColor: C.primary, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 10, overflow: 'hidden' }}>
+    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 32, borderWidth: 2, borderColor: C.primary, padding: 20, gap: 16, alignItems: 'center', shadowColor: C.primary, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 10, overflow: 'hidden' }}>
       <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
-      <View style={{ flexDirection: 'row', gap: 4 }}>
-        {[1, 2, 3, 4, 5].map((i) => (
-          <Star key={i} size={18} color="#FFCC00" fill="#FFCC00" />
-        ))}
+      
+      {/* App Store Style Golden Olympic Medal Award Badge */}
+      <View style={{ width: '100%', alignItems: 'center', backgroundColor: isDark ? 'rgba(251, 191, 36, 0.06)' : 'rgba(251, 191, 36, 0.08)', borderRadius: 20, paddingVertical: 12, paddingHorizontal: 16, borderWidth: 1.5, borderColor: '#FBBF24', gap: 6, shadowColor: '#FBBF24', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ padding: 8, backgroundColor: '#FFF', borderRadius: 50, borderWidth: 2, borderColor: '#FBBF24', shadowColor: '#FBBF24', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4 }}>
+            <Award size={24} color="#D97706" strokeWidth={2.5} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: '#D97706', fontSize: 13, fontWeight: '900', letterSpacing: 0.2 }}>
+              🏆 World's Best Food Scanner
+            </Text>
+            <Text style={{ color: C.textSub, fontSize: 10.5, fontWeight: '800' }}>
+              #1 in Barcode Scanner Apps Category
+            </Text>
+          </View>
+        </View>
       </View>
-      <Text style={{ color: C.text, fontSize: 13.5, fontWeight: '800', textAlign: 'center', lineHeight: 18 }}>
-        "BiteFix warned me about hidden factory chemicals in my favorite protein bar. I found a clean alternative in one second!"
-      </Text>
-      <Text style={{ color: C.primary, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-        — Sarah M., Verified User
-      </Text>
-      <View style={{ backgroundColor: C.cardInner, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: C.cardBorder }}>
-        <Text style={{ color: C.textSub, fontSize: 10.5, fontWeight: '800' }}>Powered by the world's largest open food database</Text>
+
+      {/* Review Box Wrapper with layout transition key */}
+      <View style={{ width: '100%', minHeight: 140, justifyContent: 'center' }}>
+        <Animated.View
+          key={activeIndex}
+          entering={FadeInRight.duration(350)}
+          exiting={FadeOutLeft.duration(350)}
+          style={{ width: '100%', gap: 12 }}
+        >
+          {/* User Details Row */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            {/* Avatar Initials with matching color */}
+            <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: activeReview.avatarBg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#FFFFFF' }}>
+              <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '900' }}>
+                {activeReview.initials}
+              </Text>
+            </View>
+
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={{ color: C.text, fontSize: 13, fontWeight: '900' }}>{activeReview.name}</Text>
+                <View style={{ backgroundColor: C.primaryLight, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                  <ShieldCheck size={10} color={C.primary} strokeWidth={3} />
+                  <Text style={{ color: C.primary, fontSize: 8.5, fontWeight: '800', textTransform: 'uppercase' }}>Verified</Text>
+                </View>
+              </View>
+              <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '700' }}>{activeReview.location}</Text>
+            </View>
+
+            <Text style={{ color: C.textMuted, fontSize: 10.5, fontWeight: '600' }}>{activeReview.date}</Text>
+          </View>
+
+          {/* Stars */}
+          <View style={{ flexDirection: 'row', gap: 3 }}>
+            {[1, 2, 3, 4, 5].map((s) => (
+              <Star key={s} size={13} color="#FBBF24" fill="#FBBF24" />
+            ))}
+          </View>
+
+          {/* Review Text */}
+          <Text style={{ color: C.text, fontSize: 12.5, fontWeight: '700', lineHeight: 17, fontStyle: 'italic' }}>
+            "{activeReview.text}"
+          </Text>
+        </Animated.View>
+      </View>
+
+      {/* Mini Rotation Indicator Dots */}
+      <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
+        {REVIEWS.map((_, idx) => {
+          const isActive = idx === activeIndex;
+          return (
+            <View
+              key={idx}
+              style={{
+                width: isActive ? 12 : 5,
+                height: 5,
+                borderRadius: 2.5,
+                backgroundColor: isActive ? C.primary : C.cardBorder,
+              }}
+            />
+          );
+        })}
       </View>
     </View>
   );
