@@ -404,6 +404,12 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
             icon={<MessageSquare size={16} color={colors.primary} />}
             onPress={() => Linking.openURL('mailto:feedback@bitefixapp.com?subject=BiteFix%20App%20Feedback')}
             colors={colors}
+          />
+          <SettingsRowItem
+            label="Web Support Portal"
+            icon={<Eye size={16} color={colors.primary} />}
+            onPress={() => Linking.openURL('https://ravinder82.github.io/BiteFix/')}
+            colors={colors}
             isLast
           />
         </SettingsGroup>

@@ -305,31 +305,21 @@ export default function PaywallScreen() {
 
   const handleOpenPrivacyPolicy = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const url = 'https://bitefix.app/privacy';
+    const url = 'https://ravinder82.github.io/BiteFix/privacy.html';
     try {
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
-      } else {
-        Alert.alert('Privacy Policy', 'Privacy Policy is available at https://bitefix.app/privacy');
-      }
+      await Linking.openURL(url);
     } catch (e) {
-      Alert.alert('Privacy Policy', 'Privacy Policy is available at https://bitefix.app/privacy');
+      Alert.alert('Privacy Policy', 'Privacy Policy is available at: https://ravinder82.github.io/BiteFix/privacy.html');
     }
   };
 
   const handleOpenTermsOfUse = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const url = 'https://www.apple.com/legal/internet-services/itunes/dev/stgula/';
+    const url = 'https://ravinder82.github.io/BiteFix/eula.html';
     try {
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
-      } else {
-        Alert.alert('Terms of Use', 'Standard Apple EULA applies: https://www.apple.com/legal/internet-services/itunes/dev/stgula/');
-      }
+      await Linking.openURL(url);
     } catch (e) {
-      Alert.alert('Terms of Use', 'Standard Apple EULA applies: https://www.apple.com/legal/internet-services/itunes/dev/stgula/');
+      Alert.alert('Terms of Use', 'EULA is available at: https://ravinder82.github.io/BiteFix/eula.html');
     }
   };
 
