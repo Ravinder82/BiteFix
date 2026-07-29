@@ -230,7 +230,7 @@ function NameCard({ cardW, C, value, onChange }: { cardW: number; C: any; value:
         width: cardW,
         backgroundColor: 'transparent',
         padding: 0,
-        gap: 16,
+        gap: 22,
       }}
     >
       <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2 }}>
@@ -1433,7 +1433,7 @@ export default function OnboardingScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {/* Mascot + Title Stacked Block */}
-          <View style={{ alignItems: 'center', gap: 6, marginBottom: isShort ? 14 : 20 }}>
+          <View style={{ alignItems: 'center', gap: 12, marginBottom: isShort ? 14 : 28 }}>
             <Animated.View style={mascotAnimStyle}>
               <OrbMascot state={slide.mascotState} size={orbSize} />
             </Animated.View>
@@ -1442,7 +1442,7 @@ export default function OnboardingScreen() {
             <Animated.View
               key={`text-${currentSlide}`}
               entering={FadeInRight.duration(250)}
-              style={{ alignItems: 'center', gap: 4, marginTop: 4 }}
+              style={{ alignItems: 'center', gap: 8, marginTop: 8 }}
             >
               {renderTitle()}
               <Text style={{ color: C.textSub, fontSize: isShort ? 13.5 : 15.5, fontWeight: '600', textAlign: 'center' }}>
@@ -1452,7 +1452,7 @@ export default function OnboardingScreen() {
           </View>
 
           {/* Card Component Slot */}
-          <View style={{ width: '100%', alignItems: 'center' }}>
+          <View style={{ width: '100%', alignItems: 'center', marginTop: isShort ? 10 : 24 }}>
             <Animated.View
               key={`card-${currentSlide}`}
               entering={FadeInRight.duration(250)}
