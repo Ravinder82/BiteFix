@@ -353,6 +353,8 @@ export default function PaywallScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* ── Header Row ──────────────────────────────────── */}
+        {/* Hard paywall: non-premium users can only Sign Out, not dismiss. */}
+        {/* The X close button is only shown for already-premium users (e.g. navigated from Settings). */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 16 }}>
           {user && !isPremium ? (
             <TouchableOpacity
@@ -376,22 +378,25 @@ export default function PaywallScreen() {
             </TouchableOpacity>
           ) : <View />}
 
-          <TouchableOpacity
-            onPress={handleDismiss}
-            accessibilityLabel="Close paywall"
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 18,
-              backgroundColor: colors.surfaceRaised,
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderWidth: 1,
-              borderColor: colors.border,
-            }}
-          >
-            <X size={18} color={colors.text} />
-          </TouchableOpacity>
+          {/* Only premium users can dismiss the paywall (they arrived from Settings > view plans) */}
+          {isPremium ? (
+            <TouchableOpacity
+              onPress={handleDismiss}
+              accessibilityLabel="Close paywall"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                backgroundColor: colors.surfaceRaised,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderWidth: 1,
+                borderColor: colors.border,
+              }}
+            >
+              <X size={18} color={colors.text} />
+            </TouchableOpacity>
+          ) : <View />}
         </View>
 
 

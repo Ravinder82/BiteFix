@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { useAppStore } from '../../stores/appStore';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
-import { ChevronRight, ArrowLeft, ShieldAlert, HeartHandshake, Eye, Moon, Layers, RotateCcw, LogOut, User, ShieldCheck, Sparkles, Filter, CreditCard, Mail, MessageSquare, Calendar } from 'lucide-react-native';
+import { ChevronRight, ArrowLeft, ShieldAlert, HeartHandshake, Eye, Moon, Layers, RotateCcw, LogOut, ShieldCheck, Sparkles, CreditCard, Mail, MessageSquare, Info } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { getIapService } from '../../services/iapLoader';
 import Constants from 'expo-constants';
@@ -52,9 +52,27 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
       const result = await service.restorePurchases();
       if (result.isEntitled) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert('Restored Successfully ✅', 'Your BiteFix Premium subscription has been restored.');
+        Alert.alert(
+          'Restored Successfully ✅',
+          'Your BiteFix Premium subscription has been restored.',
+          [{
+            text: 'Continue',
+            onPress: () => {
+              // If user was gated on paywall, navigate them into the app
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/(tabs)');
+              }
+            },
+          }]
+        );
       } else if (result.success) {
-        Alert.alert('No Subscription Found', 'We could not find an active subscription for this Apple ID.');
+        Alert.alert(
+          'No Subscription Found',
+          'We could not find an active subscription linked to this Apple ID.\n\nIf you purchased on a different Apple ID, sign in to that account in App Store settings and try again.',
+          [{ text: 'OK' }]
+        );
       } else {
         Alert.alert('Restore Failed', result.error ?? 'Could not restore purchases. Please try again.');
       }
@@ -65,16 +83,16 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
     }
   };
 
+  // Opens the App Store subscription management page directly.
+  // Falls back to the in-app info modal only when the deep-link is truly
+  // not openable (very rare edge case on locked-down enterprise devices).
   const handleManageSubscription = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const url = 'https://apps.apple.com/account/subscriptions';
     try {
-      const supported = await Linking.canOpenURL('https://apps.apple.com/account/subscriptions');
-      if (supported) {
-        await Linking.openURL('https://apps.apple.com/account/subscriptions');
-      } else {
-        setSubscriptionModalVisible(true);
-      }
-    } catch (err) {
+      await Linking.openURL(url);
+    } catch {
+      // Deep-link failed — show the informational fallback modal
       setSubscriptionModalVisible(true);
     }
   };
@@ -507,7 +525,8 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
         </SafeAreaView>
       </Modal>
 
-      {/* EDIT SUBSCRIPTION MODAL */}
+      {/* SUBSCRIPTION INFO MODAL — shown only when the App Store deep-link fails */}
+      {/* Primary action is always "Open App Store Subscriptions" */}
       <Modal visible={subscriptionModalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setSubscriptionModalVisible(false)}>
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
           {/* Header */}
@@ -524,7 +543,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
             }}
           >
             <View style={{ width: 64 }} />
-            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', textAlign: 'center' }}>Edit Subscription</Text>
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', textAlign: 'center' }}>Manage Subscription</Text>
             <TouchableOpacity
               onPress={() => setSubscriptionModalVisible(false)}
               style={{
@@ -539,152 +558,124 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
           </View>
 
           <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }} style={{ flex: 1 }}>
-            {/* Main Subscription Card */}
+
+            {/* ── Info Banner ────────────────────────────────── */}
             <View
               style={{
-                backgroundColor: colors.surface,
-                borderRadius: 24,
+                backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F0FDF4',
+                borderRadius: 20,
                 borderWidth: 1,
-                borderColor: colors.border,
+                borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#BBF7D0',
                 padding: 20,
-                gap: 14,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: isDark ? 0.2 : 0.05,
-                shadowRadius: 8,
-                elevation: 2,
+                gap: 10,
               }}
             >
-              {/* Product Header Row */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View
                   style={{
-                    width: 48,
-                    height: 48,
+                    width: 40,
+                    height: 40,
                     borderRadius: 12,
                     backgroundColor: colors.primary,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Sparkles size={24} color="#FFF" />
+                  <Sparkles size={20} color="#FFF" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: colors.text, fontSize: 15, fontWeight: '900', letterSpacing: -0.3 }}>
-                    BiteFix: Food & Swap Scanner
+                    BiteFix Premium Active ✅
+                  </Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 11, marginTop: 2, fontWeight: '500' }}>
+                    Subscription managed by Apple
                   </Text>
                 </View>
               </View>
 
-              {/* Tier Row */}
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800' }}>
-                  BiteFix Monthly
+              <View style={{ borderTopWidth: 1, borderTopColor: isDark ? 'rgba(255,255,255,0.06)' : '#D1FAE5', paddingTop: 10 }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 11, lineHeight: 17 }}>
+                  Your subscription billing, renewal dates, and pricing are managed directly by Apple through your App Store account.
+                  To view exact renewal dates or pricing, open App Store Subscriptions.
                 </Text>
-                <TouchableOpacity onPress={() => {
-                  setSubscriptionModalVisible(false);
-                  router.push('/paywall');
-                }}>
-                  <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '700' }}>
-                    {"See All Plans >"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Price Details */}
-              <View style={{ borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 14, gap: 10 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <CreditCard size={14} color={colors.textSecondary} />
-                  <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '600' }}>
-                    ₹599 per month
-                  </Text>
-                </View>
-
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Calendar size={14} color={colors.textSecondary} />
-                  <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '600' }}>
-                    Renews 28 July
-                  </Text>
-                </View>
               </View>
             </View>
 
-            {/* Cancel Action Card */}
-            <View
+            {/* ── Primary Action: Open App Store ──────────────── */}
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                setSubscriptionModalVisible(false);
+                Linking.openURL('https://apps.apple.com/account/subscriptions');
+              }}
+              activeOpacity={0.88}
               style={{
-                backgroundColor: colors.surface,
-                borderRadius: 20,
-                borderWidth: 1,
-                borderColor: colors.border,
-                overflow: 'hidden',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: isDark ? 0.1 : 0.02,
-                shadowRadius: 4,
-                elevation: 1,
+                backgroundColor: colors.primary,
+                borderRadius: 18,
+                paddingVertical: 15,
+                alignItems: 'center',
+                justifyContent: 'center',
+                shadowColor: colors.primary,
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.3,
+                shadowRadius: 12,
+                elevation: 6,
               }}
             >
-              <TouchableOpacity
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  Linking.openURL('https://apps.apple.com/account/subscriptions');
-                }}
-                activeOpacity={0.85}
-                style={{
-                  paddingVertical: 14,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Text style={{ color: colors.error, fontSize: 14, fontWeight: '800' }}>
-                  Cancel Subscription
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#F3F4F6', padding: 16, borderRadius: 16, marginTop: 4 }}>
-              <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800', marginBottom: 4 }}>Don't want auto-renewal?</Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 12, lineHeight: 18 }}>
-                You can purchase Lifetime Access to pay once and never worry about subscriptions again.
+              <Text style={{ color: '#FFF', fontSize: 15, fontWeight: '900', letterSpacing: 0.3 }}>
+                Open App Store Subscriptions
               </Text>
-              <TouchableOpacity onPress={() => {
+            </TouchableOpacity>
+
+            {/* ── Cancel Subscription guidance ────────────────── */}
+            <View
+              style={{
+                backgroundColor: isDark ? 'rgba(239,68,68,0.08)' : '#FFF5F5',
+                borderRadius: 18,
+                borderWidth: 1,
+                borderColor: isDark ? 'rgba(239,68,68,0.2)' : '#FCA5A5',
+                padding: 16,
+                gap: 6,
+              }}
+            >
+              <Text style={{ color: colors.error, fontSize: 12, fontWeight: '800' }}>Want to cancel auto-renewal?</Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 11, lineHeight: 17 }}>
+                Tap "Open App Store Subscriptions" above → select BiteFix → tap "Cancel Subscription".
+                You will keep access until the end of your current billing period.
+              </Text>
+            </View>
+
+            {/* ── Auto-renewal notice (Apple required) ─────────── */}
+            <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F9FAFB', padding: 14, borderRadius: 14 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <Info size={12} color={colors.textMuted} />
+                <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4 }}>Auto-Renewal</Text>
+              </View>
+              <Text style={{ color: colors.textSecondary, fontSize: 11, lineHeight: 17 }}>
+                Subscription automatically renews unless cancelled at least 24 hours before the end of the current period.
+                Manage or turn off auto-renewal in your App Store account settings at any time.
+              </Text>
+            </View>
+
+            {/* ── Restore Purchases ───────────────────────────── */}
+            <TouchableOpacity
+              onPress={async () => {
                 setSubscriptionModalVisible(false);
-                router.push('/paywall');
-              }} style={{ marginTop: 12, backgroundColor: colors.primary, paddingVertical: 10, borderRadius: 12, alignItems: 'center' }}>
-                 <Text style={{ color: '#FFF', fontSize: 13, fontWeight: '800' }}>Get Lifetime Access</Text>
-              </TouchableOpacity>
-            </View>
+                await handleRestorePurchases();
+              }}
+              style={{
+                paddingVertical: 12,
+                paddingHorizontal: 20,
+                backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB',
+                borderRadius: 20,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>
+                Restore Purchases
+              </Text>
+            </TouchableOpacity>
 
-            {/* RESTORE PURCHASES AND ABOUT LINKS CONTAINER */}
-            <View style={{ alignItems: 'center', marginTop: 12, gap: 12 }}>
-              {/* Restore Purchases Link */}
-              <TouchableOpacity
-                onPress={async () => {
-                  setSubscriptionModalVisible(false);
-                  await handleRestorePurchases();
-                }}
-                style={{ paddingVertical: 10, paddingHorizontal: 20, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB', borderRadius: 20, width: '100%', alignItems: 'center' }}
-              >
-                <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800' }}>
-                  Restore Purchases
-                </Text>
-              </TouchableOpacity>
-
-              {/* About Link */}
-              <TouchableOpacity
-                onPress={() => {
-                  Alert.alert(
-                    'Subscriptions and Privacy',
-                    'BiteFix subscriptions are managed safely via App Store Connect. Your personal and billing data remains private.'
-                  );
-                }}
-                style={{ paddingVertical: 4 }}
-              >
-                <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '700', textDecorationLine: 'underline' }}>
-                  About Subscriptions and Privacy
-                </Text>
-              </TouchableOpacity>
-            </View>
           </ScrollView>
         </SafeAreaView>
       </Modal>

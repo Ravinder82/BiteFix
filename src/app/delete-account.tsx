@@ -93,6 +93,37 @@ export default function DeleteAccountScreen() {
       return;
     }
 
+    // Apple Guideline 5.1.1(v): Warn the user that deleting the app account
+    // does NOT automatically cancel an active App Store subscription.
+    // The user must confirm they understand this before we proceed.
+    if (isPremium) {
+      const proceed = await new Promise<boolean>((resolve) => {
+        Alert.alert(
+          '⚠️ Cancel Your Subscription First',
+          'Deleting your account will NOT automatically cancel your active App Store subscription. ' +
+          'You will continue to be charged unless you cancel it manually.\n\n' +
+          'Go to App Store → Subscriptions → BiteFix → Cancel Subscription first, then delete your account.',
+          [
+            {
+              text: 'Cancel Subscription First',
+              style: 'default',
+              onPress: () => {
+                Linking.openURL('https://apps.apple.com/account/subscriptions');
+                resolve(false);
+              },
+            },
+            {
+              text: 'Delete Anyway',
+              style: 'destructive',
+              onPress: () => resolve(true),
+            },
+          ],
+          { cancelable: true, onDismiss: () => resolve(false) }
+        );
+      });
+      if (!proceed) return;
+    }
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     setIsDeleting(true);
 
@@ -135,18 +166,28 @@ export default function DeleteAccountScreen() {
       }
     }
 
-    // 4. Wipe all local app data
-    clearAllData();
+    // 4. Disconnect IAP service to clean up any pending listeners
+    try {
+      const { getLoadedIapService } = await import('../services/iapLoader');
+      await getLoadedIapService()?.disconnect();
+    } catch {
+      // IAP cleanup is best-effort — don't block the deletion flow
+    }
 
-    // 5. Navigate to auth screen
+    // 5. Wipe all local app data
+    //    Keep onboardingComplete: true so re-registering users skip onboarding.
+    clearAllData();
+    useAppStore.getState().setOnboardingComplete(true);
+
+    // 6. Navigate to auth screen (not onboarding — they've already done that)
     Alert.alert(
       'Account Deleted',
-      'Your account and all data have been permanently deleted. You can register again to continue using BiteFix.',
+      'Your BiteFix account and all local data have been permanently deleted.\n\nYour App Store subscription must be cancelled separately in Settings → Apple ID → Subscriptions.',
       [
         {
           text: 'OK',
           onPress: () => {
-            router.replace('/onboarding');
+            router.replace('/auth');
           },
         },
       ]
