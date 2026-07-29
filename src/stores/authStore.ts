@@ -15,8 +15,10 @@ import {
   sendPasswordResetEmail,
   signOut as firebaseSignOut,
   deleteUser,
+  reauthenticateWithCredential,
   GoogleAuthProvider,
   OAuthProvider,
+  EmailAuthProvider,
   updateProfile,
   type User,
 } from 'firebase/auth';
@@ -46,6 +48,9 @@ interface AuthState {
   resetPassword: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
+  reauthWithGoogle: (idToken: string) => Promise<void>;
+  reauthWithApple: (identityToken: string, nonce: string) => Promise<void>;
+  reauthWithEmail: (email: string, password: string) => Promise<void>;
 }
 
 // ── Helpers ──────────────────────────────────────────────
@@ -193,5 +198,33 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       set({ isLoading: false });
       throw error;
     }
+  },
+
+  // ── Re-authenticate with Google ─────────────────────
+  reauthWithGoogle: async (idToken: string) => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) throw new Error('No user signed in');
+    const credential = GoogleAuthProvider.credential(idToken);
+    await reauthenticateWithCredential(currentUser, credential);
+  },
+
+  // ── Re-authenticate with Apple ──────────────────────
+  reauthWithApple: async (identityToken: string, nonce: string) => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) throw new Error('No user signed in');
+    const provider = new OAuthProvider('apple.com');
+    const credential = provider.credential({
+      idToken: identityToken,
+      rawNonce: nonce,
+    });
+    await reauthenticateWithCredential(currentUser, credential);
+  },
+
+  // ── Re-authenticate with Email ──────────────────────
+  reauthWithEmail: async (email: string, password: string) => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) throw new Error('No user signed in');
+    const credential = EmailAuthProvider.credential(email, password);
+    await reauthenticateWithCredential(currentUser, credential);
   },
 }));

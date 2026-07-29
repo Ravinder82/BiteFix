@@ -19,6 +19,9 @@ export function useAuth() {
     resetPassword,
     signOut,
     deleteAccount,
+    reauthWithGoogle,
+    reauthWithApple,
+    reauthWithEmail,
   } = useAuthStore();
 
   return {
@@ -35,6 +38,11 @@ export function useAuth() {
     resetPassword,
     signOut,
     deleteAccount,
+
+    // Re-authentication actions
+    reauthWithGoogle,
+    reauthWithApple,
+    reauthWithEmail,
 
     // Computed helpers
     displayName: user?.displayName || user?.email?.split('@')[0] || 'User',
