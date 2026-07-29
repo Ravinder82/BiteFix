@@ -228,21 +228,11 @@ function NameCard({ cardW, C, value, onChange }: { cardW: number; C: any; value:
     <View
       style={{
         width: cardW,
-        backgroundColor: C.card,
-        borderRadius: 28,
-        borderWidth: 2,
-        borderColor: C.primary,
-        padding: 24,
-        shadowColor: C.primary,
-        shadowOffset: { width: 0, height: 12 },
-        shadowOpacity: 0.2,
-        shadowRadius: 24,
-        elevation: 10,
-        overflow: 'hidden',
+        backgroundColor: 'transparent',
+        padding: 0,
         gap: 16,
       }}
     >
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
       <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2 }}>
         Personal Account Profile
       </Text>
@@ -323,21 +313,11 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
     <View
       style={{
         width: cardW,
-        backgroundColor: C.card,
-        borderRadius: 28,
-        borderWidth: 2,
-        borderColor: C.primary,
-        padding: 20,
+        backgroundColor: 'transparent',
+        padding: 0,
         gap: 12,
-        shadowColor: C.primary,
-        shadowOffset: { width: 0, height: 12 },
-        shadowOpacity: 0.2,
-        shadowRadius: 24,
-        elevation: 10,
-        overflow: 'hidden',
       }}
     >
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
       {/* Multi-Select Info Pill */}
       <AnimatedListItem index={0}>
       <View
@@ -420,8 +400,7 @@ function FoodSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any
   ];
 
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 28, borderWidth: 2, borderColor: C.primary, padding: 20, gap: 12, shadowColor: C.primary, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 10, overflow: 'hidden' }}>
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
+    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 12 }}>
       {options.map((opt, idx) => {
         const isSelected = value === opt.val;
         return (
@@ -471,21 +450,11 @@ function SymptomAuditCard({ cardW, C, selected, onToggle }: { cardW: number; C: 
     <View
       style={{
         width: cardW,
-        backgroundColor: C.card,
-        borderRadius: 28,
-        borderWidth: 2,
-        borderColor: C.primary,
-        padding: 20,
+        backgroundColor: 'transparent',
+        padding: 0,
         gap: 12,
-        shadowColor: C.primary,
-        shadowOffset: { width: 0, height: 12 },
-        shadowOpacity: 0.2,
-        shadowRadius: 24,
-        elevation: 10,
-        overflow: 'hidden',
       }}
     >
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
       <AnimatedListItem index={0}>
       <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '800', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
         Check the things you want to fix:
@@ -553,22 +522,12 @@ function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
     <View
       style={{
         width: cardW,
-        backgroundColor: C.card,
-        borderRadius: 28,
-        borderWidth: 2,
-        borderColor: C.red,
-        padding: 24,
+        backgroundColor: 'transparent',
+        padding: 0,
         gap: 18,
-        shadowColor: C.red,
-        shadowOffset: { width: 0, height: 12 },
-        shadowOpacity: 0.25,
-        shadowRadius: 24,
-        elevation: 10,
         alignItems: 'center',
-        overflow: 'hidden',
       }}
     >
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.red, opacity: 0.04 }]} />
       {/* Custom Alert Badge */}
       <AnimatedListItem index={0}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.redLight, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: C.red + '30' }}>
@@ -626,8 +585,7 @@ function AdditivePrioritiesCard({ cardW, C, selected, onToggle }: { cardW: numbe
   ];
 
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 28, borderWidth: 2, borderColor: C.primary, padding: 20, gap: 12, shadowColor: C.primary, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 10, overflow: 'hidden' }}>
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
+    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 12 }}>
       {additives.map((item, idx) => {
         const active = selected.includes(item.id);
         return (
@@ -671,8 +629,7 @@ function AllergenDefenseCard({ cardW, C, selected, onToggle }: { cardW: number; 
   const allergens = ['Gluten', 'Dairy', 'Soy', 'Nuts', 'Eggs', 'Palm Oil'];
 
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 28, borderWidth: 2, borderColor: C.primary, padding: 22, gap: 16, shadowColor: C.primary, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 10, overflow: 'hidden' }}>
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
+    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 16 }}>
       <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
         Choose what you must stay away from:
       </Text>
@@ -719,7 +676,7 @@ function CommitmentLevelCard({ cardW, C, value, onSelect }: { cardW: number; C: 
   ];
 
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 28, borderWidth: 2, borderColor: C.primary, padding: 20, gap: 12, shadowColor: C.primary, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 10, overflow: 'hidden' }}>
+    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 12 }}>
       <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
       {levels.map((lvl, idx) => {
         const active = value === lvl.id;
@@ -906,8 +863,7 @@ function SocialProofCard({ cardW, C }: { cardW: number; C: any }) {
   };
 
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 32, borderWidth: 2, borderColor: C.primary, padding: 20, gap: 16, alignItems: 'center', shadowColor: C.primary, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 10, overflow: 'hidden' }}>
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
+    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 16, alignItems: 'center' }}>
       
       {/* App Store Style Golden Olympic Medal Award Badge */}
       <View style={{ width: '100%', alignItems: 'center', backgroundColor: isDark ? 'rgba(251, 191, 36, 0.06)' : 'rgba(251, 191, 36, 0.08)', borderRadius: 20, paddingVertical: 12, paddingHorizontal: 16, borderWidth: 1.5, borderColor: '#FBBF24', gap: 6, shadowColor: '#FBBF24', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8 }}>
@@ -1032,7 +988,7 @@ function HealthAnalysisCalculationCard({ cardW, C, onComplete }: { cardW: number
   }, []);
 
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 24, borderWidth: 1.5, borderColor: C.primary, padding: 32, gap: 24, alignItems: 'center' }}>
+    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 24, alignItems: 'center' }}>
       <View style={{ width: 100, height: 100, justifyContent: 'center', alignItems: 'center' }}>
         <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: C.primary, justifyContent: 'center', alignItems: 'center', shadowColor: C.primary, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.6, shadowRadius: 15 }}>
           <Activity size={32} color="#FFF" />
@@ -1061,10 +1017,7 @@ function InstantResultSummaryCard({ cardW, C, isDark }: { cardW: number; C: any;
   ];
 
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 28, borderWidth: 2, borderColor: C.primary, padding: 18, gap: 14, overflow: 'hidden', shadowColor: C.primary, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 10 }}>
-      {/* Dynamic Background Glow */}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary, opacity: 0.05 }]} />
-      
+    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 14, overflow: 'hidden' }}>
       <Text style={{ color: C.primary, fontSize: 13, fontWeight: '900', textTransform: 'uppercase', textAlign: 'center', letterSpacing: 1 }}>
         Unlocked Scanner Features
       </Text>
@@ -1121,7 +1074,7 @@ function PaywallTransitionCard({ cardW, C }: { cardW: number; C: any }) {
   }));
 
   return (
-    <View style={{ width: cardW, backgroundColor: C.card, borderRadius: 32, borderWidth: 2, borderColor: C.primary, padding: 24, gap: 16, alignItems: 'center', overflow: 'hidden', shadowColor: C.primary, shadowOffset: { width: 0, height: 16 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 12 }}>
+    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 16, alignItems: 'center', overflow: 'hidden' }}>
       {/* Background ambient gradient */}
       <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary }, glowAnimStyle]} />
       
@@ -1490,8 +1443,7 @@ export default function OnboardingScreen() {
 
             <Animated.View
               key={`text-${currentSlide}`}
-              entering={FadeInRight.duration(300)}
-              exiting={FadeOutLeft.duration(300)}
+              entering={FadeInRight.duration(250)}
               style={{ alignItems: 'center', gap: 4, marginTop: 4 }}
             >
               {renderTitle()}
@@ -1505,8 +1457,7 @@ export default function OnboardingScreen() {
           <View style={{ width: '100%', alignItems: 'center' }}>
             <Animated.View
               key={`card-${currentSlide}`}
-              entering={FadeInRight.springify().damping(16).stiffness(120)}
-              exiting={FadeOutLeft.springify().damping(16).stiffness(120)}
+              entering={FadeInRight.duration(250)}
               style={{ width: '100%', alignItems: 'center' }}
             >
               {currentSlide === 0 && <NameCard cardW={cardW} C={C} value={userName} onChange={setUserName} />}
