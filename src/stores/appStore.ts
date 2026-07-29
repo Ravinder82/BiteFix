@@ -244,7 +244,7 @@ export const useAppStore = create<AppState>()(
         scans: state.scans.filter((scan) => scan.id !== id),
       })),
 
-      clearScans: () => set({ scans: [] }),
+      clearScans: () => set({ scans: [], collection: [] }),
 
       addToCollection: (item, category, notes) => set((state) => {
         // Prevent duplicates by ID or barcode/name

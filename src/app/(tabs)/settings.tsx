@@ -99,18 +99,18 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
 
   const handleClearScans = () => {
     Alert.alert(
-      'Clear Scan History',
-      'Are you sure you want to clear all your scanned food history and saved items?',
+      'Clear Scan History & Home Data',
+      'Are you sure you want to clear all your scanned food history and saved home tab items?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Clear',
+          text: 'Clear All Data',
           style: 'destructive',
           onPress: () => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
             clearScans();
             clearCollection();
-            Alert.alert('Scans Cleared', 'Your scan history has been successfully cleared.');
+            Alert.alert('Data Cleared', 'Your scan history and home screen data have been successfully cleared.');
           },
         },
       ]
