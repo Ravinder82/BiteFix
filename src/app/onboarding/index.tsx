@@ -320,68 +320,68 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
     >
       {/* Multi-Select Info Pill */}
       <AnimatedListItem index={0}>
-      <View
-        style={{
-          alignSelf: 'center',
-          backgroundColor: C.primaryLight,
-          borderColor: C.primary + '30',
-          borderWidth: 1,
-          borderRadius: 20,
-          paddingHorizontal: 12,
-          paddingVertical: 4,
-          marginBottom: 6,
-        }}
-      >
-        <Text style={{ color: C.primary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-          💡 Select as many as you want
-        </Text>
-      </View>
+        <View
+          style={{
+            alignSelf: 'center',
+            backgroundColor: C.primaryLight,
+            borderColor: C.primary + '30',
+            borderWidth: 1,
+            borderRadius: 20,
+            paddingHorizontal: 12,
+            paddingVertical: 4,
+            marginBottom: 6,
+          }}
+        >
+          <Text style={{ color: C.primary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            💡 Select as many as you want
+          </Text>
+        </View>
       </AnimatedListItem>
 
       {options.map((opt, idx) => {
         const isSelected = selected.includes(opt.value);
         return (
           <AnimatedListItem key={opt.value} index={idx + 1}>
-          <TouchableOpacity
-            key={opt.value}
-            onPress={() => handleToggle(opt.value)}
-            activeOpacity={0.85}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              backgroundColor: isSelected ? C.primaryLight : C.cardInner,
-              borderColor: isSelected ? C.primary : C.cardBorder,
-              borderWidth: 1.5,
-              borderRadius: 16,
-              paddingHorizontal: 14,
-              paddingVertical: 12,
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
-              <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: isSelected ? 'transparent' : C.card, alignItems: 'center', justifyContent: 'center' }}>
-                {opt.icon}
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: C.text, fontSize: 14, fontWeight: '800' }}>{opt.label}</Text>
-                <Text style={{ color: C.textMuted, fontSize: 10.5, fontWeight: '600', marginTop: 2 }}>{opt.tag}</Text>
-              </View>
-            </View>
-            <View
+            <TouchableOpacity
+              key={opt.value}
+              onPress={() => handleToggle(opt.value)}
+              activeOpacity={0.85}
               style={{
-                width: 20,
-                height: 20,
-                borderRadius: 10,
-                borderWidth: 1.5,
-                borderColor: isSelected ? C.primary : C.textMuted,
+                flexDirection: 'row',
                 alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: isSelected ? C.primary : 'transparent',
+                justifyContent: 'space-between',
+                backgroundColor: isSelected ? C.primaryLight : C.cardInner,
+                borderColor: isSelected ? C.primary : C.cardBorder,
+                borderWidth: 1.5,
+                borderRadius: 16,
+                paddingHorizontal: 14,
+                paddingVertical: 12,
               }}
             >
-              {isSelected && <Check size={12} color="#FFFFFF" strokeWidth={3.5} />}
-            </View>
-          </TouchableOpacity>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+                <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: isSelected ? 'transparent' : C.card, alignItems: 'center', justifyContent: 'center' }}>
+                  {opt.icon}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: C.text, fontSize: 14, fontWeight: '800' }}>{opt.label}</Text>
+                  <Text style={{ color: C.textMuted, fontSize: 10.5, fontWeight: '600', marginTop: 2 }}>{opt.tag}</Text>
+                </View>
+              </View>
+              <View
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: 10,
+                  borderWidth: 1.5,
+                  borderColor: isSelected ? C.primary : C.textMuted,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: isSelected ? C.primary : 'transparent',
+                }}
+              >
+                {isSelected && <Check size={12} color="#FFFFFF" strokeWidth={3.5} />}
+              </View>
+            </TouchableOpacity>
           </AnimatedListItem>
         );
       })}
@@ -405,28 +405,28 @@ function FoodSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any
         const isSelected = value === opt.val;
         return (
           <AnimatedListItem key={opt.val} index={idx}>
-          <TouchableOpacity
-            key={opt.val}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onSelect(opt.val);
-            }}
-            activeOpacity={0.85}
-            style={{
-              backgroundColor: isSelected ? C.primaryLight : C.cardInner,
-              borderColor: isSelected ? C.primary : C.cardBorder,
-              borderWidth: 1.5,
-              borderRadius: 16,
-              padding: 14,
-              gap: 4,
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={{ color: C.text, fontSize: 14, fontWeight: '800' }}>{opt.label}</Text>
-              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: opt.color }} />
-            </View>
-            <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600', lineHeight: 14 }}>{opt.desc}</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              key={opt.val}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onSelect(opt.val);
+              }}
+              activeOpacity={0.85}
+              style={{
+                backgroundColor: isSelected ? C.primaryLight : C.cardInner,
+                borderColor: isSelected ? C.primary : C.cardBorder,
+                borderWidth: 1.5,
+                borderRadius: 16,
+                padding: 14,
+                gap: 4,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={{ color: C.text, fontSize: 14, fontWeight: '800' }}>{opt.label}</Text>
+                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: opt.color }} />
+              </View>
+              <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600', lineHeight: 14 }}>{opt.desc}</Text>
+            </TouchableOpacity>
           </AnimatedListItem>
         );
       })}
@@ -456,57 +456,57 @@ function SymptomAuditCard({ cardW, C, selected, onToggle }: { cardW: number; C: 
       }}
     >
       <AnimatedListItem index={0}>
-      <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '800', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-        Check the things you want to fix:
-      </Text>
+        <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '800', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+          Check the things you want to fix:
+        </Text>
       </AnimatedListItem>
 
       {symptoms.map((s, idx) => {
         const active = selected.includes(s.id);
         return (
           <AnimatedListItem key={s.id} index={idx + 1}>
-          <TouchableOpacity
-            key={s.id}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onToggle(s.id);
-            }}
-            activeOpacity={0.85}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              backgroundColor: active ? C.redLight : C.cardInner,
-              borderColor: active ? C.red : C.cardBorder,
-              borderWidth: 1.5,
-              borderRadius: 14,
-              paddingHorizontal: 14,
-              paddingVertical: 12,
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-              <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: active ? 'transparent' : C.card, alignItems: 'center', justifyContent: 'center' }}>
-                {s.icon}
-              </View>
-              <Text style={{ color: active ? C.red : C.text, fontSize: 13.5, fontWeight: '800', flex: 1 }}>
-                {s.label}
-              </Text>
-            </View>
-            <View
+            <TouchableOpacity
+              key={s.id}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onToggle(s.id);
+              }}
+              activeOpacity={0.85}
               style={{
-                width: 18,
-                height: 18,
-                borderRadius: 9,
-                borderWidth: 1.5,
-                borderColor: active ? C.red : C.textMuted,
-                backgroundColor: active ? C.red : 'transparent',
+                flexDirection: 'row',
                 alignItems: 'center',
-                justifyContent: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: active ? C.redLight : C.cardInner,
+                borderColor: active ? C.red : C.cardBorder,
+                borderWidth: 1.5,
+                borderRadius: 14,
+                paddingHorizontal: 14,
+                paddingVertical: 12,
               }}
             >
-              {active && <Check size={12} color="#FFFFFF" strokeWidth={3.5} />}
-            </View>
-          </TouchableOpacity>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                <View style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: active ? 'transparent' : C.card, alignItems: 'center', justifyContent: 'center' }}>
+                  {s.icon}
+                </View>
+                <Text style={{ color: active ? C.red : C.text, fontSize: 13.5, fontWeight: '800', flex: 1 }}>
+                  {s.label}
+                </Text>
+              </View>
+              <View
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: 9,
+                  borderWidth: 1.5,
+                  borderColor: active ? C.red : C.textMuted,
+                  backgroundColor: active ? C.red : 'transparent',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {active && <Check size={12} color="#FFFFFF" strokeWidth={3.5} />}
+              </View>
+            </TouchableOpacity>
           </AnimatedListItem>
         );
       })}
@@ -530,28 +530,28 @@ function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
     >
       {/* Custom Alert Badge */}
       <AnimatedListItem index={0}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.redLight, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: C.red + '30' }}>
-        <AlertTriangle size={14} color={C.red} />
-        <Text style={{ color: C.red, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-          WARNING
-        </Text>
-      </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.redLight, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: C.red + '30' }}>
+          <AlertTriangle size={14} color={C.red} />
+          <Text style={{ color: C.red, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            WARNING
+          </Text>
+        </View>
       </AnimatedListItem>
 
       {/* Massive Graphic Callout */}
       <AnimatedListItem index={1}>
-      <View style={{ alignItems: 'center' }}>
-        <Text style={{ color: C.red, fontSize: 42, fontWeight: '900', letterSpacing: -1.5 }}>73%</Text>
-        <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: -2 }}>
-          OF STORE FOODS
-        </Text>
-      </View>
+        <View style={{ alignItems: 'center' }}>
+          <Text style={{ color: C.red, fontSize: 42, fontWeight: '900', letterSpacing: -1.5 }}>73%</Text>
+          <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: -2 }}>
+            OF STORE FOODS
+          </Text>
+        </View>
       </AnimatedListItem>
 
       <AnimatedListItem index={2}>
-      <Text style={{ color: C.text, fontSize: 13.5, fontWeight: '800', textAlign: 'center', lineHeight: 18 }}>
-        Are made in factories using cheap ingredients you would never keep in your own kitchen.
-      </Text>
+        <Text style={{ color: C.text, fontSize: 13.5, fontWeight: '800', textAlign: 'center', lineHeight: 18 }}>
+          Are made in factories using cheap ingredients you would never keep in your own kitchen.
+        </Text>
       </AnimatedListItem>
 
       {/* Core Highlights */}
@@ -562,10 +562,10 @@ function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
           'Fake sugars that confuse your body\'s metabolism',
         ].map((point, idx) => (
           <AnimatedListItem key={idx} index={idx + 3}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.cardInner, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: C.cardBorder }}>
-            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.red }} />
-            <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '600', flex: 1 }}>{point}</Text>
-          </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.cardInner, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: C.cardBorder }}>
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.red }} />
+              <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '600', flex: 1 }}>{point}</Text>
+            </View>
           </AnimatedListItem>
         ))}
       </View>
@@ -590,31 +590,31 @@ function AdditivePrioritiesCard({ cardW, C, selected, onToggle }: { cardW: numbe
         const active = selected.includes(item.id);
         return (
           <AnimatedListItem key={item.id} index={idx}>
-          <TouchableOpacity
-            key={item.id}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onToggle(item.id);
-            }}
-            style={{
-              backgroundColor: active ? C.primaryLight : C.cardInner,
-              borderColor: active ? C.primary : C.cardBorder,
-              borderWidth: 1.5,
-              borderRadius: 14,
-              padding: 12,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <View style={{ flex: 1, gap: 2 }}>
-              <Text style={{ color: C.text, fontSize: 13.5, fontWeight: '800' }}>{item.label}</Text>
-              <Text style={{ color: C.textMuted, fontSize: 10.5, fontWeight: '600' }}>{item.desc}</Text>
-            </View>
-            <View style={{ width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, borderColor: active ? C.primary : C.textMuted, backgroundColor: active ? C.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-              {active && <Check size={10} color="#FFF" strokeWidth={3} />}
-            </View>
-          </TouchableOpacity>
+            <TouchableOpacity
+              key={item.id}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onToggle(item.id);
+              }}
+              style={{
+                backgroundColor: active ? C.primaryLight : C.cardInner,
+                borderColor: active ? C.primary : C.cardBorder,
+                borderWidth: 1.5,
+                borderRadius: 14,
+                padding: 12,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={{ color: C.text, fontSize: 13.5, fontWeight: '800' }}>{item.label}</Text>
+                <Text style={{ color: C.textMuted, fontSize: 10.5, fontWeight: '600' }}>{item.desc}</Text>
+              </View>
+              <View style={{ width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, borderColor: active ? C.primary : C.textMuted, backgroundColor: active ? C.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                {active && <Check size={10} color="#FFF" strokeWidth={3} />}
+              </View>
+            </TouchableOpacity>
           </AnimatedListItem>
         );
       })}
@@ -638,25 +638,25 @@ function AllergenDefenseCard({ cardW, C, selected, onToggle }: { cardW: number; 
           const active = selected.includes(item);
           return (
             <AnimatedListItem key={item} index={idx}>
-            <TouchableOpacity
-              key={item}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                onToggle(item);
-              }}
-              style={{
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-                borderRadius: 14,
-                backgroundColor: active ? C.redLight : C.cardInner,
-                borderWidth: 1.5,
-                borderColor: active ? C.red : C.cardBorder,
-              }}
-            >
-              <Text style={{ color: active ? C.red : C.text, fontSize: 13, fontWeight: active ? '900' : '700' }}>
-                {active ? `🚨 ${item}` : item}
-              </Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                key={item}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  onToggle(item);
+                }}
+                style={{
+                  paddingHorizontal: 14,
+                  paddingVertical: 10,
+                  borderRadius: 14,
+                  backgroundColor: active ? C.redLight : C.cardInner,
+                  borderWidth: 1.5,
+                  borderColor: active ? C.red : C.cardBorder,
+                }}
+              >
+                <Text style={{ color: active ? C.red : C.text, fontSize: 13, fontWeight: active ? '900' : '700' }}>
+                  {active ? `🚨 ${item}` : item}
+                </Text>
+              </TouchableOpacity>
             </AnimatedListItem>
           );
         })}
@@ -682,23 +682,23 @@ function CommitmentLevelCard({ cardW, C, value, onSelect }: { cardW: number; C: 
         const active = value === lvl.id;
         return (
           <AnimatedListItem key={lvl.id} index={idx}>
-          <TouchableOpacity
-            key={lvl.id}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onSelect(lvl.id);
-            }}
-            style={{
-              backgroundColor: active ? C.primaryLight : C.cardInner,
-              borderColor: active ? C.primary : C.cardBorder,
-              borderWidth: 1.5,
-              borderRadius: 16,
-              padding: 14,
-            }}
-          >
-            <Text style={{ color: C.text, fontSize: 14, fontWeight: '800' }}>{lvl.title}</Text>
-            <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600', marginTop: 2, lineHeight: 14 }}>{lvl.desc}</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              key={lvl.id}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onSelect(lvl.id);
+              }}
+              style={{
+                backgroundColor: active ? C.primaryLight : C.cardInner,
+                borderColor: active ? C.primary : C.cardBorder,
+                borderWidth: 1.5,
+                borderRadius: 16,
+                padding: 14,
+              }}
+            >
+              <Text style={{ color: C.text, fontSize: 14, fontWeight: '800' }}>{lvl.title}</Text>
+              <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600', marginTop: 2, lineHeight: 14 }}>{lvl.desc}</Text>
+            </TouchableOpacity>
           </AnimatedListItem>
         );
       })}
@@ -864,7 +864,7 @@ function SocialProofCard({ cardW, C }: { cardW: number; C: any }) {
 
   return (
     <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 16, alignItems: 'center' }}>
-      
+
       {/* App Store Style Golden Olympic Medal Award Badge */}
       <View style={{ width: '100%', alignItems: 'center', backgroundColor: isDark ? 'rgba(251, 191, 36, 0.06)' : 'rgba(251, 191, 36, 0.08)', borderRadius: 20, paddingVertical: 12, paddingHorizontal: 16, borderWidth: 1.5, borderColor: '#FBBF24', gap: 6, shadowColor: '#FBBF24', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -976,29 +976,119 @@ function SocialProofCard({ cardW, C }: { cardW: number; C: any }) {
 // ─────────────────────────────────────────────────────────
 function HealthAnalysisCalculationCard({ cardW, C, onComplete }: { cardW: number; C: any; onComplete: () => void }) {
   const [progress, setProgress] = useState(0);
-  const [stepText, setStepText] = useState('Building your profile...');
+  const [phases, setPhases] = useState([
+    { label: 'Initializing Gut Shield Pro...', status: 'loading' },
+    { label: 'Analyzing Additive Priorities...', status: 'pending' },
+    { label: 'Indexing Clean Swaps Database...', status: 'pending' },
+  ]);
 
   useEffect(() => {
-    const t1 = setTimeout(() => { setProgress(35); setStepText('Loading custom ingredient alerts...'); }, 800);
-    const t2 = setTimeout(() => { setProgress(70); setStepText('Preparing your clean food swaps...'); }, 1800);
-    const t3 = setTimeout(() => { setProgress(100); setStepText('Profile complete. Ready to scan!'); }, 2800);
-    const t4 = setTimeout(() => { onComplete(); }, 3500);
+    const t1 = setTimeout(() => {
+      setProgress(35);
+      setPhases([
+        { label: 'Initializing Gut Shield Pro...', status: 'done' },
+        { label: 'Analyzing Additive Priorities...', status: 'loading' },
+        { label: 'Indexing Clean Swaps Database...', status: 'pending' },
+      ]);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }, 1000);
 
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
+    const t2 = setTimeout(() => {
+      setProgress(70);
+      setPhases([
+        { label: 'Initializing Gut Shield Pro...', status: 'done' },
+        { label: 'Analyzing Additive Priorities...', status: 'done' },
+        { label: 'Indexing Clean Swaps Database...', status: 'loading' },
+      ]);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }, 2000);
+
+    const t3 = setTimeout(() => {
+      setProgress(100);
+      setPhases([
+        { label: 'Initializing Gut Shield Pro...', status: 'done' },
+        { label: 'Analyzing Additive Priorities...', status: 'done' },
+        { label: 'Indexing Clean Swaps Database...', status: 'done' },
+      ]);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }, 3000);
+
+    const t4 = setTimeout(() => {
+      onComplete();
+    }, 3800);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
+    };
   }, []);
 
   return (
     <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 24, alignItems: 'center' }}>
-      <View style={{ width: 100, height: 100, justifyContent: 'center', alignItems: 'center' }}>
-        <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: C.primary, justifyContent: 'center', alignItems: 'center', shadowColor: C.primary, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.6, shadowRadius: 15 }}>
-          <Activity size={32} color="#FFF" />
+      <View style={{ width: 140, height: 140, justifyContent: 'center', alignItems: 'center' }}>
+        {/* Ambient glow backdrop */}
+        <View style={{ position: 'absolute', width: 110, height: 110, borderRadius: 55, backgroundColor: C.primary, opacity: 0.08, transform: [{ scale: 1.15 }] }} />
+        
+        {/* Rotating Circular Ring */}
+        <Svg width="120" height="120" viewBox="0 0 100 100">
+          <Circle cx="50" cy="50" r="44" stroke={C.cardBorder} strokeWidth="5.5" fill="transparent" />
+          <Circle
+            cx="50"
+            cy="50"
+            r="44"
+            stroke={C.primary}
+            strokeWidth="5.5"
+            fill="transparent"
+            strokeDasharray={276}
+            strokeDashoffset={276 - (276 * progress) / 100}
+            strokeLinecap="round"
+            transform="rotate(-90 50 50)"
+          />
+        </Svg>
+        <View style={{ position: 'absolute', alignItems: 'center' }}>
+          <Text style={{ color: C.text, fontSize: 24, fontWeight: '900' }}>{progress}%</Text>
+          <Text style={{ color: C.textSub, fontSize: 8.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 1 }}>Analyzing</Text>
         </View>
       </View>
-      <Text style={{ color: C.text, fontSize: 16, fontWeight: '900', textAlign: 'center', letterSpacing: 0.2 }}>{stepText}</Text>
-      <View style={{ width: '100%', height: 6, backgroundColor: C.cardInner, borderRadius: 3, overflow: 'hidden' }}>
-        <View style={{ width: `${progress}%`, height: '100%', backgroundColor: C.primary, borderRadius: 3 }} />
+
+      <View style={{ width: '100%', gap: 12, marginTop: 8 }}>
+        {phases.map((p, i) => {
+          const isDone = p.status === 'done';
+          const isLoading = p.status === 'loading';
+          return (
+            <View
+              key={i}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: C.cardInner,
+                borderColor: isDone ? C.primary + '30' : C.cardBorder,
+                borderWidth: 1.5,
+                borderRadius: 16,
+                paddingHorizontal: 16,
+                paddingVertical: 14,
+                gap: 12,
+                opacity: p.status === 'pending' ? 0.35 : 1,
+              }}
+            >
+              {isDone ? (
+                <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: C.primary, alignItems: 'center', justifyContent: 'center' }}>
+                  <Check size={12} color="#FFF" strokeWidth={3.5} />
+                </View>
+              ) : isLoading ? (
+                <ActivityIndicator size="small" color={C.primary} />
+              ) : (
+                <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: C.textMuted }} />
+              )}
+              <Text style={{ color: isDone ? C.text : C.textSub, fontSize: 13, fontWeight: '700' }}>
+                {p.label}
+              </Text>
+            </View>
+          );
+        })}
       </View>
-      <Text style={{ color: C.primary, fontSize: 12, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 }}>{progress}% Loading</Text>
     </View>
   );
 }
@@ -1021,7 +1111,7 @@ function InstantResultSummaryCard({ cardW, C, isDark }: { cardW: number; C: any;
       <Text style={{ color: C.primary, fontSize: 13, fontWeight: '900', textTransform: 'uppercase', textAlign: 'center', letterSpacing: 1 }}>
         Unlocked Scanner Features
       </Text>
-      
+
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between' }}>
         {features.map((f, i) => {
           // Add micro-animation delays for staggering effect
@@ -1031,7 +1121,7 @@ function InstantResultSummaryCard({ cardW, C, isDark }: { cardW: number; C: any;
             slideIn.value = withDelay(i * 100, withSpring(0, { damping: 12, stiffness: 100 }));
             fade.value = withDelay(i * 100, withTiming(1, { duration: 400 }));
           }, [i]);
-          
+
           const animStyle = useAnimatedStyle(() => ({
             transform: [{ translateY: slideIn.value }],
             opacity: fade.value,
@@ -1058,36 +1148,112 @@ function InstantResultSummaryCard({ cardW, C, isDark }: { cardW: number; C: any;
 // STEP 12: Paywall Transition Summary Card
 // ─────────────────────────────────────────────────────────
 function PaywallTransitionCard({ cardW, C }: { cardW: number; C: any }) {
+  const { allergenFilters } = useAppStore();
   const shieldScale = useSharedValue(0.8);
-  const glowOpacity = useSharedValue(0.4);
+  const glowScale = useSharedValue(1);
 
   useEffect(() => {
-    shieldScale.value = withSpring(1, { damping: 10, stiffness: 80 });
-    glowOpacity.value = withRepeat(withTiming(0.8, { duration: 1500, easing: Easing.inOut(Easing.sin) }), -1, true);
+    shieldScale.value = withSpring(1, { damping: 12, stiffness: 90 });
+    glowScale.value = withRepeat(withTiming(1.15, { duration: 1600, easing: Easing.inOut(Easing.sin) }), -1, true);
   }, []);
 
   const shieldAnimStyle = useAnimatedStyle(() => ({
     transform: [{ scale: shieldScale.value }],
   }));
   const glowAnimStyle = useAnimatedStyle(() => ({
-    opacity: glowOpacity.value,
+    transform: [{ scale: glowScale.value }],
+    opacity: withRepeat(withTiming(0.12, { duration: 1600 }), -1, true),
   }));
 
   return (
-    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 16, alignItems: 'center', overflow: 'hidden' }}>
-      {/* Background ambient gradient */}
-      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: C.primary }, glowAnimStyle]} />
-      
-      <Animated.View style={[{ width: 90, height: 90, borderRadius: 45, backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.15, shadowRadius: 15 }, shieldAnimStyle]}>
-        <ShieldCheck size={50} color={C.primary} strokeWidth={2.5} />
-      </Animated.View>
+    <View
+      style={{
+        width: cardW,
+        backgroundColor: C.cardInner,
+        borderRadius: 28,
+        borderWidth: 1.5,
+        borderColor: C.cardBorder,
+        padding: 24,
+        gap: 20,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.04,
+        shadowRadius: 16,
+      }}
+    >
+      {/* Glow Rings behind Shield */}
+      <View style={{ width: 120, height: 120, justifyContent: 'center', alignItems: 'center' }}>
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              width: 100,
+              height: 100,
+              borderRadius: 50,
+              backgroundColor: C.primary,
+              opacity: 0.08,
+            },
+            glowAnimStyle,
+          ]}
+        />
+        
+        {/* Shield Container */}
+        <Animated.View
+          style={[
+            {
+              width: 80,
+              height: 80,
+              borderRadius: 40,
+              backgroundColor: C.primaryLight,
+              borderWidth: 1.5,
+              borderColor: C.primary + '40',
+              alignItems: 'center',
+              justifyContent: 'center',
+              shadowColor: C.primary,
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.15,
+              shadowRadius: 12,
+            },
+            shieldAnimStyle,
+          ]}
+        >
+          <ShieldCheck size={42} color={C.primary} strokeWidth={2.5} />
+        </Animated.View>
+      </View>
 
-      <Text style={{ color: '#FFF', fontSize: 22, fontWeight: '900', textAlign: 'center', letterSpacing: -0.5, marginTop: 4 }}>
-        Your Custom Food Shield is Ready!
-      </Text>
-      <Text style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: 14, fontWeight: '700', textAlign: 'center', lineHeight: 20, paddingHorizontal: 10 }}>
-        Get unlimited barcode scans, instant chemical warnings, and personalized healthy swaps.
-      </Text>
+      <View style={{ gap: 6, alignItems: 'center' }}>
+        <Text style={{ color: C.text, fontSize: 20, fontWeight: '900', textAlign: 'center', letterSpacing: -0.5 }}>
+          Your Food Shield is Configured!
+        </Text>
+        <Text style={{ color: C.textSub, fontSize: 13, fontWeight: '600', textAlign: 'center', lineHeight: 18, paddingHorizontal: 4 }}>
+          BiteFix has built a custom gut-safety scanner based on your personal settings:
+        </Text>
+      </View>
+
+      {/* Summary Box */}
+      <View style={{ width: '100%', backgroundColor: C.card, borderRadius: 18, borderWidth: 1, borderColor: C.cardBorder, padding: 14, gap: 10 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.primary }} />
+          <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '800' }}>
+            Additive & Alert Filters Active
+          </Text>
+        </View>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.primary }} />
+          <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '800' }}>
+            {allergenFilters.length > 0 ? `${allergenFilters.length} Personal Allergens Tracked` : 'Allergen Defense Enabled'}
+          </Text>
+        </View>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.primary }} />
+          <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '800' }}>
+            Smart Swaps Database Connected
+          </Text>
+        </View>
+      </View>
     </View>
   );
 }
@@ -1301,7 +1467,7 @@ export default function OnboardingScreen() {
     if ((currentSlide === 10 || currentSlide === 11) && !hasRequestedCamera.current) {
       if (cameraPermission && !cameraPermission.granted && cameraPermission.canAskAgain) {
         hasRequestedCamera.current = true;
-        requestCameraPermission().catch(() => {});
+        requestCameraPermission().catch(() => { });
       }
     }
   }, [currentSlide, cameraPermission]);
@@ -1350,8 +1516,8 @@ export default function OnboardingScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       const mappedGoal =
         userGoals[0] === 'energy' || userGoals[0] === 'gut_microbiome' ? 'healthy_habits' :
-        userGoals[0] === 'weight_management' ? 'clean_swaps' :
-        userGoals[0] === 'family_safety' ? 'ultra_processed' : 'none';
+          userGoals[0] === 'weight_management' ? 'clean_swaps' :
+            userGoals[0] === 'family_safety' ? 'ultra_processed' : 'none';
 
       setProfile({
         userName: userName.trim() || 'Friend',
@@ -1433,7 +1599,7 @@ export default function OnboardingScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {/* Mascot + Title Stacked Block */}
-          <View style={{ alignItems: 'center', gap: 12, marginBottom: isShort ? 14 : 28 }}>
+          <View style={{ alignItems: 'center', gap: 2, marginBottom: isShort ? 10 : 20 }}>
             <Animated.View style={mascotAnimStyle}>
               <OrbMascot state={slide.mascotState} size={orbSize} />
             </Animated.View>
@@ -1442,7 +1608,7 @@ export default function OnboardingScreen() {
             <Animated.View
               key={`text-${currentSlide}`}
               entering={FadeInRight.duration(250)}
-              style={{ alignItems: 'center', gap: 8, marginTop: 8 }}
+              style={{ alignItems: 'center', gap: 4, marginTop: 10 }}
             >
               {renderTitle()}
               <Text style={{ color: C.textSub, fontSize: isShort ? 13.5 : 15.5, fontWeight: '600', textAlign: 'center' }}>
@@ -1452,7 +1618,7 @@ export default function OnboardingScreen() {
           </View>
 
           {/* Card Component Slot */}
-          <View style={{ width: '100%', alignItems: 'center', marginTop: isShort ? 10 : 24 }}>
+          <View style={{ width: '100%', alignItems: 'center', marginTop: isShort ? 8 : 18 }}>
             <Animated.View
               key={`card-${currentSlide}`}
               entering={FadeInRight.duration(250)}
