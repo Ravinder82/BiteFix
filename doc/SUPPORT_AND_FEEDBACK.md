@@ -8,7 +8,7 @@ Welcome to the BiteFix Support & Feedback Center. We are dedicated to providing 
 
 If you encounter technical issues, barcode scanning glitches, subscription questions, or account assistance, our team is ready to help!
 
-* **Support Email:** [support@bitefixapp.com](mailto:support@bitefixapp.com)
+* **Support Email:** [bitefixapp@gmail.com](mailto:bitefixapp@gmail.com)
 * **Response Time:** We aim to respond to all inquiries within 24–48 business hours.
 * **App Version:** BiteFix v2.0.0
 
@@ -29,7 +29,7 @@ BiteFix queries open food databases containing millions of products. If a barcod
 
 Have an idea for a feature, new clean food swap suggestion, or allergen filter? We'd love to hear from you!
 
-* **Feedback Email:** [feedback@bitefixapp.com](mailto:feedback@bitefixapp.com)
+* **Feedback Email:** [bitefixapp@gmail.com](mailto:bitefixapp@gmail.com)
 * **GitHub Community Issues:** [BiteFix Issues on GitHub](https://github.com/Ravinder82/BiteFix/issues)
 
 Thank you for making your food choices cleaner and safer with BiteFix!

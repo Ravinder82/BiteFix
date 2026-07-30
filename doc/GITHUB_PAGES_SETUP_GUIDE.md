@@ -24,7 +24,7 @@ Follow these steps to host your legal pages for free directly from your GitHub r
    * **Source**: Select **Deploy from a branch** from the dropdown menu.
    * **Branch**: 
      * Select `main` from the branch dropdown.
-     * Select `/docs` from the folder dropdown (this tells GitHub to serve files from the `docs` folder we just populated).
+     * Select `/docs` from the folder dropdown (this tells GitHub to serve files from the `docs` folder).
      * Click **Save**.
 
 5. **Wait for Deployment**:
@@ -35,35 +35,34 @@ Follow these steps to host your legal pages for free directly from your GitHub r
 
 ## 🔗 Part 2: Final Legal URLs for App Store Connect
 
-Once your GitHub Pages site is live, use these exact URLs when submitting the app in **App Store Connect**:
+Use these URLs when configuring your app metadata inside **App Store Connect**:
 
-* **Support URL (Marketing & Support page)**:
+* **Support URL (Support & Contact Page)**:
   `https://ravinder82.github.io/BiteFix/`
+  *(Point this here so users and Apple Reviewers can contact you directly or view legal terms)*
+
 * **Privacy Policy URL**:
   `https://ravinder82.github.io/BiteFix/privacy.html`
-* **Terms of Service / EULA URL**:
-  `https://ravinder82.github.io/BiteFix/eula.html`
+  *(Apple requires a public privacy policy link for all apps)*
+
+* **App Store Terms of Use / EULA URL**:
+  * **Option A: Official Standard Apple EULA (Recommended)**:
+    `https://www.apple.com/legal/internet-services/itunes/dev/stgula/`
+    *(If you do not want to host a custom license, Apple allows you to point to their standard developer SLA link directly. This is the App Store standard.)*
+  * **Option B: Custom EULA**:
+    `https://ravinder82.github.io/BiteFix/eula.html`
+    *(Use this link if you choose to enforce our custom End User License Agreement instead of Apple's default terms)*
 
 ---
 
-## 📧 Part 3: Setting Up Your App's Email Links
+## 📧 Part 3: Support Email Setup (No Custom Domain Required)
 
-The app's support flow is configured to use `support@bitefixapp.com` and `feedback@bitefixapp.com`. To ensure emails sent by users are received correctly, you have three options to set up these addresses:
+Since you do not own a custom domain, you can use a free, dedicated Gmail address (like **`bitefixapp@gmail.com`**) to receive user support and feedback.
 
-### Option A: Email Forwarding (Recommended - Free)
-If you own the domain name `bitefixapp.com` (e.g. registered on Namecheap, GoDaddy, Google Domains/Squarespace):
-1. Log in to your Domain Registrar console.
-2. Go to **DNS Settings** -> **Email Forwarding**.
-3. Create a redirect rule:
-   * **Alias**: `support` -> **Forwards to**: *your personal email* (e.g., `ravinderpoonia@gmail.com`)
-   * **Alias**: `feedback` -> **Forwards to**: *your personal email*
-4. Incoming support emails will land instantly in your personal inbox for free.
-
-### Option B: Professional Workspace (Paid)
-If you want to reply directly from your professional address (e.g., `support@bitefixapp.com`):
-1. Sign up for **Google Workspace** or **Microsoft 365** using your domain name.
-2. Verify domain ownership by adding the required **MX records** in your Domain Registrar's DNS panel.
-3. Create individual mailboxes or a shared inbox alias for `support` and `feedback`.
-
-### Option C: Fallback Web Contact
-In the event that a user does not have a native email client configured on their iPhone (or uses a third-party app), we added a **Web Support Portal** button in the app settings. This button opens `https://ravinder82.github.io/BiteFix/` in Safari, which provides a web link to click and send support requests.
+1. **How Gmail is Integrated**:
+   * The app is pre-programmed to direct all support inquiries to `bitefixapp@gmail.com`.
+   * When a user taps **Contact Support** or **Send App Feedback**, the app dynamically opens their mail app with the recipient set to `bitefixapp@gmail.com` and automatically pre-fills crucial debug info (such as App Version and OS Platform).
+2. **Apple Compliance**:
+   * Gmail addresses are fully acceptable to Apple Connect for indie developers. There is no domain verification required for support contacts.
+3. **Fallback Web Portal**:
+   * If a user doesn't have a mail app configured, the settings group includes a **Web Support Portal** button that opens `https://ravinder82.github.io/BiteFix/` in Safari, which displays your support contact email.

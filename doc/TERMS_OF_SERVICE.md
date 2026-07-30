@@ -63,5 +63,5 @@ These Terms shall be governed and construed in accordance with local laws, witho
 ## 7. Contact Us
 
 If you have any questions about these Terms, please contact us:
-* **Email:** legal@bitefixapp.com
+* **Email:** bitefixapp@gmail.com
 * **Support Page:** https://github.com/Ravinder82/BiteFix

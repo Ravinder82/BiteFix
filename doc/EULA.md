@@ -65,5 +65,5 @@ You and Licensor acknowledge and agree that Apple, and Apple’s subsidiaries, a
 ## 9. Contact Information
 
 Direct any questions, complaints, or claims with respect to the Licensed Application to:
-* **Email:** license@bitefixapp.com
+* **Email:** bitefixapp@gmail.com
 * **Website:** https://github.com/Ravinder82/BiteFix

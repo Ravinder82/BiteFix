@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ScrollView, TouchableOpacity, Switch, Alert, Modal, SafeAreaView, Linking } from 'react-native';
+import { View, ScrollView, TouchableOpacity, Switch, Alert, Modal, SafeAreaView, Linking, Platform } from 'react-native';
 import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useAppStore } from '../../stores/appStore';
@@ -396,13 +396,25 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
           <SettingsRowItem
             label="Contact Support"
             icon={<Mail size={16} color={colors.primary} />}
-            onPress={() => Linking.openURL('mailto:support@bitefixapp.com?subject=BiteFix%20Support%20Request')}
+            onPress={() => {
+              const version = Constants.expoConfig?.version || '1.0.0';
+              const os = Platform.OS;
+              const subject = encodeURIComponent('BiteFix Support Request');
+              const body = encodeURIComponent(`Please describe your issue or question below:\n\n\n\n---\nApp Version: ${version}\nPlatform: ${os}`);
+              Linking.openURL(`mailto:bitefixapp@gmail.com?subject=${subject}&body=${body}`);
+            }}
             colors={colors}
           />
           <SettingsRowItem
             label="Send App Feedback"
             icon={<MessageSquare size={16} color={colors.primary} />}
-            onPress={() => Linking.openURL('mailto:feedback@bitefixapp.com?subject=BiteFix%20App%20Feedback')}
+            onPress={() => {
+              const version = Constants.expoConfig?.version || '1.0.0';
+              const os = Platform.OS;
+              const subject = encodeURIComponent('BiteFix App Feedback');
+              const body = encodeURIComponent(`Share your thoughts, feature requests, or clean food swap ideas below:\n\n\n\n---\nApp Version: ${version}\nPlatform: ${os}`);
+              Linking.openURL(`mailto:bitefixapp@gmail.com?subject=${subject}&body=${body}`);
+            }}
             colors={colors}
           />
           <SettingsRowItem
@@ -762,7 +774,7 @@ You have full access to view and delete your scan records. You can use the "Clea
 4. THIRD PARTY SERVICE PROVIDERS
 BiteFix uses the Open Food Facts API to query food ingredients. No personal identifiers or location statistics are sent to this database during search queries.
 
-Contact: support@bitefixapp.com`;
+Contact: bitefixapp@gmail.com`;
 
 const TERMS_OF_SERVICE_TEXT = `Last Updated: June 2026
 
@@ -778,7 +790,7 @@ In-app subscription payments (if applicable) are governed by App Store and Play 
 4. USER REPRESENTATION
 You agree to use this application in compliance with local laws and regulations.
 
-Contact: legal@bitefixapp.com`;
+Contact: bitefixapp@gmail.com`;
 
 const EULA_TEXT = `Last Updated: June 2026
 
@@ -794,4 +806,4 @@ The application is provided "as is" without warranties of any kind. BiteFix is n
 4. PLATFORM GOVERNING
 This Agreement is fully compliant with Apple's Standard EULA terms and guidelines.
 
-Contact: license@bitefixapp.com`;
+Contact: bitefixapp@gmail.com`;

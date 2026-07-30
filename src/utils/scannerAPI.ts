@@ -254,7 +254,7 @@ export async function fetchWithTimeout(url: string, timeoutMs: number, signal?: 
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        'User-Agent': 'BiteFixApp/1.0.0 (React Native; iOS/Android; contact@bitefixapp.com)',
+        'User-Agent': 'BiteFixApp/1.0.0 (React Native; iOS/Android; bitefixapp@gmail.com)',
         'Accept': 'application/json',
       },
     });

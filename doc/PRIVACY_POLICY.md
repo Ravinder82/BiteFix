@@ -66,5 +66,5 @@ We may update our Privacy Policy periodically. We will notify you of any changes
 ## 6. Contact Us
 
 If you have questions, concerns, or requests regarding this Privacy Policy, please contact us:
-* **Email:** support@bitefixapp.com
+* **Email:** bitefixapp@gmail.com
 * **GitHub Repository:** https://github.com/Ravinder82/BiteFix
