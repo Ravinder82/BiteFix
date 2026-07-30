@@ -2,15 +2,15 @@ export type ColorScheme = 'light' | 'dark';
 
 export const Colors = {
   light: {
-    primary:        '#22C55E',   // Vibrant CTA Green
-    primaryLight:   '#F0FDF4',   // Very Light Green Tint
-    primaryDark:    '#16A34A',   // Slightly darker for active states
+    primary:        '#3A5E14',   // Deep Lime Green
+    primaryLight:   '#F0FCE6',   // Soft Lime Tint
+    primaryDark:    '#25400A',   // Extra Deep Forest Olive
     secondary:      '#3BB5A0',   // Teal Accent
 
     // Backgrounds
-    background:     '#FFFFFF',   // Bright white
-    surface:        '#F9FAF9',   // Very subtle green tint
-    surfaceRaised:  '#F0F2F0',   // Nested surface
+    background:     '#F8F9FA',   // Lightest vivid grey
+    surface:        '#FFFFFF',   // Pure solid white for neomorphic cards
+    surfaceRaised:  '#F1F3F5',   // Nested surface
     overlay:        'rgba(0,0,0,0.35)',
 
     // Text
@@ -21,29 +21,29 @@ export const Colors = {
 
     // Borders
     border:         '#E8EDE9',   // Hairline sage
-    borderFocus:    '#0D9668',
+    borderFocus:    '#3A5E14',
 
     // Semantic
     error:          '#DC2626',
     errorLight:     '#FEF2F2',
-    success:        '#22C55E',
-    successLight:   '#F0FDF4',
+    success:        '#3A5E14',
+    successLight:   '#F0FCE6',
     warning:        '#F5A623',
     warningLight:   '#FEF3E4',
-    info:           '#3B82F6',
-    infoLight:      '#EFF6FF',
+    info:           '#3A5E14',
+    infoLight:      '#F0FCE6',
 
     // BiteFix NOVA colors
-    nova1:          '#22C55E',   // Whole
-    nova2:          '#3BB5A0',   // Minimal
+    nova1:          '#3A5E14',   // Whole
+    nova2:          '#76B738',   // Minimal
     nova3:          '#F5A623',   // Processed
     nova4:          '#EF4444',   // Ultra-Processed
   },
   dark: {
-    primary:        '#34D399',   // Vibrant Mint/Emerald
-    primaryLight:   '#3BB5A0',   // Teal
-    primaryDark:    '#0D9668',   // Deep Emerald
-    secondary:      '#5EEAD4',   // Glowing Cyan-Teal
+    primary:        '#3A5E14',   // Deep Lime Green
+    primaryLight:   '#F0FCE6',   // Soft Lime Tint
+    primaryDark:    '#25400A',   // Extra Deep Forest Olive
+    secondary:      '#3BB5A0',   // Teal Accent
 
     // Backgrounds
     background:     '#000000',   // Ultra deep black
@@ -55,25 +55,25 @@ export const Colors = {
     text:           '#FFFFFF',   // Pure White
     textSecondary:  '#9EA7A2',   // Silver-sage
     textMuted:      '#5C6F65',   // Muted sage
-    textInverse:    '#0A1A14',
+    textInverse:    '#FFFFFF',
 
     // Borders
     border:         'rgba(255, 255, 255, 0.08)',
-    borderFocus:    '#34D399',
+    borderFocus:    '#3A5E14',
 
     // Semantic
     error:          '#f87171',
     errorLight:     '#1a0505',
-    success:        '#34d399',
+    success:        '#3A5E14',
     successLight:   '#051a10',
     warning:        '#F5A623',
     warningLight:   '#1a1000',
-    info:           '#60a5fa',
+    info:           '#3A5E14',
     infoLight:      '#050f1a',
 
     // BiteFix NOVA colors
-    nova1:          '#34d399',
-    nova2:          '#5EEAD4',
+    nova1:          '#3A5E14',
+    nova2:          '#76B738',
     nova3:          '#FBBF24',
     nova4:          '#f87171',
   },

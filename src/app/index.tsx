@@ -4,6 +4,7 @@ import { Redirect, useRootNavigationState } from 'expo-router';
 import { useAppStore } from '../stores/appStore';
 import { useAuthStore } from '../stores/authStore';
 import { useTheme } from '../hooks/useTheme';
+import { Asset } from 'expo-asset';
 
 // Track initial JS engine bundle load to detect restarts vs hot reloads
 let isFirstLoad = true;
@@ -16,6 +17,9 @@ export default function Index() {
   const rootNavigationState = useRootNavigationState();
   // null = still checking with StoreKit; false/true = check complete
   const [subChecked, setSubChecked] = useState<boolean | null>(null);
+  
+  // Enforce a minimum 5-second splash screen display on first load
+  const [splashFinished, setSplashFinished] = useState(!isFirstLoad);
 
   // Dev reset helper: Reset onboarding on fresh startup in development mode
   // only if the user is not authenticated.
@@ -100,8 +104,25 @@ export default function Index() {
     return () => { cancelled = true; };
   }, [hydrated, isInitialized, user, isPremium]);
 
+  useEffect(() => {
+    // Preload onboarding images during the 5s splash delay
+    try {
+      Asset.loadAsync([
+        require('../../assets/images/ultra_chips.png'),
+        require('../../assets/images/artisan_swaps.png'),
+      ]);
+    } catch (e) {}
+
+    if (isFirstLoad) {
+      const splashTimer = setTimeout(() => {
+        setSplashFinished(true);
+      }, 5000);
+      return () => clearTimeout(splashTimer);
+    }
+  }, []);
+
   // Wait until the store is hydrated, auth is initialized, AND navigation is ready
-  const isReady = hydrated && isInitialized && !!rootNavigationState?.key;
+  const isReady = hydrated && isInitialized && !!rootNavigationState?.key && splashFinished;
   // If user is logged in and not yet premium, wait for the StoreKit check to finish
   const waitingForSubCheck = isReady && !!user && onboardingComplete && !isPremium && subChecked === null;
 

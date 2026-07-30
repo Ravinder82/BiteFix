@@ -57,7 +57,8 @@
           "iosUrlScheme": "com.googleusercontent.apps.1097829102652-jgmhd81kr0c36338ci9tlmh1n3milght"
         }
       ],
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      "expo-asset"
     ],
     "extra": {
       "router": {},
