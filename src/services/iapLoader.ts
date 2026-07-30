@@ -1,27 +1,22 @@
-type IAPService = typeof import('./iapService').iapService;
+import { iapService } from './iapService';
 
-let service: IAPService | null = null;
-let servicePromise: Promise<IAPService | null> | null = null;
+type IAPService = typeof iapService;
+
+let initialized = false;
 
 export async function getIapService(): Promise<IAPService | null> {
-  if (service) return service;
-
-  if (!servicePromise) {
-    servicePromise = import('./iapService')
-      .then((module) => {
-        service = module.iapService;
-        return service;
-      })
-      .catch((error) => {
-        console.error('[BitefixIAP] Failed to load IAP service:', error);
-        servicePromise = null;
-        return null;
-      });
+  try {
+    if (!initialized) {
+      await iapService.connect();
+      initialized = true;
+    }
+    return iapService;
+  } catch (error) {
+    console.error('[BitefixIAP] Failed to initialize IAP service:', error);
+    return null;
   }
-
-  return servicePromise;
 }
 
 export function getLoadedIapService(): IAPService | null {
-  return service;
+  return initialized ? iapService : null;
 }
