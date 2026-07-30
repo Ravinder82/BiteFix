@@ -28,6 +28,9 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   };
 
   const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
+  const [supportModalVisible, setSupportModalVisible] = useState(false);
+  const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
+  const [termsModalVisible, setTermsModalVisible] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [subDetails, setSubDetails] = useState<{ planType: string; purchaseDate: string; autoRenew: boolean } | null>(null);
 
@@ -430,10 +433,21 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
         {/* SUPPORT & LEGAL SECTION */}
         <SettingsGroup title="Support & Legal" colors={colors}>
           <SettingsRowItem
-            label="Help & Support Center"
-            rightValue="ravinder82.github.io"
-            icon={<HeartHandshake size={16} color={colors.primary} />}
-            onPress={() => Linking.openURL('https://ravinder82.github.io/BiteFix/')}
+            label="Contact/Support Us"
+            icon={<Mail size={16} color={colors.primary} />}
+            onPress={() => setSupportModalVisible(true)}
+            colors={colors}
+          />
+          <SettingsRowItem
+            label="Privacy Policy"
+            icon={<ShieldAlert size={16} color={colors.primary} />}
+            onPress={() => setPrivacyModalVisible(true)}
+            colors={colors}
+          />
+          <SettingsRowItem
+            label="Terms of Service"
+            icon={<Eye size={16} color={colors.primary} />}
+            onPress={() => setTermsModalVisible(true)}
             colors={colors}
             isLast
           />
@@ -662,6 +676,107 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
               </Text>
             </TouchableOpacity>
 
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* ── Support & Feedback Modal ───────────────────────── */}
+      <Modal visible={supportModalVisible} animationType="slide" presentationStyle="pageSheet">
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+          <View className="flex-row items-center justify-between p-4 border-b" style={{ borderBottomColor: colors.border, backgroundColor: colors.surface }}>
+            <Text style={{ color: colors.text }} className="font-extrabold text-lg">Help & Support Center</Text>
+            <TouchableOpacity onPress={() => setSupportModalVisible(false)} className="p-2 rounded-full" style={{ backgroundColor: colors.surfaceRaised }}>
+              <Text style={{ color: colors.textMuted }} className="font-bold text-xs">CLOSE</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
+            <View className="items-center mb-4">
+              <Mail size={48} color={colors.primary} />
+              <Text style={{ color: colors.text }} className="font-extrabold text-xl mt-4 text-center">We're here to help.</Text>
+              <Text style={{ color: colors.textSecondary }} className="text-center mt-2 leading-relaxed">
+                Need assistance with your premium subscription, barcode scans, or have an idea to improve BiteFix? Choose an option below.
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => {
+                const version = Constants.expoConfig?.version || '1.0.0';
+                const os = Platform.OS;
+                const subject = encodeURIComponent('BiteFix Support Request');
+                const body = encodeURIComponent(`Please describe your issue or question below:\n\n\n\n---\nApp Version: ${version}\nPlatform: ${os}`);
+                Linking.openURL(`mailto:bitefixapp@gmail.com?subject=${subject}&body=${body}`);
+              }}
+              style={{ backgroundColor: colors.primary, borderRadius: 16, padding: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10 }}
+            >
+              <HeartHandshake size={20} color="#FFF" />
+              <Text style={{ color: '#FFF' }} className="font-extrabold text-sm">Email Support</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                const subject = encodeURIComponent('BiteFix App Feedback');
+                const body = encodeURIComponent('Share your thoughts, feature requests, or clean food swap ideas below:\n\n');
+                Linking.openURL(`mailto:bitefixapp@gmail.com?subject=${subject}&body=${body}`);
+              }}
+              style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB', borderRadius: 16, padding: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10 }}
+            >
+              <MessageSquare size={20} color={colors.text} />
+              <Text style={{ color: colors.text }} className="font-bold text-sm">Send App Feedback</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* ── Privacy Policy Modal ───────────────────────────── */}
+      <Modal visible={privacyModalVisible} animationType="slide" presentationStyle="pageSheet">
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+          <View className="flex-row items-center justify-between p-4 border-b" style={{ borderBottomColor: colors.border, backgroundColor: colors.surface }}>
+            <Text style={{ color: colors.text }} className="font-extrabold text-lg">Privacy Policy</Text>
+            <TouchableOpacity onPress={() => setPrivacyModalVisible(false)} className="p-2 rounded-full" style={{ backgroundColor: colors.surfaceRaised }}>
+              <Text style={{ color: colors.textMuted }} className="font-bold text-xs">CLOSE</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
+            <View className="items-center mb-4">
+              <ShieldAlert size={48} color={colors.primary} />
+              <Text style={{ color: colors.text }} className="font-extrabold text-xl mt-4 text-center">Your data belongs to you.</Text>
+              <Text style={{ color: colors.textSecondary }} className="text-center mt-2 leading-relaxed">
+                BiteFix is built with privacy at its core. Your scan history and custom allergen preferences remain on your device and are never sold to third parties. For full details on how we protect your data, please read our complete Privacy Policy.
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => Linking.openURL('https://ravinder82.github.io/BiteFix/privacy.html')}
+              style={{ backgroundColor: colors.primary, borderRadius: 16, padding: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10 }}
+            >
+              <Eye size={20} color="#FFF" />
+              <Text style={{ color: '#FFF' }} className="font-extrabold text-sm">View Full Privacy Policy</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* ── Terms of Service (EULA) Modal ──────────────────── */}
+      <Modal visible={termsModalVisible} animationType="slide" presentationStyle="pageSheet">
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+          <View className="flex-row items-center justify-between p-4 border-b" style={{ borderBottomColor: colors.border, backgroundColor: colors.surface }}>
+            <Text style={{ color: colors.text }} className="font-extrabold text-lg">Terms of Service</Text>
+            <TouchableOpacity onPress={() => setTermsModalVisible(false)} className="p-2 rounded-full" style={{ backgroundColor: colors.surfaceRaised }}>
+              <Text style={{ color: colors.textMuted }} className="font-bold text-xs">CLOSE</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
+            <View className="items-center mb-4">
+              <Layers size={48} color={colors.primary} />
+              <Text style={{ color: colors.text }} className="font-extrabold text-xl mt-4 text-center">End User License Agreement</Text>
+              <Text style={{ color: colors.textSecondary }} className="text-center mt-2 leading-relaxed">
+                BiteFix is governed by the standard Apple End User License Agreement (EULA). By using this app, you agree to these standard terms provided by Apple for all App Store applications.
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}
+              style={{ backgroundColor: colors.primary, borderRadius: 16, padding: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10 }}
+            >
+              <Eye size={20} color="#FFF" />
+              <Text style={{ color: '#FFF' }} className="font-extrabold text-sm">View Standard EULA</Text>
+            </TouchableOpacity>
           </ScrollView>
         </SafeAreaView>
       </Modal>
