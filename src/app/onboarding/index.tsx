@@ -182,11 +182,32 @@ function FullWidthPillCTA({
     transform: [{ translateX: interpolate(sweep.value, [-1, 1], [-180, 420]) }, { skewX: '-18deg' }],
   }));
 
-  const bgBtn = isLast ? '#D8B65C' : '#3A5E14';
-  const textBtn = '#FFFFFF';
+  const bgBtn = disabled
+    ? '#D6E0CC'
+    : isLast
+      ? '#D8B65C'
+      : '#3A5E14';
+
+  const textBtn = disabled
+    ? '#5B7844'
+    : '#FFFFFF';
+
+  const iconBg = disabled
+    ? 'rgba(91, 120, 68, 0.15)'
+    : 'rgba(255, 255, 255, 0.22)';
+
+  const iconColor = disabled
+    ? '#5B7844'
+    : '#FFFFFF';
+
+  const borderColor = disabled
+    ? '#C2D1B5'
+    : isLast
+      ? '#EAD084'
+      : '#4C7A1A';
 
   return (
-    <Animated.View style={[{ width: '100%', opacity: disabled ? 0.45 : 1 }, shellStyle]}>
+    <Animated.View style={[{ width: '100%' }, shellStyle]}>
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ disabled }}
@@ -194,9 +215,11 @@ function FullWidthPillCTA({
         disabled={disabled}
         onPress={onPress}
         onPressIn={() => {
+          if (disabled) return;
           scale.value = withSpring(0.97, { damping: 20, stiffness: 400 });
         }}
         onPressOut={() => {
+          if (disabled) return;
           scale.value = withSpring(1, { damping: 20, stiffness: 400 });
         }}
         style={({ pressed }) => ({
@@ -206,12 +229,12 @@ function FullWidthPillCTA({
           overflow: 'hidden',
           backgroundColor: bgBtn,
           borderWidth: 1.5,
-          borderColor: isLast ? '#EAD084' : '#5E9324',
+          borderColor: borderColor,
           shadowColor: bgBtn,
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: pressed ? 0.2 : 0.3,
-          shadowRadius: 16,
-          elevation: 7,
+          shadowOffset: { width: 0, height: disabled ? 2 : 8 },
+          shadowOpacity: disabled ? 0.05 : pressed ? 0.2 : 0.35,
+          shadowRadius: disabled ? 4 : 16,
+          elevation: disabled ? 1 : 7,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
@@ -219,11 +242,15 @@ function FullWidthPillCTA({
           gap: 12,
         })}
       >
-        <View pointerEvents="none" style={{ position: 'absolute', left: 2, right: 2, top: 1, height: 1.5, backgroundColor: '#FFFFFF', opacity: 0.3 }} />
-        <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: -16, bottom: -16, width: 64, backgroundColor: '#FFFFFF', opacity: 0.2 }, sweepStyle]} />
+        {!disabled && (
+          <View pointerEvents="none" style={{ position: 'absolute', left: 2, right: 2, top: 1, height: 1.5, backgroundColor: '#FFFFFF', opacity: 0.3 }} />
+        )}
+        {!disabled && (
+          <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: -16, bottom: -16, width: 64, backgroundColor: '#FFFFFF', opacity: 0.2 }, sweepStyle]} />
+        )}
         <Text style={{ color: textBtn, fontSize: 16, fontWeight: '900', letterSpacing: -0.2 }}>{label}</Text>
-        <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
-          {isLast ? <Check size={16} color="#FFFFFF" strokeWidth={3} /> : <ArrowRight size={16} color="#FFFFFF" strokeWidth={3} />}
+        <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: iconBg, alignItems: 'center', justifyContent: 'center' }}>
+          {isLast ? <Check size={16} color={iconColor} strokeWidth={3} /> : <ArrowRight size={16} color={iconColor} strokeWidth={3} />}
         </View>
       </Pressable>
     </Animated.View>
