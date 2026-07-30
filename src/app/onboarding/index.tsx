@@ -724,21 +724,17 @@ function ChipSwapDemoCardComponent({
   };
 
   const beforeStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 0.58, 1], [1, 0.26, 0.52]),
-    transform: [{ scale: interpolate(progress.value, [0, 1], [1, 0.985]) }],
+    opacity: 1,
+    transform: [{ scale: 1 }],
   }));
 
   const afterStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 0.35, 1], [0.7, 0.86, 1]),
+    opacity: 1,
     transform: [
-      { translateY: interpolate(progress.value, [0, 1], [8, 0]) },
-      { scale: interpolate(progress.value, [0, 1], [0.975, 1]) },
+      { translateY: 0 },
+      { scale: 1 },
     ],
-    borderColor: interpolateColor(
-      progress.value,
-      [0, 1],
-      [color.line, T.mint],
-    ),
+    borderColor: T.mint,
   }));
 
   const buttonStyle = useAnimatedStyle(() => ({
@@ -755,7 +751,7 @@ function ChipSwapDemoCardComponent({
       style={[styles.root, { width: cardW }]}
       accessibilityLabel="Comparison between ultra-processed chips and simpler olive-oil chips"
     >
-      
+
 
       {/* One visual stage: the products feel connected, not like two unrelated cards. */}
       <View style={[styles.stage, { backgroundColor: color.soft, borderColor: color.line }]}>
@@ -1527,7 +1523,7 @@ const SLIDES: SlideData[] = [
   { step: 3, title: 'Grocery Shopping', highlight: 'Grocery Shopping', subtitle: 'How often do you go grocery shopping?', buttonLabel: 'Continue', isLast: false },
   { step: 4, title: 'What is your main goal?', highlight: 'main goal?', subtitle: 'We will customize the scanner just for you.', buttonLabel: 'Continue', isLast: false },
   { step: 5, title: 'The Grocery Truth', highlight: 'Grocery Truth', subtitle: 'Most store-bought food is highly factory-made.', buttonLabel: 'I Want to Protect Myself', isLast: false },
-  { step: 6, title: 'Smart Healthy Swaps', highlight: 'Healthy Alternatives.', subtitle: 'A simple swap can find you Healthy Alternatives.', buttonLabel: 'Show Me More', isLast: false },
+  { step: 6, title: 'Smart', highlight: 'Healthy Alternatives.', subtitle: 'A simple swap can find you Healthy Options.', buttonLabel: 'Show Me More', isLast: false },
   { step: 7, title: 'Protect Loved Ones', highlight: 'Loved Ones', subtitle: 'Safeguard your family from harmful ingredients.', buttonLabel: 'Continue', isLast: false },
   { step: 8, title: 'Any daily struggles?', highlight: 'daily struggles?', subtitle: 'Select any options that you want to fix:', buttonLabel: 'Continue', isLast: false },
   { step: 9, title: 'Things to Avoid', highlight: 'Things to Avoid', subtitle: 'Choose what you want the app to warn you about:', buttonLabel: 'Continue', isLast: false },
