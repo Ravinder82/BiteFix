@@ -12,13 +12,13 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
-  Image,
   AccessibilityInfo,
   Pressable,
 } from 'react-native';
 import { router } from 'expo-router';
-import { Camera, useCameraPermissions } from 'expo-camera';
+import { useCameraPermissions } from 'expo-camera';
 import Animated, {
+  cancelAnimation,
   useSharedValue,
   useAnimatedStyle,
   withSpring,
@@ -28,18 +28,14 @@ import Animated, {
   withDelay,
   Easing,
   runOnJS,
-  FadeInRight,
-  FadeOutLeft,
   FadeInDown,
   interpolate,
-  interpolateColor,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStore } from '../../stores/appStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useTheme } from '../../hooks/useTheme';
-import { OrbMascot } from '../../components/features/OrbMascot';
-import { MagicalBackground } from '../../components/features/MagicalBackground';
+import { OrbMascot, MascotState } from '../../components/features/OrbMascot';
 import {
   ArrowRight,
   Check,
@@ -49,57 +45,213 @@ import {
   ShieldAlert,
   Activity,
   Sparkles,
-  RefreshCw,
   Zap,
-  Star,
   Layers,
   Heart,
   Flame,
-  Award,
   ShoppingCart,
   ArrowRightLeft,
-  XCircle,
-  CheckCircle2,
-  Lock,
-  ChevronRight,
-  Info,
   ArrowDown,
   Apple,
   CircleAlert,
   Droplets,
   Layers3,
-  ScanLine,
   X,
+  Users,
+  Award,
+  Shield,
+  CheckCircle,
+  Info,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import Svg, { Circle, Path, Defs, RadialGradient as SvgRadialGradient, Stop, LinearGradient as SvgLinearGradient, Rect, Line, G } from 'react-native-svg';
+import Svg, {
+  Circle,
+  Path,
+  Defs,
+  RadialGradient as SvgRadialGradient,
+  Stop,
+  LinearGradient as SvgLinearGradient,
+  Rect,
+  Line,
+} from 'react-native-svg';
 
 // ─────────────────────────────────────────────────────────
-// Color Palette (Strict Light Mode Mint / Obsidian-V3 translation)
-// No purple allowed! Mint #9CFFDD + Deep Mint #00C288 + Gold #F5A623 + Red #EF4444
+// Color Palette (Luxury Mint / Gold / Obsidian)
 // ─────────────────────────────────────────────────────────
-const MINT = '#9BE55A';
-const MINT_DARK = '#76B738';
-const MINT_LIGHT = '#F0FCE6';
-const MINT_BG = '#F0FCE6';
-const GOLD = '#F5A623';
-const RED = '#EF4444';
-const BLUE = '#00B0FF';
-const DARK_TEXT = '#0A1A14';
-const SUB_TEXT = '#3D5A4E';
+const MINT = '#00E5A0';
+const MINT_DARK = '#008F67';
+const MINT_LIGHT = '#EAFBF5';
+const GOLD = '#D8B65C';
+const RED = '#D84C5B';
+const DARK_TEXT = '#101418';
+const SUB_TEXT = '#626B74';
 
 // ─────────────────────────────────────────────────────────
-// Custom Claymorphic SVGs & Decorative Elements
+// Custom Drawing Board & Luxury Decor Elements
 // ─────────────────────────────────────────────────────────
 
-// Mascot Shadow Component
+function DrawingBoardTape() {
+  return (
+    <View
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        top: -9,
+        alignSelf: 'center',
+        width: 68,
+        height: 16,
+        backgroundColor: 'rgba(216, 182, 92, 0.42)',
+        borderRadius: 3,
+        borderWidth: 1,
+        borderColor: 'rgba(216, 182, 92, 0.65)',
+        transform: [{ rotate: '-1.8deg' }],
+        zIndex: 10,
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.12,
+        shadowRadius: 3,
+      }}
+    />
+  );
+}
+
+function LuxuryBackdrop({ C }: { C: any }) {
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
+      <Svg width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+        <Defs>
+          <SvgRadialGradient id="ambientMint" cx="88%" cy="5%" rx="75%" ry="50%">
+            <Stop offset="0%" stopColor={MINT} stopOpacity={C.isDark ? 0.12 : 0.08} />
+            <Stop offset="60%" stopColor={MINT} stopOpacity="0.015" />
+            <Stop offset="100%" stopColor={MINT} stopOpacity="0" />
+          </SvgRadialGradient>
+          <SvgRadialGradient id="ambientGold" cx="5%" cy="95%" rx="60%" ry="45%">
+            <Stop offset="0%" stopColor={GOLD} stopOpacity={C.isDark ? 0.08 : 0.05} />
+            <Stop offset="100%" stopColor={GOLD} stopOpacity="0" />
+          </SvgRadialGradient>
+        </Defs>
+        <Rect width="100%" height="100%" fill={C.bg} />
+        <Rect width="100%" height="100%" fill="url(#ambientMint)" />
+        <Rect width="100%" height="100%" fill="url(#ambientGold)" />
+      </Svg>
+    </View>
+  );
+}
+
+function FullWidthPillCTA({
+  label,
+  disabled,
+  isLast,
+  compact,
+  onPress,
+}: {
+  label: string;
+  disabled: boolean;
+  isLast: boolean;
+  compact: boolean;
+  onPress: () => void;
+}) {
+  const scale = useSharedValue(1);
+  const sweep = useSharedValue(-1);
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+    const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
+    return () => subscription.remove();
+  }, []);
+
+  useEffect(() => {
+    cancelAnimation(sweep);
+    sweep.value = -1;
+    if (disabled || reduceMotion) return;
+    sweep.value = withRepeat(
+      withSequence(
+        withDelay(1200, withTiming(1, { duration: 1300, easing: Easing.bezier(0.4, 0, 0.6, 1) })),
+        withTiming(-1, { duration: 1 }),
+        withDelay(1800, withTiming(-1, { duration: 1 }))
+      ),
+      -1,
+      false
+    );
+    return () => cancelAnimation(sweep);
+  }, [disabled, reduceMotion]);
+
+  const shellStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const sweepStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: interpolate(sweep.value, [-1, 1], [-180, 420]) }, { skewX: '-18deg' }],
+  }));
+
+  return (
+    <Animated.View style={[{ width: '100%', opacity: disabled ? 0.45 : 1 }, shellStyle]}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled }}
+        accessibilityLabel={label}
+        disabled={disabled}
+        onPress={onPress}
+        onPressIn={() => {
+          scale.value = withSpring(0.98, { damping: 22, stiffness: 400 });
+        }}
+        onPressOut={() => {
+          scale.value = withSpring(1, { damping: 22, stiffness: 400 });
+        }}
+        style={({ pressed }) => ({
+          width: '100%',
+          height: compact ? 52 : 58,
+          borderRadius: 29,
+          overflow: 'hidden',
+          backgroundColor: '#0B0D0F',
+          borderWidth: 1.5,
+          borderColor: isLast ? GOLD : disabled ? '#31363A' : '#283138',
+          shadowColor: isLast ? GOLD : '#000000',
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: pressed ? 0.15 : isLast ? 0.28 : 0.22,
+          shadowRadius: 18,
+          elevation: 8,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 20,
+          gap: 12,
+        })}
+      >
+        <View pointerEvents="none" style={{ position: 'absolute', left: 2, right: 2, top: 1, height: 1.5, backgroundColor: '#FFFFFF', opacity: 0.22 }} />
+        <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: -16, bottom: -16, width: 64, backgroundColor: '#FFFFFF', opacity: 0.1 }, sweepStyle]} />
+        <Text style={{ color: '#F5F7F6', fontSize: 16, fontWeight: '800', letterSpacing: -0.2 }}>{label}</Text>
+        <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: isLast ? GOLD : MINT, alignItems: 'center', justifyContent: 'center' }}>
+          {isLast ? <Check size={17} color="#0B0D0F" strokeWidth={3} /> : <ArrowRight size={17} color="#0B0D0F" strokeWidth={3} />}
+        </View>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+function StepRail({ current, total, C }: { current: number; total: number; C: any }) {
+  return (
+    <View style={{ flex: 1, marginRight: 12, gap: 5 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text style={{ color: C.textMuted, fontSize: 10, fontWeight: '900', letterSpacing: 1.2 }}>
+          PROFILE FORGE
+        </Text>
+        <Text style={{ color: C.textSub, fontSize: 10.5, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+          {String(current + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
+        </Text>
+      </View>
+      <View style={{ height: 4, borderRadius: 2, backgroundColor: C.cardBorder, overflow: 'hidden' }}>
+        <View style={{ width: `${((current + 1) / total) * 100}%`, height: '100%', borderRadius: 2, backgroundColor: current === total - 1 ? GOLD : MINT_DARK }} />
+      </View>
+    </View>
+  );
+}
+
 function MascotShadow({ size }: { size: number }) {
   return (
     <View style={{ width: size, height: size * 0.12, alignSelf: 'center' }}>
       <Svg width="100%" height="100%" viewBox="0 0 100 15">
         <Defs>
           <SvgRadialGradient id="shadowG" cx="50%" cy="50%" rx="50%" ry="50%">
-            <Stop offset="0%" stopColor="#000000" stopOpacity="0.16" />
+            <Stop offset="0%" stopColor="#000000" stopOpacity="0.18" />
             <Stop offset="100%" stopColor="#000000" stopOpacity="0" />
           </SvgRadialGradient>
         </Defs>
@@ -109,195 +261,113 @@ function MascotShadow({ size }: { size: number }) {
   );
 }
 
-// Cute Clay Apple Icon SVG
+function HeadlineHighlight({ title, highlight, C }: { title: string; highlight: string; C: any }) {
+  if (!highlight) {
+    return (
+      <Text style={{ color: C.text, fontSize: 26, fontWeight: '900', textAlign: 'center', letterSpacing: -0.8 }}>
+        {title}
+      </Text>
+    );
+  }
+  const parts = title.split(highlight);
+  return (
+    <Text style={{ color: C.text, fontSize: 25, lineHeight: 32, fontWeight: '900', textAlign: 'center', letterSpacing: -0.7 }}>
+      {parts[0]}
+      <Text style={{ color: C.primaryDark, backgroundColor: C.isDark ? 'rgba(0,229,160,0.12)' : 'rgba(0,143,103,0.1)', paddingHorizontal: 6, borderRadius: 6, fontWeight: '900' }}>
+        {highlight}
+      </Text>
+      {parts[1] || ''}
+    </Text>
+  );
+}
+
+function MascotDrawingBoardHeader({
+  state = 'idle',
+  speech = 'Scanning for cleaner options...',
+  C,
+  isDark,
+}: {
+  state?: MascotState;
+  speech?: string;
+  C: any;
+  isDark: boolean;
+}) {
+  return (
+    <View style={{ alignItems: 'center', marginVertical: 6 }}>
+      <View
+        style={{
+          backgroundColor: C.card,
+          borderWidth: 1.5,
+          borderColor: C.cardBorder,
+          borderRadius: 20,
+          paddingHorizontal: 16,
+          paddingVertical: 10,
+          alignItems: 'center',
+          flexDirection: 'row',
+          gap: 12,
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.08,
+          shadowRadius: 12,
+          elevation: 4,
+          maxWidth: 340,
+        }}
+      >
+        <DrawingBoardTape />
+        <View style={{ width: 52, height: 52, justifyContent: 'center', alignItems: 'center' }}>
+          <OrbMascot state={state} size={50} theme={isDark ? 'obsidian' : 'porcelain'} showShadow={false} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Sparkles size={11} color={MINT_DARK} />
+            <Text style={{ color: MINT_DARK, fontSize: 9.5, fontWeight: '900', letterSpacing: 0.8, textTransform: 'uppercase' }}>
+              BiteFix Mascot
+            </Text>
+          </View>
+          <Text style={{ color: C.text, fontSize: 12, fontWeight: '700', lineHeight: 16, marginTop: 1 }}>
+            {speech}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+// Clay Accessories
 function ClayAppleSvg({ size = 44 }: { size?: number }) {
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: '#F0FCE6', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#76B738', shadowColor: '#76B738', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 5 }}>
+    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: '#EAFBF5', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#008F67', shadowColor: '#008F67', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 4 }}>
       <Apple size={size * 0.55} color="#76B738" strokeWidth={2.5} />
     </View>
   );
 }
 
-// Cute Clay Shopping Basket SVG
 function ClayBasketSvg({ size = 44 }: { size?: number }) {
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: '#FEF3E4', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#F5A623', shadowColor: '#F5A623', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 5 }}>
+    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: '#F7F3E9', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#D8B65C', shadowColor: '#D8B65C', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 4 }}>
       <ShoppingCart size={size * 0.55} color="#F5A623" strokeWidth={2.5} />
     </View>
   );
 }
 
-// Barcode Scan Reticle SVG
-function BarcodeReticleSvg({ size = 44 }: { size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 44 44" fill="none">
-      <Path d="M4 12 V6 A2 2 0 0 1 6 4 H12" stroke="#00C288" strokeWidth="3" strokeLinecap="round" />
-      <Path d="M32 4 H38 A2 2 0 0 1 40 6 V12" stroke="#00C288" strokeWidth="3" strokeLinecap="round" />
-      <Path d="M4 32 V38 A2 2 0 0 0 6 40 H12" stroke="#00C288" strokeWidth="3" strokeLinecap="round" />
-      <Path d="M32 40 H38 A2 2 0 0 0 40 38 V32" stroke="#00C288" strokeWidth="3" strokeLinecap="round" />
-      <Line x1="10" y1="14" x2="10" y2="30" stroke="#0A1A14" strokeWidth="2" />
-      <Line x1="15" y1="14" x2="15" y2="30" stroke="#0A1A14" strokeWidth="3" />
-      <Line x1="21" y1="14" x2="21" y2="30" stroke="#0A1A14" strokeWidth="1.5" />
-      <Line x1="26" y1="14" x2="26" y2="30" stroke="#0A1A14" strokeWidth="3.5" />
-      <Line x1="32" y1="14" x2="32" y2="30" stroke="#0A1A14" strokeWidth="2" />
-      <Line x1="4" y1="22" x2="40" y2="22" stroke="#00C288" strokeWidth="1.5" opacity="0.85" />
-    </Svg>
-  );
-}
-
 // ─────────────────────────────────────────────────────────
-// UI FEATURE COMPONENTS (SPEEDOMETER, NOVA, NUTRI-SCORE, ADDITIVES, GUT SHIELD)
+// UI FEATURE COMPONENTS
 // ─────────────────────────────────────────────────────────
 
-// 1. ANALOG SPEEDOMETER COMPONENT FOR HEALTH SCORE
-function AnalogSpeedometer({ score = 92, size = 110 }: { score?: number; size?: number }) {
-  // Angle range: -120 deg to +120 deg
-  const angle = -120 + (score / 100) * 240;
-  const needleAnim = useSharedValue(-120);
-
-  useEffect(() => {
-    needleAnim.value = withSpring(angle, { damping: 14, stiffness: 90 });
-  }, [score]);
-
-  const needleStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${needleAnim.value}deg` }],
-  }));
-
-  return (
-    <View style={{ width: size, height: size * 0.75, alignItems: 'center', justifyContent: 'center' }}>
-      <Svg width={size} height={size} viewBox="0 0 100 100">
-        <Defs>
-          <SvgLinearGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0%" stopColor="#EF4444" />
-            <Stop offset="45%" stopColor="#F5A623" />
-            <Stop offset="100%" stopColor="#00C288" />
-          </SvgLinearGradient>
-        </Defs>
-        {/* Gauge Background Track */}
-        <Path
-          d="M 15 75 A 40 40 0 1 1 85 75"
-          fill="none"
-          stroke="#E8EDE9"
-          strokeWidth="10"
-          strokeLinecap="round"
-        />
-        {/* Active Gradient Arc */}
-        <Path
-          d="M 15 75 A 40 40 0 1 1 85 75"
-          fill="none"
-          stroke="url(#gaugeGrad)"
-          strokeWidth="10"
-          strokeLinecap="round"
-        />
-        {/* Scale Ticks */}
-        <Circle cx="50" cy="50" r="3" fill="#0A1A14" />
-      </Svg>
-
-      {/* Animated Needle Indicator */}
-      <Animated.View
-        style={[
-          {
-            position: 'absolute',
-            top: size * 0.42,
-            width: size * 0.36,
-            height: 4,
-            backgroundColor: '#0A1A14',
-            borderRadius: 2,
-            transformOrigin: 'left center',
-            left: size * 0.5,
-          },
-          needleStyle,
-        ]}
-      />
-
-      {/* Score Digital Readout */}
-      <View style={{ position: 'absolute', bottom: -2, alignItems: 'center' }}>
-        <Text style={{ color: '#0A1A14', fontSize: 16, fontWeight: '900' }}>{score}</Text>
-        <Text style={{ color: '#00C288', fontSize: 8, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>EXCELLENT</Text>
-      </View>
-    </View>
-  );
-}
-
-// 2. NOVA SCORE CARD COMPONENT
-function NovaScoreCard({ group = 4 }: { group?: number }) {
-  const isNova4 = group === 4;
-  return (
-    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 14, padding: 10, borderWidth: 1, borderColor: isNova4 ? '#EF4444' : '#E8EDE9', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-      <View style={{ paddingHorizontal: 10, height: 34, borderRadius: 17, backgroundColor: isNova4 ? '#FEF2F2' : '#E6FFFA', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: isNova4 ? '#EF4444' : '#00C288' }}>
-        <Text numberOfLines={1} style={{ color: isNova4 ? '#EF4444' : '#00C288', fontSize: 13, fontWeight: '900' }}>NOVA {group}</Text>
-      </View>
-      <View style={{ flex: 1 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Text style={{ color: '#0A1A14', fontSize: 12, fontWeight: '800' }}>
-            {isNova4 ? 'Ultra-Processed Food' : 'Unprocessed / Minimal'}
-          </Text>
-          {isNova4 && <AlertTriangle size={12} color="#EF4444" />}
-        </View>
-        <Text style={{ color: '#3D5A4E', fontSize: 10, fontWeight: '600', marginTop: 1 }}>
-          {isNova4 ? 'Factory formulations with chemical additives' : 'Whole natural food ingredients'}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-// 3. NUTRI-SCORE CARD COMPONENT
-function NutriScoreCard({ grade = 'A' }: { grade?: 'A' | 'B' | 'C' | 'D' | 'E' }) {
-  const grades = [
-    { key: 'A', color: '#00C288' },
-    { key: 'B', color: '#84CC16' },
-    { key: 'C', color: '#F5A623' },
-    { key: 'D', color: '#F97316' },
-    { key: 'E', color: '#EF4444' },
-  ];
-
-  return (
-    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 14, padding: 10, borderWidth: 1, borderColor: '#E8EDE9', gap: 6 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={{ color: '#0A1A14', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>Nutri-Score Rating</Text>
-        <View style={{ backgroundColor: '#E6FFFA', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
-          <Text style={{ color: '#00C288', fontSize: 9, fontWeight: '900' }}>GRADE {grade}</Text>
-        </View>
-      </View>
-      <View style={{ flexDirection: 'row', height: 22, borderRadius: 6, overflow: 'hidden', gap: 2 }}>
-        {grades.map((g) => {
-          const active = g.key === grade;
-          return (
-            <View
-              key={g.key}
-              style={{
-                flex: active ? 1.6 : 1,
-                backgroundColor: g.color,
-                alignItems: 'center',
-                justifyContent: 'center',
-                opacity: active ? 1 : 0.45,
-                transform: active ? [{ scaleY: 1.1 }] : [],
-                borderRadius: 4,
-              }}
-            >
-              <Text style={{ color: '#FFFFFF', fontSize: active ? 12 : 10, fontWeight: '900' }}>{g.key}</Text>
-            </View>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
-
-// 4. ADDITIVES HAZARD CARD COMPONENT
 function AdditivesHazardCard({ tags = ['Red 40 (E129)', 'Palm Oil', 'Polysorbate 80'] }: { tags?: string[] }) {
   return (
-    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 14, padding: 10, borderWidth: 1, borderColor: '#E8EDE9', gap: 8 }}>
+    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#E1E5E8', gap: 8 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         <ShieldAlert size={16} color="#EF4444" />
-        <Text style={{ color: '#0A1A14', fontSize: 11.5, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>Hazardous Additive Defense</Text>
+        <Text style={{ color: '#101418', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+          Additive Watchlist
+        </Text>
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
         {tags.map((t, idx) => (
-          <View key={idx} style={{ backgroundColor: '#FEF2F2', borderColor: '#FECACA', borderWidth: 1, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#EF4444' }} />
-            <Text style={{ color: '#EF4444', fontSize: 10.5, fontWeight: '800' }}>{t}</Text>
+          <View key={idx} style={{ backgroundColor: '#FFF5F5', borderColor: '#EFC9CD', borderWidth: 1, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#D84C5B' }} />
+            <Text style={{ color: '#D84C5B', fontSize: 10.5, fontWeight: '800' }}>{t}</Text>
           </View>
         ))}
       </View>
@@ -305,77 +375,71 @@ function AdditivesHazardCard({ tags = ['Red 40 (E129)', 'Palm Oil', 'Polysorbate
   );
 }
 
-// 5. GUT SHIELD CARD COMPONENT
 function GutShieldCard({ status = 'ACTIVE' }: { status?: string }) {
   return (
-    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 14, padding: 12, borderWidth: 1.5, borderColor: '#00C288', flexDirection: 'row', alignItems: 'center', gap: 12, shadowColor: '#00C288', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 3 }}>
-      <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: '#E6FFFA', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#9CFFDD' }}>
+    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: 12, borderWidth: 1.5, borderColor: '#00C288', flexDirection: 'row', alignItems: 'center', gap: 12, shadowColor: '#00C288', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 3 }}>
+      <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: '#EAFBF5', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#A1F3D5' }}>
         <ShieldCheck size={22} color="#00C288" />
       </View>
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={{ color: '#0A1A14', fontSize: 13, fontWeight: '900' }}>Personal Gut Shield</Text>
-          <View style={{ backgroundColor: '#9CFFDD', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
-            <Text style={{ color: '#0A1A14', fontSize: 8.5, fontWeight: '900' }}>{status}</Text>
+          <Text style={{ color: '#101418', fontSize: 13, fontWeight: '900' }}>Personal Gut Shield</Text>
+          <View style={{ backgroundColor: '#A1F3D5', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+            <Text style={{ color: '#101418', fontSize: 8.5, fontWeight: '900' }}>{status}</Text>
           </View>
         </View>
-        <Text style={{ color: '#3D5A4E', fontSize: 10.5, fontWeight: '600', marginTop: 2 }}>
-          Filters stomach irritants, artificial dyes & inflammatory oils in real-time.
+        <Text style={{ color: '#626B74', fontSize: 10.5, fontWeight: '600', marginTop: 2 }}>
+          Checks selected additives, colours and oils against your personal watchlist.
         </Text>
       </View>
     </View>
   );
 }
 
-// 6. STICKY NOTE CARD WRAPPER (Claymorphism 3D Style)
 function StickyNoteCard({ children, style, tilt = 0 }: { children: React.ReactNode; style?: any; tilt?: number }) {
   return (
     <View
       style={[
         {
           backgroundColor: '#FFFFFF',
-          borderRadius: 20,
+          borderRadius: 22,
           padding: 16,
           borderWidth: 1.5,
-          borderColor: '#E8EDE9',
-          shadowColor: '#0F172A',
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.07,
-          shadowRadius: 16,
+          borderColor: '#DDE2E5',
+          shadowColor: '#080A0C',
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.08,
+          shadowRadius: 20,
           elevation: 4,
-          transform: tilt ? [{ rotate: `${tilt}deg` }] : [],
+          transform: tilt ? [{ rotate: `${tilt * 0.35}deg` }] : [],
         },
         style,
       ]}
     >
-      {/* Sticky Tape Bar Accent */}
-      <View style={{ position: 'absolute', top: -6, alignSelf: 'center', width: 44, height: 8, backgroundColor: '#9CFFDD', borderRadius: 4, opacity: 0.7 }} />
+      <DrawingBoardTape />
       {children}
     </View>
   );
 }
 
-// Animated List Item
-function AnimatedListItem({ children, index, style, animate = true }: { children: React.ReactNode; index: number; style?: any; animate?: boolean }) {
-  if (!animate) return <View style={style}>{children}</View>;
+function AnimatedListItem({ children, index, style }: { children: React.ReactNode; index: number; style?: any }) {
   return (
-    <Animated.View entering={FadeInDown.delay(index * 110).springify().damping(16).stiffness(120)} style={style}>
+    <Animated.View entering={FadeInDown.delay(index * 70).duration(380).easing(Easing.bezier(0.16, 1, 0.3, 1))} style={style}>
       {children}
     </Animated.View>
   );
 }
 
-// Standard Neomorphic / Claymorphism Helper
 const getClayStyle = (active: boolean, C: any) => ({
-  backgroundColor: '#FFFFFF',
+  backgroundColor: C.card,
   borderColor: active ? C.primaryDark : C.cardBorder,
-  borderWidth: active ? 2 : 1.5,
-  borderRadius: 18,
-  shadowColor: active ? C.primaryDark : '#0F172A',
-  shadowOffset: { width: 0, height: 6 },
-  shadowOpacity: active ? 0.12 : 0.05,
-  shadowRadius: 12,
-  elevation: 3,
+  borderWidth: 1.5,
+  borderRadius: 20,
+  shadowColor: active ? C.primaryDark : '#080A0C',
+  shadowOffset: { width: 0, height: active ? 8 : 5 },
+  shadowOpacity: active ? 0.16 : 0.06,
+  shadowRadius: active ? 16 : 12,
+  elevation: active ? 5 : 2,
 });
 
 // ─────────────────────────────────────────────────────────
@@ -383,7 +447,7 @@ const getClayStyle = (active: boolean, C: any) => ({
 // ─────────────────────────────────────────────────────────
 function NameCard({ cardW, C, value, onChange }: { cardW: number; C: any; value: string; onChange: (v: string) => void }) {
   return (
-    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 20 }}>
+    <View style={{ width: cardW, gap: 16 }}>
       <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2 }}>
         Personal Account Profile
       </Text>
@@ -400,10 +464,10 @@ function NameCard({ cardW, C, value, onChange }: { cardW: number; C: any; value:
         />
       </View>
       <StickyNoteCard tilt={-1}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Sparkles size={20} color={C.primaryDark} />
-          <Text style={{ color: C.text, fontSize: 13, fontWeight: '800', flex: 1, lineHeight: 17 }}>
-            {value.trim() ? `Welcome, ${value.trim()}! Ready to fix your food?` : 'Type your name above to personalize your scanner!'}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Sparkles size={22} color={C.primaryDark} />
+          <Text style={{ color: C.text, fontSize: 13, fontWeight: '800', flex: 1, lineHeight: 18 }}>
+            {value.trim() ? `Welcome, ${value.trim()}! Let's shape your scanner around your daily food choices.` : 'Type your name above to personalize your BiteFix scanner!'}
           </Text>
         </View>
       </StickyNoteCard>
@@ -412,17 +476,18 @@ function NameCard({ cardW, C, value, onChange }: { cardW: number; C: any; value:
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 2: On-The-Go Eating Frequency
+// STEP 2: Daily Meal Sourcing
 // ─────────────────────────────────────────────────────────
-function FoodSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any; value: string; onSelect: (v: string) => void }) {
+function DailyMealSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any; value: string; onSelect: (v: string) => void }) {
   const options = [
-    { label: 'Every single day', desc: 'Lots of packaged snacks, boxed meals, or fast food', val: 'daily' },
-    { label: 'A few times a week', desc: 'Some home cooking mixed with store-bought snacks', val: 'weekly' },
-    { label: 'Rarely', desc: 'Eat fresh and cook almost everything from scratch', val: 'rarely' },
+    { label: 'Fresh home cooking', desc: 'Cook meals mostly from raw ingredients', val: 'fresh_home' },
+    { label: 'Mix of home & packaged', desc: 'Combine fresh cooking with store-bought items', val: 'mixed' },
+    { label: 'Takeout & delivery', desc: 'Order restaurant food or meal kits frequently', val: 'takeout' },
+    { label: 'Ready-to-eat packaged', desc: 'Rely heavily on convenient shelf-stable foods', val: 'packaged' },
   ];
 
   return (
-    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 12 }}>
+    <View style={{ width: cardW, gap: 10 }}>
       {options.map((opt, idx) => {
         const isSelected = value === opt.val;
         return (
@@ -433,15 +498,15 @@ function FoodSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any
                 onSelect(opt.val);
               }}
               activeOpacity={0.85}
-              style={[{ padding: 16, gap: 4 }, getClayStyle(isSelected, C)]}
+              style={[{ padding: 14, gap: 3 }, getClayStyle(isSelected, C)]}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={{ color: C.text, fontSize: 15, fontWeight: '800' }}>{opt.label}</Text>
+                <Text style={{ color: C.text, fontSize: 14.5, fontWeight: '800' }}>{opt.label}</Text>
                 <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: isSelected ? C.primaryDark : C.textMuted, backgroundColor: isSelected ? C.primaryDark : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                   {isSelected && <Check size={13} color="#FFF" strokeWidth={3} />}
                 </View>
               </View>
-              <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '600', lineHeight: 16 }}>{opt.desc}</Text>
+              <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '600', lineHeight: 15 }}>{opt.desc}</Text>
             </TouchableOpacity>
           </AnimatedListItem>
         );
@@ -451,41 +516,37 @@ function FoodSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 3: Grocery Shopping Frequency
+// STEP 3: Store Label Inspection Routine
 // ─────────────────────────────────────────────────────────
-function GrocerySourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any; value: string; onSelect: (v: string) => void }) {
+function LabelInspectionRoutineCard({ cardW, C, value, onSelect }: { cardW: number; C: any; value: string; onSelect: (v: string) => void }) {
   const options = [
-    { label: 'Daily', desc: 'Pick up fresh items and ingredients every day', val: 'daily' },
-    { label: 'A few times a week', desc: 'Regular planned trips to restock the pantry', val: 'weekly' },
-    { label: 'Rarely / Monthly bulk', desc: 'Big bulk shopping trips rarely', val: 'rarely' },
+    { label: 'Always — inspect every line', desc: 'Turn every pack around to read fine print ingredients', val: 'always' },
+    { label: 'Sometimes — if suspicious', desc: 'Check ingredients only on unfamiliar or high-risk brands', val: 'sometimes' },
+    { label: 'Rarely — labels are confusing', desc: 'Hard to understand synthetic terms and additive codes', val: 'rarely' },
+    { label: 'Never — trust front labels', desc: 'Rely on claims like "Natural", "Organic" or "Low Fat"', val: 'never' },
   ];
 
   return (
-    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 12 }}>
-      <AnimatedListItem index={0}>
-        <View style={{ alignItems: 'center', marginBottom: 4 }}>
-          <ClayBasketSvg size={44} />
-        </View>
-      </AnimatedListItem>
+    <View style={{ width: cardW, gap: 10 }}>
       {options.map((opt, idx) => {
         const isSelected = value === opt.val;
         return (
-          <AnimatedListItem key={opt.val} index={idx + 1}>
+          <AnimatedListItem key={opt.val} index={idx}>
             <TouchableOpacity
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 onSelect(opt.val);
               }}
               activeOpacity={0.85}
-              style={[{ padding: 16, gap: 4 }, getClayStyle(isSelected, C)]}
+              style={[{ padding: 14, gap: 3 }, getClayStyle(isSelected, C)]}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={{ color: C.text, fontSize: 15, fontWeight: '800' }}>{opt.label}</Text>
+                <Text style={{ color: C.text, fontSize: 14.5, fontWeight: '800' }}>{opt.label}</Text>
                 <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: isSelected ? C.primaryDark : C.textMuted, backgroundColor: isSelected ? C.primaryDark : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                   {isSelected && <Check size={13} color="#FFF" strokeWidth={3} />}
                 </View>
               </View>
-              <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '600', lineHeight: 16 }}>{opt.desc}</Text>
+              <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '600', lineHeight: 15 }}>{opt.desc}</Text>
             </TouchableOpacity>
           </AnimatedListItem>
         );
@@ -495,14 +556,14 @@ function GrocerySourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: 
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 4: Primary Health Goal Card (Multi-Select)
+// STEP 4: Primary Health Goal Card
 // ─────────────────────────────────────────────────────────
 type GoalOption = 'energy' | 'gut_microbiome' | 'weight_management' | 'maintain_health';
 
 function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; selected: GoalOption[]; onSelect: (vals: GoalOption[]) => void }) {
   const options: { label: string; tag: string; icon: React.ReactNode; value: GoalOption }[] = [
-    { label: 'Feel more energized', tag: 'Avoid foods that cause afternoon slumps', icon: <Flame size={20} color="#FF6D00" />, value: 'energy' },
-    { label: 'Better digestion', tag: 'Stay away from gut-irritating additives', icon: <Activity size={20} color="#00C288" />, value: 'gut_microbiome' },
+    { label: 'Feel more energized', tag: 'Avoid foods causing afternoon slumps', icon: <Flame size={20} color="#FF6D00" />, value: 'energy' },
+    { label: 'Better digestion', tag: 'Stay away from gut-irritating emulsifiers', icon: <Activity size={20} color="#00C288" />, value: 'gut_microbiome' },
     { label: 'Manage weight easily', tag: 'Flag hidden sugars and cheap syrups', icon: <Layers size={20} color="#F5A623" />, value: 'weight_management' },
     { label: 'Maintain Health', tag: 'Keep artificial colors out of your kitchen', icon: <ShieldCheck size={20} color="#EF4444" />, value: 'maintain_health' },
   ];
@@ -517,19 +578,11 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
   };
 
   return (
-    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 12 }}>
-      <AnimatedListItem index={0}>
-        <View style={{ alignSelf: 'center', backgroundColor: '#E6FFFA', borderColor: C.cardBorder, borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4, marginBottom: 4 }}>
-          <Text style={{ color: C.primaryDark, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            Select as many as you want
-          </Text>
-        </View>
-      </AnimatedListItem>
-
+    <View style={{ width: cardW, gap: 10 }}>
       {options.map((opt, idx) => {
         const isSelected = selected.includes(opt.value);
         return (
-          <AnimatedListItem key={opt.value} index={idx + 1}>
+          <AnimatedListItem key={opt.value} index={idx}>
             <TouchableOpacity
               onPress={() => handleToggle(opt.value)}
               activeOpacity={0.85}
@@ -541,7 +594,7 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: C.text, fontSize: 14, fontWeight: '800' }}>{opt.label}</Text>
-                  <Text style={{ color: C.textMuted, fontSize: 10.5, fontWeight: '600', marginTop: 2 }}>{opt.tag}</Text>
+                  <Text style={{ color: C.textMuted, fontSize: 10.5, fontWeight: '600', marginTop: 1 }}>{opt.tag}</Text>
                 </View>
               </View>
               <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: isSelected ? C.primaryDark : C.textMuted, backgroundColor: isSelected ? C.primaryDark : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
@@ -560,19 +613,17 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
 // ─────────────────────────────────────────────────────────
 function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
   return (
-    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 14, alignItems: 'center' }}>
+    <View style={{ width: cardW, gap: 12, alignItems: 'center' }}>
       <AnimatedListItem index={0}>
         <View style={{ alignItems: 'center' }}>
-          <Text style={{ color: C.red, fontSize: 48, fontWeight: '900', letterSpacing: -1.5 }}>73%</Text>
+          <Text style={{ color: C.red, fontSize: 46, fontWeight: '900', letterSpacing: -1.5 }}>73%</Text>
           <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1, marginTop: -4 }}>
             OF STORE FOODS ARE NOVA 4
           </Text>
         </View>
       </AnimatedListItem>
 
-
-
-      <AnimatedListItem index={2}>
+      <AnimatedListItem index={1}>
         <StickyNoteCard tilt={1}>
           <Text style={{ color: C.text, fontSize: 13, fontWeight: '700', textAlign: 'center', lineHeight: 18 }}>
             Factory formulations use cheap synthetic ingredients you would never keep in your own home kitchen.
@@ -580,16 +631,16 @@ function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
         </StickyNoteCard>
       </AnimatedListItem>
 
-      <View style={{ width: '100%', gap: 8, marginTop: 2 }}>
+      <View style={{ width: '100%', gap: 8 }}>
         {[
-          'Harsh emulsifiers that disrupt stomach lining',
-          'Synthetic dyes affecting focus & health',
+          'Emulsifiers that disrupt stomach lining',
+          'Synthetic dyes affecting focus & behavior',
           'Refined sweeteners tricking metabolism',
         ].map((point, idx) => (
-          <AnimatedListItem key={idx} index={idx + 3}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FFFFFF', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: C.cardBorder }}>
+          <AnimatedListItem key={idx} index={idx + 2}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.card, padding: 12, borderRadius: 14, borderWidth: 1, borderColor: C.cardBorder }}>
               <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.red }} />
-              <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '600', flex: 1 }}>{point}</Text>
+              <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '600', flex: 1 }}>{point}</Text>
             </View>
           </AnimatedListItem>
         ))}
@@ -599,30 +650,8 @@ function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 6: Category Smart Swap Demo
+// STEP 6: Category Smart Swap Demo Component
 // ─────────────────────────────────────────────────────────
-
-
-/**
- * BiteFix Onboarding — Step 06: Category Smart Swap Demo
- *
- * DESIGN INTENT
- * A proof-of-value interaction, not a marketing comparison. The user actively
- * scans/reveals a like-for-like alternative and sees what materially changed.
- * Colour supports meaning but icons + labels carry every status for accessibility.
- *
- * CONTENT ACCURACY
- * - NOVA 1 excludes products with added oil or salt. A simple potato chip is
- *   generally a processed food (NOVA 3), not automatically NOVA 1.
- * - Nutri-Score measures nutrient composition, not processing level. Do not show
- *   a Nutri-Score unless it is calculated from the exact product nutrition label.
- *
- * References:
- * https://nupens.fsp.usp.br/en/food-classification-nova/
- * https://www.santepubliquefrance.fr/media/files/02-determinants-de-sante/
- * nutrition-et-activite-physique/nutri-score/q-a-en
- */
-
 export type SwapDemoTheme = {
   text?: string;
   textSub?: string;
@@ -630,13 +659,6 @@ export type SwapDemoTheme = {
   card?: string;
   border?: string;
   isDark?: boolean;
-};
-
-export type ChipSwapDemoCardProps = {
-  cardW: number;
-  C?: SwapDemoTheme;
-  reduceMotion?: boolean;
-  onSwapComplete?: () => void;
 };
 
 const T = {
@@ -652,267 +674,102 @@ const T = {
   mintWash: '#EAFBF5',
   danger: '#D74652',
   dangerWash: '#FFF5F5',
-  amber: '#B96C12',
-  gold: '#D8B65C',
 } as const;
 
-const BEFORE = {
-  eyebrow: 'CURRENT PICK',
-  title: 'Flavoured potato chips',
-  subtitle: 'Longer formula · multiple cosmetic additives',
-  processing: 'NOVA 4',
-  processingLabel: 'Ultra-processed',
-  ingredients: '12 ingredients',
-  oil: 'Palm oil',
-  flags: ['Added colour', 'Flavour enhancer', 'Emulsifier'],
-};
-
-const AFTER = {
-  eyebrow: 'SMARTER SWAP',
-  title: 'Sea-salt olive oil chips',
-  subtitle: 'Same category · simpler ingredient list',
-  processing: 'NOVA 3',
-  processingLabel: 'Processed',
-  ingredients: '3 ingredients',
-  oil: 'Olive oil',
-  flags: ['No colour found', 'No emulsifier found'],
-};
-
-function ChipSwapDemoCardComponent({
-  cardW,
-  C = {},
-  reduceMotion: reduceMotionProp,
-  onSwapComplete,
-}: ChipSwapDemoCardProps) {
-  const [revealed, setRevealed] = useState(true);
-  const [systemReduceMotion, setSystemReduceMotion] = useState(false);
-  const progress = useSharedValue(1);
-  const press = useSharedValue(1);
-
-  useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(setSystemReduceMotion);
-    const subscription = AccessibilityInfo.addEventListener(
-      'reduceMotionChanged',
-      setSystemReduceMotion,
-    );
-    return () => subscription.remove();
-  }, []);
-
-  const reduceMotion = reduceMotionProp ?? systemReduceMotion;
+function ChipSwapDemoCardComponent({ cardW, C = {} }: { cardW: number; C?: SwapDemoTheme }) {
   const dark = Boolean(C.isDark);
-
-  const color = useMemo(() => ({
-    page: C.background ?? (dark ? T.obsidian : T.porcelain),
-    card: C.card ?? (dark ? T.obsidianCard : T.white),
-    text: C.text ?? (dark ? '#F2F5F4' : T.ink),
-    sub: C.textSub ?? (dark ? '#9BA3AA' : T.inkMuted),
-    line: C.border ?? (dark ? T.obsidianLine : '#E1E5E8'),
-    soft: dark ? '#101315' : '#F1F3F4',
-    mintWash: dark ? 'rgba(0,201,139,0.08)' : T.mintWash,
-    dangerWash: dark ? 'rgba(215,70,82,0.08)' : T.dangerWash,
-  }), [C, dark]);
-
-  const revealSwap = () => {
-    if (revealed) return;
-    setRevealed(true);
-    progress.value = withTiming(1, {
-      duration: reduceMotion ? 1 : 620,
-      easing: Easing.bezier(0.16, 1, 0.3, 1),
-    }, finished => {
-      if (finished && onSwapComplete) runOnJS(onSwapComplete)();
-    });
-  };
-
-  const beforeStyle = useAnimatedStyle(() => ({
-    opacity: 1,
-    transform: [{ scale: 1 }],
-  }));
-
-  const afterStyle = useAnimatedStyle(() => ({
-    opacity: 1,
-    transform: [
-      { translateY: 0 },
-      { scale: 1 },
-    ],
-    borderColor: T.mint,
-  }));
-
-  const buttonStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: press.value }],
-  }));
-
-  const scanStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 0.08, 0.86, 1], [0, 1, 1, 0]),
-    transform: [{ translateY: interpolate(progress.value, [0, 1], [-104, 108]) }],
-  }));
+  const color = useMemo(
+    () => ({
+      page: C.background ?? (dark ? T.obsidian : T.porcelain),
+      card: C.card ?? (dark ? T.obsidianCard : T.white),
+      text: C.text ?? (dark ? '#F2F5F4' : T.ink),
+      sub: C.textSub ?? (dark ? '#9BA3AA' : T.inkMuted),
+      line: C.border ?? (dark ? T.obsidianLine : '#E1E5E8'),
+      soft: dark ? '#101315' : '#F1F3F4',
+      mintWash: dark ? 'rgba(0,201,139,0.08)' : T.mintWash,
+      dangerWash: dark ? 'rgba(215,70,82,0.08)' : T.dangerWash,
+    }),
+    [C, dark]
+  );
 
   return (
-    <View
-      style={[styles.root, { width: cardW }]}
-      accessibilityLabel="Comparison between ultra-processed chips and simpler olive-oil chips"
-    >
-
-
-      {/* One visual stage: the products feel connected, not like two unrelated cards. */}
+    <View style={{ width: cardW, gap: 12 }}>
       <View style={[styles.stage, { backgroundColor: color.soft, borderColor: color.line }]}>
-        <View style={styles.stageRule} />
-
-        <Animated.View
-          style={[
-            styles.productCard,
-            {
-              backgroundColor: color.card,
-              borderColor: revealed ? color.line : dark ? '#503036' : '#EBC8CB',
-            },
-            beforeStyle,
-          ]}
-        >
+        {/* Before Item */}
+        <View style={[styles.productCard, { backgroundColor: color.card, borderColor: dark ? '#5D3238' : '#F0C8CB' }]}>
           <View style={styles.productTopline}>
             <View>
-              <Text style={[styles.eyebrow, { color: color.sub }]}>{BEFORE.eyebrow}</Text>
-              <Text style={[styles.productTitle, { color: color.text }]}>{BEFORE.title}</Text>
+              <Text style={[styles.eyebrow, { color: color.sub }]}>CURRENT PICK</Text>
+              <Text style={[styles.productTitle, { color: color.text }]}>Flavoured potato chips</Text>
             </View>
-            <View style={[styles.novaBadge, { backgroundColor: color.dangerWash, borderColor: dark ? '#5D3238' : '#F0C8CB' }]}>
+            <View style={[styles.novaBadge, { backgroundColor: color.dangerWash, borderColor: '#F0C8CB' }]}>
               <CircleAlert size={13} color={T.danger} strokeWidth={2.2} />
               <View>
-                <Text style={[styles.novaValue, { color: T.danger }]}>{BEFORE.processing}</Text>
-                <Text style={[styles.novaLabel, { color: color.sub }]}>{BEFORE.processingLabel}</Text>
+                <Text style={[styles.novaValue, { color: T.danger }]}>NOVA 4</Text>
+                <Text style={[styles.novaLabel, { color: color.sub }]}>Ultra-processed</Text>
               </View>
             </View>
           </View>
-
-          <Text style={[styles.productSubtitle, { color: color.sub }]}>{BEFORE.subtitle}</Text>
-
           <View style={styles.productBody}>
             <View style={[styles.imageStage, { backgroundColor: dark ? '#0D0F11' : '#F7F7F5', borderColor: color.line }]}>
-              <ExpoImage
-                source={require('../../../assets/images/ultra_chips.png')}
-                style={styles.productImage}
-                contentFit="contain"
-                transition={reduceMotion ? 0 : 180}
-                priority="high"
-                cachePolicy="memory-disk"
-                accessibilityLabel="Pack of flavoured potato chips"
-              />
+              <ExpoImage source={require('../../../assets/images/ultra_chips.png')} style={styles.productImage} contentFit="contain" priority="high" cachePolicy="memory-disk" />
             </View>
             <View style={styles.factColumn}>
-              <FactRow icon="layers" label="Formula" value={BEFORE.ingredients} color={color} tone="danger" />
-              <FactRow icon="oil" label="Cooking oil" value={BEFORE.oil} color={color} />
+              <FactRow icon="layers" label="Formula" value="12 ingredients" color={color} tone="danger" />
+              <FactRow icon="oil" label="Cooking oil" value="Palm oil" color={color} />
             </View>
           </View>
+        </View>
 
-          <View style={styles.flagRow}>
-            {BEFORE.flags.map(flag => (
-              <View key={flag} style={[styles.flag, { borderColor: color.line }]}>
-                <X size={10} color={T.danger} strokeWidth={2.7} />
-                <Text style={[styles.flagText, { color: color.sub }]}>{flag}</Text>
-              </View>
-            ))}
-          </View>
-        </Animated.View>
-
-        {/* The connector is a static "Swapped" badge */}
+        {/* Swap Action Badge */}
         <View style={styles.actionWrap}>
           <View style={[styles.action, { backgroundColor: '#0F172A', borderColor: T.mint, borderWidth: 1.5 }]}>
             <View style={[styles.actionIcon, { backgroundColor: T.mint }]}>
               <ArrowDown size={14} color="#0F172A" strokeWidth={3} />
             </View>
-            <Text style={[styles.actionText, { color: T.mint }]}>Swapped</Text>
+            <Text style={[styles.actionText, { color: T.mint }]}>BiteFix Clean Swap</Text>
           </View>
         </View>
 
-        <Animated.View
-          style={[
-            styles.productCard,
-            {
-              backgroundColor: color.card,
-              borderColor: color.line,
-            },
-            afterStyle,
-          ]}
-        >
+        {/* After Item */}
+        <View style={[styles.productCard, { backgroundColor: color.card, borderColor: T.mint }]}>
           <View style={styles.productTopline}>
-            <View style={styles.flexOne}>
-              <Text style={[styles.eyebrow, { color: revealed ? T.mintDark : color.sub }]}>{AFTER.eyebrow}</Text>
-              <Text style={[styles.productTitle, { color: color.text }]}>{AFTER.title}</Text>
+            <View>
+              <Text style={[styles.eyebrow, { color: T.mintDark }]}>SMARTER SWAP</Text>
+              <Text style={[styles.productTitle, { color: color.text }]}>Sea-salt olive oil chips</Text>
             </View>
-            <View style={[styles.novaBadge, { backgroundColor: color.mintWash, borderColor: revealed ? T.mint : color.line }]}>
+            <View style={[styles.novaBadge, { backgroundColor: color.mintWash, borderColor: T.mint }]}>
               <Check size={13} color={T.mintDark} strokeWidth={2.7} />
               <View>
-                <Text style={[styles.novaValue, { color: dark ? '#89E6C5' : T.mintDark }]}>{AFTER.processing}</Text>
-                <Text style={[styles.novaLabel, { color: color.sub }]}>{AFTER.processingLabel}</Text>
+                <Text style={[styles.novaValue, { color: dark ? '#89E6C5' : T.mintDark }]}>NOVA 3</Text>
+                <Text style={[styles.novaLabel, { color: color.sub }]}>Processed</Text>
               </View>
             </View>
           </View>
-
-          <Text style={[styles.productSubtitle, { color: color.sub }]}>{AFTER.subtitle}</Text>
-
           <View style={styles.productBody}>
             <View style={[styles.imageStage, { backgroundColor: dark ? '#0D0F11' : '#F7F7F5', borderColor: color.line }]}>
-              <ExpoImage
-                source={require('../../../assets/images/artisan_swaps.png')}
-                style={styles.productImage}
-                contentFit="contain"
-                transition={reduceMotion ? 0 : 180}
-                priority="high"
-                cachePolicy="memory-disk"
-                accessibilityLabel="Pack of sea-salt olive-oil potato chips"
-              />
-              <Animated.View pointerEvents="none" style={[styles.scanBeam, scanStyle]} />
+              <ExpoImage source={require('../../../assets/images/artisan_swaps.png')} style={styles.productImage} contentFit="contain" priority="high" cachePolicy="memory-disk" />
             </View>
             <View style={styles.factColumn}>
-              <FactRow icon="layers" label="Formula" value={AFTER.ingredients} color={color} tone="clean" />
-              <FactRow icon="oil" label="Cooking oil" value={AFTER.oil} color={color} />
+              <FactRow icon="layers" label="Formula" value="3 ingredients" color={color} tone="clean" />
+              <FactRow icon="oil" label="Cooking oil" value="Olive oil" color={color} />
             </View>
           </View>
-
-          <View style={styles.flagRow}>
-            {AFTER.flags.map(flag => (
-              <View key={flag} style={[styles.flag, { borderColor: revealed ? '#A7DFC9' : color.line }]}>
-                <Check size={10} color={T.mintDark} strokeWidth={2.7} />
-                <Text style={[styles.flagText, { color: color.sub }]}>{flag}</Text>
-              </View>
-            ))}
-          </View>
-        </Animated.View>
+        </View>
       </View>
-
-
-
-      <Text style={[styles.disclosure, { color: color.sub }]}>Demo comparison. Classification and flags must be calculated from each product’s actual label data.</Text>
     </View>
   );
 }
 
-type FactColor = {
-  text: string;
-  sub: string;
-  line: string;
-  soft: string;
-};
-
-function FactRow({
-  icon,
-  label,
-  value,
-  color,
-  tone,
-}: {
-  icon: 'layers' | 'oil';
-  label: string;
-  value: string;
-  color: FactColor;
-  tone?: 'clean' | 'danger';
-}) {
+function FactRow({ icon, label, value, color, tone }: { icon: 'layers' | 'oil'; label: string; value: string; color: any; tone?: 'clean' | 'danger' }) {
   const Icon = icon === 'oil' ? Droplets : Layers3;
   const accent = tone === 'clean' ? T.mintDark : tone === 'danger' ? T.danger : color.sub;
-
   return (
     <View style={styles.factRow}>
       <View style={[styles.factIcon, { backgroundColor: color.soft }]}>
         <Icon size={13} color={accent} strokeWidth={2.2} />
       </View>
-      <View style={styles.flexOne}>
+      <View style={{ flex: 1 }}>
         <Text style={[styles.factLabel, { color: color.sub }]}>{label}</Text>
         <Text style={[styles.factValue, { color: color.text }]}>{value}</Text>
       </View>
@@ -921,293 +778,76 @@ function FactRow({
 }
 
 export const ChipSwapDemoCard = memo(ChipSwapDemoCardComponent);
-ChipSwapDemoCard.displayName = 'ChipSwapDemoCard';
-
-const styles = StyleSheet.create({
-  root: {
-    alignSelf: 'center',
-    gap: 16,
-  },
-  header: {
-    gap: 8,
-    paddingHorizontal: 2,
-  },
-  kicker: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-  },
-  kickerText: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.15,
-  },
-  heading: {
-    fontSize: 30,
-    lineHeight: 33,
-    fontWeight: '800',
-    letterSpacing: -1.05,
-  },
-  intro: {
-    maxWidth: 350,
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '500',
-  },
-  stage: {
-    position: 'relative',
-    gap: 0,
-    borderWidth: 1,
-    borderRadius: 28,
-    padding: 10,
-    overflow: 'hidden',
-  },
-  stageRule: {
-    position: 'absolute',
-    top: 26,
-    bottom: 26,
-    left: 25,
-    width: 1,
-    backgroundColor: 'rgba(95,104,114,0.14)',
-  },
-  productCard: {
-    width: '100%',
-    gap: 10,
-    borderWidth: 1.5,
-    borderRadius: 20,
-    padding: 14,
-    shadowColor: '#080A0C',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.07,
-    shadowRadius: 18,
-    elevation: 3,
-  },
-  productTopline: {
-    minHeight: 43,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  eyebrow: {
-    marginBottom: 3,
-    fontSize: 9.5,
-    fontWeight: '800',
-    letterSpacing: 1.25,
-  },
-  productTitle: {
-    maxWidth: 190,
-    fontSize: 16.5,
-    lineHeight: 20,
-    fontWeight: '800',
-    letterSpacing: -0.35,
-  },
-  productSubtitle: {
-    fontSize: 11.5,
-    lineHeight: 16,
-    fontWeight: '500',
-  },
-  novaBadge: {
-    minWidth: 88,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-  },
-  novaValue: {
-    fontSize: 10.5,
-    lineHeight: 12,
-    fontWeight: '900',
-    letterSpacing: 0.35,
-  },
-  novaLabel: {
-    marginTop: 1,
-    fontSize: 8.5,
-    lineHeight: 10,
-    fontWeight: '600',
-  },
-  productBody: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  imageStage: {
-    width: 96,
-    height: 92,
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderRadius: 15,
-  },
-  productImage: {
-    width: 84,
-    height: 84,
-  },
-  scanBeam: {
-    position: 'absolute',
-    left: 6,
-    right: 6,
-    top: 0,
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: T.mint,
-    shadowColor: T.mint,
-    shadowOpacity: 0.75,
-    shadowRadius: 7,
-    elevation: 4,
-  },
-  factColumn: {
-    flex: 1,
-    gap: 9,
-  },
-  factRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  factIcon: {
-    width: 27,
-    height: 27,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 8,
-  },
-  factLabel: {
-    fontSize: 9,
-    lineHeight: 11,
-    fontWeight: '600',
-  },
-  factValue: {
-    marginTop: 1,
-    fontSize: 11.5,
-    lineHeight: 14,
-    fontWeight: '700',
-  },
-  flagRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 5,
-  },
-  flag: {
-    minHeight: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 7,
-    paddingVertical: 4,
-  },
-  flagText: {
-    fontSize: 9.5,
-    fontWeight: '600',
-  },
-  actionWrap: {
-    zIndex: 5,
-    alignSelf: 'center',
-    marginVertical: -7,
-  },
-  action: {
-    minHeight: 42,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 13,
-    paddingVertical: 7,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    elevation: 7,
-  },
-  actionIcon: {
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-  },
-  actionText: {
-    color: '#F4F7F6',
-    fontSize: 10.5,
-    fontWeight: '900',
-    letterSpacing: 0.85,
-  },
-  payoff: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 11,
-    borderWidth: 1.5,
-    borderRadius: 18,
-    padding: 13,
-  },
-  payoffIcon: {
-    width: 34,
-    height: 34,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 11,
-  },
-  payoffTitle: {
-    fontSize: 13.5,
-    lineHeight: 17,
-    fontWeight: '800',
-    letterSpacing: -0.18,
-  },
-  payoffBody: {
-    marginTop: 3,
-    fontSize: 11.5,
-    lineHeight: 16,
-    fontWeight: '500',
-  },
-  disclosure: {
-    paddingHorizontal: 8,
-    textAlign: 'center',
-    fontSize: 9,
-    lineHeight: 13,
-    fontWeight: '500',
-  },
-  flexOne: {
-    flex: 1,
-  },
-});
-
 
 // ─────────────────────────────────────────────────────────
-// STEP 7: Protecting Loved Ones
+// STEP 7: Protecting Loved Ones (REDESIGNED)
 // ─────────────────────────────────────────────────────────
 function ProtectLovedOnesCard({ cardW, C }: { cardW: number; C: any }) {
+  const [selectedMembers, setSelectedMembers] = useState<string[]>(['Self', 'Kids']);
+  const members = [
+    { id: 'Self', label: 'Myself', icon: <Heart size={16} color={MINT_DARK} /> },
+    { id: 'Partner', label: 'Partner', icon: <Users size={16} color="#4D8DE8" /> },
+    { id: 'Kids', label: 'Kids', icon: <Sparkles size={16} color="#F5A623" /> },
+    { id: 'Seniors', label: 'Parents', icon: <Shield size={16} color="#EF4444" /> },
+  ];
+
+  const toggleMember = (id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedMembers((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
   return (
-    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 16 }}>
+    <View style={{ width: cardW, gap: 14 }}>
       <AnimatedListItem index={0}>
         <GutShieldCard status="FAMILY SHIELD" />
       </AnimatedListItem>
 
       <AnimatedListItem index={1}>
-        <StickyNoteCard tilt={1}>
-          <View style={{ alignItems: 'center', gap: 10 }}>
-            <ClayAppleSvg size={42} />
-            <Text style={{ color: C.text, fontSize: 17, fontWeight: '900', textAlign: 'center', lineHeight: 22 }}>
-              Scan before you buy.
+        <StickyNoteCard tilt={-1}>
+          <View style={{ gap: 10 }}>
+            <Text style={{ color: C.textSub, fontSize: 10.5, fontWeight: '900', letterSpacing: 0.8, textTransform: 'uppercase' }}>
+              Select Family Members Protected
             </Text>
-            <Text style={{ color: C.textSub, fontSize: 13.5, fontWeight: '600', textAlign: 'center', lineHeight: 20 }}>
-              Protect your loved ones from harmful additives and chemicals by analyzing every product's Barcode in seconds.
-            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {members.map((m) => {
+                const active = selectedMembers.includes(m.id);
+                return (
+                  <TouchableOpacity
+                    key={m.id}
+                    onPress={() => toggleMember(m.id)}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                      backgroundColor: active ? MINT_LIGHT : C.surfaceRaised,
+                      borderWidth: 1.5,
+                      borderColor: active ? MINT_DARK : C.cardBorder,
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderRadius: 12,
+                    }}
+                  >
+                    {m.icon}
+                    <Text style={{ color: active ? MINT_DARK : C.text, fontSize: 12, fontWeight: '800' }}>{m.label}</Text>
+                    {active && <Check size={12} color={MINT_DARK} strokeWidth={3} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
         </StickyNoteCard>
+      </AnimatedListItem>
+
+      <AnimatedListItem index={2}>
+        <View style={{ backgroundColor: C.card, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: C.cardBorder, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <ClayAppleSvg size={42} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: C.text, fontSize: 13, fontWeight: '900' }}>78% Household Coverage</Text>
+            <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600', marginTop: 2 }}>
+              Filters out food colorings, artificial preservatives, and harsh emulsifiers before they enter your kitchen.
+            </Text>
+          </View>
+        </View>
       </AnimatedListItem>
     </View>
   );
@@ -1219,26 +859,33 @@ function ProtectLovedOnesCard({ cardW, C }: { cardW: number; C: any }) {
 function SymptomAuditCard({ cardW, C, selected, onToggle }: { cardW: number; C: any; selected: string[]; onToggle: (s: string) => void }) {
   const symptoms = [
     { id: 'slumps', label: 'Afternoon energy crashes', icon: <Zap size={18} color="#F5A623" /> },
-    { id: 'bloating', label: 'Bloating & tummy pain', icon: <AlertTriangle size={18} color="#EF4444" /> },
+    { id: 'bloating', label: 'Bloating & tummy discomfort', icon: <AlertTriangle size={18} color="#EF4444" /> },
     { id: 'brainfog', label: 'Hard to focus / brain fog', icon: <Search size={18} color="#00C288" /> },
-    { id: 'cravings', label: 'Can\'t stop craving sugar', icon: <Heart size={18} color="#00B0FF" /> },
+    { id: 'cravings', label: "Can't stop sugar cravings", icon: <Heart size={18} color="#4D8DE8" /> },
   ];
 
   return (
-    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 12 }}>
+    <View style={{ width: cardW, gap: 10 }}>
       {symptoms.map((s, idx) => {
         const active = selected.includes(s.id);
         return (
           <AnimatedListItem key={s.id} index={idx}>
-            <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onToggle(s.id); }} activeOpacity={0.85} style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 12 }, getClayStyle(active, C)]}>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onToggle(s.id);
+              }}
+              activeOpacity={0.85}
+              style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 12 }, getClayStyle(active, C)]}
+            >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-                <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: C.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: C.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
                   {s.icon}
                 </View>
                 <Text style={{ color: C.text, fontSize: 13.5, fontWeight: '800', flex: 1 }}>{s.label}</Text>
               </View>
               <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: active ? C.primaryDark : C.textMuted, backgroundColor: active ? C.primaryDark : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                {active && <Check size={13} color="#FFFFFF" strokeWidth={3} />}
+                {active && <Check size={13} color="#FFF" strokeWidth={3} />}
               </View>
             </TouchableOpacity>
           </AnimatedListItem>
@@ -1253,14 +900,14 @@ function SymptomAuditCard({ cardW, C, selected, onToggle }: { cardW: number; C: 
 // ─────────────────────────────────────────────────────────
 function AdditivePrioritiesCard({ cardW, C, selected, onToggle }: { cardW: number; C: any; selected: string[]; onToggle: (a: string) => void }) {
   const additives = [
-    { id: 'dyes', label: 'Fake Colors & Dyes', desc: 'Red 40, Yellow 5, Blue 1' },
-    { id: 'hfcs', label: 'Cheap Sugars', desc: 'Fake sweeteners & corn syrups' },
-    { id: 'emulsifiers', label: 'Stomach Upsetters', desc: 'Thickeners that cause bloating' },
-    { id: 'oils', label: 'Greasy Factory Oils', desc: 'Canola, palm, and soybean oils' },
+    { id: 'dyes', label: 'Synthetic colours', desc: 'Red 40, Yellow 5, Blue 1' },
+    { id: 'hfcs', label: 'Added sugars & syrups', desc: 'Concentrated high fructose corn syrup' },
+    { id: 'emulsifiers', label: 'Selected emulsifiers', desc: 'Gut disruptors like Polysorbate 80' },
+    { id: 'oils', label: 'Refined seed oils', desc: 'Palm oil, canola & hydrogenated oils' },
   ];
 
   return (
-    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 12 }}>
+    <View style={{ width: cardW, gap: 10 }}>
       <AnimatedListItem index={0}>
         <AdditivesHazardCard tags={['Red 40 (E129)', 'E466 Emulsifiers', 'Palm Oil']} />
       </AnimatedListItem>
@@ -1269,7 +916,13 @@ function AdditivePrioritiesCard({ cardW, C, selected, onToggle }: { cardW: numbe
         const active = selected.includes(item.id);
         return (
           <AnimatedListItem key={item.id} index={idx + 1}>
-            <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onToggle(item.id); }} style={[{ padding: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, getClayStyle(active, C)]}>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onToggle(item.id);
+              }}
+              style={[{ padding: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, getClayStyle(active, C)]}
+            >
               <View style={{ flex: 1, gap: 2 }}>
                 <Text style={{ color: C.text, fontSize: 13.5, fontWeight: '800' }}>{item.label}</Text>
                 <Text style={{ color: C.textMuted, fontSize: 10.5, fontWeight: '600' }}>{item.desc}</Text>
@@ -1286,25 +939,63 @@ function AdditivePrioritiesCard({ cardW, C, selected, onToggle }: { cardW: numbe
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 10: Personal Allergen Defense Card
+// STEP 10: Personal Allergen Defense Card (REDESIGNED)
 // ─────────────────────────────────────────────────────────
 function AllergenDefenseCard({ cardW, C, selected, onToggle }: { cardW: number; C: any; selected: string[]; onToggle: (a: string) => void }) {
-  const allergens = ['Gluten', 'Dairy', 'Soy', 'Nuts', 'Eggs', 'Palm Oil'];
+  const items = [
+    { id: 'Gluten', label: 'Gluten & Wheat', icon: <Layers size={18} color="#D8B65C" /> },
+    { id: 'Dairy', label: 'Dairy & Milk', icon: <Droplets size={18} color="#4D8DE8" /> },
+    { id: 'Soy', label: 'Soy Derivatives', icon: <Sparkles size={18} color="#00C288" /> },
+    { id: 'Nuts', label: 'Tree Nuts & Peanuts', icon: <Shield size={18} color="#FF6D00" /> },
+    { id: 'Eggs', label: 'Egg Products', icon: <CircleAlert size={18} color="#F5A623" /> },
+    { id: 'Palm Oil', label: 'Palm & Seed Oils', icon: <Droplets size={18} color="#EF4444" /> },
+  ];
 
   return (
-    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 16 }}>
-      <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-        Choose what you must stay away from:
-      </Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {allergens.map((item, idx) => {
-          const active = selected.includes(item);
+    <View style={{ width: cardW, gap: 12 }}>
+      <StickyNoteCard tilt={-1}>
+        <View style={{ gap: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <ShieldCheck size={18} color={MINT_DARK} />
+            <Text style={{ color: C.text, fontSize: 14, fontWeight: '900' }}>Ingredient & Allergen Shield</Text>
+          </View>
+          <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600' }}>
+            BiteFix alerts you the moment any scanned product contains checked items.
+          </Text>
+        </View>
+      </StickyNoteCard>
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+        {items.map((item, idx) => {
+          const active = selected.includes(item.id);
           return (
-            <AnimatedListItem key={item} index={idx}>
-              <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onToggle(item); }} style={[{ paddingHorizontal: 18, paddingVertical: 12 }, getClayStyle(active, C)]}>
-                <Text style={{ color: C.text, fontSize: 13.5, fontWeight: active ? '900' : '700' }}>
-                  {item}
-                </Text>
+            <AnimatedListItem key={item.id} index={idx} style={{ width: '48%' }}>
+              <TouchableOpacity
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  onToggle(item.id);
+                }}
+                activeOpacity={0.85}
+                style={[
+                  {
+                    padding: 12,
+                    borderRadius: 16,
+                    gap: 8,
+                    minHeight: 88,
+                    justifyContent: 'space-between',
+                  },
+                  getClayStyle(active, C),
+                ]}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: C.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
+                    {item.icon}
+                  </View>
+                  <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: active ? C.primaryDark : C.textMuted, backgroundColor: active ? C.primaryDark : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                    {active && <Check size={12} color="#FFF" strokeWidth={3} />}
+                  </View>
+                </View>
+                <Text style={{ color: C.text, fontSize: 12.5, fontWeight: '800' }}>{item.label}</Text>
               </TouchableOpacity>
             </AnimatedListItem>
           );
@@ -1315,30 +1006,58 @@ function AllergenDefenseCard({ cardW, C, selected, onToggle }: { cardW: number; 
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 11: Healthy Basket Intro Card
+// STEP 11: Healthy Basket Intro Card (REDESIGNED)
 // ─────────────────────────────────────────────────────────
 function HealthyBasketIntroCard({ cardW, C }: { cardW: number; C: any }) {
+  const basketItems = [
+    { title: 'Artisan Olive Oil Chips', tag: 'NOVA 3 Clean Swap', clean: true },
+    { title: 'Organic Almond Milk', tag: 'Zero Emulsifiers', clean: true },
+    { title: 'Grass-fed Greek Yogurt', tag: 'High Protein', clean: true },
+  ];
+
   return (
-    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 16 }}>
-      <AnimatedListItem index={0}>
-        <StickyNoteCard tilt={-1}>
-          <View style={{ alignItems: 'center', gap: 14, paddingVertical: 8 }}>
-            <ClayBasketSvg size={54} />
-            <Text style={{ color: C.text, fontSize: 18, fontWeight: '900', textAlign: 'center' }}>
-              Build Your Personal Healthy Basket
-            </Text>
-            <Text style={{ color: C.textSub, fontSize: 13.5, fontWeight: '600', textAlign: 'center', lineHeight: 21 }}>
-              Save scanned and swapped food products to build your Personal Healthy Basket. Your Grocery Cart becomes a Healthy Cart with each clean choice!
-            </Text>
+    <View style={{ width: cardW, gap: 12 }}>
+      <StickyNoteCard tilt={1}>
+        <View style={{ gap: 10 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <ClayBasketSvg size={36} />
+              <View>
+                <Text style={{ color: C.text, fontSize: 14, fontWeight: '900' }}>Clean Basket Blueprint</Text>
+                <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '700' }}>Automatic Safe List</Text>
+              </View>
+            </View>
+            <View style={{ backgroundColor: MINT_LIGHT, borderBottomColor: MINT_DARK, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+              <Text style={{ color: MINT_DARK, fontSize: 10, fontWeight: '900' }}>SCORE 98/100</Text>
+            </View>
           </View>
-        </StickyNoteCard>
-      </AnimatedListItem>
+
+          <View style={{ gap: 6, marginTop: 4 }}>
+            {basketItems.map((item, idx) => (
+              <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: C.surfaceRaised, padding: 8, borderRadius: 10 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <CheckCircle size={14} color={MINT_DARK} />
+                  <Text style={{ color: C.text, fontSize: 11.5, fontWeight: '800' }}>{item.title}</Text>
+                </View>
+                <Text style={{ color: C.textSub, fontSize: 9.5, fontWeight: '700' }}>{item.tag}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </StickyNoteCard>
+
+      <View style={{ backgroundColor: C.card, borderRadius: 16, padding: 12, borderWidth: 1, borderColor: C.cardBorder, gap: 8 }}>
+        <Text style={{ color: C.text, fontSize: 12.5, fontWeight: '900' }}>Why build a clean basket?</Text>
+        <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600', lineHeight: 16 }}>
+          Save items that meet your strict standards. Your next grocery run becomes 3x faster and stress-free.
+        </Text>
+      </View>
     </View>
   );
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 12: Dynamic Health Analysis Engine (Calculation Loader)
+// STEP 12: Calculation Loader Card (UPDATED WITH LOGO & SLOGAN)
 // ─────────────────────────────────────────────────────────
 function HealthAnalysisCalculationCard({ cardW, C, onComplete }: { cardW: number; C: any; onComplete: () => void }) {
   const [progress, setProgress] = useState(0);
@@ -1349,26 +1068,25 @@ function HealthAnalysisCalculationCard({ cardW, C, onComplete }: { cardW: number
   ]);
 
   useEffect(() => {
-    // 6-second minimum timer
     const t1 = setTimeout(() => {
-      setProgress(35);
+      setProgress(38);
       setPhases([
         { label: 'Mapping Additive Defense & Shield...', status: 'done' },
         { label: 'Indexing Category Swap Database...', status: 'loading' },
         { label: 'Building Personal Healthy Basket Engine...', status: 'pending' },
       ]);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }, 2000);
+    }, 1800);
 
     const t2 = setTimeout(() => {
-      setProgress(70);
+      setProgress(74);
       setPhases([
         { label: 'Mapping Additive Defense & Shield...', status: 'done' },
         { label: 'Indexing Category Swap Database...', status: 'done' },
         { label: 'Building Personal Healthy Basket Engine...', status: 'loading' },
       ]);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }, 4000);
+    }, 3600);
 
     const t3 = setTimeout(() => {
       setProgress(100);
@@ -1378,47 +1096,64 @@ function HealthAnalysisCalculationCard({ cardW, C, onComplete }: { cardW: number
         { label: 'Building Personal Healthy Basket Engine...', status: 'done' },
       ]);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }, 5500);
+    }, 5000);
 
     const t4 = setTimeout(() => {
       onComplete();
-    }, 6000);
+    }, 5600);
 
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
+    };
   }, []);
 
   return (
-    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 22, alignItems: 'center' }}>
-      <View style={{ width: 140, height: 140, justifyContent: 'center', alignItems: 'center' }}>
-        <View style={{ position: 'absolute', width: 110, height: 110, borderRadius: 55, backgroundColor: MINT, opacity: 0.25, transform: [{ scale: 1.15 }] }} />
-        <Svg width="120" height="120" viewBox="0 0 100 100">
+    <View style={{ width: cardW, gap: 20, alignItems: 'center' }}>
+      {/* High End App Logo Header */}
+      <View style={{ alignItems: 'center', gap: 4 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: MINT, alignItems: 'center', justifyContent: 'center' }}>
+            <Sparkles size={18} color="#0B0D0F" />
+          </View>
+          <Text style={{ color: C.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>BiteFix</Text>
+        </View>
+        <Text style={{ color: MINT_DARK, fontSize: 11, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase' }}>
+          Scan . Swap . EatClean
+        </Text>
+      </View>
+
+      {/* Orbital Loader */}
+      <View style={{ width: 130, height: 130, justifyContent: 'center', alignItems: 'center' }}>
+        <View style={{ position: 'absolute', width: 100, height: 100, borderRadius: 50, backgroundColor: MINT, opacity: 0.2, transform: [{ scale: 1.15 }] }} />
+        <Svg width="110" height="110" viewBox="0 0 100 100">
           <Circle cx="50" cy="50" r="44" stroke="#E8EDE9" strokeWidth="6" fill="transparent" />
           <Circle cx="50" cy="50" r="44" stroke={MINT_DARK} strokeWidth="6" fill="transparent" strokeDasharray={276} strokeDashoffset={276 - (276 * progress) / 100} strokeLinecap="round" transform="rotate(-90 50 50)" />
         </Svg>
         <View style={{ position: 'absolute', alignItems: 'center' }}>
-          <Text style={{ color: C.text, fontSize: 24, fontWeight: '900' }}>{progress}%</Text>
-          <Text style={{ color: C.textSub, fontSize: 8.5, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 1 }}>Analyzing</Text>
+          <Text style={{ color: C.text, fontSize: 22, fontWeight: '900' }}>{progress}%</Text>
+          <Text style={{ color: C.textSub, fontSize: 8, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 }}>CONFIGURING</Text>
         </View>
       </View>
 
-      <View style={{ width: '100%', gap: 10 }}>
+      <View style={{ width: '100%', gap: 8 }}>
         {phases.map((p, i) => {
           const isDone = p.status === 'done';
           const isLoading = p.status === 'loading';
           return (
-            <View key={i} style={[{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 12, opacity: p.status === 'pending' ? 0.4 : 1 }, getClayStyle(isDone, C)]}>
+            <View key={i} style={[{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, gap: 10, opacity: p.status === 'pending' ? 0.4 : 1 }, getClayStyle(isDone, C)]}>
               {isDone ? (
-                <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: MINT_DARK, alignItems: 'center', justifyContent: 'center' }}>
-                  <Check size={13} color="#FFF" strokeWidth={3.5} />
+                <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: MINT_DARK, alignItems: 'center', justifyContent: 'center' }}>
+                  <Check size={12} color="#FFF" strokeWidth={3.5} />
                 </View>
               ) : isLoading ? (
                 <ActivityIndicator size="small" color={MINT_DARK} />
               ) : (
-                <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: C.textMuted }} />
+                <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: C.textMuted }} />
               )}
-              <Text style={{ color: isDone ? C.text : C.textSub, fontSize: 12.5, fontWeight: '700', flex: 1, lineHeight: 16 }}>
-                {p.label}
-              </Text>
+              <Text style={{ color: isDone ? C.text : C.textSub, fontSize: 12, fontWeight: '700', flex: 1 }}>{p.label}</Text>
             </View>
           );
         })}
@@ -1428,85 +1163,89 @@ function HealthAnalysisCalculationCard({ cardW, C, onComplete }: { cardW: number
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 13: Instant Result Intelligence Preview (6 Feature Sticky Notes Matrix)
+// STEP 13: Instant Result Summary
 // ─────────────────────────────────────────────────────────
 function InstantResultSummaryCard({ cardW, C }: { cardW: number; C: any }) {
   const features = [
-    { id: '1', title: 'Health Score', desc: 'Analog speedometer for instant rating', icon: <Activity size={22} color={MINT_DARK} />, bg: MINT_LIGHT, border: MINT },
-    { id: '2', title: 'NOVA Scale', desc: 'Processing level detection (1 to 4)', icon: <Layers size={22} color="#F5A623" />, bg: '#FEF3E4', border: '#FDE68A' },
-    { id: '3', title: 'Nutri-Score', desc: 'European nutrition grades (A to E)', icon: <Heart size={22} color="#00C288" />, bg: '#E6FFFA', border: '#99F6E4' },
-    { id: '4', title: 'Additive Alerts', desc: 'Detects harmful dyes & emulsifiers', icon: <AlertTriangle size={22} color="#EF4444" />, bg: '#FEF2F2', border: '#FECACA' },
-    { id: '5', title: 'Gut Shield', desc: 'Checks for bloating & microbiome damage', icon: <ShieldCheck size={22} color="#8B5CF6" />, bg: '#F3E8FF', border: '#DDD6FE' },
-    { id: '6', title: 'Smart Swaps', desc: 'Recommends cleaner alternatives instantly', icon: <ArrowRightLeft size={22} color="#3B82F6" />, bg: '#EFF6FF', border: '#BFDBFE' },
+    { id: '1', title: 'Health Score', desc: 'Instant 0-100 quality gauge', icon: <Activity size={20} color={MINT_DARK} /> },
+    { id: '2', title: 'NOVA Scale', desc: 'Processing level detection (1 to 4)', icon: <Layers size={20} color="#F5A623" /> },
+    { id: '3', title: 'Nutri-Score', desc: 'European nutrition grades (A to E)', icon: <Heart size={20} color="#00C288" /> },
+    { id: '4', title: 'Additive Alerts', desc: 'Surfaces colours & emulsifiers', icon: <AlertTriangle size={20} color="#EF4444" /> },
+    { id: '5', title: 'Gut Shield', desc: 'Checks against gut watchlist', icon: <ShieldCheck size={20} color={MINT_DARK} /> },
+    { id: '6', title: 'Smart Swaps', desc: 'Recommends cleaner picks instantly', icon: <ArrowRightLeft size={20} color={MINT_DARK} /> },
   ];
 
   return (
-    <View style={{ width: cardW, backgroundColor: 'transparent', padding: 0, gap: 14 }}>
-      <Text style={{ color: MINT_DARK, fontSize: 12, fontWeight: '900', textTransform: 'uppercase', textAlign: 'center', letterSpacing: 1 }}>
-        6 Unlocked Features Per Scan
-      </Text>
-
-      <View style={{ gap: 10 }}>
-        {features.map((f, i) => (
-          <AnimatedListItem key={f.id} index={i}>
-            <View style={[{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 14 }, getClayStyle(false, C)]}>
-              <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: f.bg, borderWidth: 1, borderColor: f.border, alignItems: 'center', justifyContent: 'center' }}>
-                {f.icon}
-              </View>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={{ color: C.text, fontSize: 15, fontWeight: '900' }}>{f.title}</Text>
-                <Text style={{ color: C.textSub, fontSize: 12, fontWeight: '600' }}>{f.desc}</Text>
-              </View>
-              <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: C.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
-                <Check size={14} color={C.textMuted} strokeWidth={3} />
-              </View>
+    <View style={{ width: cardW, gap: 10 }}>
+      {features.map((f, i) => (
+        <AnimatedListItem key={f.id} index={i}>
+          <View style={[{ padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }, getClayStyle(false, C)]}>
+            <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: C.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
+              {f.icon}
             </View>
-          </AnimatedListItem>
-        ))}
-      </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: C.text, fontSize: 14, fontWeight: '800' }}>{f.title}</Text>
+              <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600' }}>{f.desc}</Text>
+            </View>
+            <Check size={16} color={MINT_DARK} strokeWidth={3} />
+          </View>
+        </AnimatedListItem>
+      ))}
     </View>
   );
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 14: Paywall Transition Summary Card
+// STEP 14: Paywall Blueprint Summary Card (REDESIGNED)
 // ─────────────────────────────────────────────────────────
 function PaywallTransitionCard({ cardW, C }: { cardW: number; C: any }) {
   const { allergenFilters } = useAppStore();
 
   return (
-    <View style={[{ width: cardW, padding: 20, gap: 18, alignItems: 'center' }, getClayStyle(true, C)]}>
-      <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#E6FFFA', borderWidth: 2, borderColor: MINT_DARK, alignItems: 'center', justifyContent: 'center' }}>
-        <ShieldCheck size={44} color={MINT_DARK} strokeWidth={2.5} />
-      </View>
-      <View style={{ gap: 4, alignItems: 'center' }}>
-        <Text style={{ color: C.text, fontSize: 20, fontWeight: '900', textAlign: 'center', letterSpacing: -0.5 }}>
-          Your Food Shield is Configured!
+    <View style={{ width: cardW, gap: 14 }}>
+      <StickyNoteCard tilt={-1}>
+        <View style={{ gap: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Award size={22} color={GOLD} />
+              <Text style={{ color: C.text, fontSize: 15, fontWeight: '900' }}>BiteFix Food Blueprint</Text>
+            </View>
+            <View style={{ backgroundColor: GOLD, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+              <Text style={{ color: '#0B0D0F', fontSize: 9.5, fontWeight: '900' }}>VERIFIED</Text>
+            </View>
+          </View>
+
+          <View style={{ height: 1, backgroundColor: C.cardBorder }} />
+
+          <View style={{ gap: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '700' }}>Allergen Shields Active</Text>
+              <Text style={{ color: C.text, fontSize: 12, fontWeight: '900' }}>{allergenFilters.length} Configured</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '700' }}>NOVA 4 Ultra-Processed Guard</Text>
+              <Text style={{ color: MINT_DARK, fontSize: 12, fontWeight: '900' }}>ACTIVE</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '700' }}>Smart Category Swaps</Text>
+              <Text style={{ color: MINT_DARK, fontSize: 12, fontWeight: '900' }}>READY</Text>
+            </View>
+          </View>
+        </View>
+      </StickyNoteCard>
+
+      <View style={{ backgroundColor: C.card, borderRadius: 16, padding: 12, borderWidth: 1, borderColor: C.cardBorder, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Info size={18} color={MINT_DARK} />
+        <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600', flex: 1 }}>
+          Your profile is locked and synced with your camera scanner.
         </Text>
-        <Text style={{ color: C.textSub, fontSize: 13, fontWeight: '600', textAlign: 'center', lineHeight: 18 }}>
-          BiteFix has generated your personal food scanner:
-        </Text>
-      </View>
-      <View style={{ width: '100%', backgroundColor: C.surfaceRaised, borderRadius: 16, borderWidth: 1, borderColor: C.cardBorder, padding: 12, gap: 8 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: MINT_DARK }} />
-          <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '800' }}>NOVA 4 & Additive Filters Active</Text>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: MINT_DARK }} />
-          <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '800' }}>{allergenFilters.length > 0 ? `${allergenFilters.length} Allergen Shields Configured` : 'Allergen Defense Enabled'}</Text>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: MINT_DARK }} />
-          <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '800' }}>Analog Speedometer & Nutri-Score Matrix Ready</Text>
-        </View>
       </View>
     </View>
   );
 }
 
 // ─────────────────────────────────────────────────────────
-// SLIDES DATA CONFIGURATION (14 STEPS)
+// SLIDES DATA CONFIGURATION
 // ─────────────────────────────────────────────────────────
 interface SlideData {
   step: number;
@@ -1514,31 +1253,36 @@ interface SlideData {
   highlight: string;
   subtitle: string;
   buttonLabel: string;
+  mascotState: MascotState;
+  mascotSpeech: string;
   isLast: boolean;
 }
 
 const SLIDES: SlideData[] = [
-  { step: 1, title: 'Welcome to BiteFix', highlight: 'BiteFix', subtitle: "Let's set up your custom food scanner.", buttonLabel: 'Continue', isLast: false },
-  { step: 2, title: 'On-The-Go Habits', highlight: 'On-The-Go', subtitle: 'How often do you eat packaged food outdoors / on the go?', buttonLabel: 'Continue', isLast: false },
-  { step: 3, title: 'Grocery Shopping', highlight: 'Grocery Shopping', subtitle: 'How often do you go grocery shopping?', buttonLabel: 'Continue', isLast: false },
-  { step: 4, title: 'What is your main goal?', highlight: 'main goal?', subtitle: 'We will customize the scanner just for you.', buttonLabel: 'Continue', isLast: false },
-  { step: 5, title: 'The Grocery Truth', highlight: 'Grocery Truth', subtitle: 'Most store-bought food is highly factory-made.', buttonLabel: 'I Want to Protect Myself', isLast: false },
-  { step: 6, title: 'Smart', highlight: 'Healthy Alternatives.', subtitle: 'A simple swap can find you Healthy Options.', buttonLabel: 'Show Me More', isLast: false },
-  { step: 7, title: 'Protect Loved Ones', highlight: 'Loved Ones', subtitle: 'Safeguard your family from harmful ingredients.', buttonLabel: 'Continue', isLast: false },
-  { step: 8, title: 'Any daily struggles?', highlight: 'daily struggles?', subtitle: 'Select any options that you want to fix:', buttonLabel: 'Continue', isLast: false },
-  { step: 9, title: 'Things to Avoid', highlight: 'Things to Avoid', subtitle: 'Choose what you want the app to warn you about:', buttonLabel: 'Continue', isLast: false },
-  { step: 10, title: 'Personal Food Alerts', highlight: 'Food Alerts', subtitle: 'Select any ingredients you must stay away from:', buttonLabel: 'Continue', isLast: false },
-  { step: 11, title: 'Your Healthy Basket', highlight: 'Healthy Basket', subtitle: 'Turn every grocery trip into a clean shopping cart.', buttonLabel: 'Build My Basket', isLast: false },
-  { step: 12, title: 'Creating Your Profile...', highlight: 'Creating', subtitle: 'Customizing your gut safety and swap options.', buttonLabel: 'Analyzing...', isLast: false },
-  { step: 13, title: 'Your Scanner is Ready!', highlight: 'Scanner is Ready!', subtitle: 'Here is what we will show you on every scan:', buttonLabel: 'Unlock Full Access', isLast: false },
-  { step: 14, title: 'Start Eating Cleaner', highlight: 'Eating Cleaner', subtitle: 'Say goodbye to chemical junk and hidden ingredients.', buttonLabel: 'Start My Clean Journey', isLast: true },
+  { step: 1, title: 'Meet your food intelligence layer', highlight: 'food intelligence', subtitle: 'Tell us your name. BiteFix will shape every scan around your priorities.', buttonLabel: 'Personalize My Scanner', mascotState: 'happy', mascotSpeech: "Hey! I'm your BiteFix scanner mascot.", isLast: false },
+  { step: 2, title: 'Where do your daily meals come from?', highlight: 'daily meals', subtitle: 'Understanding your routine helps BiteFix suggest realistic swaps.', buttonLabel: 'Continue', mascotState: 'thinking', mascotSpeech: 'Sourcing clean food starts with daily habits.', isLast: false },
+  { step: 3, title: 'How often do you read store labels?', highlight: 'read store labels?', subtitle: 'Fine print ingredient lists can hide artificial additives behind complex numbers.', buttonLabel: 'Continue', mascotState: 'scanning', mascotSpeech: 'I decode hidden fine-print ingredients for you!', isLast: false },
+  { step: 4, title: 'What should every scan protect?', highlight: 'protect?', subtitle: 'Select your core health focus. BiteFix will highlight it on every barcode.', buttonLabel: 'Set My Priority', mascotState: 'happy', mascotSpeech: 'Your priorities guide every single scan!', isLast: false },
+  { step: 5, title: 'The label rarely tells the whole story', highlight: 'whole story', subtitle: 'Processing levels and cosmetic additives lurk behind bright packaging.', buttonLabel: 'Show Me What I Miss', mascotState: 'caution', mascotSpeech: '73% of supermarket foods are ultra-processed!', isLast: false },
+  { step: 6, title: 'Same craving. A cleaner label.', highlight: 'cleaner label.', subtitle: 'Compare products in the same category and see exactly what changes.', buttonLabel: 'Build My Swap Profile', mascotState: 'scanning', mascotSpeech: 'Look how easy it is to find cleaner swaps!', isLast: false },
+  { step: 7, title: 'Protect your household & loved ones', highlight: 'household & loved ones', subtitle: 'Your food shield can protect the choices your entire family cares about.', buttonLabel: 'Create Our Shield', mascotState: 'happy', mascotSpeech: 'Family food safety in a single scan.', isLast: false },
+  { step: 8, title: 'What do you want food to stop costing you?', highlight: 'stop costing you?', subtitle: 'Select the everyday fatigue signals you want BiteFix to keep in view.', buttonLabel: 'Add to My Profile', mascotState: 'thinking', mascotSpeech: 'Let us keep energy slumps and fog away.', isLast: false },
+  { step: 9, title: 'Choose your ingredient watchlist', highlight: 'watchlist', subtitle: 'BiteFix will surface these ingredients clearly—without hiding them in fine print.', buttonLabel: 'Activate Watchlist', mascotState: 'caution', mascotSpeech: 'Watchlist active! No sneaky additives allowed.', isLast: false },
+  { step: 10, title: 'Set your personal ingredient shield', highlight: 'ingredient shield', subtitle: 'Choose allergens or ingredients that should never enter your basket.', buttonLabel: 'Lock My Shield', mascotState: 'happy', mascotSpeech: 'Locking down your personal allergen shield.', isLast: false },
+  { step: 11, title: 'Turn good scans into a better basket', highlight: 'better basket', subtitle: 'Save products that fit your profile and make every shop faster.', buttonLabel: 'Build My Basket', mascotState: 'happy', mascotSpeech: 'Build a basket full of foods you trust!', isLast: false },
+  { step: 12, title: 'Forging your Food Shield', highlight: 'Food Shield', subtitle: 'Mapping your watchlist, swap preferences, and clean cart engine.', buttonLabel: 'Analyzing', mascotState: 'scanning', mascotSpeech: 'Forging your BiteFix profile...', isLast: false },
+  { step: 13, title: 'Six layers of intelligence—ready', highlight: 'ready', subtitle: 'Every barcode now returns a clear, personal decision—not another label to decode.', buttonLabel: 'View My Shield', mascotState: 'happy', mascotSpeech: 'You get 6 deep health checks per barcode!', isLast: false },
+  { step: 14, title: 'Your scanner now knows what matters', highlight: 'what matters', subtitle: 'Your Food Shield and Healthy Basket are configured and ready to use.', buttonLabel: 'Activate BiteFix', mascotState: 'happy', mascotSpeech: 'Your Food Shield is fully armed and ready!', isLast: true },
 ];
 
 function DotIndicator({ active, C }: { active: boolean; C: any }) {
-  const dotAnimStyle = useAnimatedStyle(() => ({
-    width: withSpring(active ? 18 : 6, { damping: 15, stiffness: 150 }),
-    backgroundColor: withTiming(active ? C.primaryDark : C.cardBorder, { duration: 200 }),
-  }), [active, C]);
+  const dotAnimStyle = useAnimatedStyle(
+    () => ({
+      width: withSpring(active ? 18 : 6, { damping: 15, stiffness: 150 }),
+      backgroundColor: withTiming(active ? C.primaryDark : C.cardBorder, { duration: 200 }),
+    }),
+    [active, C]
+  );
 
   return <Animated.View style={[{ height: 6, borderRadius: 3 }, dotAnimStyle]} />;
 }
@@ -1547,7 +1291,6 @@ function DotIndicator({ active, C }: { active: boolean; C: any }) {
 // MAIN ONBOARDING SCREEN COMPONENT
 // ─────────────────────────────────────────────────────────
 export default function OnboardingScreen() {
-  // Preload key image assets for instant rendering
   useEffect(() => {
     try {
       Asset.loadAsync([
@@ -1556,29 +1299,32 @@ export default function OnboardingScreen() {
       ]);
     } catch (e) { }
   }, []);
+
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
-  const { colors, isDark } = useTheme();
+  const { isDark } = useTheme();
   const { setProfile, setOnboardingComplete, toggleAllergenFilter, allergenFilters } = useAppStore();
   const { user } = useAuthStore();
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
   const C = {
-    bg: colors.background,
-    card: '#FFFFFF',
-    cardInner: '#FFFFFF',
-    surfaceRaised: '#F1F3F5',
-    cardBorder: '#E8EDE9',
+    bg: isDark ? '#080A0C' : '#F6F7F8',
+    card: isDark ? '#14171A' : '#FFFFFF',
+    cardInner: isDark ? '#181C20' : '#FFFFFF',
+    surfaceRaised: isDark ? '#1D2226' : '#F1F3F4',
+    cardBorder: isDark ? '#2B3136' : '#E1E5E8',
+    chrome: isDark ? 'rgba(255,255,255,0.16)' : '#D9DEE2',
     primary: MINT,
-    primaryDark: MINT_DARK,
+    primaryDark: isDark ? '#49E5B1' : MINT_DARK,
     red: RED,
-    text: DARK_TEXT,
-    textSub: SUB_TEXT,
-    textMuted: '#6E8A7E',
+    gold: GOLD,
+    text: isDark ? '#F2F5F4' : DARK_TEXT,
+    textSub: isDark ? '#A3ABB2' : SUB_TEXT,
+    textMuted: isDark ? '#727B83' : '#7A848D',
+    isDark,
   };
 
   const [currentSlide, setCurrentSlide] = useState(0);
-
   const hasRequestedCamera = React.useRef(false);
 
   useEffect(() => {
@@ -1590,10 +1336,10 @@ export default function OnboardingScreen() {
     }
   }, [currentSlide, cameraPermission]);
 
-  // User State
+  // User Form State
   const [userName, setUserName] = useState('');
-  const [foodSourcingOnTheGo, setFoodSourcingOnTheGo] = useState('');
-  const [foodSourcingGrocery, setFoodSourcingGrocery] = useState('');
+  const [dailyMealSource, setDailyMealSource] = useState('');
+  const [labelRoutine, setLabelRoutine] = useState('');
   const [userGoals, setUserGoals] = useState<GoalOption[]>([]);
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [additives, setAdditives] = useState<string[]>([]);
@@ -1610,9 +1356,13 @@ export default function OnboardingScreen() {
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       const mappedGoal =
-        userGoals[0] === 'energy' || userGoals[0] === 'gut_microbiome' ? 'healthy_habits' :
-          userGoals[0] === 'weight_management' ? 'clean_swaps' :
-            userGoals[0] === 'maintain_health' ? 'ultra_processed' : 'none';
+        userGoals[0] === 'energy' || userGoals[0] === 'gut_microbiome'
+          ? 'healthy_habits'
+          : userGoals[0] === 'weight_management'
+            ? 'clean_swaps'
+            : userGoals[0] === 'maintain_health'
+              ? 'ultra_processed'
+              : 'none';
 
       setProfile({
         userName: userName.trim() || 'Friend',
@@ -1625,8 +1375,8 @@ export default function OnboardingScreen() {
 
   const isNextDisabled = () => {
     if (currentSlide === 0 && !userName.trim()) return true;
-    if (currentSlide === 1 && !foodSourcingOnTheGo) return true;
-    if (currentSlide === 2 && !foodSourcingGrocery) return true;
+    if (currentSlide === 1 && !dailyMealSource) return true;
+    if (currentSlide === 2 && !labelRoutine) return true;
     if (currentSlide === 3 && userGoals.length === 0) return true;
     if (currentSlide === 7 && symptoms.length === 0) return true;
     if (currentSlide === 8 && additives.length === 0) return true;
@@ -1636,64 +1386,67 @@ export default function OnboardingScreen() {
 
   const slide = SLIDES[currentSlide] || SLIDES[0];
   const isShort = height < 700;
-  const orbSize = Math.min(Math.round(width * 0.36), 140);
   const cardW = Math.min(width - 32, 380);
-
-  const renderTitle = () => {
-    const textSlide = SLIDES[currentSlide] || SLIDES[0];
-    const parts = textSlide.title.split(textSlide.highlight);
-    return (
-      <Text style={{ color: C.text, fontSize: isShort ? 22 : 26, fontWeight: '900', textAlign: 'center', letterSpacing: -0.5 }}>
-        {parts[0]}
-        {textSlide.highlight ? <Text style={{ color: C.primaryDark }}>{textSlide.highlight}</Text> : null}
-        {parts[1] || ''}
-      </Text>
-    );
-  };
 
   const toggleSymptom = (id: string) => setSymptoms((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   const toggleAdditive = (id: string) => setAdditives((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.bg }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <MagicalBackground />
-      <View style={{ flex: 1, paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16, paddingHorizontal: 16 }}>
-        {/* Pinned Header Bar */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 40, marginBottom: 4 }}>
-          <View />
+    <KeyboardAvoidingView accessibilityLabel={`BiteFix onboarding step ${currentSlide + 1}`} style={{ flex: 1, backgroundColor: C.bg }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <LuxuryBackdrop C={C} />
+      <View style={{ flex: 1, paddingTop: insets.top + 6, paddingBottom: insets.bottom + 12, paddingHorizontal: 16 }}>
+        {/* Header Bar */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, marginBottom: 4 }}>
+          <StepRail current={currentSlide} total={SLIDES.length} C={C} />
           {currentSlide > 0 && currentSlide !== 11 && (
-            <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setCurrentSlide((s) => s - 1); }} style={{ backgroundColor: '#FFFFFF', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10, borderWidth: 1, borderColor: C.cardBorder }}>
-              <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '800' }}>Back</Text>
-            </TouchableOpacity>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setCurrentSlide((s) => s - 1);
+              }}
+              style={({ pressed }) => ({
+                backgroundColor: C.card,
+                paddingHorizontal: 14,
+                minHeight: 34,
+                borderRadius: 12,
+                borderWidth: 1.5,
+                borderColor: C.chrome,
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: pressed ? 0.75 : 1,
+              })}
+            >
+              <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '700' }}>Back</Text>
+            </Pressable>
           )}
         </View>
 
-        {/* Scrollable Middle Content Section */}
+        {/* Scrollable Center Content */}
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 8 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
-          <View style={{ alignItems: 'center', gap: 2, marginBottom: isShort ? 8 : 16 }}>
-            {/* Show Mascot ONLY on slide 0 */}
-            {currentSlide === 0 && (
-              <Animated.View entering={FadeInDown}>
-                <OrbMascot state="happy" size={orbSize} />
-                <MascotShadow size={orbSize} />
-              </Animated.View>
-            )}
-
-            <Animated.View key={`text-${currentSlide}`} entering={FadeInRight.duration(250)} style={{ alignItems: 'center', gap: 4, marginTop: currentSlide === 0 ? 8 : 0 }}>
-              {renderTitle()}
-              <Text style={{ color: C.textSub, fontSize: isShort ? 13 : 15, fontWeight: '600', textAlign: 'center', paddingHorizontal: 10 }}>
-                {SLIDES[currentSlide].subtitle}
+          {/* Headline Typography */}
+          <View style={{ alignItems: 'center', gap: 6, marginBottom: 12 }}>
+            <Animated.View key={`title-${currentSlide}`} entering={FadeInDown.duration(360).easing(Easing.bezier(0.16, 1, 0.3, 1))} style={{ alignItems: 'center', gap: 6 }}>
+              <HeadlineHighlight title={slide.title} highlight={slide.highlight} C={C} />
+              <Text style={{ color: C.textSub, fontSize: isShort ? 12.5 : 14, lineHeight: isShort ? 17 : 20, fontWeight: '500', textAlign: 'center', paddingHorizontal: 10 }}>
+                {slide.subtitle}
               </Text>
             </Animated.View>
           </View>
 
-          {/* Card Component Slot */}
-          <View style={{ width: '100%', alignItems: 'center', marginTop: isShort ? 6 : 14 }}>
-            <Animated.View key={`card-${currentSlide}`} entering={FadeInRight.duration(250)} style={{ width: '100%', alignItems: 'center' }}>
+          {/* Dynamic Mascot Header (On screens 0..10 & 12..13) */}
+          {currentSlide !== 11 && (
+            <MascotDrawingBoardHeader state={slide.mascotState} speech={slide.mascotSpeech} C={C} isDark={isDark} />
+          )}
+
+          {/* Interactive Card Slots */}
+          <View style={{ width: '100%', alignItems: 'center', marginTop: 8 }}>
+            <Animated.View key={`card-${currentSlide}`} entering={FadeInDown.duration(380).easing(Easing.bezier(0.16, 1, 0.3, 1))} style={{ width: '100%', alignItems: 'center' }}>
               {currentSlide === 0 && <NameCard cardW={cardW} C={C} value={userName} onChange={setUserName} />}
-              {currentSlide === 1 && <FoodSourcingCard cardW={cardW} C={C} value={foodSourcingOnTheGo} onSelect={setFoodSourcingOnTheGo} />}
-              {currentSlide === 2 && <GrocerySourcingCard cardW={cardW} C={C} value={foodSourcingGrocery} onSelect={setFoodSourcingGrocery} />}
+              {currentSlide === 1 && <DailyMealSourcingCard cardW={cardW} C={C} value={dailyMealSource} onSelect={setDailyMealSource} />}
+              {currentSlide === 2 && <LabelInspectionRoutineCard cardW={cardW} C={C} value={labelRoutine} onSelect={setLabelRoutine} />}
               {currentSlide === 3 && <GoalCard cardW={cardW} C={C} selected={userGoals} onSelect={setUserGoals} />}
               {currentSlide === 4 && <NovaWakeUpCard cardW={cardW} C={C} />}
               {currentSlide === 5 && <ChipSwapDemoCard cardW={cardW} C={C} />}
@@ -1709,45 +1462,139 @@ export default function OnboardingScreen() {
           </View>
         </ScrollView>
 
-        {/* Pinned Bottom Bar */}
+        {/* Pinned Bottom Navigation & CTA */}
         {currentSlide !== 11 && (
-          <View style={{ gap: 12, marginTop: 8 }}>
+          <View style={{ gap: 10, marginTop: 6, paddingTop: 8, borderTopWidth: 1, borderTopColor: C.cardBorder }}>
             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 5 }}>
               {SLIDES.map((_, idx) => (
                 <DotIndicator key={idx} active={currentSlide === idx} C={C} />
               ))}
             </View>
 
-            <View style={{ width: '100%', opacity: isNextDisabled() ? 0.5 : 1 }}>
-              <TouchableOpacity
-                onPress={handleNext}
-                disabled={isNextDisabled()}
-                activeOpacity={0.9}
-                style={{
-                  width: '100%',
-                  backgroundColor: MINT_DARK,
-                  borderRadius: 22,
-                  paddingVertical: isShort ? 15 : 18,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 10,
-                  shadowColor: MINT_DARK,
-                  shadowOffset: { width: 0, height: 8 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 14,
-                  elevation: 8,
-                }}
-              >
-                <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '900', letterSpacing: 0.2 }}>
-                  {slide.buttonLabel}
-                </Text>
-                {slide.isLast ? <Check size={18} color="#FFF" strokeWidth={3} /> : <ArrowRight size={18} color="#FFF" strokeWidth={3} />}
-              </TouchableOpacity>
-            </View>
+            <FullWidthPillCTA label={slide.buttonLabel} disabled={isNextDisabled()} isLast={slide.isLast} compact={isShort} onPress={handleNext} />
           </View>
         )}
       </View>
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  stage: {
+    position: 'relative',
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 24,
+    padding: 10,
+  },
+  productCard: {
+    width: '100%',
+    gap: 8,
+    borderWidth: 1.5,
+    borderRadius: 18,
+    padding: 12,
+    shadowColor: '#080A0C',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    elevation: 2,
+  },
+  productTopline: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 6,
+  },
+  eyebrow: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+  },
+  productTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  novaBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 5,
+  },
+  novaValue: {
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  novaLabel: {
+    fontSize: 8,
+    fontWeight: '600',
+  },
+  productBody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  imageStage: {
+    width: 72,
+    height: 72,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderRadius: 12,
+  },
+  productImage: {
+    width: 64,
+    height: 64,
+  },
+  factColumn: {
+    flex: 1,
+    gap: 6,
+  },
+  factRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  factIcon: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 6,
+  },
+  factLabel: {
+    fontSize: 8.5,
+    fontWeight: '600',
+  },
+  factValue: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  actionWrap: {
+    alignSelf: 'center',
+    marginVertical: -4,
+  },
+  action: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+  actionIcon: {
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+  },
+  actionText: {
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.8,
+  },
+});
