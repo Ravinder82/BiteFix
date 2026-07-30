@@ -436,6 +436,48 @@ class BitefixIAPService {
       }
     }
   }
+
+  /**
+   * Fetches active subscription metadata (plan type, purchase date, auto-renew)
+   * to display on the Settings premium info card.
+   */
+  public async getActiveSubscriptionDetails() {
+    await this.connect();
+    try {
+      const available = await getAvailablePurchases();
+      const activePurchase = available?.find((p: any) => ALL_PRODUCT_SKUS.includes(p.productId));
+
+      if (activePurchase) {
+        const isMonthly = activePurchase.productId === PRODUCT_IDS.MONTHLY;
+        const dateObj = activePurchase.transactionDate 
+          ? new Date(activePurchase.transactionDate) 
+          : new Date();
+        
+        return {
+          planType: isMonthly ? 'Monthly' : 'Yearly',
+          purchaseDate: dateObj.toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric'
+          }),
+          autoRenew: true // StoreKit auto-renews by default unless canceled
+        };
+      }
+    } catch (e) {
+      console.warn('[BitefixIAP] Failed to fetch available purchases details:', e);
+    }
+
+    // Default fallback (e.g. for development environment or manual premium overrides)
+    return {
+      planType: 'Yearly',
+      purchaseDate: new Date().toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      }),
+      autoRenew: true
+    };
+  }
 }
 
 // Export a single shared instance

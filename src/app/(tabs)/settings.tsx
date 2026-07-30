@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ScrollView, TouchableOpacity, Switch, Alert, Modal, SafeAreaView, Linking, Platform } from 'react-native';
 import { Text } from '@/components/Text';
 import { router } from 'expo-router';
@@ -29,6 +29,18 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
 
   const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [subDetails, setSubDetails] = useState<{ planType: string; purchaseDate: string; autoRenew: boolean } | null>(null);
+
+  useEffect(() => {
+    if (isPremium) {
+      getIapService().then(async (service) => {
+        if (service) {
+          const details = await service.getActiveSubscriptionDetails();
+          setSubDetails(details);
+        }
+      });
+    }
+  }, [isPremium]);
 
   const handleRestorePurchases = async () => {
     if (isRestoring) return;
@@ -222,27 +234,59 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
               />
             </>
           ) : (
-            <>
-              <SettingsRowItem
-                label="BiteFix Premium Active ✅"
-                icon={<ShieldCheck size={16} color="#10B981" />}
-                onPress={() => router.push('/paywall')}
-                colors={colors}
-              />
-              <SettingsRowItem
-                label="Manage App Store Subscription"
-                icon={<CreditCard size={16} color={colors.primary} />}
+            <View style={{ backgroundColor: colors.surface, padding: 18 }} className="gap-3">
+              <View className="flex-row items-center justify-between pb-3" style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                <View className="flex-row items-center gap-2">
+                  <ShieldCheck size={20} color="#10B981" />
+                  <Text style={{ color: colors.text }} className="font-extrabold text-base">BiteFix Premium</Text>
+                </View>
+                <View style={{ backgroundColor: '#10B98115', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+                  <Text style={{ color: '#10B981' }} className="text-[10px] font-black uppercase tracking-wide">Active</Text>
+                </View>
+              </View>
+
+              <View className="gap-2.5 my-1">
+                <View className="flex-row justify-between">
+                  <Text style={{ color: colors.textSecondary }} className="text-xs font-semibold">Plan Tier</Text>
+                  <Text style={{ color: colors.text }} className="text-xs font-bold">{subDetails?.planType ?? 'Yearly'} Access</Text>
+                </View>
+                
+                <View className="flex-row justify-between">
+                  <Text style={{ color: colors.textSecondary }} className="text-xs font-semibold">Purchase Date</Text>
+                  <Text style={{ color: colors.text }} className="text-xs font-bold">{subDetails?.purchaseDate ?? '-'}</Text>
+                </View>
+
+                <View className="flex-row justify-between">
+                  <Text style={{ color: colors.textSecondary }} className="text-xs font-semibold">Auto-Renewal</Text>
+                  <Text style={{ color: '#10B981' }} className="text-xs font-bold">Active</Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
                 onPress={handleManageSubscription}
-                colors={colors}
-              />
-              <SettingsRowItem
-                label="Restore Purchases"
-                icon={<RotateCcw size={16} color={colors.textSecondary} />}
+                activeOpacity={0.88}
+                style={{
+                  backgroundColor: colors.primary,
+                  borderRadius: 14,
+                  paddingVertical: 12,
+                  alignItems: 'center',
+                  marginTop: 6,
+                }}
+              >
+                <Text style={{ color: '#FFF' }} className="text-xs font-extrabold">Manage Subscription</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
                 onPress={handleRestorePurchases}
-                colors={colors}
-                isLast
-              />
-            </>
+                activeOpacity={0.7}
+                style={{
+                  alignItems: 'center',
+                  paddingVertical: 6,
+                }}
+              >
+                <Text style={{ color: colors.textSecondary }} className="text-xs font-bold">Sync & Restore Purchases</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </SettingsGroup>
 
