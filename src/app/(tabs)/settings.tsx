@@ -27,16 +27,8 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
     }
   };
 
-  const [legalModalVisible, setLegalModalVisible] = useState(false);
   const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
-  const [legalContent, setLegalContent] = useState({ title: '', body: '' });
   const [isRestoring, setIsRestoring] = useState(false);
-
-  const showLegalDoc = (title: string, body: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setLegalContent({ title, body });
-    setLegalModalVisible(true);
-  };
 
   const handleRestorePurchases = async () => {
     if (isRestoring) return;
@@ -391,8 +383,8 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
           </View>
         </SettingsGroup>
 
-        {/* SUPPORT & FEEDBACK SECTION */}
-        <SettingsGroup title="Support & Feedback" colors={colors}>
+        {/* SUPPORT & LEGAL SECTION */}
+        <SettingsGroup title="Support & Legal" colors={colors}>
           <SettingsRowItem
             label="Contact Support"
             icon={<Mail size={16} color={colors.primary} />}
@@ -406,44 +398,15 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
             colors={colors}
           />
           <SettingsRowItem
-            label="Send App Feedback"
-            icon={<MessageSquare size={16} color={colors.primary} />}
-            onPress={() => {
-              const version = Constants.expoConfig?.version || '1.0.0';
-              const os = Platform.OS;
-              const subject = encodeURIComponent('BiteFix App Feedback');
-              const body = encodeURIComponent(`Share your thoughts, feature requests, or clean food swap ideas below:\n\n\n\n---\nApp Version: ${version}\nPlatform: ${os}`);
-              Linking.openURL(`mailto:bitefixapp@gmail.com?subject=${subject}&body=${body}`);
-            }}
-            colors={colors}
-          />
-          <SettingsRowItem
-            label="Web Support Portal"
-            icon={<Eye size={16} color={colors.primary} />}
-            onPress={() => Linking.openURL('https://ravinder82.github.io/BiteFix/')}
-            colors={colors}
-            isLast
-          />
-        </SettingsGroup>
-
-        {/* COMPLIANCE & LEGAL SECTION */}
-        <SettingsGroup title="Legal & Compliance" colors={colors}>
-          <SettingsRowItem
             label="Privacy Policy"
             icon={<ShieldAlert size={16} color={colors.primary} />}
-            onPress={() => showLegalDoc('Privacy Policy', PRIVACY_POLICY_TEXT)}
+            onPress={() => Linking.openURL('https://ravinder82.github.io/BiteFix/privacy.html')}
             colors={colors}
           />
           <SettingsRowItem
-            label="Terms of Service"
-            icon={<HeartHandshake size={16} color={colors.primary} />}
-            onPress={() => showLegalDoc('Terms of Service', TERMS_OF_SERVICE_TEXT)}
-            colors={colors}
-          />
-          <SettingsRowItem
-            label="End User License Agreement (EULA)"
+            label="Terms of Use (EULA)"
             icon={<Eye size={16} color={colors.primary} />}
-            onPress={() => showLegalDoc('EULA', EULA_TEXT)}
+            onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stgula/')}
             colors={colors}
             isLast
           />
@@ -519,30 +482,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
         </View>
       </ScrollView>
 
-      {/* LEGAL VIEWER MODAL */}
-      <Modal visible={legalModalVisible} animationType="slide" presentationStyle="pageSheet">
-        <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-          <View
-            style={{ borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.surface }}
-            className="flex-row items-center justify-between px-6 py-4"
-          >
-            <TouchableOpacity
-              onPress={() => setLegalModalVisible(false)}
-              style={{ backgroundColor: colors.surfaceRaised }}
-              className="p-2 rounded-full"
-            >
-              <ArrowLeft size={18} color={colors.text} />
-            </TouchableOpacity>
-            <Text style={{ color: colors.text }} className="text-base font-black">{legalContent.title}</Text>
-            <View className="w-8" />
-          </View>
-          <ScrollView contentContainerStyle={{ padding: 24 }} className="flex-1">
-            <Text style={{ color: colors.textSecondary }} className="font-medium text-xs leading-relaxed mb-12">
-              {legalContent.body}
-            </Text>
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
+
 
       {/* SUBSCRIPTION INFO MODAL — shown only when the App Store deep-link fails */}
       {/* Primary action is always "Open App Store Subscriptions" */}
@@ -759,51 +699,3 @@ function SettingsRowItem({ label, icon, onPress, textColor = 'normal', colors, i
   );
 }
 
-// LEGAL DOCUMENTS PLAIN TEXT (For local compliance viewing)
-const PRIVACY_POLICY_TEXT = `Last Updated: June 2026
-
-1. INFORMATION WE COLLECT
-BiteFix collects your food scan history. This information is saved locally on your device via AsyncStorage and SecureStore and is never shared, uploaded, or sold to third parties.
-
-2. HEALTH DATA ENCRYPTION
-Any scanned history data is processed locally on your hardware. We do not maintain remote cloud infrastructure.
-
-3. YOUR RIGHTS
-You have full access to view and delete your scan records. You can use the "Clear Scan History" or "Reset App Data" actions to wipe all device state instantly.
-
-4. THIRD PARTY SERVICE PROVIDERS
-BiteFix uses the Open Food Facts API to query food ingredients. No personal identifiers or location statistics are sent to this database during search queries.
-
-Contact: bitefixapp@gmail.com`;
-
-const TERMS_OF_SERVICE_TEXT = `Last Updated: June 2026
-
-1. ACCEPTANCE
-By installing and using the BiteFix mobile application, you agree to these Terms of Service.
-
-2. MEDICAL DISCLAIMER
-BiteFix is an informational food processing and ingredient transparency scanner. It is NOT a medical device, nor does it replace professional diagnostic equipment, clinical consulting, or pharmaceutical advice. Always consult a healthcare specialist before making dietary modifications.
-
-3. PAYMENTS & SUBSCRIPTIONS
-In-app subscription payments (if applicable) are governed by App Store and Play Store terms. Subscriptions automatically renew unless cancelled 24 hours before expiration.
-
-4. USER REPRESENTATION
-You agree to use this application in compliance with local laws and regulations.
-
-Contact: bitefixapp@gmail.com`;
-
-const EULA_TEXT = `Last Updated: June 2026
-
-1. LICENSE GRANT
-BiteFix grants you a personal, non-transferable, revocable license to run this mobile application on your personal device.
-
-2. PROHIBITED USES
-You may not reverse-engineer, distribute, or compile the source code or binary configurations of BiteFix.
-
-3. WARRANTY AND LIABILITY
-The application is provided "as is" without warranties of any kind. BiteFix is not liable for health modifications, inaccurate measurements, or device damage.
-
-4. PLATFORM GOVERNING
-This Agreement is fully compliant with Apple's Standard EULA terms and guidelines.
-
-Contact: bitefixapp@gmail.com`;
