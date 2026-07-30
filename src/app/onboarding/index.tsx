@@ -182,6 +182,9 @@ function FullWidthPillCTA({
     transform: [{ translateX: interpolate(sweep.value, [-1, 1], [-180, 420]) }, { skewX: '-18deg' }],
   }));
 
+  const bgBtn = isLast ? '#D8B65C' : '#3A5E14';
+  const textBtn = '#FFFFFF';
+
   return (
     <Animated.View style={[{ width: '100%', opacity: disabled ? 0.45 : 1 }, shellStyle]}>
       <Pressable
@@ -191,36 +194,36 @@ function FullWidthPillCTA({
         disabled={disabled}
         onPress={onPress}
         onPressIn={() => {
-          scale.value = withSpring(0.98, { damping: 22, stiffness: 400 });
+          scale.value = withSpring(0.97, { damping: 20, stiffness: 400 });
         }}
         onPressOut={() => {
-          scale.value = withSpring(1, { damping: 22, stiffness: 400 });
+          scale.value = withSpring(1, { damping: 20, stiffness: 400 });
         }}
         style={({ pressed }) => ({
           width: '100%',
-          height: compact ? 52 : 58,
-          borderRadius: 29,
+          height: compact ? 52 : 56,
+          borderRadius: 28,
           overflow: 'hidden',
-          backgroundColor: '#0B0D0F',
+          backgroundColor: bgBtn,
           borderWidth: 1.5,
-          borderColor: isLast ? GOLD : disabled ? '#31363A' : '#283138',
-          shadowColor: isLast ? GOLD : '#000000',
-          shadowOffset: { width: 0, height: 10 },
-          shadowOpacity: pressed ? 0.15 : isLast ? 0.28 : 0.22,
-          shadowRadius: 18,
-          elevation: 8,
+          borderColor: isLast ? '#EAD084' : '#5E9324',
+          shadowColor: bgBtn,
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: pressed ? 0.2 : 0.3,
+          shadowRadius: 16,
+          elevation: 7,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          paddingHorizontal: 20,
+          paddingHorizontal: 22,
           gap: 12,
         })}
       >
-        <View pointerEvents="none" style={{ position: 'absolute', left: 2, right: 2, top: 1, height: 1.5, backgroundColor: '#FFFFFF', opacity: 0.22 }} />
-        <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: -16, bottom: -16, width: 64, backgroundColor: '#FFFFFF', opacity: 0.1 }, sweepStyle]} />
-        <Text style={{ color: '#F5F7F6', fontSize: 16, fontWeight: '800', letterSpacing: -0.2 }}>{label}</Text>
-        <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: isLast ? GOLD : MINT, alignItems: 'center', justifyContent: 'center' }}>
-          {isLast ? <Check size={17} color="#0B0D0F" strokeWidth={3} /> : <ArrowRight size={17} color="#0B0D0F" strokeWidth={3} />}
+        <View pointerEvents="none" style={{ position: 'absolute', left: 2, right: 2, top: 1, height: 1.5, backgroundColor: '#FFFFFF', opacity: 0.3 }} />
+        <Animated.View pointerEvents="none" style={[{ position: 'absolute', top: -16, bottom: -16, width: 64, backgroundColor: '#FFFFFF', opacity: 0.2 }, sweepStyle]} />
+        <Text style={{ color: textBtn, fontSize: 16, fontWeight: '900', letterSpacing: -0.2 }}>{label}</Text>
+        <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
+          {isLast ? <Check size={16} color="#FFFFFF" strokeWidth={3} /> : <ArrowRight size={16} color="#FFFFFF" strokeWidth={3} />}
         </View>
       </Pressable>
     </Animated.View>
@@ -273,7 +276,7 @@ function HeadlineHighlight({ title, highlight, C }: { title: string; highlight: 
   return (
     <Text style={{ color: C.text, fontSize: 25, lineHeight: 32, fontWeight: '900', textAlign: 'center', letterSpacing: -0.7 }}>
       {parts[0]}
-      <Text style={{ color: C.primaryDark, backgroundColor: C.isDark ? 'rgba(0,229,160,0.12)' : 'rgba(0,143,103,0.1)', paddingHorizontal: 6, borderRadius: 6, fontWeight: '900' }}>
+      <Text style={{ color: C.primaryDark, fontWeight: '900' }}>
         {highlight}
       </Text>
       {parts[1] || ''}
@@ -293,38 +296,45 @@ function MascotDrawingBoardHeader({
   isDark: boolean;
 }) {
   return (
-    <View style={{ alignItems: 'center', marginVertical: 6 }}>
+    <View style={{ alignItems: 'center', marginVertical: 10, width: '100%' }}>
       <View
         style={{
+          width: '100%',
+          maxWidth: 380,
           backgroundColor: C.card,
           borderWidth: 1.5,
           borderColor: C.cardBorder,
-          borderRadius: 20,
+          borderRadius: 24,
           paddingHorizontal: 16,
-          paddingVertical: 10,
+          paddingVertical: 14,
           alignItems: 'center',
           flexDirection: 'row',
-          gap: 12,
+          gap: 14,
           shadowColor: '#000000',
           shadowOffset: { width: 0, height: 6 },
           shadowOpacity: 0.08,
-          shadowRadius: 12,
+          shadowRadius: 14,
           elevation: 4,
-          maxWidth: 340,
         }}
       >
         <DrawingBoardTape />
-        <View style={{ width: 52, height: 52, justifyContent: 'center', alignItems: 'center' }}>
-          <OrbMascot state={state} size={50} theme={isDark ? 'obsidian' : 'porcelain'} showShadow={false} />
+        <View style={{ width: 84, height: 84, justifyContent: 'center', alignItems: 'center' }}>
+          <OrbMascot
+            key={state}
+            state={state}
+            size={84}
+            theme={isDark ? 'obsidian' : 'porcelain'}
+            showShadow={false}
+          />
         </View>
-        <View style={{ flex: 1 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Sparkles size={11} color={MINT_DARK} />
-            <Text style={{ color: MINT_DARK, fontSize: 9.5, fontWeight: '900', letterSpacing: 0.8, textTransform: 'uppercase' }}>
+        <View style={{ flex: 1, gap: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+            <Sparkles size={13} color={C.primaryDark} />
+            <Text style={{ color: C.primaryDark, fontSize: 10.5, fontWeight: '900', letterSpacing: 0.9, textTransform: 'uppercase' }}>
               BiteFix Mascot
             </Text>
           </View>
-          <Text style={{ color: C.text, fontSize: 12, fontWeight: '700', lineHeight: 16, marginTop: 1 }}>
+          <Text style={{ color: C.text, fontSize: 13, fontWeight: '700', lineHeight: 18 }}>
             {speech}
           </Text>
         </View>
