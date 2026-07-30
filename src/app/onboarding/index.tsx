@@ -13,7 +13,6 @@ import {
   ScrollView,
   ActivityIndicator,
   AccessibilityInfo,
-  Pressable,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useCameraPermissions } from 'expo-camera';
@@ -183,36 +182,36 @@ function FullWidthPillCTA({
   }));
 
   const bgBtn = disabled
-    ? '#D6E0CC'
+    ? '#2D3748'
     : isLast
       ? '#D8B65C'
-      : '#3A5E14';
+      : '#0A361F';
 
   const textBtn = disabled
-    ? '#5B7844'
+    ? '#A0AEC0'
     : '#FFFFFF';
 
   const iconBg = disabled
-    ? 'rgba(91, 120, 68, 0.15)'
+    ? 'rgba(160, 174, 192, 0.15)'
     : 'rgba(255, 255, 255, 0.22)';
 
   const iconColor = disabled
-    ? '#5B7844'
+    ? '#A0AEC0'
     : '#FFFFFF';
 
   const borderColor = disabled
-    ? '#C2D1B5'
+    ? '#4A5568'
     : isLast
       ? '#EAD084'
-      : '#4C7A1A';
+      : '#0A361F';
 
   return (
-    <Animated.View style={[{ width: '100%' }, shellStyle]}>
-      <Pressable
+    <Animated.View style={[{ width: '100%', alignSelf: 'stretch' }, shellStyle]}>
+      <TouchableOpacity
         accessibilityRole="button"
-        accessibilityState={{ disabled }}
         accessibilityLabel={label}
         disabled={disabled}
+        activeOpacity={0.85}
         onPress={onPress}
         onPressIn={() => {
           if (disabled) return;
@@ -222,25 +221,25 @@ function FullWidthPillCTA({
           if (disabled) return;
           scale.value = withSpring(1, { damping: 20, stiffness: 400 });
         }}
-        style={({ pressed }) => ({
+        style={{
           width: '100%',
           height: compact ? 52 : 56,
           borderRadius: 28,
-          overflow: 'hidden',
+          overflow: 'hidden' as const,
           backgroundColor: bgBtn,
           borderWidth: 1.5,
           borderColor: borderColor,
           shadowColor: bgBtn,
           shadowOffset: { width: 0, height: disabled ? 2 : 8 },
-          shadowOpacity: disabled ? 0.05 : pressed ? 0.2 : 0.35,
+          shadowOpacity: disabled ? 0.05 : 0.35,
           shadowRadius: disabled ? 4 : 16,
           elevation: disabled ? 1 : 7,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
+          flexDirection: 'row' as const,
+          alignItems: 'center' as const,
+          justifyContent: 'center' as const,
           paddingHorizontal: 22,
           gap: 12,
-        })}
+        }}
       >
         {!disabled && (
           <View pointerEvents="none" style={{ position: 'absolute', left: 2, right: 2, top: 1, height: 1.5, backgroundColor: '#FFFFFF', opacity: 0.3 }} />
@@ -252,7 +251,7 @@ function FullWidthPillCTA({
         <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: iconBg, alignItems: 'center', justifyContent: 'center' }}>
           {isLast ? <Check size={16} color={iconColor} strokeWidth={3} /> : <ArrowRight size={16} color={iconColor} strokeWidth={3} />}
         </View>
-      </Pressable>
+      </TouchableOpacity>
     </Animated.View>
   );
 }
@@ -303,7 +302,7 @@ function HeadlineHighlight({ title, highlight, C }: { title: string; highlight: 
   return (
     <Text style={{ color: C.text, fontSize: 25, lineHeight: 32, fontWeight: '900', textAlign: 'center', letterSpacing: -0.7 }}>
       {parts[0]}
-      <Text style={{ color: C.primaryDark, fontWeight: '900' }}>
+      <Text style={{ color: C.text, fontWeight: '900', fontStyle: 'italic' }}>
         {highlight}
       </Text>
       {parts[1] || ''}
@@ -345,11 +344,10 @@ function MascotDrawingBoardHeader({
         }}
       >
         <DrawingBoardTape />
-        <View style={{ width: 84, height: 84, justifyContent: 'center', alignItems: 'center' }}>
+        <View style={{ width: 130, height: 130, justifyContent: 'center', alignItems: 'center' }}>
           <OrbMascot
-            key={state}
             state={state}
-            size={84}
+            size={110}
             theme={isDark ? 'obsidian' : 'porcelain'}
             showShadow={false}
           />
@@ -1436,27 +1434,27 @@ export default function OnboardingScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, marginBottom: 4 }}>
           <StepRail current={currentSlide} total={SLIDES.length} C={C} />
           {currentSlide > 0 && currentSlide !== 11 && (
-            <Pressable
+            <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel="Go back"
+              activeOpacity={0.75}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setCurrentSlide((s) => s - 1);
               }}
-              style={({ pressed }) => ({
+              style={{
                 backgroundColor: C.card,
                 paddingHorizontal: 14,
                 minHeight: 34,
                 borderRadius: 12,
                 borderWidth: 1.5,
                 borderColor: C.chrome,
-                alignItems: 'center',
-                justifyContent: 'center',
-                opacity: pressed ? 0.75 : 1,
-              })}
+                alignItems: 'center' as const,
+                justifyContent: 'center' as const,
+              }}
             >
               <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '700' }}>Back</Text>
-            </Pressable>
+            </TouchableOpacity>
           )}
         </View>
 
@@ -1501,14 +1499,16 @@ export default function OnboardingScreen() {
 
         {/* Pinned Bottom Navigation & CTA */}
         {currentSlide !== 11 && (
-          <View style={{ gap: 10, marginTop: 6, paddingTop: 8, borderTopWidth: 1, borderTopColor: C.cardBorder }}>
+          <View style={{ width: '100%', gap: 10, marginTop: 6, paddingTop: 8, borderTopWidth: 1, borderTopColor: C.cardBorder }}>
             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 5 }}>
               {SLIDES.map((_, idx) => (
                 <DotIndicator key={idx} active={currentSlide === idx} C={C} />
               ))}
             </View>
 
-            <FullWidthPillCTA label={slide.buttonLabel} disabled={isNextDisabled()} isLast={slide.isLast} compact={isShort} onPress={handleNext} />
+            <View style={{ width: '100%', alignItems: 'stretch' }}>
+              <FullWidthPillCTA label={slide.buttonLabel} disabled={isNextDisabled()} isLast={slide.isLast} compact={isShort} onPress={handleNext} />
+            </View>
           </View>
         )}
       </View>
