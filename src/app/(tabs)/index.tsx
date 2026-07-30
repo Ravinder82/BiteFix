@@ -483,33 +483,16 @@ export default function HomeScreen() {
         {/* Card A: Daily Clean Score Card */}
         <View
           style={{
-            borderRadius: 32,
-            overflow: 'hidden',
             marginBottom: 20,
-            borderWidth: 1.5,
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
-            backgroundColor: isDark ? '#111827' : '#FFFFFF',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: isDark ? 0.25 : 0.06,
-            shadowRadius: 18,
-            elevation: 6,
+            backgroundColor: 'transparent',
           }}
         >
           {/* Card Ambient Glow Header */}
           <LinearGradient
-            colors={
-              basketItemCount === 0 && scans.length === 0
-                ? (isDark ? ['#1f293720', '#11182740'] : ['#f3f4f680', '#e5e7eb80'])
-                : avgBiteFixScore >= 76
-                  ? (isDark ? ['#064e3b20', '#022c2240'] : ['#d1fae560', '#f0fdf480'])
-                  : avgBiteFixScore >= 41
-                    ? (isDark ? ['#1e1b4b10', '#0f172a20'] : ['#eff6ff60', '#f8fafc80'])
-                    : (isDark ? ['#451a0320', '#1c191740'] : ['#fee2e260', '#fef2f280'])
-            }
+            colors={['transparent', 'transparent']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={{ padding: 24 }}
+            style={{ padding: 0 }}
           >
             {/* Top Row: Title Badge */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
