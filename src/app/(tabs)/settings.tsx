@@ -430,27 +430,10 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
         {/* SUPPORT & LEGAL SECTION */}
         <SettingsGroup title="Support & Legal" colors={colors}>
           <SettingsRowItem
-            label="Contact Support"
-            icon={<Mail size={16} color={colors.primary} />}
-            onPress={() => {
-              const version = Constants.expoConfig?.version || '1.0.0';
-              const os = Platform.OS;
-              const subject = encodeURIComponent('BiteFix Support Request');
-              const body = encodeURIComponent(`Please describe your issue or question below:\n\n\n\n---\nApp Version: ${version}\nPlatform: ${os}`);
-              Linking.openURL(`mailto:bitefixapp@gmail.com?subject=${subject}&body=${body}`);
-            }}
-            colors={colors}
-          />
-          <SettingsRowItem
-            label="Privacy Policy"
-            icon={<ShieldAlert size={16} color={colors.primary} />}
-            onPress={() => Linking.openURL('https://ravinder82.github.io/BiteFix/privacy.html')}
-            colors={colors}
-          />
-          <SettingsRowItem
-            label="Terms of Use (EULA)"
-            icon={<Eye size={16} color={colors.primary} />}
-            onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stgula/')}
+            label="Help & Support Center"
+            rightValue="ravinder82.github.io"
+            icon={<HeartHandshake size={16} color={colors.primary} />}
+            onPress={() => Linking.openURL('https://ravinder82.github.io/BiteFix/')}
             colors={colors}
             isLast
           />
