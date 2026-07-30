@@ -30,7 +30,6 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
   const [supportModalVisible, setSupportModalVisible] = useState(false);
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
-  const [termsModalVisible, setTermsModalVisible] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [subDetails, setSubDetails] = useState<{ planType: string; purchaseDate: string; autoRenew: boolean } | null>(null);
 
@@ -433,7 +432,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
         {/* SUPPORT & LEGAL SECTION */}
         <SettingsGroup title="Support & Legal" colors={colors}>
           <SettingsRowItem
-            label="Contact/Support Us"
+            label="Support"
             icon={<Mail size={16} color={colors.primary} />}
             onPress={() => setSupportModalVisible(true)}
             colors={colors}
@@ -447,7 +446,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
           <SettingsRowItem
             label="Terms of Service"
             icon={<Eye size={16} color={colors.primary} />}
-            onPress={() => setTermsModalVisible(true)}
+            onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}
             colors={colors}
             isLast
           />
@@ -684,7 +683,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
       <Modal visible={supportModalVisible} animationType="slide" presentationStyle="pageSheet">
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
           <View className="flex-row items-center justify-between p-4 border-b" style={{ borderBottomColor: colors.border, backgroundColor: colors.surface }}>
-            <Text style={{ color: colors.text }} className="font-extrabold text-lg">Help & Support Center</Text>
+            <Text style={{ color: colors.text }} className="font-extrabold text-lg">Support</Text>
             <TouchableOpacity onPress={() => setSupportModalVisible(false)} className="p-2 rounded-full" style={{ backgroundColor: colors.surfaceRaised }}>
               <Text style={{ color: colors.textMuted }} className="font-bold text-xs">CLOSE</Text>
             </TouchableOpacity>
@@ -692,9 +691,12 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
           <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
             <View className="items-center mb-4">
               <Mail size={48} color={colors.primary} />
-              <Text style={{ color: colors.text }} className="font-extrabold text-xl mt-4 text-center">We're here to help.</Text>
+              <Text style={{ color: colors.text }} className="font-extrabold text-xl mt-4 text-center">BiteFix Support</Text>
               <Text style={{ color: colors.textSecondary }} className="text-center mt-2 leading-relaxed">
-                Need assistance with your premium subscription, barcode scans, or have an idea to improve BiteFix? Choose an option below.
+                Need assistance with subscriptions, barcode scans, or account options?
+              </Text>
+              <Text style={{ color: colors.textSecondary }} className="text-center mt-2 leading-relaxed">
+                Have an idea for clean food swaps or allergen filters?
               </Text>
             </View>
             <TouchableOpacity
@@ -735,47 +737,44 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
-            <View className="items-center mb-4">
-              <ShieldAlert size={48} color={colors.primary} />
-              <Text style={{ color: colors.text }} className="font-extrabold text-xl mt-4 text-center">Your data belongs to you.</Text>
-              <Text style={{ color: colors.textSecondary }} className="text-center mt-2 leading-relaxed">
-                BiteFix is built with privacy at its core. Your scan history and custom allergen preferences remain on your device and are never sold to third parties. For full details on how we protect your data, please read our complete Privacy Policy.
-              </Text>
-            </View>
+            <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900' }}>Privacy Policy for BiteFix</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '700' }}>Effective Date: June 1, 2026 | Last Updated: July 28, 2026</Text>
+            
+            <Text style={{ color: colors.textSecondary, lineHeight: 22 }}>
+              BiteFix ("we," "our," or "us") operates the BiteFix mobile application. This Privacy Policy explains how we handle your information when you use our application.
+            </Text>
+
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800', marginTop: 12 }}>1. Privacy-First Architecture</Text>
+            <Text style={{ color: colors.textSecondary, lineHeight: 22 }}>
+              BiteFix is built with privacy at its core. Your scan history, custom allergen choices, and food goals are stored locally on your device using encrypted storage and are never sold or shared with third parties.
+            </Text>
+
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800', marginTop: 12 }}>2. Third-Party API Queries</Text>
+            <Text style={{ color: colors.textSecondary, lineHeight: 22 }}>
+              When you scan a product barcode, the application sends only the numeric barcode string (e.g., 0123456789) to the Open Food Facts public database to retrieve ingredient and nutrition labels. No personal data, location coordinates, or account information are transmitted.
+            </Text>
+
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800', marginTop: 12 }}>3. In-App Purchases</Text>
+            <Text style={{ color: colors.textSecondary, lineHeight: 22 }}>
+              Subscriptions are processed through Apple's native StoreKit billing system. We do not store or process your financial payment details.
+            </Text>
+
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800', marginTop: 12 }}>4. Data Retention and Account Deletion</Text>
+            <Text style={{ color: colors.textSecondary, lineHeight: 22 }}>
+              You can erase all your scan history locally in the app settings (Settings &gt; Clear Scan History). If you sign in, you can permanently delete your account directly inside the app via Settings &gt; Delete Account.
+            </Text>
+
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800', marginTop: 12 }}>5. Contact Us</Text>
+            <Text style={{ color: colors.textSecondary, lineHeight: 22, marginBottom: 20 }}>
+              If you have any questions regarding this policy, contact us at bitefixapp@gmail.com.
+            </Text>
+
             <TouchableOpacity
               onPress={() => Linking.openURL('https://ravinder82.github.io/BiteFix/privacy.html')}
-              style={{ backgroundColor: colors.primary, borderRadius: 16, padding: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10 }}
+              style={{ backgroundColor: colors.primary, borderRadius: 16, padding: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, marginTop: 10 }}
             >
               <Eye size={20} color="#FFF" />
-              <Text style={{ color: '#FFF' }} className="font-extrabold text-sm">View Full Privacy Policy</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
-
-      {/* ── Terms of Service (EULA) Modal ──────────────────── */}
-      <Modal visible={termsModalVisible} animationType="slide" presentationStyle="pageSheet">
-        <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-          <View className="flex-row items-center justify-between p-4 border-b" style={{ borderBottomColor: colors.border, backgroundColor: colors.surface }}>
-            <Text style={{ color: colors.text }} className="font-extrabold text-lg">Terms of Service</Text>
-            <TouchableOpacity onPress={() => setTermsModalVisible(false)} className="p-2 rounded-full" style={{ backgroundColor: colors.surfaceRaised }}>
-              <Text style={{ color: colors.textMuted }} className="font-bold text-xs">CLOSE</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView contentContainerStyle={{ padding: 24, gap: 16 }}>
-            <View className="items-center mb-4">
-              <Layers size={48} color={colors.primary} />
-              <Text style={{ color: colors.text }} className="font-extrabold text-xl mt-4 text-center">End User License Agreement</Text>
-              <Text style={{ color: colors.textSecondary }} className="text-center mt-2 leading-relaxed">
-                BiteFix is governed by the standard Apple End User License Agreement (EULA). By using this app, you agree to these standard terms provided by Apple for all App Store applications.
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}
-              style={{ backgroundColor: colors.primary, borderRadius: 16, padding: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10 }}
-            >
-              <Eye size={20} color="#FFF" />
-              <Text style={{ color: '#FFF' }} className="font-extrabold text-sm">View Standard EULA</Text>
+              <Text style={{ color: '#FFF' }} className="font-extrabold text-sm">View Policy Online</Text>
             </TouchableOpacity>
           </ScrollView>
         </SafeAreaView>
