@@ -136,6 +136,7 @@ function normalizePersistedState(persistedState: unknown, version: number): Part
     stealthAdditivesAlert: typeof state.stealthAdditivesAlert === 'boolean' ? state.stealthAdditivesAlert : true,
     isPremium: typeof state.isPremium === 'boolean' ? state.isPremium : false,
     freeScansUsed: typeof state.freeScansUsed === 'number' ? state.freeScansUsed : 0,
+    trialStarted: typeof state.trialStarted === 'boolean' ? state.trialStarted : false,
   };
 }
 
