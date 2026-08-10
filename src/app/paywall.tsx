@@ -482,7 +482,7 @@ export default function PaywallScreen() {
             }}
           >
             <Text style={{ color: colors.primary, fontSize: 14, fontWeight: '800', letterSpacing: 0.5 }}>
-              🎁 TRY FOR FREE ({remainingFreeScans} of 5 Scans Left)
+              TRY FOR FREE
             </Text>
           </TouchableOpacity>
         )}
@@ -552,19 +552,6 @@ export default function PaywallScreen() {
                 Restore Purchases
               </Text>
             </TouchableOpacity>
-
-            {__DEV__ && (
-              <TouchableOpacity
-                onPress={() => {
-                  useAppStore.getState().resetSubscriptionAndScans();
-                  Alert.alert('Dev Only', 'App state wiped. Reload app to see onboarding.');
-                }}
-              >
-                <Text style={{ color: 'red', fontSize: 10, fontWeight: '700', textDecorationLine: 'underline' }}>
-                  [Dev: Reset State]
-                </Text>
-              </TouchableOpacity>
-            )}
           </View>
         </View>
       </ScrollView>
