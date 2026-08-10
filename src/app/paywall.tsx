@@ -25,7 +25,8 @@ import {
   ActivityIndicator,
   Platform,
   StyleSheet,
-  Linking
+  Linking,
+  Modal
 } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import { Text } from '@/components/Text';
@@ -143,6 +144,7 @@ export default function PaywallScreen() {
   const [products, setProducts] = useState<IAPProduct[]>([]);
   const [isFetchingProducts, setIsFetchingProducts] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(!hasFreeScansAvailable);
 
   // Track mount state to avoid setting state after unmount
   const mountedRef = useRef(true);
@@ -423,44 +425,23 @@ export default function PaywallScreen() {
           })}
         </View>
 
-        {/* ── Plan Selection ───────────────────────────────── */}
-        <View style={{ gap: 12, marginBottom: 20 }}>
-          {/* Loading placeholder */}
-          {isFetchingProducts && (
-            <View style={{ alignItems: 'center', paddingVertical: 12 }}>
-              <ActivityIndicator size="small" color={colors.primary} />
-              <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 6 }}>
-                Loading prices from App Store…
-              </Text>
-            </View>
-          )}
+        {/* Bottom Padding for floating actions */}
+        <View style={{ height: 160 }} />
+      </ScrollView>
 
-          {/* Monthly Plan */}
-          <PlanCard
-            tier="monthly"
-            title="Monthly Pass"
-            displayPrice={getDisplayPrice('monthly')}
-            subtitle={getSubtitle('monthly')}
-            badge={null}
-            isSelected={selectedPlan === 'monthly'}
-            onPress={() => handlePlanSelect('monthly')}
-            colors={colors}
-          />
-
-          {/* Annual Plan */}
-          <PlanCard
-            tier="annual"
-            title="Yearly Pass"
-            displayPrice={getDisplayPrice('annual')}
-            subtitle={getSubtitle('annual')}
-            badge="75% DISCOUNT"
-            isSelected={selectedPlan === 'annual'}
-            onPress={() => handlePlanSelect('annual')}
-            colors={colors}
-          />
-        </View>
-
-        {/* ── Try for Free Button (5 Free Scans Available) ── */}
+      {/* ── Floating Bottom Actions ───────────────────────── */}
+      <View style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: colors.background,
+        paddingHorizontal: 24,
+        paddingTop: 16,
+        paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+        borderTopWidth: 1,
+        borderTopColor: colors.border,
+      }}>
         {hasFreeScansAvailable && (
           <TouchableOpacity
             onPress={() => {
@@ -469,92 +450,161 @@ export default function PaywallScreen() {
               router.replace('/(tabs)');
             }}
             activeOpacity={0.88}
-            accessibilityLabel="Try 5 Free Scans"
             style={{
-              backgroundColor: colors.surfaceRaised,
-              borderRadius: 20,
+              backgroundColor: colors.surface,
+              borderRadius: 24,
               borderWidth: 1.5,
-              borderColor: colors.primary,
-              paddingVertical: 15,
+              borderColor: colors.border,
+              paddingVertical: 18,
               alignItems: 'center',
-              justifyContent: 'center',
               marginBottom: 12,
             }}
           >
-            <Text style={{ color: colors.primary, fontSize: 14, fontWeight: '800', letterSpacing: 0.5 }}>
-              TRY FOR FREE
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>
+              Try It Free
             </Text>
           </TouchableOpacity>
         )}
 
-        {/* ── Subscribe CTA ─────────────────────────────────── */}
         <TouchableOpacity
-          onPress={handleSubscribe}
-          disabled={isProcessing}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setIsModalVisible(true);
+          }}
           activeOpacity={0.88}
-          accessibilityLabel="Subscribe to BiteFix Premium"
           style={{
-            backgroundColor: isProcessing ? colors.success + 'AA' : colors.success,
-            borderRadius: 20,
-            paddingVertical: 17,
+            backgroundColor: colors.text,
+            borderRadius: 24,
+            paddingVertical: 18,
             alignItems: 'center',
-            justifyContent: 'center',
-            shadowColor: colors.success,
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.35,
-            shadowRadius: 16,
-            elevation: 8,
-            marginBottom: 8,
           }}
         >
-          {isProcessing
-            ? <ActivityIndicator color="#FFFFFF" size="small" />
-            : <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 0.6 }}>
-              SUBSCRIBE NOW
-            </Text>
-          }
-        </TouchableOpacity>
-
-        {/* ── Legal & Policies ──────────────────────────────── */}
-        <View style={{ marginTop: 20, gap: 10, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 16 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 9.5, textAlign: 'center', lineHeight: 14 }}>
-            Payment will be charged to your Apple ID account at confirmation of purchase. Subscription
-            automatically renews unless auto-renew is turned off at least 24 hours before the end of
-            the current period. Account will be charged for renewal within 24 hours prior to the end of
-            the current period. Manage or cancel in your App Store Account Settings.
+          <Text style={{ color: colors.background, fontSize: 16, fontWeight: '800' }}>
+            Unlock Unlimited Now
           </Text>
+        </TouchableOpacity>
+      </View>
 
-          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 4 }}>
-            <TouchableOpacity
-              onPress={handleOpenPrivacyPolicy}
-              accessibilityLabel="Privacy Policy"
-            >
-              <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '700', textDecorationLine: 'underline' }}>
-                Privacy Policy
-              </Text>
-            </TouchableOpacity>
+      {/* ── Subscription Bottom Sheet Modal ───────────────── */}
+      <Modal
+        visible={isModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          if (hasFreeScansAvailable) setIsModalVisible(false);
+        }}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+          <View style={{
+            backgroundColor: colors.background,
+            borderTopLeftRadius: 32,
+            borderTopRightRadius: 32,
+            padding: 24,
+            paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+            maxHeight: '90%',
+          }}>
+            {/* Grab Handle */}
+            <View style={{ alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border, marginBottom: 20 }} />
+            
+            {/* Modal Header */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+              <View style={{ flex: 1, paddingRight: 16 }}>
+                <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', marginBottom: 8, letterSpacing: -0.5 }}>
+                  Unlock Unlimited Scanning
+                </Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 20, fontWeight: '500' }}>
+                  {hasFreeScansAvailable 
+                    ? 'Get full access to all premium features without any limits.' 
+                    : "That was your last free scan. Keep the streak going with unlimited scanning."}
+                </Text>
+              </View>
+              {hasFreeScansAvailable && (
+                <TouchableOpacity 
+                  onPress={() => setIsModalVisible(false)} 
+                  style={{ padding: 8, backgroundColor: colors.surfaceRaised, borderRadius: 20 }}
+                >
+                  <X size={20} color={colors.text} />
+                </TouchableOpacity>
+              )}
+            </View>
 
-            <TouchableOpacity
-              onPress={handleOpenTermsOfUse}
-              accessibilityLabel="Terms of Use"
-            >
-              <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '700', textDecorationLine: 'underline' }}>
-                Terms of Use
-              </Text>
-            </TouchableOpacity>
+            {/* Plan Selection */}
+            <View style={{ gap: 12, marginBottom: 24 }}>
+              {isFetchingProducts && (
+                <View style={{ alignItems: 'center', paddingVertical: 12 }}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                </View>
+              )}
 
+              <PlanCard
+                tier="monthly"
+                title="Monthly Pass"
+                displayPrice={getDisplayPrice('monthly')}
+                subtitle={getSubtitle('monthly')}
+                badge={null}
+                isSelected={selectedPlan === 'monthly'}
+                onPress={() => setSelectedPlan('monthly')}
+                colors={colors}
+              />
+              <PlanCard
+                tier="annual"
+                title="Yearly Pass"
+                displayPrice={getDisplayPrice('annual')}
+                subtitle={getSubtitle('annual')}
+                badge="75% DISCOUNT"
+                isSelected={selectedPlan === 'annual'}
+                onPress={() => setSelectedPlan('annual')}
+                colors={colors}
+              />
+            </View>
+
+            {/* Subscribe CTA */}
             <TouchableOpacity
-              onPress={handleRestore}
+              onPress={handleSubscribe}
               disabled={isProcessing}
-              accessibilityLabel="Restore Purchases"
+              activeOpacity={0.88}
+              style={{
+                backgroundColor: isProcessing ? colors.text + 'AA' : colors.text,
+                borderRadius: 24,
+                paddingVertical: 18,
+                alignItems: 'center',
+                justifyContent: 'center',
+                shadowColor: colors.text,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.2,
+                shadowRadius: 12,
+                elevation: 4,
+              }}
             >
-              <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '700', textDecorationLine: 'underline' }}>
-                Restore Purchases
-              </Text>
+              {isProcessing
+                ? <ActivityIndicator color={colors.background} size="small" />
+                : <Text style={{ color: colors.background, fontSize: 16, fontWeight: '800' }}>
+                  Subscribe
+                </Text>
+              }
             </TouchableOpacity>
+
+            {/* Legal Links */}
+            <View style={{ marginTop: 24, gap: 10 }}>
+              <Text style={{ color: colors.textMuted, fontSize: 10, textAlign: 'center', lineHeight: 14 }}>
+                Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period.
+              </Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 4 }}>
+                <TouchableOpacity onPress={handleRestore} disabled={isProcessing}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textDecorationLine: 'underline' }}>Restore Purchases</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleOpenTermsOfUse}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textDecorationLine: 'underline' }}>Terms</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleOpenPrivacyPolicy}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textDecorationLine: 'underline' }}>Privacy</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         </View>
-      </ScrollView>
+      </Modal>
+
     </SafeAreaView>
   );
 }
