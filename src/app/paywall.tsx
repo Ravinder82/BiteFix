@@ -32,7 +32,6 @@ import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useTheme } from '../hooks/useTheme';
 import { useAppStore } from '../stores/appStore';
-import { useAuthStore } from '../stores/authStore';
 import { OrbMascot } from '../components/features/OrbMascot';
 import { MagicalBackground } from '../components/features/MagicalBackground';
 import {
@@ -134,8 +133,10 @@ function AnimatedListItem({ children, index, style }: { children: React.ReactNod
 
 export default function PaywallScreen() {
   const { colors } = useTheme();
-  const { isPremium } = useAppStore();
-  const { user } = useAuthStore();
+  const { isPremium, freeScansUsed } = useAppStore();
+
+  const remainingFreeScans = Math.max(0, 5 - (freeScansUsed || 0));
+  const hasFreeScansAvailable = !isPremium && remainingFreeScans > 0;
 
   // ── Component State ─────────────────────────────────────
   const [selectedPlan, setSelectedPlan] = useState<PlanTier>('annual');
@@ -220,12 +221,6 @@ export default function PaywallScreen() {
 
   const handleSubscribe = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-    // Require authentication before purchasing
-    if (!user) {
-      router.push({ pathname: '/auth', params: { redirect: 'paywall' } });
-      return;
-    }
 
     setIsProcessing(true);
     try {
@@ -343,33 +338,9 @@ export default function PaywallScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* ── Header Row ──────────────────────────────────── */}
-        {/* Hard paywall: non-premium users can only Sign Out, not dismiss. */}
-        {/* The X close button is only shown for already-premium users (e.g. navigated from Settings). */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 16 }}>
-          {user && !isPremium ? (
-            <TouchableOpacity
-              onPress={async () => {
-                await useAuthStore.getState().signOut();
-                router.replace('/auth');
-              }}
-              accessibilityLabel="Sign out"
-              style={{
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 12,
-                backgroundColor: colors.surfaceRaised,
-                borderWidth: 1,
-                borderColor: colors.border,
-              }}
-            >
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700' }}>
-                Sign Out
-              </Text>
-            </TouchableOpacity>
-          ) : <View />}
-
-          {/* Only premium users can dismiss the paywall (they arrived from Settings > view plans) */}
-          {isPremium ? (
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', paddingTop: 16 }}>
+          {/* Dismiss button available for premium users or users with free scans left */}
+          {isPremium || hasFreeScansAvailable ? (
             <TouchableOpacity
               onPress={handleDismiss}
               accessibilityLabel="Close paywall"
@@ -488,6 +459,32 @@ export default function PaywallScreen() {
             colors={colors}
           />
         </View>
+
+        {/* ── Try for Free Button (5 Free Scans Available) ── */}
+        {hasFreeScansAvailable && (
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.replace('/(tabs)');
+            }}
+            activeOpacity={0.88}
+            accessibilityLabel="Try 5 Free Scans"
+            style={{
+              backgroundColor: colors.surfaceRaised,
+              borderRadius: 20,
+              borderWidth: 1.5,
+              borderColor: colors.primary,
+              paddingVertical: 15,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 12,
+            }}
+          >
+            <Text style={{ color: colors.primary, fontSize: 14, fontWeight: '800', letterSpacing: 0.5 }}>
+              🎁 TRY FOR FREE ({remainingFreeScans} of 5 Scans Left)
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {/* ── Subscribe CTA ─────────────────────────────────── */}
         <TouchableOpacity

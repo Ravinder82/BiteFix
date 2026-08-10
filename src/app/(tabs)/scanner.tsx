@@ -89,7 +89,7 @@ const PRODUCT_BARCODE_TYPES = ['qr', 'upc_a', 'upc_e', 'ean13', 'ean8', 'code128
 // ─────────────────────────────────────────────────────────
 export default function ScannerScreen() {
   const { colors, isDark } = useTheme();
-  const { addScan, sugarUnit, addToCollection, collection } = useAppStore();
+  const { addScan, sugarUnit, addToCollection, collection, isPremium, freeScansUsed, incrementFreeScans } = useAppStore();
 
   // Camera permission hook from expo-camera
   const [permission, requestPermission] = useCameraPermissions();
@@ -261,6 +261,19 @@ export default function ScannerScreen() {
     const barcode = data?.trim();
     if (!barcode) return;
 
+    // Check 5 Free Scans Limit
+    if (!isPremium && typeof freeScansUsed === 'number' && freeScansUsed >= 5) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      Alert.alert(
+        'Scans Completed',
+        'All 5 free scans are now completed.',
+        [
+          { text: 'OK', onPress: () => router.push('/paywall') },
+        ]
+      );
+      return;
+    }
+
     isScanningRef.current = true;
     const lookupController = new AbortController();
     activeLookupControllerRef.current?.abort();
@@ -285,8 +298,6 @@ export default function ScannerScreen() {
       let result = await lookupOpenFoodFacts(barcode, lookupController.signal);
 
       if (!isCurrentLookup()) return;
-
-
 
       if (result) {
         addScan(
@@ -316,6 +327,18 @@ export default function ScannerScreen() {
           result.nutriScore,
           result.biteFixScore
         );
+
+        if (!isPremium) {
+          incrementFreeScans();
+          const countAfterScan = (freeScansUsed || 0) + 1;
+          if (countAfterScan >= 5) {
+            Alert.alert(
+              'Scans Completed',
+              'All 5 free scans are now completed.',
+              [{ text: 'OK', onPress: () => router.push('/paywall') }]
+            );
+          }
+        }
 
         if (isCurrentLookup()) {
           setScanResult(result);

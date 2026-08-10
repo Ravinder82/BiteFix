@@ -16,12 +16,16 @@ interface AppState {
   strictNovaAlert: boolean;
   stealthAdditivesAlert: boolean;
   isPremium: boolean;
+  freeScansUsed: number;
 
   // Actions
   setOnboardingComplete: (complete: boolean) => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   setSugarUnit: (sugarUnit: 'g' | 'oz') => void;
   setPremium: (premium: boolean) => void;
+  incrementFreeScans: () => void;
+  syncFreeScansFromKeychain: () => Promise<void>;
+  resetSubscriptionAndScans: () => void;
   setAllergenFilters: (allergens: string[]) => void;
   toggleAllergenFilter: (allergen: string) => void;
   setStrictNovaAlert: (enabled: boolean) => void;
@@ -129,6 +133,7 @@ function normalizePersistedState(persistedState: unknown, version: number): Part
     strictNovaAlert: typeof state.strictNovaAlert === 'boolean' ? state.strictNovaAlert : true,
     stealthAdditivesAlert: typeof state.stealthAdditivesAlert === 'boolean' ? state.stealthAdditivesAlert : true,
     isPremium: typeof state.isPremium === 'boolean' ? state.isPremium : false,
+    freeScansUsed: typeof state.freeScansUsed === 'number' ? state.freeScansUsed : 0,
   };
 }
 
@@ -146,11 +151,41 @@ export const useAppStore = create<AppState>()(
       strictNovaAlert: true,
       stealthAdditivesAlert: true,
       isPremium: false,
+      freeScansUsed: 0,
 
       setOnboardingComplete: (complete) => set({ onboardingComplete: complete }),
       setTheme: (theme) => set({ theme }),
       setSugarUnit: (sugarUnit) => set({ sugarUnit }),
       setPremium: (isPremium) => set({ isPremium }),
+      incrementFreeScans: () => {
+        set((state) => {
+          const newCount = state.freeScansUsed + 1;
+          import('../utils/keychainStorage').then(({ keychainStorage }) => {
+            keychainStorage.setFreeScansUsed(newCount);
+          });
+          return { freeScansUsed: newCount };
+        });
+      },
+      syncFreeScansFromKeychain: async () => {
+        try {
+          const { keychainStorage } = await import('../utils/keychainStorage');
+          const count = await keychainStorage.getFreeScansUsed();
+          // Always trust the keychain count on sync (it persists across reinstalls)
+          set({ freeScansUsed: count });
+        } catch (e) {}
+      },
+      resetSubscriptionAndScans: () => {
+        set({
+          isPremium: false,
+          freeScansUsed: 0,
+          scans: [],
+          collection: [],
+          onboardingComplete: false,
+        });
+        import('../utils/keychainStorage').then(({ keychainStorage }) => {
+          keychainStorage.clearFreeScansUsed();
+        });
+      },
       setAllergenFilters: (allergenFilters) => set({ allergenFilters }),
       toggleAllergenFilter: (allergen) => set((state) => ({
         allergenFilters: state.allergenFilters.includes(allergen)
@@ -286,6 +321,7 @@ export const useAppStore = create<AppState>()(
         strictNovaAlert: true,
         stealthAdditivesAlert: true,
         isPremium: false,
+        freeScansUsed: 0,
       }),
     }),
     {

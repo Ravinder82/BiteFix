@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
 import { Tabs, Redirect } from 'expo-router';
 import { useTheme } from '../../hooks/useTheme';
-import { useAuthStore } from '../../stores/authStore';
 import { useAppStore } from '../../stores/appStore';
 import { Home, ScanBarcode, Settings, Clock } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -70,16 +69,11 @@ function FloatingScannerButton({ onPress, accessibilityState }: any) {
 
 export default function TabLayout() {
   const { colors, isDark } = useTheme();
-  const { user, isInitialized } = useAuthStore();
-  const { isPremium } = useAppStore();
+  const { isPremium, freeScansUsed } = useAppStore();
 
-  // If Firebase Auth has finished loading and no user is logged in, redirect to the Auth Screen
-  if (isInitialized && !user) {
-    return <Redirect href="/auth" />;
-  }
-
-  // HARD PAYWALL GUARD: Non-premium users CANNOT access main tabs under any circumstances
-  if (isInitialized && !isPremium) {
+  // GATING GUARD: Allow access if user is premium OR has remaining free scans (< 5)
+  const canAccessApp = isPremium || (typeof freeScansUsed === 'number' && freeScansUsed < 5);
+  if (!canAccessApp) {
     return <Redirect href="/paywall" />;
   }
 

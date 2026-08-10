@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Animated as RNAnimated } from 'react-native';
 import { Image } from 'expo-image';
 import { Bookmark, Trash2 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -52,10 +52,27 @@ export default function ProductHeroCardDashboard({
   onPress,
 }: ProductHeroCardDashboardProps) {
   const [imageError, setImageError] = React.useState(false);
+  const [imageLoaded, setImageLoaded] = React.useState(false);
+  const shimmerAnim = React.useRef(new RNAnimated.Value(0.3)).current;
 
   React.useEffect(() => {
     setImageError(false);
+    setImageLoaded(false);
   }, [scanResult.imageUrl]);
+
+  // Shimmer pulse animation (like Instagram/social media skeleton loading)
+  React.useEffect(() => {
+    if (!imageLoaded && scanResult.imageUrl && !imageError) {
+      const loop = RNAnimated.loop(
+        RNAnimated.sequence([
+          RNAnimated.timing(shimmerAnim, { toValue: 0.8, duration: 800, useNativeDriver: true }),
+          RNAnimated.timing(shimmerAnim, { toValue: 0.3, duration: 800, useNativeDriver: true }),
+        ])
+      );
+      loop.start();
+      return () => loop.stop();
+    }
+  }, [imageLoaded, imageError, scanResult.imageUrl]);
 
   const isUnknown =
     scanResult.sugarTeaspoons === undefined &&
@@ -135,13 +152,29 @@ export default function ProductHeroCardDashboard({
           }}
         >
             {scanResult.imageUrl && !imageError ? (
-            <Image
-              source={{ uri: scanResult.imageUrl }}
-              style={{ width: '100%', height: '100%', borderRadius: 12 }}
-              contentFit="contain"
-              transition={150}
-              onError={() => setImageError(true)}
-            />
+            <View style={{ width: '100%', height: '100%', position: 'relative' }}>
+              {/* Shimmer skeleton placeholder — visible until image loads */}
+              {!imageLoaded && (
+                <RNAnimated.View
+                  style={{
+                    position: 'absolute',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    borderRadius: 12,
+                    backgroundColor: isDark ? '#2C2C2E' : '#E8E8ED',
+                    opacity: shimmerAnim,
+                    zIndex: 1,
+                  }}
+                />
+              )}
+              <Image
+                source={{ uri: scanResult.imageUrl }}
+                style={{ width: '100%', height: '100%', borderRadius: 12, opacity: imageLoaded ? 1 : 0 }}
+                contentFit="contain"
+                transition={300}
+                onLoad={() => setImageLoaded(true)}
+                onError={() => setImageError(true)}
+              />
+            </View>
           ) : (
             <Mascot
               state={biteFixScore >= 76 ? 'happy' : biteFixScore >= 41 ? 'idle' : 'shocked'}

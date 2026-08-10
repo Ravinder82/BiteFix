@@ -570,12 +570,85 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
       return null;
     }
 
-    const p = resData.product;
+    let p = resData.product;
     const name = extractUniversalName(p);
     const brand = extractUniversalBrand(p);
     const imageUrl = p.image_front_url || p.image_url || p.image_front_small_url || undefined;
 
-    const n = p.nutriments ?? p.nutrition_grades ?? p.nutrition_data ?? {};
+    let n = p.nutriments ?? p.nutrition_grades ?? p.nutrition_data ?? {};
+
+    // ─── NUTRIMENT ENRICHMENT FALLBACK ───────────────────────────
+    // Many products (especially Indian/regional brands) exist in OpenFoodFacts
+    // under multiple barcodes. Often one barcode has name+image but empty nutriments,
+    // while another barcode for the same product has full nutritional data.
+    // This fallback searches by product name to find enriched data.
+    const hasNutrimentData = n && typeof n === 'object' && Object.keys(n).length > 0 &&
+      (n.sugars_100g !== undefined || n.sugars !== undefined || n['energy-kcal_100g'] !== undefined ||
+       n.carbohydrates_100g !== undefined || n.fat_100g !== undefined || n.proteins_100g !== undefined);
+
+    if (!hasNutrimentData && !signal.aborted) {
+      console.log(`[BiteFix] Barcode product "${name}" has empty nutriments — attempting text search enrichment...`);
+      try {
+        const searchTerms = name.replace(/[^\w\s]/g, ' ').trim();
+        const searchUrl = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(searchTerms)}&search_simple=1&json=1&page_size=10&fields=product_name,brands,nutriments,nova_group,nutriscore_grade,nutrition_grades,additives_tags,additives_original_tags,allergens_hierarchy,allergens_tags,ingredients_text,ingredients_text_en,serving_size,serving_quantity,serving_quantity_unit,quantity,categories_tags,image_front_url,image_url`;
+        const searchResp = await fetchWithTimeout(searchUrl, API_TIMEOUT_MS, signal);
+        if (!signal.aborted && searchResp.ok) {
+          const searchData = await searchResp.json();
+          const searchProducts = searchData?.products;
+          if (Array.isArray(searchProducts) && searchProducts.length > 0) {
+            // Find the best match: same product name (fuzzy) with actual nutriment data
+            const nameNorm = name.toLowerCase().replace(/[^\w\s]/g, '').trim();
+            const enrichedProduct = searchProducts.find((sp: any) => {
+              const spName = extractUniversalName(sp).toLowerCase().replace(/[^\w\s]/g, '').trim();
+              const spN = sp.nutriments;
+              const spHasData = spN && typeof spN === 'object' && Object.keys(spN).length > 0 &&
+                (spN.sugars_100g !== undefined || spN['energy-kcal_100g'] !== undefined || spN.carbohydrates_100g !== undefined);
+              // Check for name similarity: at least 60% word overlap
+              const nameWords = new Set(nameNorm.split(/\s+/).filter((w: string) => w.length > 2));
+              const spWords = new Set(spName.split(/\s+/).filter((w: string) => w.length > 2));
+              if (nameWords.size === 0) return false;
+              let overlap = 0;
+              nameWords.forEach((w: string) => { if (spWords.has(w)) overlap++; });
+              const similarity = overlap / Math.max(nameWords.size, 1);
+              return spHasData && similarity >= 0.5;
+            });
+
+            if (enrichedProduct) {
+              console.log(`[BiteFix] Found enriched nutriment data from "${extractUniversalName(enrichedProduct)}" — merging...`);
+              n = enrichedProduct.nutriments;
+              // Also merge in any missing metadata from the enriched product
+              if (!p.nova_group && enrichedProduct.nova_group) p = { ...p, nova_group: enrichedProduct.nova_group };
+              if (!p.nutriscore_grade && !p.nutrition_grades && (enrichedProduct.nutriscore_grade || enrichedProduct.nutrition_grades)) {
+                p = { ...p, nutriscore_grade: enrichedProduct.nutriscore_grade, nutrition_grades: enrichedProduct.nutrition_grades };
+              }
+              if ((!p.additives_tags || p.additives_tags.length === 0) && enrichedProduct.additives_tags) {
+                p = { ...p, additives_tags: enrichedProduct.additives_tags };
+              }
+              if ((!p.allergens_hierarchy || p.allergens_hierarchy.length === 0) && enrichedProduct.allergens_hierarchy) {
+                p = { ...p, allergens_hierarchy: enrichedProduct.allergens_hierarchy };
+              }
+              if (!p.ingredients_text && !p.ingredients_text_en) {
+                p = { ...p, ingredients_text: enrichedProduct.ingredients_text, ingredients_text_en: enrichedProduct.ingredients_text_en };
+              }
+              if (!p.serving_size && enrichedProduct.serving_size) {
+                p = { ...p, serving_size: enrichedProduct.serving_size };
+              }
+              if ((!p.categories_tags || p.categories_tags.length === 0) && enrichedProduct.categories_tags) {
+                p = { ...p, categories_tags: enrichedProduct.categories_tags };
+              }
+              // Preserve original image if enriched product doesn't have one
+              if (!p.image_front_url && enrichedProduct.image_front_url) {
+                p = { ...p, image_front_url: enrichedProduct.image_front_url };
+              }
+            }
+          }
+        }
+      } catch (enrichErr) {
+        if (isAbortError(enrichErr)) return null;
+        console.warn('[BiteFix] Nutriment enrichment fallback failed:', enrichErr);
+        // Continue with whatever data we have — this is a best-effort enrichment
+      }
+    }
 
     // Authoritative total sugar per 100g
     let sugarPer100g = extractNumberFromKeys(n, [

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { ShieldAlert, ShieldCheck, Activity, BrainCircuit } from 'lucide-react-native';
+import { ShieldAlert, ShieldCheck, Activity, Leaf } from 'lucide-react-native';
 import { GutInsight } from '../../utils/gutShieldEvaluator';
 
 interface GutShieldCardProps {
@@ -78,7 +78,7 @@ export function GutShieldCard({ score, insights, colors, isDark }: GutShieldCard
           alignItems: 'center',
           gap: 12
         }}>
-          <BrainCircuit size={24} color="#10B981" />
+          <Leaf size={24} color="#10B981" />
           <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600', flex: 1 }}>
             Optimal for gut health. No disruptive synthetic compounds detected.
           </Text>

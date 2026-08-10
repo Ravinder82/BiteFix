@@ -3,7 +3,6 @@ import { View, ScrollView, TouchableOpacity, Switch, Alert, Modal, SafeAreaView,
 import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useAppStore } from '../../stores/appStore';
-import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../hooks/useTheme';
 import { ChevronRight, ArrowLeft, ShieldAlert, HeartHandshake, Eye, Moon, Layers, RotateCcw, LogOut, ShieldCheck, Sparkles, CreditCard, Mail, MessageSquare, Info } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -13,19 +12,9 @@ import Constants from 'expo-constants';
 export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   const { colors, theme, toggleTheme, isDark } = useTheme();
   const { 
-    sugarUnit, setSugarUnit, clearScans, clearCollection, clearAllData, userName, userGoal,
+    sugarUnit, setSugarUnit, clearScans, clearCollection, clearAllData,
     allergenFilters, toggleAllergenFilter, strictNovaAlert, setStrictNovaAlert, stealthAdditivesAlert, setStealthAdditivesAlert, isPremium 
   } = useAppStore();
-  const { user, displayName, providerLabel, signOut, deleteAccount } = useAuth();
-
-  const getGoalLabel = (goal?: string) => {
-    switch (goal) {
-      case 'energy': return 'Increase Energy';
-      case 'weight': return 'Weight Management';
-      case 'mental': return 'Focus & Brain Health';
-      default: return 'General Wellness';
-    }
-  };
 
   const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
   const [supportModalVisible, setSupportModalVisible] = useState(false);
@@ -156,66 +145,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
         contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 20 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* USER PROFILE SECTION */}
-        {user && (
-          <View style={{ marginBottom: 20 }}>
-            <View
-              style={{
-                backgroundColor: colors.surface,
-                borderRadius: 20,
-                borderWidth: 1,
-                borderColor: colors.border,
-                padding: 16,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 14,
-              }}
-            >
-              {/* Avatar circle */}
-              <View
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 26,
-                  backgroundColor: colors.primary + '15',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderWidth: 1,
-                  borderColor: colors.primary + '30',
-                }}
-              >
-                <Text style={{ color: colors.primary, fontSize: 20, fontWeight: '900' }}>
-                  {(userName || displayName || 'U').charAt(0).toUpperCase()}
-                </Text>
-              </View>
-              
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={{ color: colors.text, fontWeight: '900', fontSize: 16, letterSpacing: -0.3 }}>
-                  {userName || displayName}
-                </Text>
-                {user.email ? (
-                  <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '500' }} numberOfLines={1}>
-                    {user.email}
-                  </Text>
-                ) : null}
-                <View className="flex-row items-center gap-1.5 mt-1">
-                  <View
-                    style={{
-                      backgroundColor: colors.primary + '15',
-                      paddingHorizontal: 10,
-                      paddingVertical: 4,
-                      borderRadius: 8,
-                    }}
-                  >
-                    <Text style={{ color: colors.primary, fontSize: 10, fontWeight: '800', letterSpacing: 0.5 }}>
-                      {providerLabel.toUpperCase()}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          </View>
-        )}
+        {/* USER PROFILE SECTION REMOVED */}
 
         {/* SUBSCRIPTION MANAGEMENT SECTION */}
         <SettingsGroup title="Subscription" colors={colors}>
@@ -463,57 +393,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
           />
         </SettingsGroup>
 
-        {/* ACCOUNT COMPLIANCE */}
-        <SettingsGroup title="Account Actions" colors={colors}>
-          <SettingsRowItem
-            label="Delete Account"
-            icon={<ShieldAlert size={16} color={colors.error} />}
-            onPress={() => router.push('/delete-account')}
-            textColor="red"
-            colors={colors}
-            isLast
-          />
-        </SettingsGroup>
-
-        {/* LOG OUT */}
-        {user && (
-          <SettingsGroup title="Session" colors={colors}>
-            <TouchableOpacity
-              onPress={() => {
-                Alert.alert(
-                  'Log Out',
-                  'Are you sure you want to log out of BiteFix?',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    {
-                      text: 'Log Out',
-                      style: 'destructive',
-                      onPress: async () => {
-                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-                        try {
-                          await signOut();
-                        } catch (e) {
-                          Alert.alert('Error', 'Failed to log out. Please try again.');
-                        }
-                      },
-                    },
-                  ]
-                );
-              }}
-              style={{
-                backgroundColor: colors.surface,
-                borderRadius: 16,
-                borderWidth: 1,
-                borderColor: colors.error + '30',
-              }}
-              className="flex-row items-center justify-center gap-2 p-4"
-            >
-              <LogOut size={16} color={colors.error} />
-              <Text style={{ color: colors.error, fontWeight: '800', fontSize: 14 }}>Log Out</Text>
-            </TouchableOpacity>
-          </SettingsGroup>
-        )}
-
+        {/* ACCOUNT COMPLIANCE REMOVED */}
         {/* Version */}
         <View className="mb-16 items-center">
           <Text style={{ color: colors.textMuted }} className="text-[10px] font-black uppercase tracking-wider">

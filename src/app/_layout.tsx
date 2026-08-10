@@ -10,8 +10,6 @@ import { useTheme } from '../hooks/useTheme';
 import { useFonts, Inter_300Light, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold, Inter_900Black } from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
 
-import { useAuthStore } from '../stores/authStore';
-
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // Removed unsafe defaultProps mutation. Use custom Text component for styling.
@@ -76,12 +74,6 @@ export default function RootLayout() {
       SplashScreen.hideAsync().catch(() => {});
     }
   }, [fontsLoaded, fontError]);
-
-  // Initialize Firebase Auth listener
-  useEffect(() => {
-    const unsubscribe = useAuthStore.getState().initialize();
-    return () => unsubscribe();
-  }, []);
 
   // ── Foreground-resume subscription check ──────────────────────────────
   // When the user returns from background (e.g. they went to Apple Settings

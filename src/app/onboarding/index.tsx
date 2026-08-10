@@ -32,7 +32,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStore } from '../../stores/appStore';
-import { useAuthStore } from '../../stores/authStore';
 import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot, MascotState } from '../../components/features/OrbMascot';
 import {
@@ -43,7 +42,6 @@ import {
   ShieldCheck,
   ShieldAlert,
   Activity,
-  Sparkles,
   Zap,
   Layers,
   Heart,
@@ -354,7 +352,6 @@ function MascotDrawingBoardHeader({
         </View>
         <View style={{ flex: 1, gap: 4 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            <Sparkles size={13} color={C.primaryDark} />
             <Text style={{ color: C.primaryDark, fontSize: 10.5, fontWeight: '900', letterSpacing: 0.9, textTransform: 'uppercase' }}>
               BiteFix Mascot
             </Text>
@@ -371,8 +368,39 @@ function MascotDrawingBoardHeader({
 // Clay Accessories
 function ClayAppleSvg({ size = 44 }: { size?: number }) {
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: '#EAFBF5', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#008F67', shadowColor: '#008F67', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 4 }}>
-      <Apple size={size * 0.55} color="#76B738" strokeWidth={2.5} />
+    <View style={{ width: size, height: size }}>
+      <Svg width={size} height={size} viewBox="0 0 44 44" fill="none">
+        <Defs>
+          {/* Background Gradient */}
+          <SvgLinearGradient id="appleBgGrad" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0%" stopColor="#EAFBF5" />
+            <Stop offset="100%" stopColor="#C8F3E4" />
+          </SvgLinearGradient>
+          {/* Apple Body Gradient (Premium Shiny Green) */}
+          <SvgLinearGradient id="appleBodyGrad" x1="0.2" y1="0" x2="0.8" y2="1">
+            <Stop offset="0%" stopColor="#00E5A0" />
+            <Stop offset="100%" stopColor="#008F67" />
+          </SvgLinearGradient>
+          {/* Leaf Gradient (Luxury Gold Accent) */}
+          <SvgLinearGradient id="appleLeafGrad" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0%" stopColor="#D8B65C" />
+            <Stop offset="100%" stopColor="#A6842A" />
+          </SvgLinearGradient>
+        </Defs>
+
+        {/* Glossy Outer Ring and Glow */}
+        <Circle cx="22" cy="22" r="20" fill="url(#appleBgGrad)" stroke="#00C98B" strokeWidth={1.5} />
+
+        {/* Custom High-end Apple Logo */}
+        <Path
+          d="M16.5 14.5c-2.5 0-4.5 1.8-4.5 4.8 0 4.8 4.2 10.2 7.6 10.2.8 0 1.2-.4 2.1-.4s1.3.4 2.1.4c3.4 0 7.6-5.4 7.6-10.2 0-3-2-4.8-4.5-4.8-2.5 0-3.8 1.8-4.9 1.8-1.1 0-2.5-1.8-5.4-1.8z"
+          fill="url(#appleBodyGrad)"
+        />
+        <Path
+          d="M22.5 13.5c1.8-2.5 5.2-3.7 5.2-3.7s-.8 3.3-3.3 5c-1.3 1-2.5.8-2.5.8s.2-1.2.6-2.1z"
+          fill="url(#appleLeafGrad)"
+        />
+      </Svg>
     </View>
   );
 }
@@ -412,19 +440,40 @@ function AdditivesHazardCard({ tags = ['Red 40 (E129)', 'Palm Oil', 'Polysorbate
 
 function GutShieldCard({ status = 'ACTIVE' }: { status?: string }) {
   return (
-    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, padding: 12, borderWidth: 1.5, borderColor: '#00C288', flexDirection: 'row', alignItems: 'center', gap: 12, shadowColor: '#00C288', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 3 }}>
-      <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: '#EAFBF5', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#A1F3D5' }}>
-        <ShieldCheck size={22} color="#00C288" />
+    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, paddingVertical: 18, paddingHorizontal: 16, borderWidth: 1.5, borderColor: '#00C288', flexDirection: 'row', alignItems: 'center', gap: 12, shadowColor: '#00C288', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 3 }}>
+      <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#EAFBF5', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#A1F3D5' }}>
+        <ShieldCheck size={24} color="#00C288" />
       </View>
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={{ color: '#101418', fontSize: 13, fontWeight: '900' }}>Personal Gut Shield</Text>
-          <View style={{ backgroundColor: '#A1F3D5', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
-            <Text style={{ color: '#101418', fontSize: 8.5, fontWeight: '900' }}>{status}</Text>
+          <Text style={{ color: '#101418', fontSize: 15.5, fontWeight: '900' }}>Personal Gut Shield</Text>
+          <View style={{ backgroundColor: '#A1F3D5', paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6 }}>
+            <Text style={{ color: '#101418', fontSize: 9.5, fontWeight: '900' }}>{status}</Text>
           </View>
         </View>
-        <Text style={{ color: '#626B74', fontSize: 10.5, fontWeight: '600', marginTop: 2 }}>
+        <Text style={{ color: '#626B74', fontSize: 12.5, lineHeight: 16, fontWeight: '600', marginTop: 3 }}>
           Checks selected additives, colours and oils against your personal watchlist.
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function HouseholdCoverageCard() {
+  return (
+    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 16, paddingVertical: 18, paddingHorizontal: 16, borderWidth: 1.5, borderColor: '#00C288', flexDirection: 'row', alignItems: 'center', gap: 12, shadowColor: '#00C288', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 3 }}>
+      <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#EAFBF5', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#A1F3D5' }}>
+        <ClayAppleSvg size={30} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Text style={{ color: '#101418', fontSize: 15.5, fontWeight: '900' }}>Household Coverage</Text>
+          <View style={{ backgroundColor: '#A1F3D5', paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6 }}>
+            <Text style={{ color: '#101418', fontSize: 9.5, fontWeight: '900' }}>ACTIVE</Text>
+          </View>
+        </View>
+        <Text style={{ color: '#626B74', fontSize: 12.5, lineHeight: 16, fontWeight: '600', marginTop: 3 }}>
+          Filters out food colorings, artificial preservatives, and harsh emulsifiers before they enter your kitchen.
         </Text>
       </View>
     </View>
@@ -500,7 +549,7 @@ function NameCard({ cardW, C, value, onChange }: { cardW: number; C: any; value:
       </View>
       <StickyNoteCard tilt={-1}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Sparkles size={22} color={C.primaryDark} />
+          <Info size={22} color={C.primaryDark} />
           <Text style={{ color: C.text, fontSize: 13, fontWeight: '800', flex: 1, lineHeight: 18 }}>
             {value.trim() ? `Welcome, ${value.trim()}! Let's shape your scanner around your daily food choices.` : 'Type your name above to personalize your BiteFix scanner!'}
           </Text>
@@ -818,19 +867,6 @@ export const ChipSwapDemoCard = memo(ChipSwapDemoCardComponent);
 // STEP 7: Protecting Loved Ones (REDESIGNED)
 // ─────────────────────────────────────────────────────────
 function ProtectLovedOnesCard({ cardW, C }: { cardW: number; C: any }) {
-  const [selectedMembers, setSelectedMembers] = useState<string[]>(['Self', 'Kids']);
-  const members = [
-    { id: 'Self', label: 'Myself', icon: <Heart size={16} color={MINT_DARK} /> },
-    { id: 'Partner', label: 'Partner', icon: <Users size={16} color="#4D8DE8" /> },
-    { id: 'Kids', label: 'Kids', icon: <Sparkles size={16} color="#F5A623" /> },
-    { id: 'Seniors', label: 'Parents', icon: <Shield size={16} color="#EF4444" /> },
-  ];
-
-  const toggleMember = (id: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSelectedMembers((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-  };
-
   return (
     <View style={{ width: cardW, gap: 14 }}>
       <AnimatedListItem index={0}>
@@ -838,51 +874,7 @@ function ProtectLovedOnesCard({ cardW, C }: { cardW: number; C: any }) {
       </AnimatedListItem>
 
       <AnimatedListItem index={1}>
-        <StickyNoteCard tilt={-1}>
-          <View style={{ gap: 10 }}>
-            <Text style={{ color: C.textSub, fontSize: 10.5, fontWeight: '900', letterSpacing: 0.8, textTransform: 'uppercase' }}>
-              Select Family Members Protected
-            </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {members.map((m) => {
-                const active = selectedMembers.includes(m.id);
-                return (
-                  <TouchableOpacity
-                    key={m.id}
-                    onPress={() => toggleMember(m.id)}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 6,
-                      backgroundColor: active ? MINT_LIGHT : C.surfaceRaised,
-                      borderWidth: 1.5,
-                      borderColor: active ? MINT_DARK : C.cardBorder,
-                      paddingHorizontal: 12,
-                      paddingVertical: 8,
-                      borderRadius: 12,
-                    }}
-                  >
-                    {m.icon}
-                    <Text style={{ color: active ? MINT_DARK : C.text, fontSize: 12, fontWeight: '800' }}>{m.label}</Text>
-                    {active && <Check size={12} color={MINT_DARK} strokeWidth={3} />}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-        </StickyNoteCard>
-      </AnimatedListItem>
-
-      <AnimatedListItem index={2}>
-        <View style={{ backgroundColor: C.card, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: C.cardBorder, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <ClayAppleSvg size={42} />
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: C.text, fontSize: 13, fontWeight: '900' }}>78% Household Coverage</Text>
-            <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600', marginTop: 2 }}>
-              Filters out food colorings, artificial preservatives, and harsh emulsifiers before they enter your kitchen.
-            </Text>
-          </View>
-        </View>
+        <HouseholdCoverageCard />
       </AnimatedListItem>
     </View>
   );
@@ -980,7 +972,7 @@ function AllergenDefenseCard({ cardW, C, selected, onToggle }: { cardW: number; 
   const items = [
     { id: 'Gluten', label: 'Gluten & Wheat', icon: <Layers size={18} color="#D8B65C" /> },
     { id: 'Dairy', label: 'Dairy & Milk', icon: <Droplets size={18} color="#4D8DE8" /> },
-    { id: 'Soy', label: 'Soy Derivatives', icon: <Sparkles size={18} color="#00C288" /> },
+    { id: 'Soy', label: 'Soy Derivatives', icon: <Layers3 size={18} color="#00C288" /> },
     { id: 'Nuts', label: 'Tree Nuts & Peanuts', icon: <Shield size={18} color="#FF6D00" /> },
     { id: 'Eggs', label: 'Egg Products', icon: <CircleAlert size={18} color="#F5A623" /> },
     { id: 'Palm Oil', label: 'Palm & Seed Oils', icon: <Droplets size={18} color="#EF4444" /> },
@@ -1151,7 +1143,7 @@ function HealthAnalysisCalculationCard({ cardW, C, onComplete }: { cardW: number
       <View style={{ alignItems: 'center', gap: 4 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: MINT, alignItems: 'center', justifyContent: 'center' }}>
-            <Sparkles size={18} color="#0B0D0F" />
+            <ShieldCheck size={18} color="#0B0D0F" />
           </View>
           <Text style={{ color: C.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>BiteFix</Text>
         </View>
@@ -1295,19 +1287,18 @@ interface SlideData {
 
 const SLIDES: SlideData[] = [
   { step: 1, title: 'Meet your food intelligence layer', highlight: 'food intelligence', subtitle: 'Tell us your name. BiteFix will shape every scan around your priorities.', buttonLabel: 'Personalize My Scanner', mascotState: 'happy', mascotSpeech: "Hey! I'm your BiteFix scanner mascot.", isLast: false },
-  { step: 2, title: 'Where do your daily meals come from?', highlight: 'daily meals', subtitle: 'Understanding your routine helps BiteFix suggest realistic swaps.', buttonLabel: 'Continue', mascotState: 'thinking', mascotSpeech: 'Sourcing clean food starts with daily habits.', isLast: false },
-  { step: 3, title: 'How often do you read store labels?', highlight: 'read store labels?', subtitle: 'Fine print ingredient lists can hide artificial additives behind complex numbers.', buttonLabel: 'Continue', mascotState: 'scanning', mascotSpeech: 'I decode hidden fine-print ingredients for you!', isLast: false },
-  { step: 4, title: 'What should every scan protect?', highlight: 'protect?', subtitle: 'Select your core health focus. BiteFix will highlight it on every barcode.', buttonLabel: 'Set My Priority', mascotState: 'happy', mascotSpeech: 'Your priorities guide every single scan!', isLast: false },
-  { step: 5, title: 'The label rarely tells the whole story', highlight: 'whole story', subtitle: 'Processing levels and cosmetic additives lurk behind bright packaging.', buttonLabel: 'Show Me What I Miss', mascotState: 'caution', mascotSpeech: '73% of supermarket foods are ultra-processed!', isLast: false },
-  { step: 6, title: 'Same craving. A cleaner label.', highlight: 'cleaner label.', subtitle: 'Compare products in the same category and see exactly what changes.', buttonLabel: 'Build My Swap Profile', mascotState: 'scanning', mascotSpeech: 'Look how easy it is to find cleaner swaps!', isLast: false },
-  { step: 7, title: 'Protect your household & loved ones', highlight: 'household & loved ones', subtitle: 'Your food shield can protect the choices your entire family cares about.', buttonLabel: 'Create Our Shield', mascotState: 'happy', mascotSpeech: 'Family food safety in a single scan.', isLast: false },
-  { step: 8, title: 'What do you want food to stop costing you?', highlight: 'stop costing you?', subtitle: 'Select the everyday fatigue signals you want BiteFix to keep in view.', buttonLabel: 'Add to My Profile', mascotState: 'thinking', mascotSpeech: 'Let us keep energy slumps and fog away.', isLast: false },
-  { step: 9, title: 'Choose your ingredient watchlist', highlight: 'watchlist', subtitle: 'BiteFix will surface these ingredients clearly—without hiding them in fine print.', buttonLabel: 'Activate Watchlist', mascotState: 'caution', mascotSpeech: 'Watchlist active! No sneaky additives allowed.', isLast: false },
-  { step: 10, title: 'Set your personal ingredient shield', highlight: 'ingredient shield', subtitle: 'Choose allergens or ingredients that should never enter your basket.', buttonLabel: 'Lock My Shield', mascotState: 'happy', mascotSpeech: 'Locking down your personal allergen shield.', isLast: false },
-  { step: 11, title: 'Turn good scans into a better basket', highlight: 'better basket', subtitle: 'Save products that fit your profile and make every shop faster.', buttonLabel: 'Build My Basket', mascotState: 'happy', mascotSpeech: 'Build a basket full of foods you trust!', isLast: false },
-  { step: 12, title: 'Forging your Food Shield', highlight: 'Food Shield', subtitle: 'Mapping your watchlist, swap preferences, and clean cart engine.', buttonLabel: 'Analyzing', mascotState: 'scanning', mascotSpeech: 'Forging your BiteFix profile...', isLast: false },
-  { step: 13, title: 'Six layers of intelligence—ready', highlight: 'ready', subtitle: 'Every barcode now returns a clear, personal decision—not another label to decode.', buttonLabel: 'View My Shield', mascotState: 'happy', mascotSpeech: 'You get 6 deep health checks per barcode!', isLast: false },
-  { step: 14, title: 'Your scanner now knows what matters', highlight: 'what matters', subtitle: 'Your Food Shield and Healthy Basket are configured and ready to use.', buttonLabel: 'Activate BiteFix', mascotState: 'happy', mascotSpeech: 'Your Food Shield is fully armed and ready!', isLast: true },
+  { step: 2, title: 'How often do you read store labels?', highlight: 'read store labels?', subtitle: 'Fine print ingredient lists can hide artificial additives behind complex numbers.', buttonLabel: 'Continue', mascotState: 'scanning', mascotSpeech: 'I decode hidden fine-print ingredients for you!', isLast: false },
+  { step: 3, title: 'What should every scan protect?', highlight: 'protect?', subtitle: 'Select your core health focus. BiteFix will highlight it on every barcode.', buttonLabel: 'Set My Priority', mascotState: 'happy', mascotSpeech: 'Your priorities guide every single scan!', isLast: false },
+  { step: 4, title: 'The label rarely tells the whole story', highlight: 'whole story', subtitle: 'Processing levels and cosmetic additives lurk behind bright packaging.', buttonLabel: 'Show Me What I Miss', mascotState: 'caution', mascotSpeech: '73% of supermarket foods are ultra-processed!', isLast: false },
+  { step: 5, title: 'Same craving. A cleaner label.', highlight: 'cleaner label.', subtitle: 'Compare products in the same category and see exactly what changes.', buttonLabel: 'Build My Swap Profile', mascotState: 'scanning', mascotSpeech: 'Look how easy it is to find cleaner swaps!', isLast: false },
+  { step: 6, title: 'Protect your household & loved ones', highlight: 'household & loved ones', subtitle: 'Your food shield can protect the choices your entire family cares about.', buttonLabel: 'Create Our Shield', mascotState: 'happy', mascotSpeech: 'Family food safety in a single scan.', isLast: false },
+  { step: 7, title: 'What do you want food to stop costing you?', highlight: 'stop costing you?', subtitle: 'Select the everyday fatigue signals you want BiteFix to keep in view.', buttonLabel: 'Add to My Profile', mascotState: 'thinking', mascotSpeech: 'Let us keep energy slumps and fog away.', isLast: false },
+  { step: 8, title: 'Choose your ingredient watchlist', highlight: 'watchlist', subtitle: 'BiteFix will surface these ingredients clearly—without hiding them in fine print.', buttonLabel: 'Activate Watchlist', mascotState: 'caution', mascotSpeech: 'Watchlist active! No sneaky additives allowed.', isLast: false },
+  { step: 9, title: 'Set your personal ingredient shield', highlight: 'ingredient shield', subtitle: 'Choose allergens or ingredients that should never enter your basket.', buttonLabel: 'Lock My Shield', mascotState: 'happy', mascotSpeech: 'Locking down your personal allergen shield.', isLast: false },
+  { step: 10, title: 'Turn good scans into a better basket', highlight: 'better basket', subtitle: 'Save products that fit your profile and make every shop faster.', buttonLabel: 'Build My Basket', mascotState: 'happy', mascotSpeech: 'Build a basket full of foods you trust! Scan Barcode and Save it in your Basket', isLast: false },
+  { step: 11, title: 'Forging your Food Shield', highlight: 'Food Shield', subtitle: 'Mapping your watchlist, swap preferences, and clean cart engine.', buttonLabel: 'Analyzing', mascotState: 'scanning', mascotSpeech: 'Forging your BiteFix profile...', isLast: false },
+  { step: 12, title: 'Six layers of intelligence—ready', highlight: 'ready', subtitle: 'Every barcode now returns a clear, personal decision—not another label to decode.', buttonLabel: 'View My Shield', mascotState: 'happy', mascotSpeech: 'You get 6 deep health checks per barcode!', isLast: false },
+  { step: 13, title: 'Your scanner now knows what matters', highlight: 'what matters', subtitle: 'Your Food Shield and Healthy Basket are configured and ready to use.', buttonLabel: 'Activate BiteFix', mascotState: 'happy', mascotSpeech: 'Your Food Shield is fully armed and ready!', isLast: true },
 ];
 
 function DotIndicator({ active, C }: { active: boolean; C: any }) {
@@ -1326,6 +1317,8 @@ function DotIndicator({ active, C }: { active: boolean; C: any }) {
 // MAIN ONBOARDING SCREEN COMPONENT
 // ─────────────────────────────────────────────────────────
 export default function OnboardingScreen() {
+  const { setProfile, setOnboardingComplete, toggleAllergenFilter, allergenFilters, setAllergenFilters } = useAppStore();
+
   useEffect(() => {
     try {
       Asset.loadAsync([
@@ -1333,13 +1326,13 @@ export default function OnboardingScreen() {
         require('../../../assets/images/artisan_swaps.png'),
       ]);
     } catch (e) { }
+    // Ensure allergen filters start fresh/empty
+    setAllergenFilters([]);
   }, []);
 
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const { isDark } = useTheme();
-  const { setProfile, setOnboardingComplete, toggleAllergenFilter, allergenFilters } = useAppStore();
-  const { user } = useAuthStore();
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
   const C = {
@@ -1363,7 +1356,7 @@ export default function OnboardingScreen() {
   const hasRequestedCamera = React.useRef(false);
 
   useEffect(() => {
-    if ((currentSlide === 11 || currentSlide === 12) && !hasRequestedCamera.current) {
+    if ((currentSlide === 10 || currentSlide === 11) && !hasRequestedCamera.current) {
       if (cameraPermission && !cameraPermission.granted && cameraPermission.canAskAgain) {
         hasRequestedCamera.current = true;
         requestCameraPermission().catch(() => { });
@@ -1404,18 +1397,17 @@ export default function OnboardingScreen() {
         userGoal: mappedGoal,
       });
       setOnboardingComplete(true);
-      router.replace(user ? '/paywall' : '/auth');
+      router.replace('/paywall');
     }
   };
 
   const isNextDisabled = () => {
     if (currentSlide === 0 && !userName.trim()) return true;
-    if (currentSlide === 1 && !dailyMealSource) return true;
-    if (currentSlide === 2 && !labelRoutine) return true;
-    if (currentSlide === 3 && userGoals.length === 0) return true;
-    if (currentSlide === 7 && symptoms.length === 0) return true;
-    if (currentSlide === 8 && additives.length === 0) return true;
-    if (currentSlide === 9 && allergenFilters.length === 0) return true;
+    if (currentSlide === 1 && !labelRoutine) return true;
+    if (currentSlide === 2 && userGoals.length === 0) return true;
+    if (currentSlide === 6 && symptoms.length === 0) return true;
+    if (currentSlide === 7 && additives.length === 0) return true;
+    if (currentSlide === 8 && allergenFilters.length === 0) return true;
     return false;
   };
 
@@ -1429,11 +1421,18 @@ export default function OnboardingScreen() {
   return (
     <KeyboardAvoidingView accessibilityLabel={`BiteFix onboarding step ${currentSlide + 1}`} style={{ flex: 1, backgroundColor: C.bg }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <LuxuryBackdrop C={C} />
+
+      {/* Pre-warm images for slide 6 (ChipSwapDemoCard) off-screen to avoid mounting layout flash */}
+      <View style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }} pointerEvents="none">
+        <ExpoImage source={require('../../../assets/images/ultra_chips.png')} style={{ width: 1, height: 1 }} />
+        <ExpoImage source={require('../../../assets/images/artisan_swaps.png')} style={{ width: 1, height: 1 }} />
+      </View>
+
       <View style={{ flex: 1, paddingTop: insets.top + 6, paddingBottom: insets.bottom + 12, paddingHorizontal: 16 }}>
         {/* Header Bar */}
         <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, marginBottom: 4 }}>
           <StepRail current={currentSlide} total={SLIDES.length} C={C} />
-          {currentSlide > 0 && currentSlide !== 11 && (
+          {currentSlide > 0 && currentSlide !== 10 && (
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel="Go back"
@@ -1471,8 +1470,8 @@ export default function OnboardingScreen() {
             </Animated.View>
           </View>
 
-          {/* Dynamic Mascot Header (On screens 0..10 & 12..13) */}
-          {currentSlide !== 11 && (
+          {/* Dynamic Mascot Header (On screens 0..7, 9, and 12) */}
+          {currentSlide !== 8 && currentSlide !== 10 && currentSlide !== 11 && (
             <MascotDrawingBoardHeader state={slide.mascotState} speech={slide.mascotSpeech} C={C} isDark={isDark} />
           )}
 
@@ -1480,25 +1479,24 @@ export default function OnboardingScreen() {
           <View style={{ width: '100%', alignItems: 'center', marginTop: 8 }}>
             <Animated.View key={`card-${currentSlide}`} entering={FadeInDown.duration(380).easing(Easing.bezier(0.16, 1, 0.3, 1))} style={{ width: '100%', alignItems: 'center' }}>
               {currentSlide === 0 && <NameCard cardW={cardW} C={C} value={userName} onChange={setUserName} />}
-              {currentSlide === 1 && <DailyMealSourcingCard cardW={cardW} C={C} value={dailyMealSource} onSelect={setDailyMealSource} />}
-              {currentSlide === 2 && <LabelInspectionRoutineCard cardW={cardW} C={C} value={labelRoutine} onSelect={setLabelRoutine} />}
-              {currentSlide === 3 && <GoalCard cardW={cardW} C={C} selected={userGoals} onSelect={setUserGoals} />}
-              {currentSlide === 4 && <NovaWakeUpCard cardW={cardW} C={C} />}
-              {currentSlide === 5 && <ChipSwapDemoCard cardW={cardW} C={C} />}
-              {currentSlide === 6 && <ProtectLovedOnesCard cardW={cardW} C={C} />}
-              {currentSlide === 7 && <SymptomAuditCard cardW={cardW} C={C} selected={symptoms} onToggle={toggleSymptom} />}
-              {currentSlide === 8 && <AdditivePrioritiesCard cardW={cardW} C={C} selected={additives} onToggle={toggleAdditive} />}
-              {currentSlide === 9 && <AllergenDefenseCard cardW={cardW} C={C} selected={allergenFilters} onToggle={toggleAllergenFilter} />}
-              {currentSlide === 10 && <HealthyBasketIntroCard cardW={cardW} C={C} />}
-              {currentSlide === 11 && <HealthAnalysisCalculationCard cardW={cardW} C={C} onComplete={() => setCurrentSlide(12)} />}
-              {currentSlide === 12 && <InstantResultSummaryCard cardW={cardW} C={C} />}
-              {currentSlide === 13 && <PaywallTransitionCard cardW={cardW} C={C} />}
+              {currentSlide === 1 && <LabelInspectionRoutineCard cardW={cardW} C={C} value={labelRoutine} onSelect={setLabelRoutine} />}
+              {currentSlide === 2 && <GoalCard cardW={cardW} C={C} selected={userGoals} onSelect={setUserGoals} />}
+              {currentSlide === 3 && <NovaWakeUpCard cardW={cardW} C={C} />}
+              {currentSlide === 4 && <ChipSwapDemoCard cardW={cardW} C={C} />}
+              {currentSlide === 5 && <ProtectLovedOnesCard cardW={cardW} C={C} />}
+              {currentSlide === 6 && <SymptomAuditCard cardW={cardW} C={C} selected={symptoms} onToggle={toggleSymptom} />}
+              {currentSlide === 7 && <AdditivePrioritiesCard cardW={cardW} C={C} selected={additives} onToggle={toggleAdditive} />}
+              {currentSlide === 8 && <AllergenDefenseCard cardW={cardW} C={C} selected={allergenFilters} onToggle={toggleAllergenFilter} />}
+              {currentSlide === 9 && <HealthyBasketIntroCard cardW={cardW} C={C} />}
+              {currentSlide === 10 && <HealthAnalysisCalculationCard cardW={cardW} C={C} onComplete={() => setCurrentSlide(11)} />}
+              {currentSlide === 11 && <InstantResultSummaryCard cardW={cardW} C={C} />}
+              {currentSlide === 12 && <PaywallTransitionCard cardW={cardW} C={C} />}
             </Animated.View>
           </View>
         </ScrollView>
 
         {/* Pinned Bottom Navigation & CTA */}
-        {currentSlide !== 11 && (
+        {currentSlide !== 10 && (
           <View style={{ width: '100%', gap: 10, marginTop: 6, paddingTop: 8, borderTopWidth: 1, borderTopColor: C.cardBorder }}>
             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 5 }}>
               {SLIDES.map((_, idx) => (
