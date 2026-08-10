@@ -52,6 +52,7 @@ import {
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
 import ProductHeroCardDashboard from '../../components/features/ProductHeroCardDashboard';
+import { SubscriptionModal } from '../../components/SubscriptionModal';
 import {
   Keyboard,
   ArrowLeft,
@@ -100,6 +101,7 @@ export default function ScannerScreen() {
   const [loadingText, setLoadingText] = useState('Analyzing...');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [torchOn, setTorchOn] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
   // cameraReady: set to true only after the CameraView fires onCameraReady
   const [cameraReady, setCameraReady] = useState(false);
@@ -142,7 +144,12 @@ export default function ScannerScreen() {
     return () => subscription.remove();
   }, []);
 
-
+  // Auto-trigger modal if they are out of scans
+  useEffect(() => {
+    if (scannerIsVisible && !isPremium && typeof freeScansUsed === 'number' && freeScansUsed >= 5) {
+      setShowSubscriptionModal(true);
+    }
+  }, [scannerIsVisible, isPremium, freeScansUsed]);
 
   const stopActiveScannerSession = useCallback((clearLoading = true) => {
     activeLookupControllerRef.current?.abort();
@@ -264,13 +271,7 @@ export default function ScannerScreen() {
     // Check 5 Free Scans Limit
     if (!isPremium && typeof freeScansUsed === 'number' && freeScansUsed >= 5) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      Alert.alert(
-        'Scans Completed',
-        'All 5 free scans are now completed.',
-        [
-          { text: 'OK', onPress: () => router.push('/paywall') },
-        ]
-      );
+      setShowSubscriptionModal(true);
       return;
     }
 
@@ -332,11 +333,7 @@ export default function ScannerScreen() {
           incrementFreeScans();
           const countAfterScan = (freeScansUsed || 0) + 1;
           if (countAfterScan >= 5) {
-            Alert.alert(
-              'Scans Completed',
-              'All 5 free scans are now completed.',
-              [{ text: 'OK', onPress: () => router.push('/paywall') }]
-            );
+            setShowSubscriptionModal(true);
           }
         }
 
@@ -573,9 +570,21 @@ export default function ScannerScreen() {
                 </BlurView>
               </TouchableOpacity>
 
-
-
-              {/* Left back button only */}
+              {/* Free Scans Counter Pill */}
+              {!isPremium && (
+                <View style={{
+                  backgroundColor: 'rgba(0,0,0,0.6)',
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: 'rgba(255,255,255,0.2)',
+                }}>
+                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>
+                    Used {freeScansUsed || 0} of 5
+                  </Text>
+                </View>
+              )}
             </View>
           </SafeAreaView>
 
@@ -1196,6 +1205,13 @@ export default function ScannerScreen() {
           </Text>
         </View>
       )}
+
+      {/* ─── Subscription Half-Modal ─── */}
+      <SubscriptionModal 
+        visible={showSubscriptionModal} 
+        onClose={() => setShowSubscriptionModal(false)}
+        showCloseButton={(!isPremium && typeof freeScansUsed === 'number' && freeScansUsed < 5)}
+      />
     </View>
   );
 }
