@@ -465,6 +465,7 @@ export default function PaywallScreen() {
           <TouchableOpacity
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              useAppStore.getState().setTrialStarted(true);
               router.replace('/(tabs)');
             }}
             activeOpacity={0.88}

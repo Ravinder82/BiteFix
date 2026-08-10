@@ -17,12 +17,14 @@ interface AppState {
   stealthAdditivesAlert: boolean;
   isPremium: boolean;
   freeScansUsed: number;
+  trialStarted: boolean;
 
   // Actions
   setOnboardingComplete: (complete: boolean) => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   setSugarUnit: (sugarUnit: 'g' | 'oz') => void;
   setPremium: (premium: boolean) => void;
+  setTrialStarted: (started: boolean) => void;
   incrementFreeScans: () => void;
   syncFreeScansFromKeychain: () => Promise<void>;
   resetSubscriptionAndScans: () => void;
@@ -152,11 +154,13 @@ export const useAppStore = create<AppState>()(
       stealthAdditivesAlert: true,
       isPremium: false,
       freeScansUsed: 0,
+      trialStarted: false,
 
       setOnboardingComplete: (complete) => set({ onboardingComplete: complete }),
       setTheme: (theme) => set({ theme }),
       setSugarUnit: (sugarUnit) => set({ sugarUnit }),
       setPremium: (isPremium) => set({ isPremium }),
+      setTrialStarted: (trialStarted) => set({ trialStarted }),
       incrementFreeScans: () => {
         set((state) => {
           const newCount = state.freeScansUsed + 1;
@@ -178,6 +182,7 @@ export const useAppStore = create<AppState>()(
         set({
           isPremium: false,
           freeScansUsed: 0,
+          trialStarted: false,
           scans: [],
           collection: [],
           onboardingComplete: false,

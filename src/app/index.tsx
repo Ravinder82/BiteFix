@@ -16,7 +16,7 @@ const GOLD = '#D8B65C';
 let isFirstLoad = true;
 
 export default function Index() {
-  const { onboardingComplete, isPremium } = useAppStore();
+  const { onboardingComplete, isPremium, freeScansUsed, trialStarted } = useAppStore();
   const { colors } = useTheme();
   const [hydrated, setHydrated] = useState(false);
   const rootNavigationState = useRootNavigationState();
@@ -256,12 +256,15 @@ export default function Index() {
     return <Redirect href="/onboarding" />;
   }
 
-  // Step 2: If not premium → ALWAYS show paywall.
-  // The paywall has "Try for Free" (5 scans) and "Subscribe" options.
-  if (!isPremium) {
+  // Step 2: Gating checks for free users.
+  // We direct them to the paywall if:
+  // - They are NOT premium AND
+  // - EITHER they used up all free scans (>= 5) OR they have not started the trial yet
+  const isTrialActive = trialStarted || (freeScansUsed || 0) > 0;
+  if (!isPremium && ((freeScansUsed || 0) >= 5 || !isTrialActive)) {
     return <Redirect href="/paywall" />;
   }
 
-  // Step 3: Onboarded + premium → go to main tabs
+  // Step 3: Onboarded + premium OR active trial → go to main tabs
   return <Redirect href="/(tabs)" />;
 }
