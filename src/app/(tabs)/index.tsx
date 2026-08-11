@@ -1021,6 +1021,8 @@ export default function HomeScreen() {
                   sugarGrams={selectedSavedItem.sugarGrams ?? selectedSavedItem.sugarPer100g ?? 0}
                   calories={selectedSavedItem.calories}
                   servingSize={formatWeight(selectedSavedItem.servingSize, sugarUnit) || '100 g / 100 ml'}
+                  totalWeightGrams={selectedSavedItem.totalWeightGrams}
+                  totalSugarGrams={selectedSavedItem.totalSugarGrams}
                   sugarPer100g={selectedSavedItem.sugarPer100g}
                   whoLimitServingPercent={selectedSavedItem.whoLimitServingPercent ?? (selectedSavedItem.sugarTeaspoons !== undefined ? Math.round((selectedSavedItem.sugarTeaspoons / 12) * 100) : undefined)}
                   isDefaultServing={selectedSavedItem.isDefaultServing}

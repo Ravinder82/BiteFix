@@ -13,6 +13,8 @@ interface NutritionFactsProps {
   calories?: number;
   sugarGrams: number;
   servingSize?: string;
+  totalWeightGrams?: number;
+  totalSugarGrams?: number;
   sugarPer100g?: number;
   whoLimitServingPercent?: number;
   isDefaultServing?: boolean;
@@ -28,6 +30,8 @@ export function NutritionFacts({
   calories,
   sugarGrams,
   servingSize,
+  totalWeightGrams,
+  totalSugarGrams,
   sugarPer100g,
   whoLimitServingPercent,
   isDefaultServing,
@@ -171,6 +175,37 @@ export function NutritionFacts({
           )}
         </View>
       </View>
+
+      {/* ── Whole Pack Sugar Load (True Impact) ── */}
+      {totalSugarGrams !== undefined && totalWeightGrams !== undefined && totalWeightGrams > 0 && (
+        <View
+          style={{
+            backgroundColor: bentoBg,
+            borderRadius: 16,
+            padding: 14,
+            borderWidth: 1,
+            borderColor: borderDivider,
+            marginBottom: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <View style={{ flexShrink: 1, paddingRight: 12 }}>
+            <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>
+              TOTAL SUGAR IN WHOLE PACK ({totalWeightGrams}g)
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4, flexWrap: 'wrap' }}>
+              <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.6 }}>
+                {formatSugar(totalSugarGrams, sugarUnit)}
+              </Text>
+              <Text style={{ color: '#EF4444', fontSize: 13, fontWeight: '800' }}>
+                ({parseFloat((totalSugarGrams / 4.2).toFixed(1))} tsp)
+              </Text>
+            </View>
+          </View>
+        </View>
+      )}
 
       {/* ── Disguised / Hidden Sugars Audit Box (No coloured cards, only LED lights & tidy names) ── */}
       {(() => {

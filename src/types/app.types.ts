@@ -46,6 +46,8 @@ export interface ScanHistoryItem {
   sugarGrams: number;
   sugarTeaspoons: number;
   servingSize?: string;
+  totalWeightGrams?: number;
+  totalSugarGrams?: number;
   calories?: number;
   carbsGrams?: number;
   fatGrams?: number;

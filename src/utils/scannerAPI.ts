@@ -6,6 +6,8 @@ export interface ScanResultData {
   brand: string;
   sugarGrams?: number;
   sugarTeaspoons?: number;
+  totalWeightGrams?: number;
+  totalSugarGrams?: number;
   servingSize?: string;
   calories?: number;
   carbsGrams?: number;
@@ -678,11 +680,17 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
     const protein100g = extractNumberFromKeys(n, ['proteins_100g', 'proteins', 'proteins_value']);
 
     // Determine if product is liquid or solid for accurate "100 g/ml" default serving label
-    const rawQuantityStr = String(p.quantity || '').toLowerCase();
+    const rawQuantityStr = String(p.quantity || p.product_quantity || '').toLowerCase();
     const rawCategoryStr = String((Array.isArray(p.categories_tags) ? p.categories_tags.join(' ') : p.categories) || '').toLowerCase();
-    const isLiquid = rawQuantityStr.includes('ml') || rawQuantityStr.includes(' l') || rawQuantityStr.includes('cl') || rawQuantityStr.includes('fl oz') ||
-      rawCategoryStr.includes('beverage') || rawCategoryStr.includes('drink') || rawCategoryStr.includes('juice') || rawCategoryStr.includes('soda') || rawCategoryStr.includes('water') || rawCategoryStr.includes('milk') || rawCategoryStr.includes('cola') || rawCategoryStr.includes('beer');
+    const isLiquid = isProductLiquid(rawQuantityStr, rawCategoryStr);
     const defaultUnitLabel = isLiquid ? '100 ml' : '100 g';
+
+    // ─── WHOLE PACK CALCULATION ───
+    const totalWeightGrams = parseQuantityString(rawQuantityStr);
+    let totalSugarGrams: number | undefined;
+    if (totalWeightGrams !== null && totalWeightGrams > 0 && sugarPer100g !== undefined) {
+      totalSugarGrams = parseFloat(((sugarPer100g * totalWeightGrams) / 100).toFixed(1));
+    }
 
     // ─── STEP 1: PER SERVING CALCULATION (Per Serving if not then 100 g/ml must be considered Per serving size) ───
     let servingSugarGrams = extractNumberFromKeys(n, [
@@ -761,6 +769,8 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
       brand,
       sugarGrams: finalSugarGrams,
       sugarTeaspoons,
+      totalWeightGrams: totalWeightGrams ?? undefined,
+      totalSugarGrams,
       sugarPer100g,
       imageUrl,
       servingSize,

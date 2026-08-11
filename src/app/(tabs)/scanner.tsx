@@ -694,6 +694,8 @@ export default function ScannerScreen() {
               sugarGrams={scanResult.sugarGrams ?? scanResult.sugarPer100g ?? 0}
               calories={scanResult.calories}
               servingSize={formatWeight(scanResult.servingSize, sugarUnit) || '100 g / 100 ml'}
+              totalWeightGrams={scanResult.totalWeightGrams}
+              totalSugarGrams={scanResult.totalSugarGrams}
               sugarPer100g={scanResult.sugarPer100g}
               whoLimitServingPercent={scanResult.whoLimitServingPercent ?? (scanResult.sugarTeaspoons !== undefined ? Math.round((scanResult.sugarTeaspoons / 12) * 100) : undefined)}
               isDefaultServing={scanResult.isDefaultServing}
