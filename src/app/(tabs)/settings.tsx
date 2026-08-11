@@ -638,9 +638,9 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
               Subscriptions are processed through Apple's native StoreKit billing system. We do not store or process your financial payment details.
             </Text>
 
-            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800', marginTop: 12 }}>4. Data Retention and Account Deletion</Text>
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800', marginTop: 12 }}>4. Data Retention and Deletion</Text>
             <Text style={{ color: colors.textSecondary, lineHeight: 22 }}>
-              You can erase all your scan history locally in the app settings (Settings &gt; Clear Scan History). If you sign in, you can permanently delete your account directly inside the app via Settings &gt; Delete Account.
+              BiteFix operates purely locally and does not utilize online user accounts. You can instantly erase all your saved data at any time directly inside the app via Settings &gt; Clear All Data.
             </Text>
 
             <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800', marginTop: 12 }}>5. Contact Us</Text>

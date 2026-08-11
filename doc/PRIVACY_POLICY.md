@@ -14,7 +14,7 @@ BiteFix is built with a **privacy-first architecture**. Your scan data, custom a
 ### A. Local Device Storage (Personal Data)
 * **Scan History & Baskets:** Scanned barcodes, product ingredient analysis, food scores, and saved food swaps.
 * **App Preferences:** Personal allergen selections (e.g., Gluten, Dairy, Soy), sugar unit display choices (Grams vs. Ounces), theme settings, and food quality alert thresholds.
-* **Account Info:** Display name and basic authentication identifiers if you sign in via Google or Apple Authentication.
+
 
 **Storage Location:** All scanning and preference data is stored locally on your iOS device using encrypted storage (`AsyncStorage` and `SecureStore`). We do not maintain external database servers storing your personal food logs.
 
@@ -38,16 +38,11 @@ BiteFix offers optional auto-renewing subscriptions processed directly through A
 
 You retain 100% control over your data footprint:
 
-### A. Clearing Scan History
-You can erase all your scanned food logs and saved baskets at any time in the app by going to **Settings -> Data Management -> Clear Scan History**.
+### A. Clearing App Data
+You can erase all your saved baskets, allergen preferences, and settings at any time in the app by going to **Settings -> Clear All Data**.
 
-### B. Permanent Account Deletion
-In accordance with Apple App Store Guideline 5.1.1(m), you can permanently delete your account directly inside the app:
-1. Open **Settings**.
-2. Tap **Delete Account**.
-3. Confirm re-authentication.
-
-Deleting your account immediately terminates your authentication session and wipes all local app storage.
+### B. No Online Accounts
+Because BiteFix operates 100% locally and does not collect or transmit user profile information to remote servers, there is no remote account data to manage or delete. Uninstalling the app permanently purges all local storage.
 
 ---
 
