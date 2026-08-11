@@ -846,31 +846,7 @@ export default function HomeScreen() {
           </LinearGradient>
         </View>
 
-        {/* Premium Call To Action Button with Loop-Reflection Shine */}
-        <View style={{ overflow: 'hidden', position: 'relative', borderRadius: 24 }} className="mb-6 shadow-md">
-          <TouchableOpacity
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              router.push('/scanner');
-            }}
-            style={{ backgroundColor: colors.primary }}
-            className="w-full p-5 flex-row items-center justify-between active:opacity-90"
-            activeOpacity={0.9}
-          >
-            <View className="flex-row items-center gap-4">
-              <View className="p-3 bg-white/10 rounded-xl">
-                <ScanBarcode size={24} color="white" />
-              </View>
-              <View>
-                <Text className="text-white text-base font-black leading-tight">Scan Packaged Food</Text>
-                <Text className="text-white/70 text-xs mt-1">Reveal ingredients & processing level</Text>
-              </View>
-            </View>
-            <View className="p-2 bg-white/10 rounded-full">
-              <ArrowRight size={16} color="white" />
-            </View>
-          </TouchableOpacity>
-        </View>
+
 
         {/* Your Basket Section */}
         <View className="mb-8">
