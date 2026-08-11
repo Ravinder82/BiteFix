@@ -8,7 +8,6 @@ interface AppState {
   onboardingComplete: boolean;
   theme: 'light' | 'dark' | 'system';
   sugarUnit: 'g' | 'oz';
-  scans: ScanHistoryItem[];
   collection: CollectionItem[];
   userName?: string;
   userGoal?: 'ultra_processed' | 'nutri_score' | 'clean_swaps' | 'healthy_habits' | 'none';
@@ -37,46 +36,13 @@ interface AppState {
     userGoal?: 'ultra_processed' | 'nutri_score' | 'clean_swaps' | 'healthy_habits' | 'none';
   }) => void;
 
-  // Scan Actions
-  addScan: (
-    name: string,
-    sugarGrams: number,
-    brand?: string,
-    imageUrl?: string,
-    barcode?: string,
-    servingSize?: string,
-    calories?: number,
-    carbsGrams?: number,
-    fatGrams?: number,
-    proteinGrams?: number,
-    sugarPer100g?: number,
-    categoryTag?: string,
-    isDefaultServing?: boolean,
-    whoLimitServingPercent?: number,
-    whoLimitIdealServingPercent?: number,
-    ingredientsText?: string,
-    hasHiddenSugars?: boolean,
-    hiddenSugars?: string[],
-    hiddenSugarCount?: number,
-    novaClass?: NOVAClass,
-    additives?: AdditiveDetail[],
-    additiveCount?: number,
-    allergens?: string[],
-    nutriScore?: 'a' | 'b' | 'c' | 'd' | 'e',
-    biteFixScore?: number
-  ) => void;
-  deleteScan: (id: string) => void;
-  clearScans: () => void;
-
   // Collection Actions
   addToCollection: (item: ScanHistoryItem, category?: BiteFixCategory, notes?: string) => void;
   removeFromCollection: (id: string) => void;
   toggleFavoriteCollectionItem: (id: string) => void;
   clearCollection: () => void;
 
-  // Global Actions
   clearAllData: () => void;
-  pruneExpiredScans: () => void;
 }
 
 const SUGAR_CONVERSION_GRAMS_PER_TEASPOON = 4.2; // 1 teaspoon = 4.2 grams of sugar
@@ -105,17 +71,6 @@ function normalizePersistedState(persistedState: unknown, version: number): Part
   if (version < 3) {
     state.collection = [];
   }
-  if (version < 4 && Array.isArray(state.scans)) {
-    state.scans = state.scans.map((scan: any) => ({
-      ...scan,
-      novaClass: scan.novaClass ?? undefined,
-      additives: scan.additives ?? [],
-      additiveCount: scan.additiveCount ?? 0,
-      allergens: scan.allergens ?? [],
-      nutriScore: scan.nutriScore ?? undefined,
-      biteFixScore: scan.biteFixScore ?? 50,
-    }));
-  }
   if (version < 5) {
     state.allergenFilters = state.allergenFilters ?? [];
     state.strictNovaAlert = state.strictNovaAlert ?? true;
@@ -127,7 +82,6 @@ function normalizePersistedState(persistedState: unknown, version: number): Part
     onboardingComplete: typeof state.onboardingComplete === 'boolean' ? state.onboardingComplete : false,
     theme: THEMES.includes(state.theme) ? state.theme : 'light',
     sugarUnit: SUGAR_UNITS.includes(state.sugarUnit) ? state.sugarUnit : 'g',
-    scans: normalizeObjectArray<ScanHistoryItem>(state.scans),
     collection: normalizeObjectArray<CollectionItem>(state.collection),
     userName: typeof state.userName === 'string' ? state.userName : undefined,
     userGoal: USER_GOALS.includes(state.userGoal) ? state.userGoal : 'none',
@@ -146,7 +100,6 @@ export const useAppStore = create<AppState>()(
       onboardingComplete: false,
       theme: 'light',
       sugarUnit: 'g',
-      scans: [],
       collection: [],
       userName: undefined,
       userGoal: 'none',
@@ -184,7 +137,6 @@ export const useAppStore = create<AppState>()(
           isPremium: false,
           freeScansUsed: 0,
           trialStarted: false,
-          scans: [],
           collection: [],
           onboardingComplete: false,
         });
@@ -204,88 +156,6 @@ export const useAppStore = create<AppState>()(
         userName: profile.userName !== undefined ? profile.userName : state.userName,
         userGoal: profile.userGoal !== undefined ? profile.userGoal : state.userGoal,
       })),
-
-      addScan: (
-        name,
-        sugarGrams,
-        brand,
-        imageUrl,
-        barcode,
-        servingSize,
-        calories,
-        carbsGrams,
-        fatGrams,
-        proteinGrams,
-        sugarPer100g,
-        categoryTag,
-        isDefaultServing,
-        whoLimitServingPercent,
-        whoLimitIdealServingPercent,
-        ingredientsText,
-        hasHiddenSugars,
-        hiddenSugars,
-        hiddenSugarCount,
-        novaClass,
-        additives,
-        additiveCount,
-        allergens,
-        nutriScore,
-        biteFixScore
-      ) => set((state) => {
-        const timestamp = Date.now();
-        const sugarTeaspoons = sugarGrams / SUGAR_CONVERSION_GRAMS_PER_TEASPOON;
-
-        const calculatedWhoServing = whoLimitServingPercent ?? Math.min(500, Math.round((sugarTeaspoons / 12) * 100));
-        const calculatedWhoIdeal = whoLimitIdealServingPercent ?? Math.min(500, Math.round((sugarTeaspoons / 6) * 100));
-
-        const newScan: ScanHistoryItem = {
-          id: `${timestamp}-${Math.random().toString(36).substr(2, 9)}`,
-          name: name || 'Unknown Product',
-          brand: brand || 'Generic Brand',
-          sugarGrams,
-          sugarTeaspoons: parseFloat(sugarTeaspoons.toFixed(1)),
-          timestamp,
-          imageUrl,
-          barcode,
-          servingSize,
-          calories,
-          carbsGrams,
-          fatGrams,
-          proteinGrams,
-          sugarPer100g,
-          categoryTag,
-          isDefaultServing,
-          whoLimitServingPercent: calculatedWhoServing,
-          whoLimitIdealServingPercent: calculatedWhoIdeal,
-          ingredientsText,
-          hasHiddenSugars,
-          hiddenSugars,
-          hiddenSugarCount,
-          novaClass,
-          additives,
-          additiveCount,
-          allergens,
-          nutriScore,
-          biteFixScore,
-        };
-        const cutoff = Date.now() - THIRTY_DAYS_MS;
-        const validExistingScans = state.scans.filter((scan) => scan.timestamp >= cutoff);
-        const scans = [newScan, ...validExistingScans];
-        return { scans };
-      }),
-
-      pruneExpiredScans: () => set((state) => {
-        const cutoff = Date.now() - THIRTY_DAYS_MS;
-        const freshScans = state.scans.filter((scan) => scan.timestamp >= cutoff);
-        if (freshScans.length === state.scans.length) return state;
-        return { scans: freshScans };
-      }),
-
-      deleteScan: (id) => set((state) => ({
-        scans: state.scans.filter((scan) => scan.id !== id),
-      })),
-
-      clearScans: () => set({ scans: [], collection: [] }),
 
       addToCollection: (item, category, notes) => set((state) => {
         // Prevent duplicates by ID or barcode/name
@@ -319,7 +189,6 @@ export const useAppStore = create<AppState>()(
         onboardingComplete: false,
         theme: 'light',
         sugarUnit: 'g',
-        scans: [],
         collection: [],
         userName: undefined,
         userGoal: 'none',

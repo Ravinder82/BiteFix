@@ -1,18 +1,19 @@
 import React, { useEffect } from 'react';
 import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
-import { Tabs, Redirect } from 'expo-router';
+import { Tabs, Redirect, usePathname, router } from 'expo-router';
 import { useTheme } from '../../hooks/useTheme';
 import { useAppStore } from '../../stores/appStore';
-import { Home, ScanBarcode, Settings, Clock } from 'lucide-react-native';
+import { Home, ScanBarcode, Settings } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
 // Custom Floating Center Button for Scanner Tab
 function FloatingScannerButton({ onPress, accessibilityState }: any) {
   const { colors, isDark } = useTheme();
   const isSelected = accessibilityState?.selected;
+  const pathname = usePathname();
+  const isScanner = pathname === '/scanner';
 
   const scale = useSharedValue(1);
 
@@ -32,7 +33,11 @@ function FloatingScannerButton({ onPress, accessibilityState }: any) {
       <TouchableOpacity
         onPress={(e) => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          onPress?.(e);
+          if (isScanner) {
+            router.push('/');
+          } else {
+            onPress?.(e);
+          }
         }}
         activeOpacity={0.85}
         style={{
@@ -59,7 +64,7 @@ function FloatingScannerButton({ onPress, accessibilityState }: any) {
               alignItems: 'center',
             }}
           >
-            <ScanBarcode size={24} color="white" />
+            {isScanner ? <Home size={24} color="white" /> : <ScanBarcode size={24} color="white" />}
           </LinearGradient>
         </Animated.View>
       </TouchableOpacity>
@@ -99,37 +104,6 @@ export default function TabLayout() {
           paddingBottom: 0, // Fixes iOS safe area pushing content up
           paddingTop: 0,
         },
-        tabBarBackground: () => (
-          <View
-            style={{
-              ...StyleSheet.absoluteFillObject,
-              borderRadius: 38,
-              backgroundColor: 'transparent',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 10 },
-              shadowOpacity: isDark ? 0.35 : 0.06,
-              shadowRadius: 16,
-              elevation: 8,
-            }}
-          >
-            <View
-              style={{
-                flex: 1,
-                borderRadius: 38,
-                overflow: 'hidden',
-                borderWidth: 1.5,
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.05)',
-                backgroundColor: isDark ? 'rgba(10, 10, 10, 0.6)' : 'rgba(255, 255, 255, 0.75)',
-              }}
-            >
-              <BlurView
-                tint={isDark ? "dark" : "light"}
-                intensity={isDark ? 65 : 85}
-                style={StyleSheet.absoluteFill}
-              />
-            </View>
-          </View>
-        ),
         tabBarLabelStyle: {
           fontSize: 10,
           fontWeight: '800',
@@ -148,6 +122,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: '',
+          href: null,
           tabBarIcon: ({ color, focused }) => (
             <Home
               size={30}
@@ -167,23 +142,6 @@ export default function TabLayout() {
           title: 'Scanner',
           tabBarLabel: () => null,
           tabBarButton: (props) => <FloatingScannerButton {...props} />,
-        }}
-        listeners={{
-          tabPress: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light),
-        }}
-      />
-      <Tabs.Screen
-        name="history"
-        options={{
-          title: '',
-          tabBarIcon: ({ color, focused }) => (
-            <Clock
-              size={30}
-              color={color}
-              strokeWidth={focused ? 2.5 : 2}
-              fill={focused ? `${color}15` : 'transparent'}
-            />
-          ),
         }}
         listeners={{
           tabPress: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light),

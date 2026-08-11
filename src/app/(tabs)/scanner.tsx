@@ -90,7 +90,7 @@ const PRODUCT_BARCODE_TYPES = ['qr', 'upc_a', 'upc_e', 'ean13', 'ean8', 'code128
 // ─────────────────────────────────────────────────────────
 export default function ScannerScreen() {
   const { colors, isDark } = useTheme();
-  const { addScan, sugarUnit, addToCollection, collection, isPremium, freeScansUsed, incrementFreeScans } = useAppStore();
+  const { sugarUnit, addToCollection, collection, isPremium, freeScansUsed, incrementFreeScans } = useAppStore();
 
   // Camera permission hook from expo-camera
   const [permission, requestPermission] = useCameraPermissions();
@@ -301,33 +301,6 @@ export default function ScannerScreen() {
       if (!isCurrentLookup()) return;
 
       if (result) {
-        addScan(
-          result.name,
-          result.sugarGrams ?? 0,
-          result.brand,
-          result.imageUrl,
-          data,
-          result.servingSize,
-          result.calories,
-          result.carbsGrams,
-          result.fatGrams,
-          result.proteinGrams,
-          result.sugarPer100g,
-          result.categoryTag,
-          result.isDefaultServing,
-          result.whoLimitServingPercent,
-          result.whoLimitIdealServingPercent,
-          result.ingredientsText,
-          result.hasHiddenSugars,
-          result.hiddenSugars,
-          result.hiddenSugarCount,
-          result.novaClass,
-          result.additives,
-          result.additiveCount,
-          result.allergens,
-          result.nutriScore,
-          result.biteFixScore
-        );
 
         if (!isPremium) {
           incrementFreeScans();
@@ -376,7 +349,7 @@ export default function ScannerScreen() {
         scanCooldownTimerRef.current = null;
       }, SCAN_COOLDOWN_MS);
     }
-  }, [addScan]);
+  }, []);
 
 
 
@@ -556,19 +529,7 @@ export default function ScannerScreen() {
           <SafeAreaView
             style={{ position: 'absolute', top: 0, left: 0, right: 0, paddingTop: Platform.OS === 'android' ? 12 : 0 }}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 12 }}>
-              <TouchableOpacity
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.replace('/');
-                }}
-                style={{ borderRadius: 99, overflow: 'hidden' }}
-                activeOpacity={0.85}
-              >
-                <BlurView intensity={60} tint="dark" style={{ padding: 10, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.25)', borderRadius: 99 }}>
-                  <ArrowLeft size={20} color="#fff" />
-                </BlurView>
-              </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', paddingHorizontal: 20, paddingTop: 12 }}>
 
               {/* Free Scans Counter Pill */}
               {!isPremium && (

@@ -12,7 +12,7 @@ import Constants from 'expo-constants';
 export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   const { colors, theme, toggleTheme, isDark } = useTheme();
   const { 
-    sugarUnit, setSugarUnit, clearScans, clearCollection, clearAllData,
+    sugarUnit, setSugarUnit, clearCollection, clearAllData,
     allergenFilters, toggleAllergenFilter, strictNovaAlert, setStrictNovaAlert, stealthAdditivesAlert, setStealthAdditivesAlert, isPremium 
   } = useAppStore();
 
@@ -103,9 +103,8 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
           style: 'destructive',
           onPress: () => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-            clearScans();
             clearCollection();
-            Alert.alert('Data Cleared', 'Your scan history and home screen data have been successfully cleared.');
+            Alert.alert('Data Cleared', 'Your home screen data has been successfully cleared.');
           },
         },
       ]

@@ -194,7 +194,7 @@ function SavedItemRow({ item, colors, isDark, onPress, onDelete }: { item: Colle
 
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
-  const { scans, collection, removeFromCollection, userName, sugarUnit } = useAppStore();
+  const { collection, removeFromCollection, userName, sugarUnit } = useAppStore();
   const [selectedSavedItem, setSelectedSavedItem] = useState<CollectionItem | null>(null);
   const panY = useRef(new Animated.Value(0)).current;
 
@@ -238,47 +238,7 @@ export default function HomeScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const floatAnim = useRef(new Animated.Value(0)).current;
 
-  const latestScan = scans[0];
-  const shineX = useSharedValue(-220);
 
-  useEffect(() => {
-    shineX.value = withRepeat(
-      withSequence(
-        withTiming(450, { duration: 1600, easing: Easing.linear }),
-        withDelay(2200, withTiming(-220, { duration: 0 }))
-      ),
-      -1,
-      false
-    );
-  }, []);
-
-
-
-  // --- Bento Grid Logic ---
-  const getLatestActiveScans = () => {
-    if (scans.length === 0) {
-      return { dateStr: 'Today', items: [], isEmpty: true };
-    }
-
-    const todayStr = new Date().toDateString();
-    const todayScans = scans.filter(scan => new Date(scan.timestamp).toDateString() === todayStr);
-
-    if (todayScans.length > 0) {
-      return { dateStr: 'Today', items: todayScans, isEmpty: false };
-    }
-
-    // Fallback: Find the most recent date in history that has scans
-    const sortedScansByTime = [...scans].sort((a, b) => b.timestamp - a.timestamp);
-    const latestScanDateStr = new Date(sortedScansByTime[0].timestamp).toDateString();
-    const latestScans = scans.filter(scan => new Date(scan.timestamp).toDateString() === latestScanDateStr);
-
-    const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
-    const dateFormatted = new Date(sortedScansByTime[0].timestamp).toLocaleDateString(undefined, options);
-
-    return { dateStr: dateFormatted, items: latestScans, isEmpty: false };
-  };
-
-  const activeDayInfo = getLatestActiveScans();
 
   // Helper function to calculate Gut Health Score for an item (0-100 scale)
   const getGutHealthScore = (item: any): number => {
@@ -313,21 +273,19 @@ export default function HomeScreen() {
   // Algorithmic Overall Average for Your Basket
   const avgBiteFixScore = basketItemCount > 0
     ? Math.round(collection.reduce((sum, item) => sum + (item.biteFixScore ?? 50), 0) / basketItemCount)
-    : (scans.length > 0 ? (scans[0].biteFixScore ?? 50) : 0);
+    : 0;
 
   const avgGutHealthScore = basketItemCount > 0
     ? Math.round(collection.reduce((sum, item) => sum + getGutHealthScore(item), 0) / basketItemCount)
-    : (scans.length > 0 ? getGutHealthScore(scans[0]) : 100);
+    : 100;
 
   const latestNovaClass = basketItemCount > 0
     ? collection[0].novaClass
-    : (scans.length > 0 ? scans[0].novaClass : undefined);
-
-  const mostRecentScan = basketItemCount > 0 ? collection[0] : (scans.length > 0 ? scans[0] : null);
+    : undefined;
 
   const getAvgNutriScore = (): 'a' | 'b' | 'c' | 'd' | 'e' | undefined => {
     if (basketItemCount === 0) {
-      return scans.length > 0 && scans[0].nutriScore ? scans[0].nutriScore : undefined;
+      return undefined;
     }
     const scoreMap = { a: 1, b: 2, c: 3, d: 4, e: 5 };
     const revMap = { 1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e' } as const;
@@ -351,11 +309,11 @@ export default function HomeScreen() {
     return collection.reduce((acc, item) => acc + (item.sugarTeaspoons || 0), 0);
   }, [collection, basketItemCount]);
 
-  const scoreColor = basketItemCount === 0 && scans.length === 0
+  const scoreColor = basketItemCount === 0
     ? '#D1D5DB'
     : getBiteFixScoreColor(avgBiteFixScore, latestNovaClass);
   const getLighterScoreColor = () => {
-    if (basketItemCount === 0 && scans.length === 0) return '#E5E7EB';
+    if (basketItemCount === 0) return '#E5E7EB';
     if (avgBiteFixScore >= 76) return '#4ADE80';
     if (avgBiteFixScore >= 51) return '#2DD4BF';
     if (avgBiteFixScore >= 26) return '#FBBF24';
@@ -363,45 +321,7 @@ export default function HomeScreen() {
   };
   const lighterScoreColor = getLighterScoreColor();
 
-  const getSmartSwapSuggestion = () => {
-    if (scans.length === 0 || collection.length === 0) {
-      return null;
-    }
 
-    const sortedScans = [...scans].sort((a, b) => b.timestamp - a.timestamp);
-
-    for (const scan of sortedScans) {
-      const scanScore = scan.biteFixScore ?? 50;
-      if (scanScore < 60) {
-        const scanCategory = mapToBiteFixCategory(scan.name, scan.brand, scan.categoryTag);
-
-        const matchingCollectionItem = collection.find(item => {
-          const itemCategory = item.biteFixCategory || mapToBiteFixCategory(item.name, item.brand, item.categoryTag);
-          return itemCategory === scanCategory && (item.biteFixScore ?? 50) >= 75;
-        });
-
-        if (matchingCollectionItem) {
-          return {
-            unhealthy: scan,
-            healthy: matchingCollectionItem,
-            type: 'category-match' as const
-          };
-        }
-      }
-    }
-
-    const sortedCollection = [...collection].sort((a, b) => (b.biteFixScore ?? 0) - (a.biteFixScore ?? 0));
-    if (sortedCollection.length > 0 && (sortedCollection[0].biteFixScore ?? 0) >= 75) {
-      return {
-        healthy: sortedCollection[0],
-        type: 'general-recommendation' as const
-      };
-    }
-
-    return null;
-  };
-
-  const swapSuggestion = getSmartSwapSuggestion();
 
   const mascotState = basketItemCount === 0
     ? 'idle'
@@ -541,7 +461,7 @@ export default function HomeScreen() {
                     strokeLinecap="round"
                     strokeDasharray="301.6"
                     strokeDashoffset={
-                      basketItemCount === 0 && scans.length === 0
+                      basketItemCount === 0
                         ? 301.6
                         : 301.6 * (1 - Math.max(5, avgBiteFixScore) / 100)
                     }
@@ -950,30 +870,6 @@ export default function HomeScreen() {
               <ArrowRight size={16} color="white" />
             </View>
           </TouchableOpacity>
-
-          {/* Animated Shine Overlay */}
-          <AnimatedReanimated.View
-            style={[
-              {
-                position: 'absolute',
-                top: 0,
-                bottom: 0,
-                width: 140,
-                opacity: 0.22,
-              },
-              useAnimatedStyle(() => ({
-                transform: [{ translateX: shineX.value }, { skewX: '-20deg' }],
-              })),
-            ]}
-            pointerEvents="none"
-          >
-            <LinearGradient
-              colors={['transparent', 'rgba(255, 255, 255, 0.45)', 'transparent']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={{ flex: 1 }}
-            />
-          </AnimatedReanimated.View>
         </View>
 
         {/* Your Basket Section */}
