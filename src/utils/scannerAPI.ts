@@ -2008,6 +2008,43 @@ export function deduceFunctionalArchetype(name: string, brand: string, categoryT
 }
 
 /**
+ * Dynamic Core Noun Extraction
+ * Cleans up a product name (e.g. "Britannia Bourbon Chocolate Biscuit") to extract the core product type ("biscuit").
+ */
+export function extractCoreNoun(name: string): string {
+  const n = name.toLowerCase();
+  
+  // Try to match specific known product types
+  const types = [
+    'biscuit', 'cookie', 'soda', 'juice', 'cola', 'water', 'chip', 'crisp', 'cracker',
+    'bread', 'noodle', 'ramen', 'pasta', 'yogurt', 'milk', 'chocolate', 'candy',
+    'bar', 'cereal', 'ice cream', 'sauce', 'spread', 'butter', 'mayo', 'ketchup'
+  ];
+  
+  for (const t of types) {
+    if (n.includes(t)) {
+      return t;
+    }
+  }
+  
+  // If no known type, just use the last word (often the noun in English)
+  const words = n.replace(/[^a-z0-9 ]/g, '').split(' ').filter(w => w.length > 2);
+  return words.length > 0 ? words[words.length - 1] : name;
+}
+
+/**
+ * Checks if a product is liquid based on quantity strings and categories.
+ */
+export function isProductLiquid(quantityStr?: string, categoryStr?: string): boolean {
+  const q = String(quantityStr || '').toLowerCase();
+  const c = String(categoryStr || '').toLowerCase();
+  
+  return q.includes('ml') || q.includes(' l') || q.includes('cl') || q.includes('fl oz') ||
+    c.includes('beverage') || c.includes('drink') || c.includes('juice') || 
+    c.includes('soda') || c.includes('water') || c.includes('milk');
+}
+
+/**
  * Computes an advanced Superiority Index for ranking candidate alternatives against an unhealthy original.
  * Rewards major step-downs in NOVA classification, elimination of sugar, purging of chemical additives,
  * absence of stealth sugars, and strong commercial brand presence.
@@ -2073,44 +2110,15 @@ export async function lookupAlternatives(
     const origAdditives = original.additiveCount ?? (original.additives?.length || 99);
     const origElevated = (original.additives || []).filter(a => a.riskLevel === 'elevated').length;
 
-    // ── STEP 1: Semantic Archetype Deduction ──
-    const { archetype, searchKeywords } = deduceFunctionalArchetype(origName, origBrand, categoryTag || original.categoryTag);
-
-    // ── CRITICAL GATE: If we cannot match a sensible archetype, do NOT suggest cross-category foods.
-    // Return empty — the UI will show "No substitute found" gracefully instead of confusing the user.
-    if (archetype === 'no_match') {
-      return [];
-    }
-
-    // ── STEP 2: Collect Gold-Standard Curated Branded Benchmarks for this Archetype ──
-    const candidatePool = new Map<string, ScanResultData>();
-    const curatedSwaps = BRANDED_HEALTHY_SWAPS_CATALOG[archetype] || [];
-
-    for (const item of curatedSwaps) {
-      // Ensure we don't suggest the exact item currently being scanned
-      if (item.name.toLowerCase() !== origName.toLowerCase() && item.brand?.toLowerCase() !== origBrand.toLowerCase()) {
-        const key = `${item.name.toLowerCase()}:::${item.brand?.toLowerCase()}`;
-        candidatePool.set(key, item);
-      }
-    }
+    // ── STEP 1: Dynamic Name Extraction & Solid/Liquid Enforcement ──
+    const coreNoun = extractCoreNoun(origName);
+    const originalQuantityStr = original.servingSize || '';
+    const isOriginalLiquid = isProductLiquid(originalQuantityStr, categoryTag || original.categoryTag);
 
     const candidates: { product: ScanResultData; superiorityScore: number }[] = [];
+    const candidatePool = new Map<string, ScanResultData>();
 
-    // Populate candidates with curated benchmarks immediately so they are prioritized
-    for (const item of candidatePool.values()) {
-      const score = computeSuperiorityIndex({
-        name: origName,
-        brand: origBrand,
-        sugarPer100g: origSugar,
-        novaClass: origNova,
-        additiveCount: origAdditives,
-        additives: (original.additives || []) as any,
-        biteFixScore: original.biteFixScore ?? 40
-      }, item);
-      candidates.push({ product: item, superiorityScore: score + 100 }); // +100 boost for gold-standard curated benchmark
-    }
-
-    // ── STEP 3: Multi-Strategy Dynamic OpenFoodFacts Queries ──
+    // ── STEP 2: Multi-Strategy Dynamic OpenFoodFacts Queries ──
     const offCandidates: any[] = [];
 
     // Strategy A: Query by specific Category Tag sorted by popularity/scan volume
@@ -2128,16 +2136,16 @@ export async function lookupAlternatives(
           }
         }
       } catch (e) {
-        if (isAbortError(e)) return candidates.map(c => c.product);
+        if (isAbortError(e)) return [];
         console.warn('OFF Strategy A (Category search) failed:', e);
       }
     }
 
-    // Strategy B: Query by Semantic Keywords to discover high-quality branded alternatives
-    if (!signal.aborted && searchKeywords) {
+    // Strategy B: Query by extracted Core Noun
+    if (!signal.aborted && coreNoun && coreNoun !== 'Scanned Item') {
       try {
         const resB = await fetchWithTimeout(
-          `https://world.openfoodfacts.org/api/v3/search?search_terms=${encodeURIComponent(searchKeywords)}&sort_by=unique_scans_n&page_size=30`,
+          `https://world.openfoodfacts.org/api/v3/search?search_terms=${encodeURIComponent(coreNoun)}&sort_by=unique_scans_n&page_size=30`,
           API_TIMEOUT_MS,
           signal
         );
@@ -2148,12 +2156,12 @@ export async function lookupAlternatives(
           }
         }
       } catch (e) {
-        if (isAbortError(e)) return candidates.map(c => c.product);
-        console.warn('OFF Strategy B (Keyword search) failed:', e);
+        if (isAbortError(e)) return [];
+        console.warn('OFF Strategy B (Core Noun search) failed:', e);
       }
     }
 
-    // ── STEP 4: Process and Sanitize Dynamic OpenFoodFacts Candidates ──
+    // ── STEP 3: Process and Sanitize Dynamic OpenFoodFacts Candidates ──
     for (const p of offCandidates) {
       if (!p || typeof p !== 'object') continue;
       const name = extractUniversalName(p);
@@ -2182,8 +2190,13 @@ export async function lookupAlternatives(
 
       const rawQuantityStr = String(p.quantity || '').toLowerCase();
       const rawCategoryStr = String((Array.isArray(p.categories_tags) ? p.categories_tags.join(' ') : p.categories) || '').toLowerCase();
-      const isLiquid = rawQuantityStr.includes('ml') || rawQuantityStr.includes(' l') || rawQuantityStr.includes('cl') || rawQuantityStr.includes('fl oz') ||
-        rawCategoryStr.includes('beverage') || rawCategoryStr.includes('drink') || rawCategoryStr.includes('juice') || rawCategoryStr.includes('soda') || rawCategoryStr.includes('water') || rawCategoryStr.includes('milk');
+      const isLiquid = isProductLiquid(rawQuantityStr, rawCategoryStr);
+      
+      // Strict State Enforcement: Do not swap a liquid for a solid, or a solid for a liquid.
+      if (isOriginalLiquid !== isLiquid) {
+        continue;
+      }
+
       const defaultUnitLabel = isLiquid ? '100 ml' : '100 g';
 
       let servingSugarGrams = extractNumberFromKeys(n, ['sugars_serving', 'sugars-total_serving', 'added-sugars_serving']);
