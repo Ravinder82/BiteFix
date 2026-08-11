@@ -87,7 +87,7 @@ function SavedItemRow({ item, colors, isDark, onPress, onDelete }: { item: Colle
             onError={() => setImageError(true)}
           />
         ) : (
-          <ScanBarcode size={20} color={colors.primary} />
+          <Mascot state="idle" size={36} />
         )}
       </View>
 
