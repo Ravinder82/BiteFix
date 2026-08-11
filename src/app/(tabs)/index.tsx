@@ -137,6 +137,19 @@ function SavedItemRow({ item, colors, isDark, onPress, onDelete }: { item: Colle
           }}>
             {item.novaClass ? `NOVA ${item.novaClass}` : 'Unclassified'}
           </Text>
+          {item.nutriScore && (
+            <>
+              <Text style={{ color: colors.textMuted, fontSize: 8 }}>•</Text>
+              <Text style={{ 
+                color: item.nutriScore === 'a' ? '#038141' : item.nutriScore === 'b' ? '#85BB2F' : item.nutriScore === 'c' ? '#FECB02' : item.nutriScore === 'd' ? '#EE8100' : '#E63E11',
+                fontSize: 8, 
+                fontWeight: '900', 
+                textTransform: 'uppercase' 
+              }}>
+                NUTRI-SCORE {item.nutriScore}
+              </Text>
+            </>
+          )}
           {(item.additiveCount ?? 0) > 0 && (
             <>
               <Text style={{ color: colors.textMuted, fontSize: 8 }}>•</Text>
