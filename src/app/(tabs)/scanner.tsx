@@ -728,8 +728,8 @@ export default function ScannerScreen() {
                     }}
                     disabled={isAlreadySaved}
                     style={{
-                      flex: 1,
-                      backgroundColor: isAlreadySaved ? `${colors.primary}15` : isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
+                      flex: 1.4,
+                      backgroundColor: isAlreadySaved ? `${colors.primary}15` : colors.primary,
                       borderWidth: 1.5,
                       borderColor: colors.primary,
                       paddingVertical: 14,
@@ -739,16 +739,16 @@ export default function ScannerScreen() {
                       flexDirection: 'row',
                       gap: 8,
                       shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.05,
-                      shadowRadius: 4,
-                      elevation: 1,
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: isAlreadySaved ? 0.05 : 0.15,
+                      shadowRadius: 8,
+                      elevation: isAlreadySaved ? 1 : 3,
                     }}
                     activeOpacity={0.8}
                   >
-                    <Bookmark size={16} color={colors.primary} fill={isAlreadySaved ? colors.primary : 'transparent'} />
-                    <Text style={{ color: colors.primary, fontWeight: '800', fontSize: 13 }}>
-                      {isAlreadySaved ? 'Saved' : 'Save'}
+                    <Bookmark size={16} color={isAlreadySaved ? colors.primary : '#FFFFFF'} fill={isAlreadySaved ? colors.primary : 'transparent'} />
+                    <Text style={{ color: isAlreadySaved ? colors.primary : '#FFFFFF', fontWeight: '900', fontSize: 12.5 }}>
+                      {isAlreadySaved ? 'Added to Basket' : 'Add it to your Basket'}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -759,8 +759,10 @@ export default function ScannerScreen() {
                 onPress={handleFindAlternatives}
                 disabled={loadingAlternatives}
                 style={{
-                  flex: 1.2,
-                  backgroundColor: colors.primary,
+                  flex: 1,
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
+                  borderWidth: 1.5,
+                  borderColor: colors.primary,
                   paddingVertical: 14,
                   borderRadius: 16,
                   alignItems: 'center',
@@ -768,19 +770,19 @@ export default function ScannerScreen() {
                   flexDirection: 'row',
                   gap: 8,
                   shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.15,
-                  shadowRadius: 8,
-                  elevation: 3,
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 4,
+                  elevation: 1,
                 }}
                 activeOpacity={0.9}
               >
                 {loadingAlternatives ? (
-                  <ActivityIndicator size="small" color="#ffffff" />
+                  <ActivityIndicator size="small" color={colors.primary} />
                 ) : (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#ffffff' }} />
-                    <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 13 }}>
+                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primary }} />
+                    <Text style={{ color: colors.primary, fontWeight: '800', fontSize: 13 }}>
                       Find Clean Swap
                     </Text>
                   </View>
@@ -1128,22 +1130,24 @@ export default function ScannerScreen() {
                               setShowAlternatives(false);
                             }}
                             style={{
-                              flex: 1.3,
+                              flex: 1.6,
                               paddingVertical: 15,
                               borderRadius: 16,
-                              backgroundColor: colors.primary,
+                              backgroundColor: isAltSaved ? `${colors.primary}15` : colors.primary,
+                              borderWidth: 1.5,
+                              borderColor: colors.primary,
                               alignItems: 'center',
                               justifyContent: 'center',
                               shadowColor: colors.primary,
                               shadowOffset: { width: 0, height: 4 },
-                              shadowOpacity: 0.25,
+                              shadowOpacity: isAltSaved ? 0.05 : 0.25,
                               shadowRadius: 10,
-                              elevation: 4,
+                              elevation: isAltSaved ? 1 : 4,
                             }}
                             activeOpacity={0.85}
                           >
-                            <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 13, letterSpacing: 0.3 }}>
-                              {isAltSaved ? 'Already Saved' : 'Save Swapped Choice'}
+                            <Text style={{ color: isAltSaved ? colors.primary : '#FFFFFF', fontWeight: '900', fontSize: 13, letterSpacing: 0.3 }}>
+                              {isAltSaved ? 'Already in Basket' : 'Add it to your Basket'}
                             </Text>
                           </TouchableOpacity>
                         </View>
