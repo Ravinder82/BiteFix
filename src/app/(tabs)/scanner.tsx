@@ -19,6 +19,7 @@ import {
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { useIsFocused } from '@react-navigation/native';
 import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
 
@@ -48,6 +49,7 @@ import {
   parseQuantityString,
   API_TIMEOUT_MS
 } from '../../utils/scannerAPI';
+import { analyzeImageWithVision } from '../../utils/visionAPI';
 
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
@@ -351,7 +353,46 @@ export default function ScannerScreen() {
     }
   }, []);
 
+  const handleVisionScan = async () => {
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 0.5,
+        base64: true,
+      });
 
+      if (!result.canceled && result.assets[0].base64) {
+        setMode('camera'); // Switch back to loading mode
+        setLoading(true);
+        setErrorMsg(null);
+        
+        // Creative loading sequence
+        setLoadingText('Scanning packaging details...');
+        setTimeout(() => { if (loadingRef.current) setLoadingText('Analyzing chemical additives...'); }, 2000);
+        setTimeout(() => { if (loadingRef.current) setLoadingText('Calculating health metrics...'); }, 4000);
+
+        loadingRef.current = true;
+        
+        const visionResult = await analyzeImageWithVision(result.assets[0].base64);
+        
+        if (visionResult) {
+          setScanResult(visionResult);
+          setMode('result');
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+      }
+    } catch (error) {
+      console.error('Vision Scan Error:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setErrorMsg('Failed to analyze image. Please try again or ensure your Vercel Proxy is running.');
+      setMode('not-found');
+    } finally {
+      loadingRef.current = false;
+      setLoading(false);
+      setLoadingText('Analyzing...');
+    }
+  };
 
 
 
@@ -609,12 +650,12 @@ export default function ScannerScreen() {
               Product Not Found!
             </Text>
             <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginTop: 12, lineHeight: 22, paddingHorizontal: 24 }}>
-              We couldn't find this barcode in our database. Please try scanning a different food product.
+              We couldn't find this barcode in our database. Take a photo of the front and ingredients label to scan it with AI!
             </Text>
           </View>
 
           <TouchableOpacity
-            onPress={resetScanner}
+            onPress={handleVisionScan}
             style={{
               backgroundColor: colors.primary,
               width: '100%',
@@ -627,10 +668,31 @@ export default function ScannerScreen() {
               shadowOpacity: 0.2,
               shadowRadius: 8,
               elevation: 4,
+              marginBottom: 16,
+              flexDirection: 'row',
+              gap: 10
             }}
             activeOpacity={0.9}
           >
-            <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 15 }}>Back to Scanner</Text>
+            <CameraIcon size={20} color="#ffffff" />
+            <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 16 }}>Scan Label with AI</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={resetScanner}
+            style={{
+              backgroundColor: 'transparent',
+              width: '100%',
+              paddingVertical: 18,
+              borderRadius: 20,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 2,
+              borderColor: colors.border
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={{ color: colors.textSecondary, fontWeight: '800', fontSize: 15 }}>Try another barcode</Text>
           </TouchableOpacity>
         </SafeAreaView>
       )}
