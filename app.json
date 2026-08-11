@@ -32,7 +32,6 @@
     },
     "plugins": [
       "expo-router",
-      "expo-iap",
       [
         "expo-camera",
         {
@@ -47,7 +46,8 @@
         "expo-build-properties",
         {
           "ios": {
-            "useFrameworks": "static"
+            "useFrameworks": "static",
+            "deploymentTarget": "16.0"
           }
         }
       ],

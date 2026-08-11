@@ -4,7 +4,7 @@ import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
-import { ChevronRight, ArrowLeft, ShieldAlert, HeartHandshake, Eye, Moon, Layers, RotateCcw, LogOut, ShieldCheck, Sparkles, CreditCard, Mail, MessageSquare, Info } from 'lucide-react-native';
+import { ChevronRight, ArrowLeft, ShieldAlert, HeartHandshake, Eye, Moon, Layers, RotateCcw, LogOut, ShieldCheck, Crown, CreditCard, Mail, MessageSquare, Info } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { getIapService } from '../../services/iapLoader';
 import Constants from 'expo-constants';
@@ -152,7 +152,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
             <>
               <SettingsRowItem
                 label="Upgrade to BiteFix Premium"
-                icon={<Sparkles size={16} color={colors.primary} />}
+                icon={<Crown size={16} color={colors.primary} />}
                 onPress={() => router.push('/paywall')}
                 colors={colors}
               />
@@ -304,7 +304,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
 
           <View style={{ backgroundColor: colors.surface }} className="flex-row items-center justify-between p-4">
             <View className="flex-row items-center gap-3 flex-1 mr-4">
-              <Sparkles size={16} color="#FF9500" />
+              <Crown size={16} color="#FF9500" />
               <View className="flex-1">
                 <Text style={{ color: colors.text }} className="font-bold text-sm">Additive & Sweetener Alerts</Text>
                 <Text style={{ color: colors.textMuted }} className="text-xs mt-0.5">Highlight artificial sweeteners and preservatives</Text>
@@ -459,7 +459,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
                     justifyContent: 'center',
                   }}
                 >
-                  <Sparkles size={20} color="#FFF" />
+                  <Crown size={20} color="#FFF" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: colors.text, fontSize: 15, fontWeight: '900', letterSpacing: -0.3 }}>

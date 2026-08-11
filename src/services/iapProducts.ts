@@ -1,3 +1,5 @@
+import type { PurchasesPackage } from 'react-native-purchases';
+
 export const PRODUCT_IDS = {
   MONTHLY: 'com.ravinderpoonia.bitefix.sub.monthly',
   ANNUAL: 'com.ravinderpoonia.bitefix.sub.yearly',
@@ -14,6 +16,7 @@ export interface IAPProduct {
   displayPrice: string;
   price: number;
   currency: string;
+  rcPackage?: PurchasesPackage;
 }
 
 export interface PurchaseResult {

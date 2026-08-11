@@ -37,7 +37,7 @@ import {
   RefreshCw,
   Search,
   X,
-  Sparkles,
+  Crown,
   ShieldAlert,
   Zap,
   Activity
@@ -57,7 +57,7 @@ const FEATURES = [
     subtitle: 'Decodes industrial food processing levels.',
   },
   {
-    icon: Sparkles,
+    icon: Crown,
     color: '#34C759',
     bg: 'rgba(52,199,89,0.08)',
     title: 'Nutri-Score Rating',
@@ -278,7 +278,7 @@ export default function PaywallScreen() {
             }}
           >
             <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>
-              Try It Free
+              Try For Free (5 Free Scans)
             </Text>
           </TouchableOpacity>
         )}
@@ -290,14 +290,19 @@ export default function PaywallScreen() {
           }}
           activeOpacity={0.88}
           style={{
-            backgroundColor: colors.text,
+            backgroundColor: colors.success,
             borderRadius: 24,
             paddingVertical: 18,
             alignItems: 'center',
+            shadowColor: colors.success,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.35,
+            shadowRadius: 16,
+            elevation: 8,
           }}
         >
-          <Text style={{ color: colors.background, fontSize: 16, fontWeight: '800' }}>
-            Unlock Unlimited Now
+          <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 0.6 }}>
+            Subscribe to Premium
           </Text>
         </TouchableOpacity>
       </View>

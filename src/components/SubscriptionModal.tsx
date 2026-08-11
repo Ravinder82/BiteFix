@@ -7,7 +7,8 @@ import {
   Platform,
   Alert,
   Linking,
-  StyleSheet
+  StyleSheet,
+  TouchableWithoutFeedback
 } from 'react-native';
 import { Text } from '@/components/Text';
 import { useTheme } from '../hooks/useTheme';
@@ -194,21 +195,21 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
       visible={visible}
       transparent
       animationType="slide"
-      onRequestClose={() => {
-        if (showCloseButton) onClose();
-      }}
+      onRequestClose={onClose}
     >
-      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
-        <View style={{
-          backgroundColor: colors.background,
-          borderTopLeftRadius: 32,
-          borderTopRightRadius: 32,
-          padding: 24,
-          paddingBottom: Platform.OS === 'ios' ? 40 : 24,
-          maxHeight: '90%',
-        }}>
-          {/* Grab Handle */}
-          <View style={{ alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border, marginBottom: 20 }} />
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
+          <TouchableWithoutFeedback>
+            <View style={{
+              backgroundColor: colors.background,
+              borderTopLeftRadius: 32,
+              borderTopRightRadius: 32,
+              padding: 24,
+              paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+              maxHeight: '90%',
+            }}>
+              {/* Grab Handle */}
+              <View style={{ alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border, marginBottom: 20 }} />
           
           {/* Modal Header */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
@@ -311,8 +312,10 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
               </TouchableOpacity>
             </View>
           </View>
+            </View>
+          </TouchableWithoutFeedback>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 }
