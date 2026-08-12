@@ -736,24 +736,6 @@ export default function ScannerScreen() {
               />
             </View>
 
-            {/* 2. Sugar & Energy Telemetry (Includes integrated WHO & Burn Down metrics) */}
-            <NutritionFacts
-              colors={colors}
-              productName={scanResult.name}
-              sugarGrams={scanResult.sugarGrams ?? scanResult.sugarPer100g ?? 0}
-              calories={scanResult.calories}
-              servingSize={formatWeight(scanResult.servingSize, sugarUnit) || '100 g / 100 ml'}
-              totalWeightGrams={scanResult.totalWeightGrams}
-              totalSugarGrams={scanResult.totalSugarGrams}
-              sugarPer100g={scanResult.sugarPer100g}
-              whoLimitServingPercent={scanResult.whoLimitServingPercent ?? (scanResult.sugarTeaspoons !== undefined ? Math.round((scanResult.sugarTeaspoons / 12) * 100) : undefined)}
-              isDefaultServing={scanResult.isDefaultServing}
-              hasHiddenSugars={scanResult.hasHiddenSugars}
-              hiddenSugars={scanResult.hiddenSugars}
-              hiddenSugarCount={scanResult.hiddenSugarCount}
-              nutriScore={scanResult.nutriScore}
-            />
-
             {/* NEW: Eco-Score & Dietary Metrics */}
             <EcoScoreCard 
               grade={scanResult.ecoscoreGrade}
@@ -783,6 +765,24 @@ export default function ScannerScreen() {
               additives={scanResult.additives ?? []}
               colors={colors}
               isDark={isDark}
+            />
+
+            {/* 2. Sugar & Energy Telemetry (Includes integrated WHO & Burn Down metrics) */}
+            <NutritionFacts
+              colors={colors}
+              productName={scanResult.name}
+              sugarGrams={scanResult.sugarGrams ?? scanResult.sugarPer100g ?? 0}
+              calories={scanResult.calories}
+              servingSize={formatWeight(scanResult.servingSize, sugarUnit) || '100 g / 100 ml'}
+              totalWeightGrams={scanResult.totalWeightGrams}
+              totalSugarGrams={scanResult.totalSugarGrams}
+              sugarPer100g={scanResult.sugarPer100g}
+              whoLimitServingPercent={scanResult.whoLimitServingPercent ?? (scanResult.sugarTeaspoons !== undefined ? Math.round((scanResult.sugarTeaspoons / 12) * 100) : undefined)}
+              isDefaultServing={scanResult.isDefaultServing}
+              hasHiddenSugars={scanResult.hasHiddenSugars}
+              hiddenSugars={scanResult.hiddenSugars}
+              hiddenSugarCount={scanResult.hiddenSugarCount}
+              nutriScore={scanResult.nutriScore}
             />
 
             {/* 3. Action Dock: Save & Scan Another */}

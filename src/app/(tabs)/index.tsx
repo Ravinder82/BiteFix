@@ -1165,7 +1165,38 @@ export default function HomeScreen() {
                   />
                 </View>
 
-                {/* 2. Sugar & Energy Telemetry */}
+                {/* 2. Eco-Score & Carbon Footprint Telemetry Card */}
+                <EcoScoreCard 
+                  grade={selectedSavedItem.ecoscoreGrade}
+                  carbonFootprint={selectedSavedItem.carbonFootprint100g}
+                  isOrganic={selectedSavedItem.isOrganic}
+                  isVegan={selectedSavedItem.isVegan}
+                  isVegetarian={selectedSavedItem.isVegetarian}
+                  delayIndex={3}
+                />
+
+                {/* 3. Gut Shield Pro Audit Card */}
+                {(() => {
+                  const additives: AdditiveDetail[] = selectedSavedItem.additives ?? [];
+                  const gut = evaluateGutHealth(additives);
+                  return (
+                    <GutShieldCard
+                      score={gut.score}
+                      insights={gut.insights}
+                      colors={colors}
+                      isDark={isDark}
+                    />
+                  );
+                })()}
+
+                {/* 4. Additive Detective Audit Card */}
+                <AdditiveDetectiveCard
+                  additives={selectedSavedItem.additives ?? []}
+                  colors={colors}
+                  isDark={isDark}
+                />
+
+                {/* 5. Sugar & Energy Telemetry */}
                 <NutritionFacts
                   colors={colors}
                   productName={selectedSavedItem.name}
@@ -1181,37 +1212,6 @@ export default function HomeScreen() {
                   hiddenSugars={selectedSavedItem.hiddenSugars}
                   hiddenSugarCount={selectedSavedItem.hiddenSugarCount}
                   nutriScore={selectedSavedItem.nutriScore}
-                />
-
-                {/* 3. Eco-Score & Carbon Footprint Telemetry Card */}
-                <EcoScoreCard 
-                  grade={selectedSavedItem.ecoscoreGrade}
-                  carbonFootprint={selectedSavedItem.carbonFootprint100g}
-                  isOrganic={selectedSavedItem.isOrganic}
-                  isVegan={selectedSavedItem.isVegan}
-                  isVegetarian={selectedSavedItem.isVegetarian}
-                  delayIndex={3}
-                />
-
-                {/* 4. Gut Shield Pro Audit Card */}
-                {(() => {
-                  const additives: AdditiveDetail[] = selectedSavedItem.additives ?? [];
-                  const gut = evaluateGutHealth(additives);
-                  return (
-                    <GutShieldCard
-                      score={gut.score}
-                      insights={gut.insights}
-                      colors={colors}
-                      isDark={isDark}
-                    />
-                  );
-                })()}
-
-                {/* 5. Additive Detective Audit Card */}
-                <AdditiveDetectiveCard
-                  additives={selectedSavedItem.additives ?? []}
-                  colors={colors}
-                  isDark={isDark}
                 />
 
                 {/* 3. Action Dock */}
