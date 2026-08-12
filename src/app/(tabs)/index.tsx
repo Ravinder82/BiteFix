@@ -10,7 +10,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
 import ProductHeroCardDashboard from '../../components/features/ProductHeroCardDashboard';
-import { ScanBarcode, ArrowRight, Settings, Bookmark, ArrowUpRight, Trash2, X, ShieldCheck, Leaf, ShieldAlert, CheckCircle, CloudRain, Globe } from 'lucide-react-native';
+import { ScanBarcode, ArrowRight, Settings, Bookmark, ArrowUpRight, Trash2, X, ShieldCheck, Leaf, ShieldAlert, CheckCircle, CloudRain, Globe, Flame, Activity, Bike, Waves, Footprints } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { getBiteFixScoreColor, formatWeight, getNovaColor } from '../../utils/format';
 import Svg, { Circle, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop, G } from 'react-native-svg';
@@ -352,6 +352,28 @@ export default function HomeScreen() {
     if (basketItemCount === 0) return 0;
     return collection.reduce((acc, item) => acc + (item.sugarTeaspoons || 0), 0);
   }, [collection, basketItemCount]);
+
+  const totalBasketCalories = useMemo(() => {
+    if (basketItemCount === 0) return 0;
+    return Math.round(collection.reduce((acc, item) => acc + (item.calories || 0), 0));
+  }, [collection, basketItemCount]);
+
+  const burnDownActivities = useMemo(() => {
+    if (totalBasketCalories === 0) return null;
+    const jogMins = Math.round(totalBasketCalories / 8.5);
+    const cycleMins = Math.round(totalBasketCalories / 6.5);
+    const swimMins = Math.round(totalBasketCalories / 7.5);
+    const walkMins = Math.round(totalBasketCalories / 4.2);
+    return { jogMins, cycleMins, swimMins, walkMins };
+  }, [totalBasketCalories]);
+
+  const formatBurnTime = (mins: number): string => {
+    if (!mins || mins <= 0) return '0m';
+    if (mins < 60) return `${mins}m`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  };
 
   const scoreColor = basketItemCount === 0
     ? '#D1D5DB'
@@ -853,7 +875,128 @@ export default function HomeScreen() {
               </View>
             </LinearGradient>
 
-            {/* Basket Gut Health Progress Bar Section */}
+            {/* Active Calorie Burn Down Section (Concept 2 - Apple Liquid Glass Slider) */}
+            <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1.5, borderTopColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)' }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingHorizontal: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Flame size={14} color="#F97316" />
+                  <Text style={{ color: colors.textSecondary, fontSize: 9.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    Active Calorie Burn Down
+                  </Text>
+                </View>
+                <View style={{ backgroundColor: 'rgba(249, 115, 22, 0.12)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(249, 115, 22, 0.25)' }}>
+                  <Text style={{ color: '#F97316', fontSize: 10, fontWeight: '900' }}>
+                    {totalBasketCalories} kcal
+                  </Text>
+                </View>
+              </View>
+
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingRight: 4 }}>
+                {/* Card 1: Jogging */}
+                <LinearGradient
+                  colors={isDark ? ['rgba(249, 115, 22, 0.15)', 'rgba(249, 115, 22, 0.04)'] : ['#FFF7ED', '#FFEDD5']}
+                  style={{
+                    width: 110,
+                    padding: 12,
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: 'rgba(249, 115, 22, 0.3)',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <View style={{ backgroundColor: '#F97316', padding: 6, borderRadius: 10 }}>
+                      <Activity size={14} color="#FFFFFF" />
+                    </View>
+                    <Text style={{ color: '#F97316', fontSize: 9, fontWeight: '900', textTransform: 'uppercase' }}>HIGH</Text>
+                  </View>
+                  <View style={{ marginTop: 12 }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Jogging</Text>
+                    <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', marginTop: 2 }}>
+                      {formatBurnTime(burnDownActivities?.jogMins ?? 0)}
+                    </Text>
+                  </View>
+                </LinearGradient>
+
+                {/* Card 2: Cycling */}
+                <LinearGradient
+                  colors={isDark ? ['rgba(6, 182, 212, 0.15)', 'rgba(6, 182, 212, 0.04)'] : ['#ECFEFF', '#CFFAFE']}
+                  style={{
+                    width: 110,
+                    padding: 12,
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: 'rgba(6, 182, 212, 0.3)',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <View style={{ backgroundColor: '#06B6D4', padding: 6, borderRadius: 10 }}>
+                      <Bike size={14} color="#FFFFFF" />
+                    </View>
+                    <Text style={{ color: '#06B6D4', fontSize: 9, fontWeight: '900', textTransform: 'uppercase' }}>MOD</Text>
+                  </View>
+                  <View style={{ marginTop: 12 }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Cycling</Text>
+                    <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', marginTop: 2 }}>
+                      {formatBurnTime(burnDownActivities?.cycleMins ?? 0)}
+                    </Text>
+                  </View>
+                </LinearGradient>
+
+                {/* Card 3: Swimming */}
+                <LinearGradient
+                  colors={isDark ? ['rgba(59, 130, 246, 0.15)', 'rgba(59, 130, 246, 0.04)'] : ['#EFF6FF', '#DBEAFE']}
+                  style={{
+                    width: 110,
+                    padding: 12,
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: 'rgba(59, 130, 246, 0.3)',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <View style={{ backgroundColor: '#3B82F6', padding: 6, borderRadius: 10 }}>
+                      <Waves size={14} color="#FFFFFF" />
+                    </View>
+                    <Text style={{ color: '#3B82F6', fontSize: 9, fontWeight: '900', textTransform: 'uppercase' }}>MOD</Text>
+                  </View>
+                  <View style={{ marginTop: 12 }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Swimming</Text>
+                    <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', marginTop: 2 }}>
+                      {formatBurnTime(burnDownActivities?.swimMins ?? 0)}
+                    </Text>
+                  </View>
+                </LinearGradient>
+
+                {/* Card 4: Brisk Walk */}
+                <LinearGradient
+                  colors={isDark ? ['rgba(16, 185, 129, 0.15)', 'rgba(16, 185, 129, 0.04)'] : ['#ECFDF5', '#D1FAE5']}
+                  style={{
+                    width: 110,
+                    padding: 12,
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: 'rgba(16, 185, 129, 0.3)',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <View style={{ backgroundColor: '#10B981', padding: 6, borderRadius: 10 }}>
+                      <Footprints size={14} color="#FFFFFF" />
+                    </View>
+                    <Text style={{ color: '#10B981', fontSize: 9, fontWeight: '900', textTransform: 'uppercase' }}>LOW</Text>
+                  </View>
+                  <View style={{ marginTop: 12 }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Brisk Walk</Text>
+                    <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', marginTop: 2 }}>
+                      {formatBurnTime(burnDownActivities?.walkMins ?? 0)}
+                    </Text>
+                  </View>
+                </LinearGradient>
+              </ScrollView>
+            </View>
             <View
               style={{
                 marginTop: 16,
