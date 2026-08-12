@@ -94,11 +94,11 @@ export function AdditiveDetectiveCard({ additives, colors, isDark }: AdditiveDet
       </View>
         <View style={{ gap: 16 }}>
           {elevated.length > 0 && (
-            <View>
+            <View style={{ marginBottom: 4 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                 <AlertTriangle size={14} color="#EF4444" />
                 <Text style={{ color: '#EF4444', fontSize: 12, fontWeight: '800', textTransform: 'uppercase' }}>
-                  High Risk Compounds
+                  Watch List Compounds
                 </Text>
               </View>
               <View style={{ gap: 8 }}>
@@ -127,7 +127,7 @@ export function AdditiveDetectiveCard({ additives, colors, isDark }: AdditiveDet
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                 <Zap size={14} color="#F59E0B" />
                 <Text style={{ color: '#F59E0B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase' }}>
-                  Moderate Risk
+                  Generally Accepted
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
