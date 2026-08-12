@@ -1053,7 +1053,7 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
       }
     }
 
-    // ─── PASS 3: USDA FoodData Central Multi-Source Fallback ───
+    // ─── PASS 3: USDA FoodData Central Multi-Source Fallback (If OFF returns no product) ───
     if (!resData?.product) {
       for (const cand of candidates) {
         if (signal.aborted) return null;
@@ -1070,6 +1070,36 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
         productCache.set(cand, null);
       }
       return null;
+    }
+
+    // ─── PASS 4: Hybrid Merge — Enrich OFF Product with USDA Verified Nutrition & Ingredients ───
+    if (resData?.product) {
+      let p = resData.product;
+      const offNutriments = p.nutriments ?? p.nutrition_grades ?? p.nutrition_data ?? {};
+      const hasNutrimentData = offNutriments && typeof offNutriments === 'object' && Object.keys(offNutriments).length > 0 &&
+        (offNutriments.sugars_100g !== undefined || offNutriments.sugars !== undefined || offNutriments['energy-kcal_100g'] !== undefined ||
+         offNutriments.carbohydrates_100g !== undefined || offNutriments.fat_100g !== undefined || offNutriments.proteins_100g !== undefined);
+
+      const hasIngredients = typeof (p.ingredients_text_en || p.ingredients_text) === 'string' && (p.ingredients_text_en || p.ingredients_text).trim().length > 0;
+
+      if ((!hasNutrimentData || !hasIngredients) && !signal.aborted) {
+        for (const cand of candidates) {
+          const usdaData = await fetchUsdaFoodData(cand, signal);
+          if (usdaData) {
+            console.log(`[BiteFix] Hybrid Merge: Enriched product "${p.product_name || cand}" with official USDA nutrition/ingredients specs.`);
+            p.nutriments = { ...(usdaData.nutriments || {}), ...(p.nutriments || {}) };
+            if (!hasIngredients && usdaData.ingredients_text) {
+              p.ingredients_text_en = usdaData.ingredients_text;
+              p.ingredients_text = usdaData.ingredients_text;
+            }
+            if (!p.serving_size && usdaData.serving_size) {
+              p.serving_size = usdaData.serving_size;
+            }
+            break;
+          }
+        }
+      }
+      resData.product = p;
     }
 
     // Normalize raw payload through Universal Normalizer Pipeline
