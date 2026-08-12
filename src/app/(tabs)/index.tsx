@@ -259,32 +259,9 @@ export default function HomeScreen() {
 
 
 
-  // Helper function to calculate Gut Health Score for an item (0-100 scale)
+  // Helper function to calculate Gut Health Score for an item (0-100 scale) using evaluateGutHealth
   const getGutHealthScore = (item: any): number => {
-    let score = 100;
-    if (item.novaClass === 4) score -= 25;
-    else if (item.novaClass === 3) score -= 10;
-
-    if (item.additives && item.additives.length > 0) {
-      item.additives.forEach((add: any) => {
-        const fn = (add.functionLabel || '').toLowerCase();
-        if (fn.includes('emulsifier') || fn.includes('thickener') || fn.includes('stabilizer') || fn.includes('sweetener')) {
-          score -= 15;
-        } else if (add.riskLevel === 'elevated') {
-          score -= 15;
-        } else if (add.riskLevel === 'moderate') {
-          score -= 8;
-        } else {
-          score -= 4;
-        }
-      });
-    }
-
-    if (item.hasHiddenSugars) {
-      score -= 10;
-    }
-
-    return Math.max(0, Math.min(100, score));
+    return evaluateGutHealth(item.additives ?? []).score;
   };
 
   const basketItemCount = collection.length;
