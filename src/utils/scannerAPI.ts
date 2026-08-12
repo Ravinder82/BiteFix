@@ -481,12 +481,6 @@ export function extractSugarFromNutriments(n: Record<string, any>): number {
   ]);
   if (addedSugar !== undefined && addedSugar > 0) return addedSugar;
 
-  // 4. Carbs fallback if sugars explicitly listed as 0 or missing
-  const carbs = extractNumberFromKeys(n, [
-    'carbohydrates_100g', 'carbohydrates', 'carbohydrates_value'
-  ]);
-  if (sugar100g === 0 && carbs !== undefined && carbs > 0) return carbs;
-
   return sugar100g ?? 0;
 }
 
@@ -836,14 +830,6 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
       if (added !== undefined && added > 0) sugarPer100g = added;
     }
 
-    // If still 0 or missing, check carbohydrates
-    if (sugarPer100g === 0) {
-      const carbs = extractNumberFromKeys(n, [
-        'carbohydrates_100g', 'carbohydrates', 'carbohydrates_value'
-      ]);
-      if (carbs !== undefined && carbs > 0) sugarPer100g = carbs;
-    }
-
     const kcal100g = extractNumberFromKeys(n, ['energy-kcal_100g', 'energy-kcal', 'energy-kcal_value', 'energy_100g']) ??
       (extractNumberFromKeys(n, ['energy-kj_100g', 'energy-kj', 'energy_100g']) ? Math.round((extractNumberFromKeys(n, ['energy-kj_100g', 'energy-kj', 'energy_100g']) as number) / 4.184) : undefined);
     const carbs100g = extractNumberFromKeys(n, ['carbohydrates_100g', 'carbohydrates', 'carbohydrates_value']);
@@ -930,13 +916,13 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
     const additiveCount = additives.length;
     const allergens = parseAllergensFromProduct(p);
 
-    const rawNutriScore = String(p.nutriscore_grade ?? p.nutrition_grades ?? '').toLowerCase();
+    const rawNutriScore = String(p.nutriscore_grade ?? p.nutrition_grades ?? p.ecoscore_data?.previous_data?.nutriscore_grade ?? '').toLowerCase();
     const nutriScore: ScanResultData['nutriScore'] = ['a', 'b', 'c', 'd', 'e'].includes(rawNutriScore) ? rawNutriScore as ScanResultData['nutriScore'] : undefined;
 
     const biteFixScore = computeBiteFixScore({ name, brand, novaClass, additiveCount, nutriScore, sugarPer100g, ingredientsText });
 
     // ── Sustainability & Dietary Tags ──
-    const rawEcoScore = String(p.ecoscore_grade ?? '').toLowerCase();
+    const rawEcoScore = String(p.ecoscore_grade ?? p.ecoscore_data?.previous_data?.grade ?? p.ecoscore_data?.grade ?? '').toLowerCase();
     const ecoscoreGrade: ScanResultData['ecoscoreGrade'] = ['a', 'b', 'c', 'd', 'e'].includes(rawEcoScore) ? rawEcoScore as ScanResultData['ecoscoreGrade'] : undefined;
     
     let carbonFootprint100g: number | undefined = undefined;
@@ -944,6 +930,10 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
       carbonFootprint100g = p.ecoscore_data.agribalyse.co2_total;
     } else if (p.ecoscore_data?.agribalyse?.co2_eq) {
       carbonFootprint100g = p.ecoscore_data.agribalyse.co2_eq;
+    } else if (p.ecoscore_data?.previous_data?.agribalyse?.co2_total) {
+      carbonFootprint100g = p.ecoscore_data.previous_data.agribalyse.co2_total;
+    } else if (p.ecoscore_data?.previous_data?.agribalyse?.co2_eq) {
+      carbonFootprint100g = p.ecoscore_data.previous_data.agribalyse.co2_eq;
     } else if (p.ecoscore_data?.carbon_footprint_100g) {
       carbonFootprint100g = p.ecoscore_data.carbon_footprint_100g;
     } else if (p.carbon_footprint_from_known_ingredients_100g) {

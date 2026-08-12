@@ -11,7 +11,7 @@ export interface GutInsight {
 }
 
 const DISRUPTOR_KEYWORDS: Record<GutDisruptorType, string[]> = {
-  emulsifier: ['carrageenan', 'polysorbate 80', 'carboxymethylcellulose', 'cmc', 'guar gum', 'xanthan gum', 'soy lecithin', 'emulsifier'],
+  emulsifier: ['carrageenan', 'polysorbate 80', 'carboxymethylcellulose', 'methylcellulose', 'cellulose', 'cmc', 'guar gum', 'xanthan gum', 'soy lecithin', 'emulsifier', 'thickener', 'stabilizer'],
   sweetener: ['sucralose', 'aspartame', 'saccharin', 'acesulfame', 'erythritol', 'sweetener'],
   preservative: ['sodium benzoate', 'potassium sorbate', 'nitrite', 'nitrate', 'bha', 'bht', 'preservative'],
   dye: ['red 40', 'yellow 5', 'yellow 6', 'blue 1', 'caramel color', 'synthetic colorant', 'dye', 'color']
