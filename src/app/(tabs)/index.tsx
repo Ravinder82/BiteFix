@@ -14,8 +14,14 @@ import { ScanBarcode, ArrowRight, Settings, Bookmark, ArrowUpRight, Trash2, X, S
 import * as Haptics from 'expo-haptics';
 import { getBiteFixScoreColor, formatWeight, getNovaColor } from '../../utils/format';
 import Svg, { Circle, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop, G } from 'react-native-svg';
-import { CollectionItem } from '../../types/app.types';
+import { CollectionItem, AdditiveDetail } from '../../types/app.types';
 import { mapToBiteFixCategory } from '../../utils/categoryMapper';
+import { ShieldPillCard } from '../../components/ShieldPillCard';
+import { EcoScoreCard } from '../../components/EcoScoreCard';
+import { GutShieldCard } from '../../components/features/GutShieldCard';
+import { AdditiveDetectiveCard } from '../../components/features/AdditiveDetectiveCard';
+import { detectShieldAlerts } from '../../utils/scannerAPI';
+import { evaluateGutHealth } from '../../utils/gutShieldEvaluator';
 
 function SavedItemRow({ item, colors, isDark, onPress, onDelete }: { item: CollectionItem; colors: any; isDark: boolean; onPress: () => void; onDelete: () => void }) {
   const { sugarUnit } = useAppStore();
@@ -207,7 +213,7 @@ function SavedItemRow({ item, colors, isDark, onPress, onDelete }: { item: Colle
 
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
-  const { collection, removeFromCollection, userName, sugarUnit, dietPreference, trackEcoScore, trackOrganic } = useAppStore();
+  const { collection, removeFromCollection, userName, sugarUnit, dietPreference, trackEcoScore, trackOrganic, allergenFilters } = useAppStore();
   const [selectedSavedItem, setSelectedSavedItem] = useState<CollectionItem | null>(null);
   const panY = useRef(new Animated.Value(0)).current;
 
@@ -1132,6 +1138,20 @@ export default function HomeScreen() {
 
             {selectedSavedItem && (
               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+                {/* 0. Proactive Shield Pill Cards (Allergens, Palm Oil, Diet Warnings) */}
+                <View style={{ marginBottom: 12 }}>
+                  {selectedSavedItem.ingredientsText && allergenFilters.length > 0 && detectShieldAlerts(selectedSavedItem.ingredientsText, allergenFilters).map((alert, idx) => (
+                    <ShieldPillCard key={`${alert.id}-${idx}`} alert={alert} index={idx} />
+                  ))}
+                  
+                  {dietPreference === 'vegan' && selectedSavedItem.isVegan === false && (
+                    <ShieldPillCard key="diet-vegan" alert={{ id: 'vegan', type: 'allergen', name: 'Non-Vegan Ingredients' }} index={5} />
+                  )}
+                  {dietPreference === 'vegetarian' && selectedSavedItem.isVegetarian === false && (
+                    <ShieldPillCard key="diet-veg" alert={{ id: 'veg', type: 'allergen', name: 'Non-Vegetarian Ingredients' }} index={5} />
+                  )}
+                </View>
+
                 {/* Swap Telemetry Banner if Saved as Swap */}
                 {selectedSavedItem.isSwapped && (
                   <View style={{
@@ -1184,6 +1204,37 @@ export default function HomeScreen() {
                   hiddenSugars={selectedSavedItem.hiddenSugars}
                   hiddenSugarCount={selectedSavedItem.hiddenSugarCount}
                   nutriScore={selectedSavedItem.nutriScore}
+                />
+
+                {/* 3. Eco-Score & Carbon Footprint Telemetry Card */}
+                <EcoScoreCard 
+                  grade={selectedSavedItem.ecoscoreGrade}
+                  carbonFootprint={selectedSavedItem.carbonFootprint100g}
+                  isOrganic={selectedSavedItem.isOrganic}
+                  isVegan={selectedSavedItem.isVegan}
+                  isVegetarian={selectedSavedItem.isVegetarian}
+                  delayIndex={3}
+                />
+
+                {/* 4. Gut Shield Pro Audit Card */}
+                {(() => {
+                  const additives: AdditiveDetail[] = selectedSavedItem.additives ?? [];
+                  const gut = evaluateGutHealth(additives);
+                  return (
+                    <GutShieldCard
+                      score={gut.score}
+                      insights={gut.insights}
+                      colors={colors}
+                      isDark={isDark}
+                    />
+                  );
+                })()}
+
+                {/* 5. Additive Detective Audit Card */}
+                <AdditiveDetectiveCard
+                  additives={selectedSavedItem.additives ?? []}
+                  colors={colors}
+                  isDark={isDark}
                 />
 
                 {/* 3. Action Dock */}

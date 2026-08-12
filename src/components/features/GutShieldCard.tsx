@@ -13,16 +13,68 @@ interface GutShieldCardProps {
 export function GutShieldCard({ score, insights, colors, isDark }: GutShieldCardProps) {
   const isHealthy = score >= 80;
   const isModerate = score >= 50 && score < 80;
-  
+
+  const borderDivider = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+  const bgSurface = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)';
+
+  if (insights.length === 0 && isHealthy) {
+    return (
+      <View style={{
+        backgroundColor: colors.surface,
+        borderColor: borderDivider,
+        borderWidth: 1,
+        borderRadius: 20,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        marginTop: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: isDark ? 0.2 : 0.03,
+        shadowRadius: 10,
+        elevation: 2,
+      }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{
+            width: 32,
+            height: 32,
+            borderRadius: 10,
+            backgroundColor: 'rgba(16, 185, 129, 0.12)',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <ShieldCheck size={18} color="#10B981" />
+          </View>
+          <View>
+            <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800' }}>Gut Shield Pro</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 1 }}>
+              Microbiome Friendly • 0 Disruptors
+            </Text>
+          </View>
+        </View>
+
+        <View style={{
+          backgroundColor: 'rgba(16, 185, 129, 0.15)',
+          borderColor: 'rgba(16, 185, 129, 0.3)',
+          borderWidth: 1,
+          paddingHorizontal: 10,
+          paddingVertical: 4,
+          borderRadius: 12,
+        }}>
+          <Text style={{ color: '#10B981', fontSize: 11, fontWeight: '900', letterSpacing: 0.5 }}>{score}/100</Text>
+        </View>
+      </View>
+    );
+  }
+
   const headerColor = isHealthy ? '#10B981' : isModerate ? '#F59E0B' : '#EF4444';
   const headerIcon = isHealthy ? (
     <ShieldCheck size={20} color={headerColor} />
   ) : (
     <ShieldAlert size={20} color={headerColor} />
   );
-
-  const borderDivider = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
-  const bgSurface = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)';
 
   return (
     <View style={{

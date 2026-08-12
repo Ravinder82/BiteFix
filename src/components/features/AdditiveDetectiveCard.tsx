@@ -19,6 +19,58 @@ export function AdditiveDetectiveCard({ additives, colors, isDark }: AdditiveDet
 
   const hasAlerts = elevated.length > 0 || moderate.length > 0;
 
+  if (!hasAlerts) {
+    return (
+      <View style={{
+        backgroundColor: colors.surface,
+        borderColor: borderDivider,
+        borderWidth: 1,
+        borderRadius: 20,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        marginTop: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: isDark ? 0.2 : 0.03,
+        shadowRadius: 10,
+        elevation: 2,
+      }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{
+            width: 32,
+            height: 32,
+            borderRadius: 10,
+            backgroundColor: 'rgba(34, 197, 94, 0.12)',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <CheckCircle2 size={18} color="#22C55E" />
+          </View>
+          <View>
+            <Text style={{ color: colors.text, fontSize: 14, fontWeight: '800' }}>Additive Detective</Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 1 }}>
+              0 Harmful Synthetics • Clean Label
+            </Text>
+          </View>
+        </View>
+
+        <View style={{
+          backgroundColor: 'rgba(34, 197, 94, 0.15)',
+          borderColor: 'rgba(34, 197, 94, 0.3)',
+          borderWidth: 1,
+          paddingHorizontal: 10,
+          paddingVertical: 4,
+          borderRadius: 12,
+        }}>
+          <Text style={{ color: '#22C55E', fontSize: 11, fontWeight: '900', letterSpacing: 0.5 }}>CLEAN</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={{
       backgroundColor: colors.surface,
@@ -40,27 +92,6 @@ export function AdditiveDetectiveCard({ additives, colors, isDark }: AdditiveDet
           Additive Detective
         </Text>
       </View>
-
-      {!hasAlerts ? (
-        <View style={{
-          backgroundColor: 'rgba(34, 197, 94, 0.08)',
-          padding: 16,
-          borderRadius: 16,
-          borderWidth: 1,
-          borderColor: 'rgba(34, 197, 94, 0.2)',
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 12
-        }}>
-          <CheckCircle2 size={24} color="#22C55E" />
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: '#22C55E', fontSize: 14, fontWeight: '800' }}>Clean Label</Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: 2 }}>
-              No concerning synthetic dyes, chemical sweeteners, or harmful preservatives detected.
-            </Text>
-          </View>
-        </View>
-      ) : (
         <View style={{ gap: 16 }}>
           {elevated.length > 0 && (
             <View>
@@ -118,7 +149,6 @@ export function AdditiveDetectiveCard({ additives, colors, isDark }: AdditiveDet
             </View>
           )}
         </View>
-      )}
       
       {/* Footer context */}
       <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: borderDivider }}>
