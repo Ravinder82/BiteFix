@@ -57,6 +57,10 @@ import ProductHeroCardDashboard from '../../components/features/ProductHeroCardD
 import { ShieldPillCard } from '../../components/ShieldPillCard';
 import { SubscriptionModal } from '../../components/SubscriptionModal';
 import { EcoScoreCard } from '../../components/EcoScoreCard';
+import { GutShieldCard } from '../../components/features/GutShieldCard';
+import { AdditiveDetectiveCard } from '../../components/features/AdditiveDetectiveCard';
+import { evaluateGutHealth } from '../../utils/gutShieldEvaluator';
+import { AdditiveDetail } from '../../types/app.types';
 import {
   Keyboard,
   ArrowLeft,
@@ -758,6 +762,27 @@ export default function ScannerScreen() {
               isVegan={scanResult.isVegan}
               isVegetarian={scanResult.isVegetarian}
               delayIndex={3}
+            />
+
+            {/* Gut Shield Pro Audit Card */}
+            {(() => {
+              const additives: AdditiveDetail[] = scanResult.additives ?? [];
+              const gut = evaluateGutHealth(additives);
+              return (
+                <GutShieldCard
+                  score={gut.score}
+                  insights={gut.insights}
+                  colors={colors}
+                  isDark={isDark}
+                />
+              );
+            })()}
+
+            {/* Additive Detective Audit Card */}
+            <AdditiveDetectiveCard
+              additives={scanResult.additives ?? []}
+              colors={colors}
+              isDark={isDark}
             />
 
             {/* 3. Action Dock: Save & Scan Another */}

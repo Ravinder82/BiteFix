@@ -8,9 +8,6 @@ import { useAppStore } from '../../stores/appStore';
 import { getNovaColor, getNovaShortLabel, getBiteFixScoreColor } from '../../utils/format';
 import { AdditiveDetail } from '../../types/app.types';
 import { NutriScoreTrafficLight } from './NutriScoreTrafficLight';
-import { GutShieldCard } from './GutShieldCard';
-import { AdditiveDetectiveCard } from './AdditiveDetectiveCard';
-import { evaluateGutHealth } from '../../utils/gutShieldEvaluator';
 
 export interface ProductHeroCardDashboardProps {
   scanResult: {
@@ -81,11 +78,8 @@ export default function ProductHeroCardDashboard({
   const biteFixScore = scanResult.biteFixScore ?? 50;
   const novaClass = scanResult.novaClass;
   const additiveCount = scanResult.additiveCount ?? 0;
-  const additives: AdditiveDetail[] = scanResult.additives ?? [];
   const nutriScore = scanResult.nutriScore;
-
-  const gutHealth = evaluateGutHealth(additives);
-
+  
   let ledColor: string;
   let ledLabel: string;
   let ratingDesc: string;
@@ -347,10 +341,6 @@ export default function ProductHeroCardDashboard({
         <NutriScoreTrafficLight grade={nutriScore} isDark={isDark} colors={colors} />
       ) : null}
 
-      <View style={{ height: 1, backgroundColor: borderDivider, marginVertical: 18 }} />
-
-      <AdditiveDetectiveCard additives={additives} colors={colors} isDark={isDark} />
-      <GutShieldCard score={gutHealth.score} insights={gutHealth.insights} colors={colors} isDark={isDark} />
 
       {/* ── Action Bar ── */}
       {showActions && (
