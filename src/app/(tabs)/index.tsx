@@ -746,7 +746,7 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            {/* ── CARD B1: Basket Eco-Score & Sustainability Card ── */}
+            {/* ── CARD B1: Basket Eco-Score & Climate Telemetry Card (Apple Liquid Glass) ── */}
             <View
               style={{
                 marginTop: 16,
@@ -757,20 +757,21 @@ export default function HomeScreen() {
             >
               {/* Header */}
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingHorizontal: 4 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Leaf size={14} color="#10B981" />
                   <Text style={{ color: colors.textSecondary, fontSize: 9.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    Basket Eco-Score (Environmental Impact)
+                    Basket Climate Telemetry
                   </Text>
                 </View>
                 <View style={{
-                  backgroundColor: isDark ? 'rgba(46, 204, 113, 0.15)' : 'rgba(46, 204, 113, 0.1)',
+                  backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
                   paddingHorizontal: 8,
                   paddingVertical: 3,
                   borderRadius: 8,
                   borderWidth: 1,
-                  borderColor: 'rgba(46, 204, 113, 0.3)',
+                  borderColor: 'rgba(16, 185, 129, 0.3)',
                 }}>
-                  <Text style={{ color: '#2ECC71', fontSize: 10, fontWeight: '900' }}>
+                  <Text style={{ color: '#10B981', fontSize: 10, fontWeight: '900' }}>
                     {avgEcoScore ? `GRADE ${avgEcoScore.toUpperCase()}` : 'NO DATA'}
                   </Text>
                 </View>
@@ -812,31 +813,36 @@ export default function HomeScreen() {
               </View>
 
               {/* Total CO2 Footprint & Real-World Offset Metric */}
-              <View style={{
-                marginTop: 10,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                backgroundColor: isDark ? 'rgba(0, 194, 136, 0.08)' : 'rgba(0, 194, 136, 0.05)',
-                padding: 12,
-                borderRadius: 14,
-                borderWidth: 1,
-                borderColor: 'rgba(0, 194, 136, 0.2)',
-              }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <LinearGradient
+                colors={isDark ? ['rgba(16, 185, 129, 0.12)', 'rgba(6, 182, 212, 0.04)'] : ['#ECFDF5', '#F0FDFA']}
+                style={{
+                  marginTop: 10,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: 14,
+                  borderRadius: 16,
+                  borderWidth: 1,
+                  borderColor: 'rgba(16, 185, 129, 0.25)',
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <View style={{ backgroundColor: '#10B981', padding: 8, borderRadius: 12 }}>
+                    <CloudRain size={16} color="#FFFFFF" />
+                  </View>
                   <View>
-                    <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>Total Basket CO₂</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 9.5, fontWeight: '600' }}>
-                      {basketItemCount > 0 ? `~${milesDrivenEquivalent} miles driven equiv.` : '0.0 miles'}
+                    <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>Total Carbon Mass</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '600', marginTop: 1 }}>
+                      {basketItemCount > 0 ? `🚗 ~${milesDrivenEquivalent} mi driven equiv.` : '0.0 mi driven'}
                     </Text>
                   </View>
                 </View>
-                <View style={{ backgroundColor: '#00C288', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 }}>
+                <View style={{ backgroundColor: '#10B981', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
                   <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '900' }}>
                     {totalCarbonFootprintGrams >= 1000 ? `${totalCarbonFootprintKg} kg` : `${totalCarbonFootprintGrams.toFixed(0)} g`} CO₂
                   </Text>
                 </View>
-              </View>
+              </LinearGradient>
             </View>
 
 
