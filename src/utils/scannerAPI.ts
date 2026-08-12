@@ -102,15 +102,15 @@ const ADDITIVE_FUNCTION_MAP: Record<string, string> = {
 /** Elevated-concern additive E-numbers (widely studied for caution) */
 const ELEVATED_ADDITIVES = new Set([
   'e102', 'e104', 'e110', 'e122', 'e124', 'e129', 'e133', 'e150c', 'e150d',
-  'e211', 'e220', 'e250', 'e251', 'e320', 'e321', 'e621', 'e951', 'e950',
+  'e211', 'e220', 'e250', 'e251', 'e320', 'e321', 'e407', 'e621', 'e951', 'e950',
   'e955',
 ]);
 
 /** Moderate-concern additive E-numbers */
 const MODERATE_ADDITIVES = new Set([
-  'e160b', 'e171', 'e262', 'e270', 'e280', 'e282', 'e330', 'e331',
-  'e338', 'e339', 'e340', 'e341', 'e407', 'e412', 'e415', 'e440',
-  'e466', 'e471', 'e472', 'e500', 'e508', 'e509',
+  'e160b', 'e171', 'e202', 'e262', 'e270', 'e280', 'e282', 'e330', 'e331',
+  'e338', 'e339', 'e340', 'e341', 'e412', 'e415', 'e440',
+  'e461', 'e466', 'e471', 'e472', 'e500', 'e508', 'e509',
 ]);
 
 function getAdditiveRiskLevel(eNumber: string): AdditiveRiskLevel {
@@ -157,8 +157,7 @@ function formatAdditiveDisplayName(tag: string): string {
 
 /**
  * Comprehensive Regex & Dictionary Additive Extractor.
- * Scans raw ingredient text for INS numbers, E numbers, parenthetical numbers, and chemical names
- * to ensure products without pre-populated additives_tags in OpenFoodFacts are never incorrectly marked as Clean Label.
+ * Scans raw ingredient text for INS numbers, E numbers, parenthetical numbers, and chemical names.
  */
 export function extractAdditivesFromText(ingredientsText?: string): AdditiveDetail[] {
   if (!ingredientsText || typeof ingredientsText !== 'string') return [];
@@ -166,7 +165,7 @@ export function extractAdditivesFromText(ingredientsText?: string): AdditiveDeta
   const results: AdditiveDetail[] = [];
   const seen = new Set<string>();
 
-  // 1. Match INS / E number patterns (e.g. INS 211, E211, INS-260, E 415, INS 1422, INS 330)
+  // 1. Match INS / E number patterns (e.g. INS 211, E211, INS-260, E 415, INS 1422, INS 330, E461)
   const codeRegex = /\b(INS|E)\s*[-–]?\s*(\d{3,4}[a-z]?)\b/gi;
   let match: RegExpExecArray | null;
   while ((match = codeRegex.exec(text)) !== null) {
@@ -202,6 +201,7 @@ export function extractAdditivesFromText(ingredientsText?: string): AdditiveDeta
 
   // 3. Match known chemical names in ingredient text
   const chemicalDictionary: { keywords: string[]; tag: string; name: string; fn: string; risk: AdditiveRiskLevel }[] = [
+    { keywords: ['methylcellulose', 'methyl cellulose', 'e461'], tag: 'en:e461', name: 'Methylcellulose (E461)', fn: 'Thickener / Stabilizer', risk: 'moderate' },
     { keywords: ['sodium benzoate', 'benzoate'], tag: 'en:e211', name: 'Sodium Benzoate (E211)', fn: 'Preservative', risk: 'elevated' },
     { keywords: ['potassium sorbate', 'sorbate'], tag: 'en:e202', name: 'Potassium Sorbate (E202)', fn: 'Preservative', risk: 'moderate' },
     { keywords: ['sodium metabisulfite', 'potassium metabisulfite', 'metabisulfite'], tag: 'en:e224', name: 'Sodium Metabisulfite (E224)', fn: 'Preservative', risk: 'elevated' },
@@ -210,7 +210,7 @@ export function extractAdditivesFromText(ingredientsText?: string): AdditiveDeta
     { keywords: ['modified starch', 'modified food starch', 'thickening agent (1422)'], tag: 'en:e1422', name: 'Modified Starch (E1422)', fn: 'Thickener / Stabilizer', risk: 'moderate' },
     { keywords: ['xanthan gum', 'stabilizer (415)'], tag: 'en:e415', name: 'Xanthan Gum (E415)', fn: 'Thickener / Stabilizer', risk: 'moderate' },
     { keywords: ['guar gum'], tag: 'en:e412', name: 'Guar Gum (E412)', fn: 'Thickener', risk: 'moderate' },
-    { keywords: ['carrageenan'], tag: 'en:e407', name: 'Carrageenan (E407)', fn: 'Thickener', risk: 'elevated' },
+    { keywords: ['carrageenan'], tag: 'en:e407', name: 'Carrageenan (E407)', fn: 'Thickener / Emulsifier', risk: 'elevated' },
     { keywords: ['monosodium glutamate', 'msg'], tag: 'en:e621', name: 'Monosodium Glutamate (E621)', fn: 'Flavor Enhancer', risk: 'elevated' },
     { keywords: ['high fructose corn syrup', 'hfcs'], tag: 'en:hfcs', name: 'High Fructose Corn Syrup', fn: 'Refined Sweetener', risk: 'elevated' },
     { keywords: ['caramel color', 'caramel colour'], tag: 'en:e150c', name: 'Caramel Color (E150c)', fn: 'Colorant', risk: 'elevated' },
@@ -294,6 +294,116 @@ export function parseAllergensFromProduct(p: any): string[] {
     }
   }
   return results;
+}
+
+// ─────────────────────────────────────────────────────────
+// Algorithmic Nutri-Score Engine (EU 2023 Standard Formula)
+// ─────────────────────────────────────────────────────────
+export function calculateAlgorithmicNutriScore(opts: {
+  kcal100g?: number;
+  satFat100g?: number;
+  sugar100g?: number;
+  sodiumMg100g?: number;
+  protein100g?: number;
+  isBeverage?: boolean;
+}): 'a' | 'b' | 'c' | 'd' | 'e' {
+  const kcal = opts.kcal100g ?? 0;
+  const satFat = opts.satFat100g ?? 0;
+  const sugar = opts.sugar100g ?? 0;
+  const sodium = opts.sodiumMg100g ?? 0;
+  const protein = opts.protein100g ?? 0;
+
+  // Negative points (0 to 10 each)
+  let nEnergy = 0;
+  if (kcal > 3350) nEnergy = 10;
+  else if (kcal > 3015) nEnergy = 9;
+  else if (kcal > 2680) nEnergy = 8;
+  else if (kcal > 2345) nEnergy = 7;
+  else if (kcal > 2010) nEnergy = 6;
+  else if (kcal > 1675) nEnergy = 5;
+  else if (kcal > 1340) nEnergy = 4;
+  else if (kcal > 1005) nEnergy = 3;
+  else if (kcal > 670) nEnergy = 2;
+  else if (kcal > 335) nEnergy = 1;
+
+  let nSatFat = 0;
+  if (satFat > 10) nSatFat = 10;
+  else if (satFat > 9) nSatFat = 9;
+  else if (satFat > 8) nSatFat = 8;
+  else if (satFat > 7) nSatFat = 7;
+  else if (satFat > 6) nSatFat = 6;
+  else if (satFat > 5) nSatFat = 5;
+  else if (satFat > 4) nSatFat = 4;
+  else if (satFat > 3) nSatFat = 3;
+  else if (satFat > 2) nSatFat = 2;
+  else if (satFat > 1) nSatFat = 1;
+
+  let nSugar = 0;
+  if (sugar > 45) nSugar = 10;
+  else if (sugar > 40) nSugar = 9;
+  else if (sugar > 36) nSugar = 8;
+  else if (sugar > 31) nSugar = 7;
+  else if (sugar > 27) nSugar = 6;
+  else if (sugar > 22.5) nSugar = 5;
+  else if (sugar > 18) nSugar = 4;
+  else if (sugar > 13.5) nSugar = 3;
+  else if (sugar > 9) nSugar = 2;
+  else if (sugar > 4.5) nSugar = 1;
+
+  let nSodium = 0;
+  if (sodium > 900) nSodium = 10;
+  else if (sodium > 810) nSodium = 9;
+  else if (sodium > 720) nSodium = 8;
+  else if (sodium > 630) nSodium = 7;
+  else if (sodium > 540) nSodium = 6;
+  else if (sodium > 450) nSodium = 5;
+  else if (sodium > 360) nSodium = 4;
+  else if (sodium > 270) nSodium = 3;
+  else if (sodium > 180) nSodium = 2;
+  else if (sodium > 90) nSodium = 1;
+
+  // Positive points
+  let pProtein = 0;
+  if (protein > 8) pProtein = 5;
+  else if (protein > 6.4) pProtein = 4;
+  else if (protein > 4.8) pProtein = 3;
+  else if (protein > 3.2) pProtein = 2;
+  else if (protein > 1.6) pProtein = 1;
+
+  const totalNegative = nEnergy + nSatFat + nSugar + nSodium;
+  const score = totalNegative - pProtein;
+
+  if (opts.isBeverage) {
+    if (score <= 1) return 'a';
+    if (score <= 5) return 'b';
+    if (score <= 9) return 'c';
+    if (score <= 12) return 'd';
+    return 'e';
+  }
+
+  if (score <= -1) return 'a';
+  if (score <= 2) return 'b';
+  if (score <= 10) return 'c';
+  if (score <= 18) return 'd';
+  return 'e';
+}
+
+// ─────────────────────────────────────────────────────────
+// Algorithmic Eco-Score & Carbon Footprint Estimator
+// ─────────────────────────────────────────────────────────
+export function estimateEcoScoreFromCategory(categoryStr?: string, isVegan?: boolean, isVegetarian?: boolean): { grade: 'a' | 'b' | 'c' | 'd' | 'e'; co2Grams100g: number } {
+  const cat = (categoryStr || '').toLowerCase();
+  
+  if (cat.includes('water') || cat.includes('plant-based') || isVegan) {
+    return { grade: 'b', co2Grams100g: 185 }; // Low carbon impact (~1.85 kg CO2 eq / kg)
+  }
+  if (cat.includes('dairy') || cat.includes('milk') || cat.includes('cheese') || isVegetarian) {
+    return { grade: 'c', co2Grams100g: 320 }; // Moderate carbon impact
+  }
+  if (cat.includes('meat') || cat.includes('beef') || cat.includes('pork')) {
+    return { grade: 'e', co2Grams100g: 1400 }; // High carbon impact
+  }
+  return { grade: 'c', co2Grams100g: 250 };
 }
 
 // ─────────────────────────────────────────────────────────
@@ -488,7 +598,7 @@ export function parseQuantityString(str: any): number | null {
   if (!str) return null;
   const cleaned = String(str).toLowerCase().replace(/,/g, '.');
 
-  // Try matching multi-pack syntax common in imported Indian/US/European groceries e.g. "6 x 330 ml", "4 x 100g", "10 packs x 20 g"
+  // Try matching multi-pack syntax e.g. "6 x 330 ml", "2 x 113 g"
   const multiMatch = cleaned.match(/(\d+)\s*[xX*]\s*([\d\.]+)\s*(g|gm|gms|gram|grams|ml|kg|ltr|litre|litres|cl|fl\s*oz|fl\.\s*oz|oz|ounce|ounces|lb|lbs|l)/);
   if (multiMatch) {
     const count = parseInt(multiMatch[1], 10);
@@ -505,10 +615,9 @@ export function parseQuantityString(str: any): number | null {
     }
   }
 
-  // Regular single quantity match (handling indian terminology like gm, gms, ltr, litre)
+  // Regular single quantity match
   const match = cleaned.match(/([\d\.]+)\s*(g|gm|gms|gram|grams|ml|kg|ltr|litre|litres|cl|fl\s*oz|fl\.\s*oz|oz|ounce|ounces|lb|lbs|l)/);
   if (!match) {
-    // Fallback for raw numbers without unit strings (e.g. "140", "140.0")
     const numMatch = cleaned.match(/([\d\.]+)/);
     if (numMatch) {
       const val = parseFloat(numMatch[1]);
@@ -527,12 +636,11 @@ export function parseQuantityString(str: any): number | null {
   return val;
 }
 
-// In-memory session cache for lightning-fast rescan and alternative format matching
+// In-memory session cache for lightning-fast rescan
 const productCache = new Map<string, ScanResultData | null>();
 
 /**
  * Converts an 8-digit UPC-E string to a standard 12-digit UPC-A string.
- * Essential for small drink cans (e.g., Coca-Cola mini cans, snack packs in US).
  */
 function convertUpceToUpca(upce: string): string | null {
   if (!/^\d{8}$/.test(upce)) return null;
@@ -553,11 +661,6 @@ function convertUpceToUpca(upce: string): string | null {
   return upca;
 }
 
-/**
- * Generates all valid candidate representations of a scanned barcode for US/European databases.
- * Handles UPC-E (8 digits), stripped UPC-A (11 digits), standard UPC-A (12 digits),
- * EAN-13 (13 digits), and GTIN-14 (14 digits).
- */
 export function generateBarcodeCandidates(rawBarcode: string): string[] {
   const cleaned = rawBarcode.trim().replace(/[^0-9]/g, '');
   if (!cleaned) return [rawBarcode.trim()];
@@ -590,20 +693,15 @@ export function generateBarcodeCandidates(rawBarcode: string): string[] {
     }
   }
 
-  // Deduplicate preserving order
   return Array.from(new Set(candidates));
 }
 
-/**
- * Universally extracts a product name from ANY language or field in an OpenFoodFacts product object.
- */
 function extractUniversalName(p: any): string {
   if (!p || typeof p !== 'object') return 'Scanned Food Item';
 
-  // 1. Try common explicit English and default name fields first
   const primaryNames = [
     p.product_name, p.product_name_en, p.generic_name, p.generic_name_en,
-    p.abbreviated_product_name, p.abbreviated_product_name_en
+    p.abbreviated_product_name, p.abbreviated_product_name_en, p.description
   ];
   for (const val of primaryNames) {
     if (typeof val === 'string' && val.trim() !== '' && val.trim().toLowerCase() !== 'unknown') {
@@ -611,7 +709,6 @@ function extractUniversalName(p: any): string {
     }
   }
 
-  // 2. Scan all properties in the product object for any key containing 'product_name' or 'generic_name'
   for (const key of Object.keys(p)) {
     if ((key.includes('product_name') || key.includes('generic_name')) && typeof p[key] === 'string') {
       const val = p[key].trim();
@@ -621,7 +718,6 @@ function extractUniversalName(p: any): string {
     }
   }
 
-  // 3. Try fallback to brand + category if title is completely absent
   const brandFallback = extractUniversalBrand(p);
   let categoryFallback = '';
   if (Array.isArray(p.categories_tags) && p.categories_tags.length > 0) {
@@ -642,14 +738,11 @@ function extractUniversalName(p: any): string {
   return 'Scanned Food Item';
 }
 
-/**
- * Universally extracts a brand name from ANY field or tag in an OpenFoodFacts product object.
- */
 function extractUniversalBrand(p: any): string {
   if (!p || typeof p !== 'object') return 'Generic Brand';
 
   const primaryBrands = [
-    p.brands, p.brand_owner, p.brand_owner_imported, p.brands_imported
+    p.brands, p.brand_owner, p.brand_owner_imported, p.brands_imported, p.brandName
   ];
   for (const val of primaryBrands) {
     if (typeof val === 'string' && val.trim() !== '') {
@@ -667,6 +760,236 @@ function extractUniversalBrand(p: any): string {
   return 'Generic Brand';
 }
 
+// ─────────────────────────────────────────────────────────
+// USDA FoodData Central Multi-Source Fallback
+// ─────────────────────────────────────────────────────────
+async function fetchUsdaFoodData(barcode: string, signal: AbortSignal): Promise<any | null> {
+  try {
+    const usdaUrl = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=DEMO_KEY&query=${encodeURIComponent(barcode)}&pageSize=1`;
+    const resp = await fetchWithTimeout(usdaUrl, API_TIMEOUT_MS, signal);
+    if (!signal.aborted && resp.ok) {
+      const data = await resp.json();
+      if (Array.isArray(data.foods) && data.foods.length > 0) {
+        const item = data.foods[0];
+        const nutrimentsMap: Record<string, number> = {};
+        if (Array.isArray(item.foodNutrients)) {
+          for (const fn of item.foodNutrients) {
+            const name = (fn.nutrientName || '').toLowerCase();
+            if (name.includes('energy')) nutrimentsMap['energy-kcal_100g'] = fn.value;
+            else if (name.includes('sugars, total')) nutrimentsMap['sugars_100g'] = fn.value;
+            else if (name.includes('carbohydrate')) nutrimentsMap['carbohydrates_100g'] = fn.value;
+            else if (name.includes('total lipid (fat)')) nutrimentsMap['fat_100g'] = fn.value;
+            else if (name.includes('fatty acids, total saturated')) nutrimentsMap['saturated-fat_100g'] = fn.value;
+            else if (name.includes('protein')) nutrimentsMap['proteins_100g'] = fn.value;
+            else if (name.includes('sodium')) nutrimentsMap['sodium_100g'] = fn.value;
+          }
+        }
+        return {
+          product_name: item.description,
+          brands: item.brandOwner || item.brandName,
+          ingredients_text: item.ingredients,
+          serving_size: item.servingSize ? `${item.servingSize} ${item.servingSizeUnit || 'g'}` : undefined,
+          nutriments: nutrimentsMap,
+        };
+      }
+    }
+  } catch (e) {
+    if (isAbortError(e)) return null;
+    console.warn('[BiteFix] USDA lookup skipped:', e);
+  }
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────
+// UNIVERSAL DATA NORMALIZATION ENGINE
+// ─────────────────────────────────────────────────────────
+export function normalizeProductPayload(p: any): ScanResultData {
+  const name = extractUniversalName(p);
+  const brand = extractUniversalBrand(p);
+  const imageUrl = p.image_front_url || p.image_url || p.image_front_small_url || undefined;
+
+  let n = p.nutriments ?? p.nutrition_grades ?? p.nutrition_data ?? {};
+
+  // Authoritative total sugar per 100g (Carbs are NEVER promoted to sugar)
+  let sugarPer100g = extractNumberFromKeys(n, [
+    'sugars_100g', 'sugars', 'sugars_value', 'sugars-total_100g', 'sugars-total'
+  ]) ?? 0;
+
+  if (sugarPer100g === 0) {
+    const added = extractNumberFromKeys(n, [
+      'added-sugars_100g', 'added-sugars', 'added-sugars_value'
+    ]);
+    if (added !== undefined && added > 0) sugarPer100g = added;
+  }
+
+  const kcal100g = extractNumberFromKeys(n, ['energy-kcal_100g', 'energy-kcal', 'energy-kcal_value', 'energy_100g']) ??
+    (extractNumberFromKeys(n, ['energy-kj_100g', 'energy-kj', 'energy_100g']) ? Math.round((extractNumberFromKeys(n, ['energy-kj_100g', 'energy-kj', 'energy_100g']) as number) / 4.184) : undefined);
+  const carbs100g = extractNumberFromKeys(n, ['carbohydrates_100g', 'carbohydrates', 'carbohydrates_value']);
+  const fat100g = extractNumberFromKeys(n, ['fat_100g', 'fat', 'fat_value']);
+  const satFat100g = extractNumberFromKeys(n, ['saturated-fat_100g', 'saturated-fat', 'saturated-fat_value']);
+  const protein100g = extractNumberFromKeys(n, ['proteins_100g', 'proteins', 'proteins_value']);
+  const sodiumMg100g = extractNumberFromKeys(n, ['sodium_100g', 'sodium', 'sodium_value']) ? (extractNumberFromKeys(n, ['sodium_100g', 'sodium', 'sodium_value'])! * 1000) : (extractNumberFromKeys(n, ['salt_100g', 'salt']) ? Math.round((extractNumberFromKeys(n, ['salt_100g', 'salt'])! / 2.5) * 1000) : undefined);
+
+  const rawQuantityStr = String(p.quantity || p.product_quantity || '').toLowerCase();
+  const rawCategoryStr = String((Array.isArray(p.categories_tags) ? p.categories_tags.join(' ') : p.categories) || '').toLowerCase();
+  const isLiquid = isProductLiquid(rawQuantityStr, rawCategoryStr);
+  const defaultUnitLabel = isLiquid ? '100 ml' : '100 g';
+
+  const totalWeightGrams = parseQuantityString(rawQuantityStr);
+  let totalSugarGrams: number | undefined;
+  if (totalWeightGrams !== null && totalWeightGrams > 0 && sugarPer100g !== undefined) {
+    totalSugarGrams = parseFloat(((sugarPer100g * totalWeightGrams) / 100).toFixed(1));
+  }
+
+  let servingSugarGrams = extractNumberFromKeys(n, [
+    'sugars_serving', 'sugars-total_serving', 'added-sugars_serving'
+  ]);
+  let calories = extractNumberFromKeys(n, ['energy-kcal_serving']);
+  let carbsGrams = extractNumberFromKeys(n, ['carbohydrates_serving']);
+  let fatGrams = extractNumberFromKeys(n, ['fat_serving']);
+  let proteinGrams = extractNumberFromKeys(n, ['proteins_serving']);
+
+  let servingSize: string | undefined = typeof p.serving_size === 'string' && p.serving_size.trim() !== '' && p.serving_size.trim().toLowerCase() !== 'unknown'
+    ? p.serving_size.trim()
+    : (typeof p.serving_quantity === 'number' && p.serving_quantity > 0 ? `${p.serving_quantity} ${p.serving_quantity_unit || defaultUnitLabel.split(' ')[1]}` : undefined);
+
+  let isDefaultServing = false;
+  const servingWeight = servingSize ? parseQuantityString(servingSize) : null;
+
+  if (servingSize && servingWeight !== null && servingWeight > 0) {
+    if (sugarPer100g !== undefined && sugarPer100g >= 0) {
+      servingSugarGrams = parseFloat(((sugarPer100g * servingWeight) / 100).toFixed(1));
+    }
+    if (kcal100g !== undefined) {
+      calories = Math.round((kcal100g * servingWeight) / 100);
+    }
+    if (carbs100g !== undefined) {
+      carbsGrams = parseFloat(((carbs100g * servingWeight) / 100).toFixed(1));
+    }
+    if (fat100g !== undefined) {
+      fatGrams = parseFloat(((fat100g * servingWeight) / 100).toFixed(1));
+    }
+    if (protein100g !== undefined) {
+      proteinGrams = parseFloat(((protein100g * servingWeight) / 100).toFixed(1));
+    }
+  } else {
+    isDefaultServing = true;
+    servingSize = `${defaultUnitLabel} (Standard)`;
+    servingSugarGrams = sugarPer100g;
+    calories = kcal100g;
+    carbsGrams = carbs100g;
+    fatGrams = fat100g;
+    proteinGrams = protein100g;
+  }
+
+  const finalSugarGrams = servingSugarGrams ?? sugarPer100g;
+  const sugarTeaspoons = parseFloat((finalSugarGrams / 4.2).toFixed(1));
+
+  const whoLimitServingPercent = Math.min(500, Math.round((sugarTeaspoons / 12) * 100));
+  const whoLimitIdealServingPercent = Math.min(500, Math.round((sugarTeaspoons / 6) * 100));
+
+  const categoryTag = Array.isArray(p.categories_tags) && p.categories_tags.length > 0
+    ? p.categories_tags[p.categories_tags.length - 1]
+    : undefined;
+
+  const ingredientsText = p.ingredients_text_en || p.ingredients_text || undefined;
+  const stealthAnalysis = detectStealthSugars(ingredientsText);
+
+  // NOVA Group Determination
+  const rawNova = p.nova_group ?? p.nova_groups ?? undefined;
+  let novaClass: NOVAClass | undefined = (rawNova && [1, 2, 3, 4].includes(Number(rawNova))) ? Number(rawNova) as NOVAClass : undefined;
+
+  const additives = parseAdditivesFromProduct(p);
+  const additiveCount = additives.length;
+  const allergens = parseAllergensFromProduct(p);
+
+  // Nutri-Score Resolution with Algorithmic Fallback Proxy
+  const rawNutriScore = String(p.nutriscore_grade ?? p.nutrition_grades ?? p.ecoscore_data?.previous_data?.nutriscore_grade ?? '').toLowerCase();
+  let nutriScore: ScanResultData['nutriScore'] = ['a', 'b', 'c', 'd', 'e'].includes(rawNutriScore) ? rawNutriScore as ScanResultData['nutriScore'] : undefined;
+
+  if (!nutriScore) {
+    nutriScore = calculateAlgorithmicNutriScore({
+      kcal100g,
+      satFat100g,
+      sugar100g: sugarPer100g,
+      sodiumMg100g,
+      protein100g,
+      isBeverage: isLiquid,
+    });
+  }
+
+  const biteFixScore = computeBiteFixScore({ name, brand, novaClass, additiveCount, nutriScore, sugarPer100g, ingredientsText });
+
+  // Eco-Score & Carbon Footprint Resolution with Fallback Estimator
+  const analysisTags = (p.ingredients_analysis_tags || []).map((t: string) => t.toLowerCase());
+  const isVegan = analysisTags.includes('en:vegan');
+  const isVegetarian = analysisTags.includes('en:vegetarian') || isVegan;
+
+  const rawEcoScore = String(p.ecoscore_grade ?? p.ecoscore_data?.previous_data?.grade ?? p.ecoscore_data?.grade ?? '').toLowerCase();
+  let ecoscoreGrade: ScanResultData['ecoscoreGrade'] = ['a', 'b', 'c', 'd', 'e'].includes(rawEcoScore) ? rawEcoScore as ScanResultData['ecoscoreGrade'] : undefined;
+
+  let carbonFootprint100g: number | undefined = undefined;
+  if (p.ecoscore_data?.agribalyse?.co2_total) {
+    carbonFootprint100g = p.ecoscore_data.agribalyse.co2_total;
+  } else if (p.ecoscore_data?.agribalyse?.co2_eq) {
+    carbonFootprint100g = p.ecoscore_data.agribalyse.co2_eq;
+  } else if (p.ecoscore_data?.previous_data?.agribalyse?.co2_total) {
+    carbonFootprint100g = p.ecoscore_data.previous_data.agribalyse.co2_total;
+  } else if (p.ecoscore_data?.previous_data?.agribalyse?.co2_eq) {
+    carbonFootprint100g = p.ecoscore_data.previous_data.agribalyse.co2_eq;
+  } else if (p.ecoscore_data?.carbon_footprint_100g) {
+    carbonFootprint100g = p.ecoscore_data.carbon_footprint_100g;
+  } else if (p.carbon_footprint_from_known_ingredients_100g) {
+    carbonFootprint100g = p.carbon_footprint_from_known_ingredients_100g;
+  } else {
+    carbonFootprint100g = extractNumberFromKeys(n, ['carbon-footprint-from-known-ingredients_100g', 'carbon-footprint_100g']);
+  }
+
+  if (!ecoscoreGrade || ecoscoreGrade === 'unknown') {
+    const est = estimateEcoScoreFromCategory(rawCategoryStr, isVegan, isVegetarian);
+    ecoscoreGrade = est.grade;
+    if (!carbonFootprint100g) carbonFootprint100g = est.co2Grams100g;
+  }
+
+  const labelTags = (p.labels_tags || []).map((t: string) => t.toLowerCase());
+  const isOrganic = labelTags.includes('en:organic') || labelTags.includes('en:usda-organic') || labelTags.includes('en:eu-organic') || labelTags.includes('en:bio');
+
+  return {
+    name,
+    brand,
+    sugarGrams: finalSugarGrams,
+    sugarTeaspoons,
+    totalWeightGrams: totalWeightGrams ?? undefined,
+    totalSugarGrams,
+    sugarPer100g,
+    imageUrl,
+    servingSize,
+    calories,
+    carbsGrams,
+    fatGrams,
+    proteinGrams,
+    categoryTag,
+    isDefaultServing,
+    whoLimitServingPercent,
+    whoLimitIdealServingPercent,
+    ingredientsText,
+    hasHiddenSugars: stealthAnalysis.hasHiddenSugars,
+    hiddenSugars: stealthAnalysis.matches,
+    hiddenSugarCount: stealthAnalysis.hiddenSugarCount,
+    novaClass,
+    additives,
+    additiveCount,
+    allergens,
+    nutriScore,
+    biteFixScore,
+    ecoscoreGrade,
+    carbonFootprint100g,
+    isVegan,
+    isVegetarian,
+    isOrganic,
+  };
+}
+
 export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal): Promise<ScanResultData | null> {
   const candidates = generateBarcodeCandidates(barcode);
 
@@ -680,7 +1003,7 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
   let resData: any = null;
 
   try {
-    // ─── PASS 1: Strict OpenFoodFacts v3 Priority across ALL candidates ───
+    // ─── PASS 1: OpenFoodFacts v3 Priority across ALL candidates ───
     for (const cand of candidates) {
       if (signal.aborted) return null;
 
@@ -704,7 +1027,7 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
       }
     }
 
-    // ─── PASS 2: Fallback to OpenFoodFacts v2 ONLY if v3 returned no data ───
+    // ─── PASS 2: OpenFoodFacts v2 Fallback ───
     if (!resData?.product) {
       for (const cand of candidates) {
         if (signal.aborted) return null;
@@ -730,6 +1053,18 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
       }
     }
 
+    // ─── PASS 3: USDA FoodData Central Multi-Source Fallback ───
+    if (!resData?.product) {
+      for (const cand of candidates) {
+        if (signal.aborted) return null;
+        const usdaData = await fetchUsdaFoodData(cand, signal);
+        if (usdaData) {
+          resData = { product: usdaData };
+          break;
+        }
+      }
+    }
+
     if (!resData?.product) {
       for (const cand of candidates) {
         productCache.set(cand, null);
@@ -737,252 +1072,8 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
       return null;
     }
 
-    let p = resData.product;
-    const name = extractUniversalName(p);
-    const brand = extractUniversalBrand(p);
-    const imageUrl = p.image_front_url || p.image_url || p.image_front_small_url || undefined;
-
-    let n = p.nutriments ?? p.nutrition_grades ?? p.nutrition_data ?? {};
-
-    // ─── NUTRIMENT ENRICHMENT FALLBACK ───────────────────────────
-    // Many products (especially Indian/regional brands) exist in OpenFoodFacts
-    // under multiple barcodes. Often one barcode has name+image but empty nutriments,
-    // while another barcode for the same product has full nutritional data.
-    // This fallback searches by product name to find enriched data.
-    const hasNutrimentData = n && typeof n === 'object' && Object.keys(n).length > 0 &&
-      (n.sugars_100g !== undefined || n.sugars !== undefined || n['energy-kcal_100g'] !== undefined ||
-       n.carbohydrates_100g !== undefined || n.fat_100g !== undefined || n.proteins_100g !== undefined);
-
-    if (!hasNutrimentData && !signal.aborted) {
-      console.log(`[BiteFix] Barcode product "${name}" has empty nutriments — attempting text search enrichment...`);
-      try {
-        const searchTerms = name.replace(/[^\w\s]/g, ' ').trim();
-        const searchUrl = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(searchTerms)}&search_simple=1&json=1&page_size=10&fields=product_name,brands,nutriments,nova_group,nutriscore_grade,nutrition_grades,additives_tags,additives_original_tags,allergens_hierarchy,allergens_tags,ingredients_text,ingredients_text_en,serving_size,serving_quantity,serving_quantity_unit,quantity,categories_tags,image_front_url,image_url`;
-        const searchResp = await fetchWithTimeout(searchUrl, API_TIMEOUT_MS, signal);
-        if (!signal.aborted && searchResp.ok) {
-          const searchData = await searchResp.json();
-          const searchProducts = searchData?.products;
-          if (Array.isArray(searchProducts) && searchProducts.length > 0) {
-            // Find the best match: same product name (fuzzy) with actual nutriment data
-            const nameNorm = name.toLowerCase().replace(/[^\w\s]/g, '').trim();
-            const enrichedProduct = searchProducts.find((sp: any) => {
-              const spName = extractUniversalName(sp).toLowerCase().replace(/[^\w\s]/g, '').trim();
-              const spN = sp.nutriments;
-              const spHasData = spN && typeof spN === 'object' && Object.keys(spN).length > 0 &&
-                (spN.sugars_100g !== undefined || spN['energy-kcal_100g'] !== undefined || spN.carbohydrates_100g !== undefined);
-              // Check for name similarity: at least 60% word overlap
-              const nameWords = new Set(nameNorm.split(/\s+/).filter((w: string) => w.length > 2));
-              const spWords = new Set(spName.split(/\s+/).filter((w: string) => w.length > 2));
-              if (nameWords.size === 0) return false;
-              let overlap = 0;
-              nameWords.forEach((w: string) => { if (spWords.has(w)) overlap++; });
-              const similarity = overlap / Math.max(nameWords.size, 1);
-              return spHasData && similarity >= 0.5;
-            });
-
-            if (enrichedProduct) {
-              console.log(`[BiteFix] Found enriched nutriment data from "${extractUniversalName(enrichedProduct)}" — merging...`);
-              n = enrichedProduct.nutriments;
-              // Also merge in any missing metadata from the enriched product
-              if (!p.nova_group && enrichedProduct.nova_group) p = { ...p, nova_group: enrichedProduct.nova_group };
-              if (!p.nutriscore_grade && !p.nutrition_grades && (enrichedProduct.nutriscore_grade || enrichedProduct.nutrition_grades)) {
-                p = { ...p, nutriscore_grade: enrichedProduct.nutriscore_grade, nutrition_grades: enrichedProduct.nutrition_grades };
-              }
-              if ((!p.additives_tags || p.additives_tags.length === 0) && enrichedProduct.additives_tags) {
-                p = { ...p, additives_tags: enrichedProduct.additives_tags };
-              }
-              if ((!p.allergens_hierarchy || p.allergens_hierarchy.length === 0) && enrichedProduct.allergens_hierarchy) {
-                p = { ...p, allergens_hierarchy: enrichedProduct.allergens_hierarchy };
-              }
-              if (!p.ingredients_text && !p.ingredients_text_en) {
-                p = { ...p, ingredients_text: enrichedProduct.ingredients_text, ingredients_text_en: enrichedProduct.ingredients_text_en };
-              }
-              if (!p.serving_size && enrichedProduct.serving_size) {
-                p = { ...p, serving_size: enrichedProduct.serving_size };
-              }
-              if ((!p.categories_tags || p.categories_tags.length === 0) && enrichedProduct.categories_tags) {
-                p = { ...p, categories_tags: enrichedProduct.categories_tags };
-              }
-              // Preserve original image if enriched product doesn't have one
-              if (!p.image_front_url && enrichedProduct.image_front_url) {
-                p = { ...p, image_front_url: enrichedProduct.image_front_url };
-              }
-            }
-          }
-        }
-      } catch (enrichErr) {
-        if (isAbortError(enrichErr)) return null;
-        console.warn('[BiteFix] Nutriment enrichment fallback failed:', enrichErr);
-        // Continue with whatever data we have — this is a best-effort enrichment
-      }
-    }
-
-    // Authoritative total sugar per 100g
-    let sugarPer100g = extractNumberFromKeys(n, [
-      'sugars_100g', 'sugars', 'sugars_value', 'sugars-total_100g', 'sugars-total'
-    ]) ?? 0;
-
-    // If total sugars is 0 or missing, check added sugars
-    if (sugarPer100g === 0) {
-      const added = extractNumberFromKeys(n, [
-        'added-sugars_100g', 'added-sugars', 'added-sugars_value'
-      ]);
-      if (added !== undefined && added > 0) sugarPer100g = added;
-    }
-
-    const kcal100g = extractNumberFromKeys(n, ['energy-kcal_100g', 'energy-kcal', 'energy-kcal_value', 'energy_100g']) ??
-      (extractNumberFromKeys(n, ['energy-kj_100g', 'energy-kj', 'energy_100g']) ? Math.round((extractNumberFromKeys(n, ['energy-kj_100g', 'energy-kj', 'energy_100g']) as number) / 4.184) : undefined);
-    const carbs100g = extractNumberFromKeys(n, ['carbohydrates_100g', 'carbohydrates', 'carbohydrates_value']);
-    const fat100g = extractNumberFromKeys(n, ['fat_100g', 'fat', 'fat_value']);
-    const protein100g = extractNumberFromKeys(n, ['proteins_100g', 'proteins', 'proteins_value']);
-
-    // Determine if product is liquid or solid for accurate "100 g/ml" default serving label
-    const rawQuantityStr = String(p.quantity || p.product_quantity || '').toLowerCase();
-    const rawCategoryStr = String((Array.isArray(p.categories_tags) ? p.categories_tags.join(' ') : p.categories) || '').toLowerCase();
-    const isLiquid = isProductLiquid(rawQuantityStr, rawCategoryStr);
-    const defaultUnitLabel = isLiquid ? '100 ml' : '100 g';
-
-    // ─── WHOLE PACK CALCULATION ───
-    const totalWeightGrams = parseQuantityString(rawQuantityStr);
-    let totalSugarGrams: number | undefined;
-    if (totalWeightGrams !== null && totalWeightGrams > 0 && sugarPer100g !== undefined) {
-      totalSugarGrams = parseFloat(((sugarPer100g * totalWeightGrams) / 100).toFixed(1));
-    }
-
-    // ─── STEP 1: PER SERVING CALCULATION (Per Serving if not then 100 g/ml must be considered Per serving size) ───
-    let servingSugarGrams = extractNumberFromKeys(n, [
-      'sugars_serving', 'sugars-total_serving', 'added-sugars_serving'
-    ]);
-    let calories = extractNumberFromKeys(n, ['energy-kcal_serving']);
-    let carbsGrams = extractNumberFromKeys(n, ['carbohydrates_serving']);
-    let fatGrams = extractNumberFromKeys(n, ['fat_serving']);
-    let proteinGrams = extractNumberFromKeys(n, ['proteins_serving']);
-
-    let servingSize: string | undefined = typeof p.serving_size === 'string' && p.serving_size.trim() !== '' && p.serving_size.trim().toLowerCase() !== 'unknown'
-      ? p.serving_size.trim()
-      : (typeof p.serving_quantity === 'number' && p.serving_quantity > 0 ? `${p.serving_quantity} ${p.serving_quantity_unit || defaultUnitLabel.split(' ')[1]}` : undefined);
-
-    let isDefaultServing = false;
-    const servingWeight = servingSize ? parseQuantityString(servingSize) : null;
-
-    if (servingSize && servingWeight !== null && servingWeight > 0) {
-      // Valid explicit serving size! Recalculate serving macros from 100g/ml baseline for 100% mathematical consistency
-      if (sugarPer100g !== undefined && sugarPer100g >= 0) {
-        servingSugarGrams = parseFloat(((sugarPer100g * servingWeight) / 100).toFixed(1));
-      }
-      if (kcal100g !== undefined) {
-        calories = Math.round((kcal100g * servingWeight) / 100);
-      }
-      if (carbs100g !== undefined) {
-        carbsGrams = parseFloat(((carbs100g * servingWeight) / 100).toFixed(1));
-      }
-      if (fat100g !== undefined) {
-        fatGrams = parseFloat(((fat100g * servingWeight) / 100).toFixed(1));
-      }
-      if (protein100g !== undefined) {
-        proteinGrams = parseFloat(((protein100g * servingWeight) / 100).toFixed(1));
-      }
-    } else {
-      // Per user rule: if not then 100 g/ml must be considered Per serving size, same with per serving sugar, total energy and serving energy!
-      isDefaultServing = true;
-      servingSize = `${defaultUnitLabel} (Standard)`;
-      servingSugarGrams = sugarPer100g;
-      calories = kcal100g;
-      carbsGrams = carbs100g;
-      fatGrams = fat100g;
-      proteinGrams = protein100g;
-    }
-
-    const finalSugarGrams = servingSugarGrams ?? sugarPer100g;
-    const sugarTeaspoons = parseFloat((finalSugarGrams / 4.2).toFixed(1));
-
-    // ─── STEP 3: WHO DAILY LIMIT USAGE (Per Serving Method) ───
-    // WHO adult upper daily limit = 50g (approx 12 tsp). Safe/ideal daily limit = 25g (approx 6 tsp).
-    const whoLimitServingPercent = Math.min(500, Math.round((sugarTeaspoons / 12) * 100));
-    const whoLimitIdealServingPercent = Math.min(500, Math.round((sugarTeaspoons / 6) * 100));
-
-    const categoryTag = Array.isArray(p.categories_tags) && p.categories_tags.length > 0
-      ? p.categories_tags[p.categories_tags.length - 1]
-      : undefined;
-
-    const ingredientsText = p.ingredients_text_en || p.ingredients_text || undefined;
-    const stealthAnalysis = detectStealthSugars(ingredientsText);
-
-    // ── BiteFix: Parse NOVA, Additives, Allergens, Nutri-Score ──
-    const rawNova = p.nova_group ?? p.nova_groups ?? undefined;
-    const novaClass: NOVAClass | undefined = (rawNova && [1, 2, 3, 4].includes(Number(rawNova))) ? Number(rawNova) as NOVAClass : undefined;
-
-    const additives = parseAdditivesFromProduct(p);
-    const additiveCount = additives.length;
-    const allergens = parseAllergensFromProduct(p);
-
-    const rawNutriScore = String(p.nutriscore_grade ?? p.nutrition_grades ?? p.ecoscore_data?.previous_data?.nutriscore_grade ?? '').toLowerCase();
-    const nutriScore: ScanResultData['nutriScore'] = ['a', 'b', 'c', 'd', 'e'].includes(rawNutriScore) ? rawNutriScore as ScanResultData['nutriScore'] : undefined;
-
-    const biteFixScore = computeBiteFixScore({ name, brand, novaClass, additiveCount, nutriScore, sugarPer100g, ingredientsText });
-
-    // ── Sustainability & Dietary Tags ──
-    const rawEcoScore = String(p.ecoscore_grade ?? p.ecoscore_data?.previous_data?.grade ?? p.ecoscore_data?.grade ?? '').toLowerCase();
-    const ecoscoreGrade: ScanResultData['ecoscoreGrade'] = ['a', 'b', 'c', 'd', 'e'].includes(rawEcoScore) ? rawEcoScore as ScanResultData['ecoscoreGrade'] : undefined;
-    
-    let carbonFootprint100g: number | undefined = undefined;
-    if (p.ecoscore_data?.agribalyse?.co2_total) {
-      carbonFootprint100g = p.ecoscore_data.agribalyse.co2_total;
-    } else if (p.ecoscore_data?.agribalyse?.co2_eq) {
-      carbonFootprint100g = p.ecoscore_data.agribalyse.co2_eq;
-    } else if (p.ecoscore_data?.previous_data?.agribalyse?.co2_total) {
-      carbonFootprint100g = p.ecoscore_data.previous_data.agribalyse.co2_total;
-    } else if (p.ecoscore_data?.previous_data?.agribalyse?.co2_eq) {
-      carbonFootprint100g = p.ecoscore_data.previous_data.agribalyse.co2_eq;
-    } else if (p.ecoscore_data?.carbon_footprint_100g) {
-      carbonFootprint100g = p.ecoscore_data.carbon_footprint_100g;
-    } else if (p.carbon_footprint_from_known_ingredients_100g) {
-      carbonFootprint100g = p.carbon_footprint_from_known_ingredients_100g;
-    } else {
-      carbonFootprint100g = extractNumberFromKeys(n, ['carbon-footprint-from-known-ingredients_100g', 'carbon-footprint_100g']);
-    }
-    
-    const analysisTags = (p.ingredients_analysis_tags || []).map((t: string) => t.toLowerCase());
-    const isVegan = analysisTags.includes('en:vegan');
-    const isVegetarian = analysisTags.includes('en:vegetarian') || isVegan;
-    
-    const labelTags = (p.labels_tags || []).map((t: string) => t.toLowerCase());
-    const isOrganic = labelTags.includes('en:organic') || labelTags.includes('en:usda-organic') || labelTags.includes('en:eu-organic') || labelTags.includes('en:bio');
-
-    const resultData: ScanResultData = {
-      name,
-      brand,
-      sugarGrams: finalSugarGrams,
-      sugarTeaspoons,
-      totalWeightGrams: totalWeightGrams ?? undefined,
-      totalSugarGrams,
-      sugarPer100g,
-      imageUrl,
-      servingSize,
-      calories,
-      carbsGrams,
-      fatGrams,
-      proteinGrams,
-      categoryTag,
-      isDefaultServing,
-      whoLimitServingPercent,
-      whoLimitIdealServingPercent,
-      ingredientsText,
-      hasHiddenSugars: stealthAnalysis.hasHiddenSugars,
-      hiddenSugars: stealthAnalysis.matches,
-      hiddenSugarCount: stealthAnalysis.hiddenSugarCount,
-      novaClass,
-      additives,
-      additiveCount,
-      allergens,
-      nutriScore,
-      biteFixScore,
-      ecoscoreGrade,
-      carbonFootprint100g,
-      isVegan,
-      isVegetarian,
-      isOrganic,
-    };
+    // Normalize raw payload through Universal Normalizer Pipeline
+    const resultData = normalizeProductPayload(resData.product);
 
     for (const cand of candidates) {
       productCache.set(cand, resultData);
