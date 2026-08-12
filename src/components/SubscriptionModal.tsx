@@ -114,7 +114,7 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         Alert.alert(
           '✨ Premium Unlocked!',
-          'Welcome to BiteFix Premium. You now have full access to Gut Shield, Smart Swaps, and all premium features.',
+          'Welcome to BiteFix Premium. You now have full access to Gut Shield, Sugar Detective, and all premium features.',
           [{ text: 'Start Scanning', onPress: () => {
             onClose();
             router.replace('/(tabs)');

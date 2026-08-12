@@ -17,6 +17,9 @@ interface AppState {
   isPremium: boolean;
   freeScansUsed: number;
   trialStarted: boolean;
+  dietPreference: 'vegan' | 'vegetarian' | 'standard';
+  trackEcoScore: boolean;
+  trackOrganic: boolean;
 
   // Actions
   setOnboardingComplete: (complete: boolean) => void;
@@ -35,6 +38,9 @@ interface AppState {
     userName?: string;
     userGoal?: 'ultra_processed' | 'nutri_score' | 'clean_swaps' | 'healthy_habits' | 'none';
   }) => void;
+  setDietPreference: (diet: 'vegan' | 'vegetarian' | 'standard') => void;
+  setTrackEcoScore: (track: boolean) => void;
+  setTrackOrganic: (track: boolean) => void;
 
   // Collection Actions
   addToCollection: (item: ScanHistoryItem, category?: BiteFixCategory, notes?: string) => void;
@@ -76,6 +82,11 @@ function normalizePersistedState(persistedState: unknown, version: number): Part
     state.strictNovaAlert = state.strictNovaAlert ?? true;
     state.stealthAdditivesAlert = state.stealthAdditivesAlert ?? true;
   }
+  if (version < 6) {
+    state.dietPreference = state.dietPreference ?? 'standard';
+    state.trackEcoScore = state.trackEcoScore ?? false;
+    state.trackOrganic = state.trackOrganic ?? false;
+  }
 
   return {
     ...state,
@@ -91,6 +102,9 @@ function normalizePersistedState(persistedState: unknown, version: number): Part
     isPremium: typeof state.isPremium === 'boolean' ? state.isPremium : false,
     freeScansUsed: typeof state.freeScansUsed === 'number' ? state.freeScansUsed : 0,
     trialStarted: typeof state.trialStarted === 'boolean' ? state.trialStarted : false,
+    dietPreference: ['vegan', 'vegetarian', 'standard'].includes(state.dietPreference) ? state.dietPreference : 'standard',
+    trackEcoScore: typeof state.trackEcoScore === 'boolean' ? state.trackEcoScore : false,
+    trackOrganic: typeof state.trackOrganic === 'boolean' ? state.trackOrganic : false,
   };
 }
 
@@ -109,6 +123,9 @@ export const useAppStore = create<AppState>()(
       isPremium: false,
       freeScansUsed: 0,
       trialStarted: false,
+      dietPreference: 'standard',
+      trackEcoScore: false,
+      trackOrganic: false,
 
       setOnboardingComplete: (complete) => set({ onboardingComplete: complete }),
       setTheme: (theme) => set({ theme }),
@@ -156,6 +173,9 @@ export const useAppStore = create<AppState>()(
         userName: profile.userName !== undefined ? profile.userName : state.userName,
         userGoal: profile.userGoal !== undefined ? profile.userGoal : state.userGoal,
       })),
+      setDietPreference: (diet) => set({ dietPreference: diet }),
+      setTrackEcoScore: (track) => set({ trackEcoScore: track }),
+      setTrackOrganic: (track) => set({ trackOrganic: track }),
 
       addToCollection: (item, category, notes) => set((state) => {
         // Prevent duplicates by ID or barcode/name
@@ -202,11 +222,11 @@ export const useAppStore = create<AppState>()(
     {
       name: '@bitefix-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 5,
+      version: 6,
       migrate: normalizePersistedState,
       merge: (persistedState, currentState) => ({
         ...currentState,
-        ...normalizePersistedState(persistedState, 5),
+        ...normalizePersistedState(persistedState, 6),
       }),
       onRehydrateStorage: () => (_state, error) => {
         if (error) {

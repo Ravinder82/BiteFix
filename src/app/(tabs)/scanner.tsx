@@ -46,6 +46,7 @@ import {
   fetchWithTimeout,
   extractSugarFromNutriments,
   parseQuantityString,
+  detectShieldAlerts,
   API_TIMEOUT_MS
 } from '../../utils/scannerAPI';
 import { analyzeImageWithVision } from '../../utils/visionAPI';
@@ -53,7 +54,9 @@ import { analyzeImageWithVision } from '../../utils/visionAPI';
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
 import ProductHeroCardDashboard from '../../components/features/ProductHeroCardDashboard';
+import { ShieldPillCard } from '../../components/ShieldPillCard';
 import { SubscriptionModal } from '../../components/SubscriptionModal';
+import { EcoScoreCard } from '../../components/EcoScoreCard';
 import {
   Keyboard,
   ArrowLeft,
@@ -91,7 +94,7 @@ const PRODUCT_BARCODE_TYPES = ['qr', 'upc_a', 'upc_e', 'ean13', 'ean8', 'code128
 // ─────────────────────────────────────────────────────────
 export default function ScannerScreen() {
   const { colors, isDark } = useTheme();
-  const { sugarUnit, addToCollection, collection, isPremium, freeScansUsed, incrementFreeScans } = useAppStore();
+  const { sugarUnit, addToCollection, collection, isPremium, freeScansUsed, incrementFreeScans, allergenFilters, dietPreference } = useAppStore();
 
   // Camera permission hook from expo-camera
   const [permission, requestPermission] = useCameraPermissions();
@@ -706,6 +709,20 @@ export default function ScannerScreen() {
             contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }}
             showsVerticalScrollIndicator={false}
           >
+            {/* 0. Proactive Shield Pill Cards (Allergens, Palm Oil, Diet) */}
+            <View style={{ marginBottom: 12 }}>
+              {scanResult.ingredientsText && allergenFilters.length > 0 && detectShieldAlerts(scanResult.ingredientsText, allergenFilters).map((alert, idx) => (
+                <ShieldPillCard key={`${alert.id}-${idx}`} alert={alert} index={idx} />
+              ))}
+              
+              {dietPreference === 'vegan' && scanResult.isVegan === false && (
+                <ShieldPillCard key="diet-vegan" alert={{ id: 'vegan', type: 'allergen', name: 'Non-Vegan Ingredients' }} index={5} />
+              )}
+              {dietPreference === 'vegetarian' && scanResult.isVegetarian === false && (
+                <ShieldPillCard key="diet-veg" alert={{ id: 'veg', type: 'allergen', name: 'Non-Vegetarian Ingredients' }} index={5} />
+              )}
+            </View>
+
             {/* 1. Executive Telemetry: Purity & Additives Audit */}
             <View style={{ marginBottom: 4 }}>
               <ProductHeroCardDashboard
@@ -731,6 +748,16 @@ export default function ScannerScreen() {
               hiddenSugars={scanResult.hiddenSugars}
               hiddenSugarCount={scanResult.hiddenSugarCount}
               nutriScore={scanResult.nutriScore}
+            />
+
+            {/* NEW: Eco-Score & Dietary Metrics */}
+            <EcoScoreCard 
+              grade={scanResult.ecoscoreGrade}
+              carbonFootprint={scanResult.carbonFootprint100g}
+              isOrganic={scanResult.isOrganic}
+              isVegan={scanResult.isVegan}
+              isVegetarian={scanResult.isVegetarian}
+              delayIndex={3}
             />
 
             {/* 3. Action Dock: Save & Scan Another */}
@@ -802,6 +829,11 @@ export default function ScannerScreen() {
                 <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13 }}>Scan Another</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Attribution footer */}
+            <Text style={{ color: colors.textMuted, fontSize: 10, textAlign: 'center', marginTop: 24, fontWeight: '600' }}>
+              Data sourced from Open Food Facts (ODbL)
+            </Text>
           </ScrollView>
         </SafeAreaView>
       )}

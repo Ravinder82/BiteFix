@@ -226,6 +226,23 @@ export default function ProductHeroCardDashboard({
                 </Text>
               </View>
             )}
+            {scanResult.isOrganic && (
+              <View
+                style={{
+                  alignSelf: 'flex-start',
+                  backgroundColor: 'rgba(0, 194, 136, 0.15)',
+                  borderColor: 'rgba(0, 194, 136, 0.3)',
+                  borderWidth: 1,
+                  paddingHorizontal: 8,
+                  paddingVertical: 3,
+                  borderRadius: 99,
+                }}
+              >
+                <Text style={{ color: '#00C288', fontSize: 10, fontWeight: '800', letterSpacing: 0.5 }}>
+                  ORGANIC
+                </Text>
+              </View>
+            )}
           </View>
           <Text
             style={{ color: colors.text, fontSize: 18, fontWeight: '900', lineHeight: 22, letterSpacing: -0.3 }}

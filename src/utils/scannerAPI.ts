@@ -29,8 +29,16 @@ export interface ScanResultData {
   additives?: AdditiveDetail[];
   additiveCount?: number;
   allergens?: string[];
+  shieldAlerts?: { id: string; type: 'allergen' | 'oil'; name: string }[];
   nutriScore?: 'a' | 'b' | 'c' | 'd' | 'e';
   biteFixScore?: number;
+  
+  // ── Sustainability & Dietary Extensions ──────────────
+  ecoscoreGrade?: 'a' | 'b' | 'c' | 'd' | 'e' | 'unknown';
+  carbonFootprint100g?: number;
+  isVegan?: boolean;
+  isVegetarian?: boolean;
+  isOrganic?: boolean;
 
   // ── Healthy Swap Telemetry ────────────────────────────
   isSwapped?: boolean;
@@ -39,6 +47,43 @@ export interface ScanResultData {
   originalBiteFixScore?: number;
   originalAdditiveCount?: number;
   originalSugarGrams?: number;
+}
+
+// ─────────────────────────────────────────────────────────
+// Shield Detection Helper
+// ─────────────────────────────────────────────────────────
+export function detectShieldAlerts(ingredientsText: string | undefined, allergenFilters: string[]): { id: string; type: 'allergen' | 'oil'; name: string }[] {
+  if (!ingredientsText) return [];
+  const text = ingredientsText.toLowerCase();
+  const alerts: { id: string; type: 'allergen' | 'oil'; name: string }[] = [];
+
+  // Proactive Palm Oil Check (Always Active)
+  if (text.includes('palm oil') || text.includes('palm kernel') || text.includes('fractionated palm') || text.includes('palmolein')) {
+    alerts.push({ id: 'palm_oil', type: 'oil', name: 'Palm Oil' });
+  }
+
+  // Allergen mapping (simple keyword matching)
+  const allergenKeywords: Record<string, string[]> = {
+    'Gluten': ['wheat', 'barley', 'rye', 'oat', 'malt', 'gluten'],
+    'Dairy': ['milk', 'whey', 'casein', 'butter', 'cheese', 'cream', 'lactose'],
+    'Soy': ['soy', 'edamame', 'miso', 'tempeh', 'tofu'],
+    'Nuts': ['almond', 'walnut', 'pecan', 'cashew', 'pistachio', 'macadamia', 'hazelnut', 'nut'],
+    'Peanuts': ['peanut'],
+    'Eggs': ['egg', 'albumen', 'globulin', 'livetin', 'lysozyme', 'vitellin'],
+    'Fish': ['fish', 'salmon', 'tuna', 'cod', 'tilapia', 'anchov'],
+    'Shellfish': ['crab', 'lobster', 'shrimp', 'prawn', 'crawfish', 'krill']
+  };
+
+  for (const filter of allergenFilters) {
+    if (filter === 'Palm Oil') continue; // Handled globally above
+
+    const keywords = allergenKeywords[filter] || [filter.toLowerCase()];
+    if (keywords.some(kw => text.includes(kw))) {
+      alerts.push({ id: filter.toLowerCase(), type: 'allergen', name: filter });
+    }
+  }
+
+  return alerts;
 }
 
 // ─────────────────────────────────────────────────────────
@@ -866,6 +911,30 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
 
     const biteFixScore = computeBiteFixScore({ novaClass, additiveCount, nutriScore, sugarPer100g, ingredientsText });
 
+    // ── Sustainability & Dietary Tags ──
+    const rawEcoScore = String(p.ecoscore_grade ?? '').toLowerCase();
+    const ecoscoreGrade: ScanResultData['ecoscoreGrade'] = ['a', 'b', 'c', 'd', 'e'].includes(rawEcoScore) ? rawEcoScore as ScanResultData['ecoscoreGrade'] : undefined;
+    
+    let carbonFootprint100g: number | undefined = undefined;
+    if (p.ecoscore_data?.agribalyse?.co2_total) {
+      carbonFootprint100g = p.ecoscore_data.agribalyse.co2_total;
+    } else if (p.ecoscore_data?.agribalyse?.co2_eq) {
+      carbonFootprint100g = p.ecoscore_data.agribalyse.co2_eq;
+    } else if (p.ecoscore_data?.carbon_footprint_100g) {
+      carbonFootprint100g = p.ecoscore_data.carbon_footprint_100g;
+    } else if (p.carbon_footprint_from_known_ingredients_100g) {
+      carbonFootprint100g = p.carbon_footprint_from_known_ingredients_100g;
+    } else {
+      carbonFootprint100g = extractNumberFromKeys(n, ['carbon-footprint-from-known-ingredients_100g', 'carbon-footprint_100g']);
+    }
+    
+    const analysisTags = (p.ingredients_analysis_tags || []).map((t: string) => t.toLowerCase());
+    const isVegan = analysisTags.includes('en:vegan');
+    const isVegetarian = analysisTags.includes('en:vegetarian') || isVegan;
+    
+    const labelTags = (p.labels_tags || []).map((t: string) => t.toLowerCase());
+    const isOrganic = labelTags.includes('en:organic') || labelTags.includes('en:usda-organic') || labelTags.includes('en:eu-organic') || labelTags.includes('en:bio');
+
     const resultData: ScanResultData = {
       name,
       brand,
@@ -894,6 +963,11 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
       allergens,
       nutriScore,
       biteFixScore,
+      ecoscoreGrade,
+      carbonFootprint100g,
+      isVegan,
+      isVegetarian,
+      isOrganic,
     };
 
     for (const cand of candidates) {

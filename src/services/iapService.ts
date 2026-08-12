@@ -154,13 +154,14 @@ class BitefixIAPService {
   public async checkSubscriptionStatus(): Promise<boolean> {
     try {
       const customerInfo = await Purchases.getCustomerInfo();
-      const isEntitled = typeof customerInfo.entitlements.active[ENTITLEMENT_ID] !== 'undefined';
+      const isEntitled = typeof customerInfo?.entitlements?.active?.[ENTITLEMENT_ID] !== 'undefined';
       
       useAppStore.getState().setPremium(isEntitled);
       return isEntitled;
     } catch (e: any) {
-      console.error('[RevenueCat] ❌ Status check failed:', e.message);
-      return false;
+      console.warn('[RevenueCat] Subscription check bypassed/offline:', e?.message || e);
+      // Preserve current local premium state if network or store SDK fails
+      return useAppStore.getState().isPremium;
     }
   }
 

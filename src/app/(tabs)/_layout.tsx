@@ -75,9 +75,11 @@ function FloatingScannerButton({ onPress, accessibilityState }: any) {
 export default function TabLayout() {
   const { colors, isDark } = useTheme();
   const { isPremium, freeScansUsed } = useAppStore();
+  const pathname = usePathname();
 
-  // GATING GUARD: Allow access if user is premium OR has remaining free scans (< 5)
-  const canAccessApp = isPremium || (typeof freeScansUsed === 'number' && freeScansUsed < 5);
+  // GATING GUARD: Allow access if user is premium, has free scans, or is accessing settings
+  const isSettingsPage = pathname === '/settings';
+  const canAccessApp = isPremium || (typeof freeScansUsed === 'number' && freeScansUsed < 5) || isSettingsPage;
   if (!canAccessApp) {
     return <Redirect href="/paywall" />;
   }

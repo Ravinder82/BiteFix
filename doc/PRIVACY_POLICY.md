@@ -12,7 +12,7 @@ BiteFix is built with a **privacy-first architecture**. Your scan data, custom a
 ## 1. Information We Collect and Process
 
 ### A. Local Device Storage (Personal Data)
-* **Scan History & Baskets:** Scanned barcodes, product ingredient analysis, food scores, and saved food swaps.
+* **Scan History & Baskets:** Scanned barcodes, product ingredient analysis, and food scores.
 * **App Preferences:** Personal allergen selections (e.g., Gluten, Dairy, Soy), sugar unit display choices (Grams vs. Ounces), theme settings, and food quality alert thresholds.
 
 

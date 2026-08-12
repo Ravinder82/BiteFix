@@ -79,6 +79,13 @@ export interface ScanHistoryItem {
   /** BiteFix Health Score (0-100). Computed post-scan. */
   biteFixScore?: number;
 
+  // ── Sustainability & Dietary Preference Extensions ──
+  isVegan?: boolean;
+  isVegetarian?: boolean;
+  isOrganic?: boolean;
+  ecoscoreGrade?: 'a' | 'b' | 'c' | 'd' | 'e' | 'unknown';
+  carbonFootprint100g?: number;
+
   // ── Healthy Swap Telemetry ────────────────────────────
   /** Whether this item was saved as a healthy swap alternative */
   isSwapped?: boolean;

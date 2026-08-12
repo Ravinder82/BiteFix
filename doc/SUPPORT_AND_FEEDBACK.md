@@ -27,7 +27,7 @@ BiteFix queries open food databases containing millions of products. If a barcod
 
 ## 💡 Send App Feedback
 
-Have an idea for a feature, new clean food swap suggestion, or allergen filter? We'd love to hear from you!
+Have an idea for a feature or an allergen filter? We'd love to hear from you!
 
 * **Feedback Email:** [bitefixapp@gmail.com](mailto:bitefixapp@gmail.com)
 * **GitHub Community Issues:** [BiteFix Issues on GitHub](https://github.com/Ravinder82/BiteFix/issues)

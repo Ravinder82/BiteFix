@@ -10,7 +10,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import { NutritionFacts } from '../../components/features/NutritionFacts';
 import ProductHeroCardDashboard from '../../components/features/ProductHeroCardDashboard';
-import { ScanBarcode, ArrowRight, Settings, Bookmark, ArrowUpRight, Trash2, X, ShieldCheck } from 'lucide-react-native';
+import { ScanBarcode, ArrowRight, Settings, Bookmark, ArrowUpRight, Trash2, X, ShieldCheck, Leaf, ShieldAlert, CheckCircle, CloudRain, Globe } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { getBiteFixScoreColor, formatWeight, getNovaColor } from '../../utils/format';
 import Svg, { Circle, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop, G } from 'react-native-svg';
@@ -207,7 +207,7 @@ function SavedItemRow({ item, colors, isDark, onPress, onDelete }: { item: Colle
 
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
-  const { collection, removeFromCollection, userName, sugarUnit } = useAppStore();
+  const { collection, removeFromCollection, userName, sugarUnit, dietPreference, trackEcoScore, trackOrganic } = useAppStore();
   const [selectedSavedItem, setSelectedSavedItem] = useState<CollectionItem | null>(null);
   const panY = useRef(new Animated.Value(0)).current;
 
@@ -317,6 +317,54 @@ export default function HomeScreen() {
 
   const avgNutriScore = getAvgNutriScore();
 
+  // --- BASKET DIET & ECO METRICS ---
+  const organicCount = useMemo(() => collection.filter(i => i.isOrganic).length, [collection]);
+  const organicRatio = basketItemCount > 0 ? (organicCount / basketItemCount) * 100 : 0;
+  
+  const veganCount = useMemo(() => collection.filter(i => i.isVegan).length, [collection]);
+  const vegetarianCount = useMemo(() => collection.filter(i => (i.isVegetarian || i.isVegan) && !i.isVegan).length, [collection]);
+  const nonVegCount = useMemo(() => collection.filter(i => i.isVegetarian === false && i.isVegan === false).length, [collection]);
+  
+  const getEcoScoreCounts = () => {
+    const counts = { a: 0, b: 0, c: 0, d: 0, e: 0, unknown: 0 };
+    collection.forEach(item => {
+      const g = item.ecoscoreGrade?.toLowerCase() || 'unknown';
+      if (counts[g as keyof typeof counts] !== undefined) {
+        counts[g as keyof typeof counts]++;
+      }
+    });
+    return counts;
+  };
+  const ecoScoreCounts = useMemo(getEcoScoreCounts, [collection]);
+
+  const getAvgEcoScore = () => {
+    if (basketItemCount === 0) return undefined;
+    const scoreMap = { a: 1, b: 2, c: 3, d: 4, e: 5 };
+    const revMap = { 1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e' } as const;
+    let sum = 0;
+    let count = 0;
+    collection.forEach((item) => {
+      if (item.ecoscoreGrade && item.ecoscoreGrade !== 'unknown') {
+        sum += scoreMap[item.ecoscoreGrade.toLowerCase() as keyof typeof scoreMap] || 3;
+        count++;
+      }
+    });
+    if (count === 0) return undefined;
+    const avg = Math.round(sum / count);
+    return revMap[Math.min(5, Math.max(1, avg)) as keyof typeof revMap];
+  };
+
+  const avgEcoScore = useMemo(getAvgEcoScore, [collection, basketItemCount]);
+
+  const totalCarbonFootprintGrams = useMemo(() => {
+    if (basketItemCount === 0) return 0;
+    return collection.reduce((acc, item) => acc + (item.carbonFootprint100g || 0), 0);
+  }, [collection, basketItemCount]);
+
+  const totalCarbonFootprintKg = (totalCarbonFootprintGrams / 1000).toFixed(2);
+  const milesDrivenEquivalent = (parseFloat(totalCarbonFootprintKg) * 4.0).toFixed(1);
+  // --------------------------
+
   const totalSugarTeaspoons = useMemo(() => {
     if (basketItemCount === 0) return 0;
     return collection.reduce((acc, item) => acc + (item.sugarTeaspoons || 0), 0);
@@ -384,7 +432,7 @@ export default function HomeScreen() {
             <Text
               style={{ color: colors.primary, fontSize: 9.5, fontWeight: '800', letterSpacing: 1.6 }}
             >
-              Scan.Swap.Eat Clean
+              Scan.Save.Eat Clean
             </Text>
           </View>
         </View>
@@ -428,8 +476,8 @@ export default function HomeScreen() {
             style={{ padding: 0 }}
           >
             {/* Top Row: Title Badge */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
+            <View style={{ width: '100%', flexDirection: 'column', alignItems: 'flex-start', marginBottom: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1, marginBottom: 4 }}>
                 <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.primary }} />
                 <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 }} numberOfLines={1}>
                   BiteFix Basket Scoreboard
@@ -437,7 +485,7 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            {/* Center Info Panel */}
+            {/* Center Info Panel (Mascot Ring) */}
             <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 20, width: '100%' }}>
               {/* Animated Mascot Orb Container */}
               <View style={{ width: 220, height: 220, alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
@@ -692,6 +740,101 @@ export default function HomeScreen() {
                 })}
               </View>
             </View>
+
+            {/* ── CARD B1: Basket Eco-Score & Sustainability Card ── */}
+            <View
+              style={{
+                marginTop: 16,
+                paddingTop: 16,
+                borderTopWidth: 1.5,
+                borderTopColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+              }}
+            >
+              {/* Header */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingHorizontal: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 9.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    Basket Eco-Score (Environmental Impact)
+                  </Text>
+                </View>
+                <View style={{
+                  backgroundColor: isDark ? 'rgba(46, 204, 113, 0.15)' : 'rgba(46, 204, 113, 0.1)',
+                  paddingHorizontal: 8,
+                  paddingVertical: 3,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: 'rgba(46, 204, 113, 0.3)',
+                }}>
+                  <Text style={{ color: '#2ECC71', fontSize: 10, fontWeight: '900' }}>
+                    {avgEcoScore ? `GRADE ${avgEcoScore.toUpperCase()}` : 'NO DATA'}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Eco-Score Traffic Bar */}
+              <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', padding: 12, borderRadius: 16, borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }}>
+                <View style={{ flexDirection: 'row', gap: 6 }}>
+                  {[
+                    { key: 'a', letter: 'A', color: '#1E8F4E' },
+                    { key: 'b', letter: 'B', color: '#2ECC71' },
+                    { key: 'c', letter: 'C', color: '#F1C40F' },
+                    { key: 'd', letter: 'D', color: '#E67E22' },
+                    { key: 'e', letter: 'E', color: '#E74C3C' }
+                  ].map(g => {
+                    const count = ecoScoreCounts[g.key as keyof typeof ecoScoreCounts] || 0;
+                    const isActive = avgEcoScore === g.key;
+                    return (
+                      <View key={g.key} style={{ flex: 1, alignItems: 'center' }}>
+                        <View style={{
+                          height: isActive ? 6 : 4,
+                          width: '100%',
+                          backgroundColor: g.color,
+                          borderRadius: 3,
+                          marginBottom: 6,
+                          opacity: count > 0 ? 1 : 0.2,
+                          shadowColor: isActive ? g.color : 'transparent',
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: isActive ? 0.5 : 0,
+                          shadowRadius: 4,
+                        }} />
+                        <Text style={{ color: count > 0 ? colors.text : colors.textMuted, fontSize: 10, fontWeight: '900' }}>
+                          {g.letter} <Text style={{ color: count > 0 ? colors.primary : colors.textMuted, fontWeight: '700' }}>({count})</Text>
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Total CO2 Footprint & Real-World Offset Metric */}
+              <View style={{
+                marginTop: 10,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: isDark ? 'rgba(0, 194, 136, 0.08)' : 'rgba(0, 194, 136, 0.05)',
+                padding: 12,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: 'rgba(0, 194, 136, 0.2)',
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View>
+                    <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>Total Basket CO₂</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 9.5, fontWeight: '600' }}>
+                      {basketItemCount > 0 ? `~${milesDrivenEquivalent} miles driven equiv.` : '0.0 miles'}
+                    </Text>
+                  </View>
+                </View>
+                <View style={{ backgroundColor: '#00C288', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 }}>
+                  <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '900' }}>
+                    {totalCarbonFootprintGrams >= 1000 ? `${totalCarbonFootprintKg} kg` : `${totalCarbonFootprintGrams.toFixed(0)} g`} CO₂
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+
 
             {/* Sleek Shimmering Pill Bar: Total Sugar */}
             <LinearGradient

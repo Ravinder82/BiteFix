@@ -336,6 +336,18 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
             colors={colors}
           />
           <SettingsRowItem
+            label="Data Attribution & Licenses"
+            icon={<Info size={16} color={colors.primary} />}
+            onPress={() => {
+              Alert.alert(
+                'Open Food Facts Attribution',
+                'Product and nutrition data is powered by Open Food Facts, made available under the Open Database License (ODbL) at openfoodfacts.org.\n\nThank you to the contributors who support open public databases!',
+                [{ text: 'OK' }, { text: 'Visit Website', onPress: () => Linking.openURL('https://openfoodfacts.org') }]
+              );
+            }}
+            colors={colors}
+          />
+          <SettingsRowItem
             label="Terms of Service"
             icon={<Eye size={16} color={colors.primary} />}
             onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}

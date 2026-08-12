@@ -1033,7 +1033,121 @@ function AllergenDefenseCard({ cardW, C, selected, onToggle }: { cardW: number; 
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 11: Healthy Basket Intro Card (REDESIGNED)
+// STEP 11: Dietary Guardrails (REDESIGNED)
+// ─────────────────────────────────────────────────────────
+function DietaryGuardrailsCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; selected: 'vegan' | 'vegetarian' | 'standard'; onSelect: (d: 'vegan' | 'vegetarian' | 'standard') => void }) {
+  const options = [
+    { id: 'vegan', label: 'Vegan Guard', subtitle: 'Strictly plant-based. No animal products.', icon: <Apple size={18} color="#00C288" /> },
+    { id: 'vegetarian', label: 'Vegetarian Guard', subtitle: 'No meat, poultry, or fish.', icon: <Droplets size={18} color="#4D8DE8" /> },
+    { id: 'standard', label: 'Standard Diet', subtitle: 'No dietary restrictions.', icon: <Layers size={18} color="#D8B65C" /> },
+  ] as const;
+
+  return (
+    <View style={{ width: cardW, gap: 12 }}>
+      <StickyNoteCard tilt={1}>
+        <View style={{ gap: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Apple size={18} color={MINT_DARK} />
+            <Text style={{ color: C.text, fontSize: 14, fontWeight: '900' }}>Dietary Profile</Text>
+          </View>
+          <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600' }}>
+            Set your core lifestyle. We will immediately flag hidden animal ingredients on any scan.
+          </Text>
+        </View>
+      </StickyNoteCard>
+      
+      <View style={{ gap: 8 }}>
+        {options.map((opt, idx) => {
+          const active = selected === opt.id;
+          return (
+            <AnimatedListItem key={opt.id} index={idx}>
+              <TouchableOpacity
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  onSelect(opt.id);
+                }}
+                activeOpacity={0.85}
+                style={[
+                  { padding: 14, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
+                  getClayStyle(active, C)
+                ]}
+              >
+                <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: C.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
+                  {opt.icon}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: C.text, fontSize: 14, fontWeight: '800' }}>{opt.label}</Text>
+                  <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '500' }}>{opt.subtitle}</Text>
+                </View>
+                <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: active ? C.primaryDark : C.textMuted, backgroundColor: active ? C.primaryDark : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                  {active && <Check size={14} color="#FFF" strokeWidth={3} />}
+                </View>
+              </TouchableOpacity>
+            </AnimatedListItem>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// STEP 12: Sustainability & Quality
+// ─────────────────────────────────────────────────────────
+function EcoQualityFocusCard({ cardW, C, trackOrganic, setTrackOrganic, trackEco, setTrackEco }: { cardW: number; C: any; trackOrganic: boolean; setTrackOrganic: (v: boolean) => void; trackEco: boolean; setTrackEco: (v: boolean) => void }) {
+  const options = [
+    { id: 'organic', label: 'Organic Pioneer', subtitle: 'Prioritize bio & USDA organic badges.', icon: <CheckCircle size={18} color="#00C288" />, active: trackOrganic, toggle: () => setTrackOrganic(!trackOrganic) },
+    { id: 'eco', label: 'Eco-Score Tracker', subtitle: 'Track carbon footprint & eco-packaging.', icon: <CircleAlert size={18} color="#4D8DE8" />, active: trackEco, toggle: () => setTrackEco(!trackEco) },
+  ];
+
+  return (
+    <View style={{ width: cardW, gap: 12 }}>
+      <StickyNoteCard tilt={-1}>
+        <View style={{ gap: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Layers size={18} color={MINT_DARK} />
+            <Text style={{ color: C.text, fontSize: 14, fontWeight: '900' }}>Sustainability & Quality</Text>
+          </View>
+          <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600' }}>
+            Elevate your basket. We'll verify organic sourcing and display full Eco-Scores on every scan.
+          </Text>
+        </View>
+      </StickyNoteCard>
+
+      <View style={{ gap: 8 }}>
+        {options.map((opt, idx) => (
+          <AnimatedListItem key={opt.id} index={idx}>
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                opt.toggle();
+              }}
+              activeOpacity={0.85}
+              style={[
+                { padding: 14, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
+                getClayStyle(opt.active, C)
+              ]}
+            >
+              <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: C.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
+                {opt.icon}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: C.text, fontSize: 14, fontWeight: '800' }}>{opt.label}</Text>
+                <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '500' }}>{opt.subtitle}</Text>
+              </View>
+              <View style={{ width: 42, height: 24, borderRadius: 12, backgroundColor: opt.active ? C.primaryDark : C.chrome, padding: 2 }}>
+                <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#FFF', transform: [{ translateX: opt.active ? 18 : 0 }], shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } }} />
+              </View>
+            </TouchableOpacity>
+          </AnimatedListItem>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// STEP 13: Healthy Basket Intro Card (REDESIGNED)
 // ─────────────────────────────────────────────────────────
 function HealthyBasketIntroCard({ cardW, C }: { cardW: number; C: any }) {
   const basketItems = [
@@ -1288,14 +1402,15 @@ const SLIDES: SlideData[] = [
   { step: 2, title: 'How often do you read store labels?', highlight: 'read store labels?', subtitle: 'Fine print ingredient lists can hide artificial additives behind complex numbers.', buttonLabel: 'Continue', mascotState: 'scanning', mascotSpeech: 'I decode hidden fine-print ingredients for you!', isLast: false },
   { step: 3, title: 'What should every scan protect?', highlight: 'protect?', subtitle: 'Select your core health focus. BiteFix will highlight it on every barcode.', buttonLabel: 'Set My Priority', mascotState: 'happy', mascotSpeech: 'Your priorities guide every single scan!', isLast: false },
   { step: 4, title: 'The label rarely tells the whole story', highlight: 'whole story', subtitle: 'Processing levels and cosmetic additives lurk behind bright packaging.', buttonLabel: 'Show Me What I Miss', mascotState: 'caution', mascotSpeech: '73% of supermarket foods are ultra-processed!', isLast: false },
-  { step: 5, title: 'Protect your loved ones', highlight: 'loved ones', subtitle: 'Your food shield can protect the choices your entire family cares about.', buttonLabel: 'Create Our Shield', mascotState: 'happy', mascotSpeech: 'Family food safety in a single scan.', isLast: false },
-  { step: 6, title: 'How your food costing you?', highlight: 'costing you?', subtitle: 'Select the everyday fatigue signals you want BiteFix to keep in view.', buttonLabel: 'Add to My Profile', mascotState: 'thinking', mascotSpeech: 'Let us keep energy slumps and fog away.', isLast: false },
-  { step: 7, title: 'Choose your ingredient watchlist', highlight: 'watchlist', subtitle: 'BiteFix will surface these ingredients clearly—without hiding them in fine print.', buttonLabel: 'Activate Watchlist', mascotState: 'caution', mascotSpeech: 'Watchlist active! No sneaky additives allowed.', isLast: false },
-  { step: 8, title: 'Your personal ingredient shield', highlight: 'ingredient shield', subtitle: 'Choose allergens or ingredients that should never enter your basket.', buttonLabel: 'Lock My Shield', mascotState: 'happy', mascotSpeech: 'Locking down your personal allergen shield.', isLast: false },
-  { step: 9, title: 'Keep your basket clean', highlight: 'basket clean', subtitle: 'Save products that fit your profile and make every shop faster.', buttonLabel: 'Build My Basket', mascotState: 'happy', mascotSpeech: 'Build a basket full of foods you trust! Scan Barcode and Save it in your Basket', isLast: false },
-  { step: 10, title: 'Forging your Food Shield', highlight: 'Food Shield', subtitle: 'Mapping your NOVA parameters, Gut Shield, and additive watchlist engine.', buttonLabel: 'Analyzing', mascotState: 'scanning', mascotSpeech: 'Forging your BiteFix profile...', isLast: false },
-  { step: 11, title: 'Six layers of intelligence—ready', highlight: 'ready', subtitle: 'Every barcode now returns a clear, personal decision—not another label to decode.', buttonLabel: 'View My Shield', mascotState: 'happy', mascotSpeech: 'You get 6 deep health checks per barcode!', isLast: false },
-  { step: 12, title: 'Your scanner now knows what matters', highlight: 'what matters', subtitle: 'Your Food Shield and Healthy Basket are configured and ready to use.', buttonLabel: 'Activate BiteFix', mascotState: 'happy', mascotSpeech: 'Your Food Shield is fully armed and ready!', isLast: true },
+  { step: 5, title: 'How your food costing you?', highlight: 'costing you?', subtitle: 'Select the everyday fatigue signals you want BiteFix to keep in view.', buttonLabel: 'Add to My Profile', mascotState: 'thinking', mascotSpeech: 'Let us keep energy slumps and fog away.', isLast: false },
+  { step: 6, title: 'Choose your ingredient watchlist', highlight: 'watchlist', subtitle: 'BiteFix will surface these ingredients clearly—without hiding them in fine print.', buttonLabel: 'Activate Watchlist', mascotState: 'caution', mascotSpeech: 'Watchlist active! No sneaky additives allowed.', isLast: false },
+  { step: 7, title: 'Your personal ingredient shield', highlight: 'ingredient shield', subtitle: 'Choose allergens or ingredients that should never enter your basket.', buttonLabel: 'Lock My Shield', mascotState: 'happy', mascotSpeech: 'Locking down your personal allergen shield.', isLast: false },
+  { step: 8, title: 'Dietary Guardrails', highlight: 'Guardrails', subtitle: 'Set your primary diet. We will instantly flag products that violate your lifestyle.', buttonLabel: 'Set Diet', mascotState: 'happy', mascotSpeech: 'Your scanner is your dietary gatekeeper.', isLast: false },
+  { step: 9, title: 'Clean Quality & Eco Focus', highlight: 'Eco Focus', subtitle: 'Prioritize Organic sourcing and Earth-friendly packaging in every scan.', buttonLabel: 'Activate Eco Shield', mascotState: 'happy', mascotSpeech: 'Eating clean, saving green!', isLast: false },
+  { step: 10, title: 'Keep your basket clean', highlight: 'basket clean', subtitle: 'Save products that fit your profile and make every shop faster.', buttonLabel: 'Build My Basket', mascotState: 'happy', mascotSpeech: 'Build a basket full of foods you trust! Scan Barcode and Save it in your Basket', isLast: false },
+  { step: 11, title: 'Forging your Food Shield', highlight: 'Food Shield', subtitle: 'Mapping your NOVA parameters, Gut Shield, and additive watchlist engine.', buttonLabel: 'Analyzing', mascotState: 'scanning', mascotSpeech: 'Forging your BiteFix profile...', isLast: false },
+  { step: 12, title: 'Six layers of intelligence—ready', highlight: 'ready', subtitle: 'Every barcode now returns a clear, personal decision—not another label to decode.', buttonLabel: 'View My Shield', mascotState: 'happy', mascotSpeech: 'You get deep health checks per barcode!', isLast: false },
+  { step: 13, title: 'Your scanner now knows what matters', highlight: 'what matters', subtitle: 'Your Food Shield and Healthy Basket are configured and ready to use.', buttonLabel: 'Activate BiteFix', mascotState: 'happy', mascotSpeech: 'Your Food Shield is fully armed and ready!', isLast: true },
 ];
 
 function DotIndicator({ active, C }: { active: boolean; C: any }) {
@@ -1314,7 +1429,13 @@ function DotIndicator({ active, C }: { active: boolean; C: any }) {
 // MAIN ONBOARDING SCREEN COMPONENT
 // ─────────────────────────────────────────────────────────
 export default function OnboardingScreen() {
-  const { setProfile, setOnboardingComplete, toggleAllergenFilter, allergenFilters, setAllergenFilters } = useAppStore();
+  const { 
+    setProfile, setOnboardingComplete, 
+    toggleAllergenFilter, allergenFilters, setAllergenFilters,
+    dietPreference, setDietPreference,
+    trackEcoScore, setTrackEcoScore,
+    trackOrganic, setTrackOrganic
+  } = useAppStore();
 
   useEffect(() => {
     try {
@@ -1353,7 +1474,7 @@ export default function OnboardingScreen() {
   const hasRequestedCamera = React.useRef(false);
 
   useEffect(() => {
-    if ((currentSlide === 9 || currentSlide === 10) && !hasRequestedCamera.current) {
+    if ((currentSlide === 10 || currentSlide === 11) && !hasRequestedCamera.current) {
       if (cameraPermission && !cameraPermission.granted && cameraPermission.canAskAgain) {
         hasRequestedCamera.current = true;
         requestCameraPermission().catch(() => { });
@@ -1393,6 +1514,9 @@ export default function OnboardingScreen() {
         userName: userName.trim() || 'Friend',
         userGoal: mappedGoal,
       });
+      setDietPreference(dietPreference);
+      setTrackEcoScore(true);
+      setTrackOrganic(true);
       setOnboardingComplete(true);
       router.replace('/paywall');
     }
@@ -1402,9 +1526,9 @@ export default function OnboardingScreen() {
     if (currentSlide === 0 && !userName.trim()) return true;
     if (currentSlide === 1 && !labelRoutine) return true;
     if (currentSlide === 2 && userGoals.length === 0) return true;
-    if (currentSlide === 5 && symptoms.length === 0) return true;
-    if (currentSlide === 6 && additives.length === 0) return true;
-    if (currentSlide === 7 && allergenFilters.length === 0) return true;
+    if (currentSlide === 4 && symptoms.length === 0) return true;
+    if (currentSlide === 5 && additives.length === 0) return true;
+    if (currentSlide === 6 && allergenFilters.length === 0) return true;
     return false;
   };
 
@@ -1467,8 +1591,8 @@ export default function OnboardingScreen() {
             </Animated.View>
           </View>
 
-          {/* Dynamic Mascot Header (On screens 0..7, 9, and 12) */}
-          {currentSlide !== 7 && currentSlide !== 9 && currentSlide !== 10 && (
+          {/* Dynamic Mascot Header (On screens 0..8, 10, and 13) */}
+          {currentSlide !== 8 && currentSlide !== 10 && currentSlide !== 11 && (
             <MascotDrawingBoardHeader state={slide.mascotState} speech={slide.mascotSpeech} C={C} isDark={isDark} />
           )}
 
@@ -1479,20 +1603,21 @@ export default function OnboardingScreen() {
               {currentSlide === 1 && <LabelInspectionRoutineCard cardW={cardW} C={C} value={labelRoutine} onSelect={setLabelRoutine} />}
               {currentSlide === 2 && <GoalCard cardW={cardW} C={C} selected={userGoals} onSelect={setUserGoals} />}
               {currentSlide === 3 && <NovaWakeUpCard cardW={cardW} C={C} />}
-              {currentSlide === 4 && <ProtectLovedOnesCard cardW={cardW} C={C} />}
-              {currentSlide === 5 && <SymptomAuditCard cardW={cardW} C={C} selected={symptoms} onToggle={toggleSymptom} />}
-              {currentSlide === 6 && <AdditivePrioritiesCard cardW={cardW} C={C} selected={additives} onToggle={toggleAdditive} />}
-              {currentSlide === 7 && <AllergenDefenseCard cardW={cardW} C={C} selected={allergenFilters} onToggle={toggleAllergenFilter} />}
-              {currentSlide === 8 && <HealthyBasketIntroCard cardW={cardW} C={C} />}
-              {currentSlide === 9 && <HealthAnalysisCalculationCard cardW={cardW} C={C} onComplete={() => setCurrentSlide(10)} />}
-              {currentSlide === 10 && <InstantResultSummaryCard cardW={cardW} C={C} />}
-              {currentSlide === 11 && <PaywallTransitionCard cardW={cardW} C={C} allergenFilters={allergenFilters} />}
+              {currentSlide === 4 && <SymptomAuditCard cardW={cardW} C={C} selected={symptoms} onToggle={toggleSymptom} />}
+              {currentSlide === 5 && <AdditivePrioritiesCard cardW={cardW} C={C} selected={additives} onToggle={toggleAdditive} />}
+              {currentSlide === 6 && <AllergenDefenseCard cardW={cardW} C={C} selected={allergenFilters} onToggle={toggleAllergenFilter} />}
+              {currentSlide === 7 && <DietaryGuardrailsCard cardW={cardW} C={C} selected={dietPreference} onSelect={setDietPreference} />}
+              {currentSlide === 8 && <EcoQualityFocusCard cardW={cardW} C={C} trackOrganic={trackOrganic} setTrackOrganic={setTrackOrganic} trackEco={trackEcoScore} setTrackEco={setTrackEcoScore} />}
+              {currentSlide === 9 && <HealthyBasketIntroCard cardW={cardW} C={C} />}
+              {currentSlide === 10 && <HealthAnalysisCalculationCard cardW={cardW} C={C} onComplete={() => setCurrentSlide(11)} />}
+              {currentSlide === 11 && <InstantResultSummaryCard cardW={cardW} C={C} />}
+              {currentSlide === 12 && <PaywallTransitionCard cardW={cardW} C={C} allergenFilters={allergenFilters} />}
             </Animated.View>
           </View>
         </ScrollView>
 
         {/* Pinned Bottom Navigation & CTA */}
-        {currentSlide !== 9 && (
+        {currentSlide !== 10 && (
           <View style={{ width: '100%', gap: 10, marginTop: 6, paddingTop: 8, borderTopWidth: 1, borderTopColor: C.cardBorder }}>
             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 5 }}>
               {SLIDES.map((_, idx) => (
