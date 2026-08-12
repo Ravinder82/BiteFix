@@ -281,43 +281,6 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
           </View>
         </SettingsGroup>
 
-        {/* FOOD QUALITY & INGREDIENT ALERTS SECTION */}
-        <SettingsGroup title="Food Quality & Ingredient Alerts" colors={colors}>
-          <View
-            style={{ backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border }}
-            className="flex-row items-center justify-between p-4"
-          >
-            <View className="flex-row items-center gap-3 flex-1 mr-4">
-              <ShieldCheck size={16} color={colors.primary} />
-              <View className="flex-1">
-                <Text style={{ color: colors.text }} className="font-bold text-sm">Strict Processing Alerts</Text>
-                <Text style={{ color: colors.textMuted }} className="text-xs mt-0.5">Flag heavily processed foods instantly</Text>
-              </View>
-            </View>
-            <Switch
-              value={strictNovaAlert}
-              onValueChange={setStrictNovaAlert}
-              trackColor={{ false: '#e2e8f0', true: colors.primary }}
-              thumbColor={strictNovaAlert ? '#ffffff' : '#f4f4f5'}
-            />
-          </View>
-
-          <View style={{ backgroundColor: colors.surface }} className="flex-row items-center justify-between p-4">
-            <View className="flex-row items-center gap-3 flex-1 mr-4">
-              <Crown size={16} color="#FF9500" />
-              <View className="flex-1">
-                <Text style={{ color: colors.text }} className="font-bold text-sm">Additive & Sweetener Alerts</Text>
-                <Text style={{ color: colors.textMuted }} className="text-xs mt-0.5">Highlight artificial sweeteners and preservatives</Text>
-              </View>
-            </View>
-            <Switch
-              value={stealthAdditivesAlert}
-              onValueChange={setStealthAdditivesAlert}
-              trackColor={{ false: '#e2e8f0', true: colors.primary }}
-              thumbColor={stealthAdditivesAlert ? '#ffffff' : '#f4f4f5'}
-            />
-          </View>
-        </SettingsGroup>
 
         {/* PERSONAL ALLERGEN ALERTS SECTION */}
         <SettingsGroup title="Personal Allergen Alerts" colors={colors}>
@@ -575,7 +538,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
                 Need assistance with subscriptions, barcode scans, or account options?
               </Text>
               <Text style={{ color: colors.textSecondary }} className="text-center mt-2 leading-relaxed">
-                Have an idea for clean food swaps or allergen filters?
+                Have an idea for NOVA classification, additive detection, or allergen filters?
               </Text>
             </View>
             <TouchableOpacity
@@ -594,7 +557,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
             <TouchableOpacity
               onPress={() => {
                 const subject = encodeURIComponent('BiteFix App Feedback');
-                const body = encodeURIComponent('Share your thoughts, feature requests, or clean food swap ideas below:\n\n');
+                const body = encodeURIComponent('Share your thoughts, feature requests, or additive detective ideas below:\n\n');
                 Linking.openURL(`mailto:bitefixapp@gmail.com?subject=${subject}&body=${body}`);
               }}
               style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB', borderRadius: 16, padding: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10 }}

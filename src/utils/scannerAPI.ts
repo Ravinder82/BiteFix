@@ -110,25 +110,127 @@ function formatAdditiveDisplayName(tag: string): string {
   return cleaned.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
 }
 
+/**
+ * Comprehensive Regex & Dictionary Additive Extractor.
+ * Scans raw ingredient text for INS numbers, E numbers, parenthetical numbers, and chemical names
+ * to ensure products without pre-populated additives_tags in OpenFoodFacts are never incorrectly marked as Clean Label.
+ */
+export function extractAdditivesFromText(ingredientsText?: string): AdditiveDetail[] {
+  if (!ingredientsText || typeof ingredientsText !== 'string') return [];
+  const text = ingredientsText;
+  const results: AdditiveDetail[] = [];
+  const seen = new Set<string>();
+
+  // 1. Match INS / E number patterns (e.g. INS 211, E211, INS-260, E 415, INS 1422, INS 330)
+  const codeRegex = /\b(INS|E)\s*[-–]?\s*(\d{3,4}[a-z]?)\b/gi;
+  let match: RegExpExecArray | null;
+  while ((match = codeRegex.exec(text)) !== null) {
+    const rawTag = `en:e${match[2].toLowerCase()}`;
+    const cleanTag = `e${match[2].toLowerCase()}`;
+    if (!seen.has(cleanTag)) {
+      seen.add(cleanTag);
+      results.push({
+        tag: rawTag,
+        displayName: formatAdditiveDisplayName(rawTag),
+        functionLabel: getAdditiveFunctionLabel(cleanTag),
+        riskLevel: getAdditiveRiskLevel(cleanTag),
+      });
+    }
+  }
+
+  // 2. Match parenthetical additive codes (e.g. "Preservative (211)", "Acidity Regulator (260)", "Thickening agent (1422)", "Stabilizer (415)", "Color (150c)")
+  const parenRegex = /\b(Preservative|Acidity Regulator|Acidifying Agent|Thickener|Thickening Agent|Stabilizer|Color|Colour|Emulsifier|Flavor Enhancer|Sweetener|Anti-caking Agent)\s*\(\s*(?:INS|E)?\s*(\d{3,4}[a-z]?)\s*\)/gi;
+  while ((match = parenRegex.exec(text)) !== null) {
+    const fnName = match[1];
+    const numStr = match[2].toLowerCase();
+    const cleanTag = `e${numStr}`;
+    if (!seen.has(cleanTag)) {
+      seen.add(cleanTag);
+      results.push({
+        tag: `en:e${numStr}`,
+        displayName: `${fnName} (E${numStr.toUpperCase()})`,
+        functionLabel: getAdditiveFunctionLabel(cleanTag),
+        riskLevel: getAdditiveRiskLevel(cleanTag),
+      });
+    }
+  }
+
+  // 3. Match known chemical names in ingredient text
+  const chemicalDictionary: { keywords: string[]; tag: string; name: string; fn: string; risk: AdditiveRiskLevel }[] = [
+    { keywords: ['sodium benzoate', 'benzoate'], tag: 'en:e211', name: 'Sodium Benzoate (E211)', fn: 'Preservative', risk: 'elevated' },
+    { keywords: ['potassium sorbate', 'sorbate'], tag: 'en:e202', name: 'Potassium Sorbate (E202)', fn: 'Preservative', risk: 'moderate' },
+    { keywords: ['sodium metabisulfite', 'potassium metabisulfite', 'metabisulfite'], tag: 'en:e224', name: 'Sodium Metabisulfite (E224)', fn: 'Preservative', risk: 'elevated' },
+    { keywords: ['acetic acid', 'acidifying agent (260)'], tag: 'en:e260', name: 'Acetic Acid (E260)', fn: 'Acidity Regulator', risk: 'low' },
+    { keywords: ['citric acid'], tag: 'en:e330', name: 'Citric Acid (E330)', fn: 'Acidity Regulator', risk: 'moderate' },
+    { keywords: ['modified starch', 'modified food starch', 'thickening agent (1422)'], tag: 'en:e1422', name: 'Modified Starch (E1422)', fn: 'Thickener / Stabilizer', risk: 'moderate' },
+    { keywords: ['xanthan gum', 'stabilizer (415)'], tag: 'en:e415', name: 'Xanthan Gum (E415)', fn: 'Thickener / Stabilizer', risk: 'moderate' },
+    { keywords: ['guar gum'], tag: 'en:e412', name: 'Guar Gum (E412)', fn: 'Thickener', risk: 'moderate' },
+    { keywords: ['carrageenan'], tag: 'en:e407', name: 'Carrageenan (E407)', fn: 'Thickener', risk: 'elevated' },
+    { keywords: ['monosodium glutamate', 'msg'], tag: 'en:e621', name: 'Monosodium Glutamate (E621)', fn: 'Flavor Enhancer', risk: 'elevated' },
+    { keywords: ['high fructose corn syrup', 'hfcs'], tag: 'en:hfcs', name: 'High Fructose Corn Syrup', fn: 'Refined Sweetener', risk: 'elevated' },
+    { keywords: ['caramel color', 'caramel colour'], tag: 'en:e150c', name: 'Caramel Color (E150c)', fn: 'Colorant', risk: 'elevated' },
+    { keywords: ['tartrazine'], tag: 'en:e102', name: 'Tartrazine (E102)', fn: 'Synthetic Dye', risk: 'elevated' },
+    { keywords: ['sucralose'], tag: 'en:e955', name: 'Sucralose (E955)', fn: 'Artificial Sweetener', risk: 'elevated' },
+    { keywords: ['aspartame'], tag: 'en:e951', name: 'Aspartame (E951)', fn: 'Artificial Sweetener', risk: 'elevated' },
+    { keywords: ['acesulfame'], tag: 'en:e950', name: 'Acesulfame Potassium (E950)', fn: 'Artificial Sweetener', risk: 'elevated' },
+    { keywords: ['sodium nitrite'], tag: 'en:e250', name: 'Sodium Nitrite (E250)', fn: 'Preservative', risk: 'elevated' },
+    { keywords: ['calcium propionate'], tag: 'en:e282', name: 'Calcium Propionate (E282)', fn: 'Preservative', risk: 'moderate' },
+    { keywords: ['tbhq'], tag: 'en:tbhq', name: 'TBHQ Preservative', fn: 'Preservative', risk: 'elevated' },
+  ];
+
+  const lowerText = text.toLowerCase();
+  for (const entry of chemicalDictionary) {
+    const cleanTag = entry.tag.replace(/^en:/, '');
+    if (seen.has(cleanTag)) continue;
+    for (const kw of entry.keywords) {
+      if (lowerText.includes(kw)) {
+        seen.add(cleanTag);
+        results.push({
+          tag: entry.tag,
+          displayName: entry.name,
+          functionLabel: entry.fn,
+          riskLevel: entry.risk,
+        });
+        break;
+      }
+    }
+  }
+
+  return results;
+}
+
 export function parseAdditivesFromProduct(p: any): AdditiveDetail[] {
   const additiveTags: string[] = p.additives_tags || p.additives_original_tags || [];
-  if (!Array.isArray(additiveTags) || additiveTags.length === 0) return [];
-
   const seen = new Set<string>();
   const results: AdditiveDetail[] = [];
 
-  for (const rawTag of additiveTags) {
-    const cleaned = cleanAdditiveTag(rawTag).toLowerCase();
-    if (seen.has(cleaned)) continue;
-    seen.add(cleaned);
+  if (Array.isArray(additiveTags) && additiveTags.length > 0) {
+    for (const rawTag of additiveTags) {
+      const cleaned = cleanAdditiveTag(rawTag).toLowerCase();
+      if (seen.has(cleaned)) continue;
+      seen.add(cleaned);
 
-    const eNum = cleaned.replace(/[^a-z0-9]/g, '');
-    results.push({
-      tag: rawTag,
-      displayName: formatAdditiveDisplayName(rawTag),
-      functionLabel: getAdditiveFunctionLabel(eNum),
-      riskLevel: getAdditiveRiskLevel(eNum),
-    });
+      const eNum = cleaned.replace(/[^a-z0-9]/g, '');
+      results.push({
+        tag: rawTag,
+        displayName: formatAdditiveDisplayName(rawTag),
+        functionLabel: getAdditiveFunctionLabel(eNum),
+        riskLevel: getAdditiveRiskLevel(eNum),
+      });
+    }
+  }
+
+  // Complement or fallback using raw ingredient text scanning
+  const ingredientsText = p.ingredients_text_en || p.ingredients_text || '';
+  if (ingredientsText) {
+    const textExtracted = extractAdditivesFromText(ingredientsText);
+    for (const add of textExtracted) {
+      const tagKey = cleanAdditiveTag(add.tag).toLowerCase();
+      if (!seen.has(tagKey)) {
+        seen.add(tagKey);
+        results.push(add);
+      }
+    }
   }
 
   return results;
@@ -1135,6 +1237,33 @@ const BRANDED_HEALTHY_SWAPS_CATALOG: Record<FunctionalArchetype, ScanResultData[
       allergens: [],
       nutriScore: 'a',
       biteFixScore: 97,
+    },
+    {
+      name: 'Organic Hot & Sweet Unsweetened Chili Sauce (No HFCS or Preservatives)',
+      brand: 'Yellowbird / Primal Kitchen',
+      sugarGrams: 0.8,
+      sugarTeaspoons: 0.2,
+      sugarPer100g: 5.0,
+      imageUrl: 'https://images.openfoodfacts.org/images/products/085/000/624/0055/front_en.12.400.jpg',
+      servingSize: '15 g (1 tbsp)',
+      calories: 10,
+      carbsGrams: 2,
+      fatGrams: 0,
+      proteinGrams: 0,
+      categoryTag: 'en:sauces',
+      isDefaultServing: false,
+      whoLimitServingPercent: 2,
+      whoLimitIdealServingPercent: 4,
+      ingredientsText: 'Organic Red Jalapenos, Organic Carrots, Organic Dates, Organic Vinegar, Sea Salt, Organic Garlic.',
+      hasHiddenSugars: false,
+      hiddenSugars: [],
+      hiddenSugarCount: 0,
+      novaClass: 1,
+      additives: [],
+      additiveCount: 0,
+      allergens: [],
+      nutriScore: 'a',
+      biteFixScore: 98,
     }
   ],
   mayo_dressing: [
@@ -1897,20 +2026,26 @@ export function deduceFunctionalArchetype(name: string, brand: string, categoryT
     return { archetype: 'nut_butter', searchKeywords: 'pure organic peanut butter only peanuts sea salt' };
   }
 
+  // Condiments, Ketchups & Chili Sauces
+  if (
+    combined.includes('ketchup') || combined.includes('catsup') || combined.includes('tomato sauce') ||
+    combined.includes('chili') || combined.includes('chilli') || combined.includes('hot sauce') ||
+    combined.includes('sriracha') || combined.includes('sweet chili') || combined.includes('heinz') ||
+    combined.includes('maggi') || combined.includes('sauce') || categoryTag?.includes('sauces') ||
+    categoryTag?.includes('ketchups') || categoryTag?.includes('condiments')
+  ) {
+    return { archetype: 'ketchup_condiment', searchKeywords: 'unsweetened organic ketchup tomato chili sauce' };
+  }
+  if (combined.includes('mayo') || combined.includes('mayonnaise') || combined.includes('hellmann') || combined.includes('miracle whip') || combined.includes('ranch')) {
+    return { archetype: 'mayo_dressing', searchKeywords: 'avocado oil organic mayo chosen foods' };
+  }
+
   // Snacks & Chips
   if (combined.includes('potato chip') || combined.includes('crisp') || combined.includes('lays') || combined.includes('ruffles') || combined.includes('pringles') || combined.includes('en:potato-crisps')) {
     return { archetype: 'potato_chips', searchKeywords: 'avocado oil kettle cooked potato chips sea salt' };
   }
   if (combined.includes('tortilla') || combined.includes('nacho') || combined.includes('doritos') || combined.includes('tostitos') || combined.includes('corn chip')) {
     return { archetype: 'tortilla_chips', searchKeywords: 'grain free cassava avocado oil tortilla chips' };
-  }
-
-  // Condiments & Dressings
-  if (combined.includes('ketchup') || combined.includes('catsup') || combined.includes('tomato sauce') || combined.includes('heinz')) {
-    return { archetype: 'ketchup_condiment', searchKeywords: 'unsweetened organic ketchup primal kitchen' };
-  }
-  if (combined.includes('mayo') || combined.includes('mayonnaise') || combined.includes('hellmann') || combined.includes('miracle whip') || combined.includes('ranch')) {
-    return { archetype: 'mayo_dressing', searchKeywords: 'avocado oil organic mayo chosen foods' };
   }
 
   // Chocolates & Sweets
@@ -2013,7 +2148,6 @@ export function deduceFunctionalArchetype(name: string, brand: string, categoryT
   }
 
   // CRITICAL: Return no_match instead of unrelated category catch-all.
-  // It is better to say "no substitute found" than to suggest a completely wrong food (e.g. olive oil for noodles).
   return { archetype: 'no_match', searchKeywords: '' };
 }
 
@@ -2051,7 +2185,8 @@ export function isProductLiquid(quantityStr?: string, categoryStr?: string): boo
   
   return q.includes('ml') || q.includes(' l') || q.includes('cl') || q.includes('fl oz') ||
     c.includes('beverage') || c.includes('drink') || c.includes('juice') || 
-    c.includes('soda') || c.includes('water') || c.includes('milk');
+    c.includes('soda') || c.includes('water') || c.includes('milk') ||
+    c.includes('sauce') || c.includes('ketchup') || c.includes('dressing') || c.includes('syrup') || c.includes('oil');
 }
 
 /**
@@ -2120,7 +2255,8 @@ export async function lookupAlternatives(
     const origAdditives = original.additiveCount ?? (original.additives?.length || 99);
     const origElevated = (original.additives || []).filter(a => a.riskLevel === 'elevated').length;
 
-    // ── STEP 1: Dynamic Name Extraction & Solid/Liquid Enforcement ──
+    // ── STEP 1: Archetype & Core Noun Extraction ──
+    const { archetype, searchKeywords } = deduceFunctionalArchetype(origName, origBrand, categoryTag || original.categoryTag);
     const coreNoun = extractCoreNoun(origName);
     const originalQuantityStr = original.servingSize || '';
     const isOriginalLiquid = isProductLiquid(originalQuantityStr, categoryTag || original.categoryTag);
@@ -2128,7 +2264,21 @@ export async function lookupAlternatives(
     const candidates: { product: ScanResultData; superiorityScore: number }[] = [];
     const candidatePool = new Map<string, ScanResultData>();
 
-    // ── STEP 2: Multi-Strategy Dynamic OpenFoodFacts Queries ──
+    // ── STEP 2: Pre-load Gold-Standard Curated Benchmarks for detected archetype ──
+    if (archetype !== 'no_match' && BRANDED_HEALTHY_SWAPS_CATALOG[archetype]) {
+      for (const benchmarkItem of BRANDED_HEALTHY_SWAPS_CATALOG[archetype]) {
+        const superiorityScore = computeSuperiorityIndex(original, benchmarkItem);
+        if (superiorityScore > 0 || (benchmarkItem.biteFixScore ?? 80) > (original.biteFixScore ?? 50)) {
+          const key = `${benchmarkItem.name.toLowerCase()}:::${benchmarkItem.brand.toLowerCase()}`;
+          if (!candidatePool.has(key)) {
+            candidatePool.set(key, benchmarkItem);
+            candidates.push({ product: benchmarkItem, superiorityScore });
+          }
+        }
+      }
+    }
+
+    // ── STEP 3: Multi-Strategy Dynamic OpenFoodFacts Queries ──
     const offCandidates: any[] = [];
 
     // Strategy A: Query by specific Category Tag sorted by popularity/scan volume
@@ -2171,7 +2321,27 @@ export async function lookupAlternatives(
       }
     }
 
-    // ── STEP 3: Process and Sanitize Dynamic OpenFoodFacts Candidates ──
+    // Strategy C: Query by Archetype Search Keywords
+    if (!signal.aborted && searchKeywords && searchKeywords.trim() !== '') {
+      try {
+        const resC = await fetchWithTimeout(
+          `https://world.openfoodfacts.org/api/v3/search?search_terms=${encodeURIComponent(searchKeywords)}&sort_by=unique_scans_n&page_size=30`,
+          API_TIMEOUT_MS,
+          signal
+        );
+        if (!signal.aborted && resC.ok) {
+          const jsonC = await resC.json();
+          if (Array.isArray(jsonC?.products)) {
+            offCandidates.push(...jsonC.products);
+          }
+        }
+      } catch (e) {
+        if (isAbortError(e)) return [];
+        console.warn('OFF Strategy C (Search Keywords) failed:', e);
+      }
+    }
+
+    // ── STEP 4: Process and Sanitize Dynamic OpenFoodFacts Candidates ──
     for (const p of offCandidates) {
       if (!p || typeof p !== 'object') continue;
       const name = extractUniversalName(p);
@@ -2202,8 +2372,10 @@ export async function lookupAlternatives(
       const rawCategoryStr = String((Array.isArray(p.categories_tags) ? p.categories_tags.join(' ') : p.categories) || '').toLowerCase();
       const isLiquid = isProductLiquid(rawQuantityStr, rawCategoryStr);
       
-      // Strict State Enforcement: Do not swap a liquid for a solid, or a solid for a liquid.
-      if (isOriginalLiquid !== isLiquid) {
+      const isCondimentOrSpread = rawCategoryStr.includes('sauce') || rawCategoryStr.includes('ketchup') || rawCategoryStr.includes('dressing') || rawCategoryStr.includes('spread') || rawCategoryStr.includes('butter') || rawCategoryStr.includes('paste') || (categoryTag || '').includes('sauce') || (categoryTag || '').includes('condiment');
+
+      // Do not swap liquid beverages for solid foods, but allow condiments, sauces, and spreads regardless of g vs ml
+      if (!isCondimentOrSpread && isOriginalLiquid !== isLiquid) {
         continue;
       }
 

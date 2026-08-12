@@ -85,13 +85,6 @@ const FEATURES = [
     subtitle: 'Unmasks hidden sugar teaspoon counts.',
   },
   {
-    icon: RefreshCw,
-    color: '#007AFF',
-    bg: 'rgba(0,122,255,0.08)',
-    title: 'Smart Swaps Engine',
-    subtitle: 'Instantly matches unhealthy items with clean options.',
-  },
-  {
     icon: ShieldCheck,
     color: '#34C759',
     bg: 'rgba(52,199,89,0.08)',
@@ -203,7 +196,7 @@ export default function PaywallScreen() {
             Protect Your Gut. Scan Cleaner.
           </Text>
           <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '500', textAlign: 'center', marginTop: 6, maxWidth: 300, lineHeight: 19 }}>
-            Instantly audit additives, detect hidden sugars, and swap to unprocessed alternatives.
+            Instant NOVA classification, Nutri-Score, Gut Shield & additive auditing.
           </Text>
         </View>
 

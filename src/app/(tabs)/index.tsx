@@ -140,11 +140,11 @@ function SavedItemRow({ item, colors, isDark, onPress, onDelete }: { item: Colle
           {item.nutriScore && (
             <>
               <Text style={{ color: colors.textMuted, fontSize: 8 }}>•</Text>
-              <Text style={{ 
+              <Text style={{
                 color: item.nutriScore === 'a' ? '#038141' : item.nutriScore === 'b' ? '#85BB2F' : item.nutriScore === 'c' ? '#FECB02' : item.nutriScore === 'd' ? '#EE8100' : '#E63E11',
-                fontSize: 8, 
-                fontWeight: '900', 
-                textTransform: 'uppercase' 
+                fontSize: 8,
+                fontWeight: '900',
+                textTransform: 'uppercase'
               }}>
                 NUTRI-SCORE {item.nutriScore}
               </Text>
@@ -384,7 +384,7 @@ export default function HomeScreen() {
             <Text
               style={{ color: colors.primary, fontSize: 9.5, fontWeight: '800', letterSpacing: 1.6 }}
             >
-              BiteFix: Scan.Swap.Eat Clean
+              Scan.Swap.Eat Clean
             </Text>
           </View>
         </View>
@@ -462,7 +462,7 @@ export default function HomeScreen() {
                   {/* Outer premium glass border */}
                   <Circle cx="60" cy="60" r="56" fill="none" stroke={scoreColor} strokeWidth="1.5" opacity="0.25" />
                   <Circle cx="60" cy="60" r="40" fill="none" stroke={scoreColor} strokeWidth="1.5" opacity="0.15" />
-                  
+
                   {/* Main thick progress arc */}
                   <Circle
                     cx="60"
@@ -605,6 +605,94 @@ export default function HomeScreen() {
               </View>
             </View>
 
+            {/* Basket Nutri-Score Distribution Section */}
+            <View
+              style={{
+                marginTop: 16,
+                paddingTop: 16,
+                borderTopWidth: 1.5,
+                borderTopColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+              }}
+            >
+              {/* Header */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingHorizontal: 4 }}>
+                <Text style={{ color: colors.textSecondary, fontSize: 9.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  Basket Nutri-Score
+                </Text>
+                <View style={{
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                  paddingHorizontal: 8,
+                  paddingVertical: 3,
+                  borderRadius: 8,
+                }}>
+                  <Text style={{ color: colors.text, fontSize: 10, fontWeight: '900' }}>
+                    AVERAGE: {avgNutriScore ? `GRADE ${avgNutriScore.toUpperCase()}` : '--'}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Horizontal Progress Bar Facade (Traffic Lights) */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  height: 40,
+                  backgroundColor: isDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.03)',
+                  borderRadius: 20,
+                  paddingHorizontal: 6,
+                  position: 'relative',
+                }}
+              >
+                {[
+                  { key: 'a', letter: 'A', color: '#038141' },
+                  { key: 'b', letter: 'B', color: '#85BB2F' },
+                  { key: 'c', letter: 'C', color: '#FECB02' },
+                  { key: 'd', letter: 'D', color: '#EE8100' },
+                  { key: 'e', letter: 'E', color: '#E63E11' },
+                ].map((g, index, arr) => {
+                  const isActive = avgNutriScore ? avgNutriScore.toLowerCase() === g.key : false;
+                  const isFirst = index === 0;
+                  const isLast = index === arr.length - 1;
+
+                  return (
+                    <View
+                      key={g.key}
+                      style={{
+                        flex: 1,
+                        height: isActive ? 30 : 26,
+                        backgroundColor: isActive ? g.color : (isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)'),
+                        borderColor: isActive ? '#FFFFFF' : (isDark ? g.color + '60' : g.color + '35'),
+                        borderWidth: isActive ? 1.5 : 1,
+                        borderTopLeftRadius: isFirst ? 16 : (isActive ? 8 : 6),
+                        borderBottomLeftRadius: isFirst ? 16 : (isActive ? 8 : 6),
+                        borderTopRightRadius: isLast ? 16 : (isActive ? 8 : 6),
+                        borderBottomRightRadius: isLast ? 16 : (isActive ? 8 : 6),
+                        marginHorizontal: 2,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        shadowColor: isActive ? g.color : 'transparent',
+                        shadowOffset: { width: 0, height: isActive ? 4 : 0 },
+                        shadowOpacity: isActive ? 0.6 : 0,
+                        shadowRadius: 8,
+                        elevation: isActive ? 4 : 0,
+                        zIndex: isActive ? 10 : 1,
+                      }}
+                    >
+                      {isActive ? (
+                        <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.15)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>
+                          {g.letter}
+                        </Text>
+                      ) : (
+                        <Text style={{ color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)', fontSize: 11, fontWeight: '900' }}>
+                          {g.letter}
+                        </Text>
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+
             {/* Sleek Shimmering Pill Bar: Total Sugar */}
             <LinearGradient
               colors={isDark ? ['rgba(255,255,255,0.15)', 'rgba(240, 255, 231, 0.02)'] : ['#FFFFFF', '#F0FDF4']}
@@ -638,96 +726,6 @@ export default function HomeScreen() {
                 <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600' }}>tsp / serving</Text>
               </View>
             </LinearGradient>
-
-            {/* Basket Nutri-Score Distribution Section */}
-            {avgNutriScore ? (
-              <View
-                style={{
-                  marginTop: 16,
-                  paddingTop: 16,
-                  borderTopWidth: 1.5,
-                  borderTopColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
-                }}
-              >
-                {/* Header */}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingHorizontal: 4 }}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 9.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    Basket Nutri-Score
-                  </Text>
-                  <View style={{
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                    paddingHorizontal: 8,
-                    paddingVertical: 3,
-                    borderRadius: 8,
-                  }}>
-                    <Text style={{ color: colors.text, fontSize: 10, fontWeight: '900' }}>
-                      AVERAGE: GRADE {avgNutriScore.toUpperCase()}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Horizontal Progress Bar Facade (Traffic Lights) */}
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    height: 38,
-                    backgroundColor: isDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.03)',
-                    borderRadius: 19,
-                    paddingHorizontal: 6,
-                    position: 'relative',
-                  }}
-                >
-                  {[
-                    { key: 'a', letter: 'A', color: '#038141' },
-                    { key: 'b', letter: 'B', color: '#85BB2F' },
-                    { key: 'c', letter: 'C', color: '#FECB02' },
-                    { key: 'd', letter: 'D', color: '#EE8100' },
-                    { key: 'e', letter: 'E', color: '#E63E11' },
-                  ].map((g, index, arr) => {
-                    const isActive = avgNutriScore.toLowerCase() === g.key;
-                    const isFirst = index === 0;
-                    const isLast = index === arr.length - 1;
-
-                    return (
-                      <View
-                        key={g.key}
-                        style={{
-                          flex: 1,
-                          height: isActive ? 28 : 14,
-                          backgroundColor: isActive ? g.color : (isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)'),
-                          borderColor: isActive ? '#FFFFFF' : (isDark ? g.color + '60' : g.color + '35'),
-                          borderWidth: isActive ? 1.5 : 1,
-                          borderTopLeftRadius: isFirst ? 14 : (isActive ? 8 : 4),
-                          borderBottomLeftRadius: isFirst ? 14 : (isActive ? 8 : 4),
-                          borderTopRightRadius: isLast ? 14 : (isActive ? 8 : 4),
-                          borderBottomRightRadius: isLast ? 14 : (isActive ? 8 : 4),
-                          marginHorizontal: 2,
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          shadowColor: isActive ? g.color : 'transparent',
-                          shadowOffset: { width: 0, height: isActive ? 4 : 0 },
-                          shadowOpacity: isActive ? 0.6 : 0,
-                          shadowRadius: 8,
-                          elevation: isActive ? 4 : 0,
-                          zIndex: isActive ? 10 : 1,
-                        }}
-                      >
-                        {isActive ? (
-                          <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.15)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>
-                            {g.letter}
-                          </Text>
-                        ) : (
-                          <Text style={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)', fontSize: 9.5, fontWeight: '800' }}>
-                            {g.letter}
-                          </Text>
-                        )}
-                      </View>
-                    );
-                  })}
-                </View>
-              </View>
-            ) : null}
 
             {/* Basket Gut Health Progress Bar Section */}
             <View
@@ -788,8 +786,8 @@ export default function HomeScreen() {
                       avgGutHealthScore >= 75
                         ? ['rgba(168, 85, 247, 0.4)', '#A855F7']
                         : avgGutHealthScore >= 50
-                        ? ['rgba(217, 70, 239, 0.4)', '#D946EF']
-                        : ['rgba(244, 63, 94, 0.4)', '#F43F5E']
+                          ? ['rgba(217, 70, 239, 0.4)', '#D946EF']
+                          : ['rgba(244, 63, 94, 0.4)', '#F43F5E']
                     }
                     start={{ x: 0, y: 0.5 }}
                     end={{ x: 1, y: 0.5 }}
@@ -801,7 +799,7 @@ export default function HomeScreen() {
                       right: 0,
                     }}
                   />
-                  
+
                   {/* Outer glassy shine */}
                   <LinearGradient
                     colors={['rgba(255,255,255,0.4)', 'transparent']}
@@ -817,22 +815,22 @@ export default function HomeScreen() {
                   />
 
                   {avgGutHealthScore < 100 && (
-                  <View
-                    style={{
-                      position: 'absolute',
-                      right: 0,
-                      top: 0,
-                      bottom: 0,
-                      width: 3,
-                      backgroundColor: '#FFFFFF',
-                      shadowColor: avgGutHealthScore >= 75 ? '#A855F7' : avgGutHealthScore >= 50 ? '#D946EF' : '#F43F5E',
-                      shadowOffset: { width: -2, height: 0 },
-                      shadowOpacity: 0.8,
-                      shadowRadius: 4,
-                      elevation: 3,
-                      zIndex: 20,
-                    }}
-                  />
+                    <View
+                      style={{
+                        position: 'absolute',
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: 3,
+                        backgroundColor: '#FFFFFF',
+                        shadowColor: avgGutHealthScore >= 75 ? '#A855F7' : avgGutHealthScore >= 50 ? '#D946EF' : '#F43F5E',
+                        shadowOffset: { width: -2, height: 0 },
+                        shadowOpacity: 0.8,
+                        shadowRadius: 4,
+                        elevation: 3,
+                        zIndex: 20,
+                      }}
+                    />
                   )}
                 </View>
               </View>
