@@ -897,12 +897,12 @@ export default function HomeScreen() {
                 </View>
               </View>
 
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingRight: 4 }}>
+              <View style={{ flexDirection: 'row', gap: 8, width: '100%' }}>
                 {/* Card 1: Jogging */}
                 <LinearGradient
                   colors={isDark ? ['rgba(249, 115, 22, 0.15)', 'rgba(249, 115, 22, 0.04)'] : ['#FFF7ED', '#FFEDD5']}
                   style={{
-                    width: 110,
+                    flex: 1,
                     padding: 12,
                     borderRadius: 16,
                     borderWidth: 1,
@@ -928,7 +928,7 @@ export default function HomeScreen() {
                 <LinearGradient
                   colors={isDark ? ['rgba(6, 182, 212, 0.15)', 'rgba(6, 182, 212, 0.04)'] : ['#ECFEFF', '#CFFAFE']}
                   style={{
-                    width: 110,
+                    flex: 1,
                     padding: 12,
                     borderRadius: 16,
                     borderWidth: 1,
@@ -954,7 +954,7 @@ export default function HomeScreen() {
                 <LinearGradient
                   colors={isDark ? ['rgba(59, 130, 246, 0.15)', 'rgba(59, 130, 246, 0.04)'] : ['#EFF6FF', '#DBEAFE']}
                   style={{
-                    width: 110,
+                    flex: 1,
                     padding: 12,
                     borderRadius: 16,
                     borderWidth: 1,
@@ -975,7 +975,7 @@ export default function HomeScreen() {
                     </Text>
                   </View>
                 </LinearGradient>
-              </ScrollView>
+              </View>
             </View>
             <View
               style={{
