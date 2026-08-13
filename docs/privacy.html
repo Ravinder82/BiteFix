@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - BiteFix: Food Scanner</title>
+    <style>
+        :root {
+            --bg-color: #0F172A;
+            --text-color: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --primary: #A855F7;
+            --primary-hover: #C084FC;
+            --border: rgba(255, 255, 255, 0.08);
+            --surface: rgba(255, 255, 255, 0.03);
+            --success: #10B981;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            letter-spacing: -0.05em;
+            margin: 0 0 10px 0;
+            background: linear-gradient(135deg, #A855F7 0%, #D946EF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        section {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(20px);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-color);
+            margin-top: 0;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        p, ul {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        .highlight {
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: var(--primary-hover);
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #A855F7 0%, #D946EF 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-weight: bold;
+            margin-top: 15px;
+            box-shadow: 0 4px 14px rgba(168, 85, 247, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.6);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>BiteFix</h1>
+            <div class="subtitle">Privacy Policy</div>
+            <p>Effective Date: June 1, 2026 | Last Updated: July 28, 2026</p>
+        </header>
+
+        <section>
+            <h2>1. Privacy-First Philosophy</h2>
+            <p>BiteFix is built with a <span class="highlight">privacy-first architecture</span>. Your scan history, custom allergen selections, and wellness goals are stored locally on your device and are never sold, shared, or uploaded to any remote servers.</p>
+        </section>
+
+        <section>
+            <h2>2. Information Collection and Use</h2>
+            <p><strong>A. Local Storage:</strong> All scanned food profiles and preferences remain secure on your iOS device using encrypted storage. We do not maintain user accounts or remote database servers.</p>
+            <p><strong>B. Product Lookup Requests:</strong> When you scan a food barcode, the app sends only the numeric barcode string (e.g., <code>0852629004583</code>) to public open-source food databases (Open Food Facts and USDA) to retrieve ingredients and nutritional facts. No personal identifiers or locations are attached to these requests.</p>
+        </section>
+
+        <section>
+            <h2>3. Billing and Subscriptions</h2>
+            <p>Subscriptions and in-app purchases are handled exclusively through Apple's native App Store Billing System (StoreKit 2). We do not collect or store your payment card numbers, billing addresses, or bank details.</p>
+        </section>
+
+        <section>
+            <h2>4. Data Deletion</h2>
+            <p>You have absolute control over your footprint. You can instantly erase all local scanning history and settings by going to <strong>Settings -> Clear Scan History</strong> inside the app. Uninstalling the app permanently purges all local storage.</p>
+        </section>
+
+        <section>
+            <h2>5. Contact Us</h2>
+            <p>If you have any questions or feedback, feel free to reach out to us:</p>
+            <ul>
+                <li>Email: <a href="mailto:bitefixapp@gmail.com">bitefixapp@gmail.com</a></li>
+                <li>GitHub Repo: <a href="https://github.com/Ravinder82/BiteFix" target="_blank">BiteFix GitHub</a></li>
+            </ul>
+            <a href="mailto:bitefixapp@gmail.com" class="btn">Email Support</a>
+        </section>
+
+        <footer>
+            <p>&copy; 2026 BiteFix. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -4,7 +4,7 @@ import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
-import { ChevronRight, ArrowLeft, ShieldAlert, HeartHandshake, Eye, Moon, Layers, RotateCcw, LogOut, ShieldCheck, Crown, CreditCard, Mail, MessageSquare, Info } from 'lucide-react-native';
+import { ChevronRight, ArrowLeft, ShieldAlert, HeartHandshake, Eye, Moon, Layers, RotateCcw, LogOut, ShieldCheck, Crown, CreditCard, Mail, MessageSquare, Info, Globe } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { getIapService } from '../../services/iapLoader';
 import Constants from 'expo-constants';
@@ -576,6 +576,14 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
             >
               <MessageSquare size={20} color={colors.text} />
               <Text style={{ color: colors.text }} className="font-bold text-sm">Send App Feedback</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => Linking.openURL('https://ravinder82.github.io/BiteFix/')}
+              style={{ backgroundColor: 'transparent', borderStyle: 'solid', borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, marginTop: 4 }}
+            >
+              <Globe size={18} color={colors.primary} />
+              <Text style={{ color: colors.text }} className="font-bold text-sm">View Support Portal Online</Text>
             </TouchableOpacity>
           </ScrollView>
         </SafeAreaView>
