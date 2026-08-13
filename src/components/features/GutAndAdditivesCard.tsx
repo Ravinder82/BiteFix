@@ -305,136 +305,58 @@ export function GutAndAdditivesCard({
             </Text>
           </View>
         ) : (
-          <View style={{ gap: 8 }}>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-              {additives.map((item, idx) => {
-                const isElevated = item.riskLevel === 'elevated';
-                const isModerate = item.riskLevel === 'moderate';
-                const eCode = parseENumber(item.tag, item.displayName);
-                
-                // Clean displayName by removing redundant (E...) suffix
-                const cleanName = (item.displayName || '').replace(/\s*\(e\d{3,4}[a-z]?\)/i, '');
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            {additives.map((item, idx) => {
+              const isElevated = item.riskLevel === 'elevated';
+              const isModerate = item.riskLevel === 'moderate';
+              const eCode = parseENumber(item.tag, item.displayName);
+              
+              // Clean displayName by removing redundant (E...) suffix
+              const cleanName = (item.displayName || '').replace(/\s*\(e\d{3,4}[a-z]?\)/i, '');
 
-                const tagColor = isElevated
-                  ? (isDark ? '#F87171' : '#DC2626')
-                  : isModerate
-                  ? (isDark ? '#FBBF24' : '#D97706')
-                  : (isDark ? '#34D399' : '#16A34A');
+              const tagColor = isElevated
+                ? (isDark ? '#F87171' : '#DC2626')
+                : isModerate
+                ? (isDark ? '#FBBF24' : '#D97706')
+                : (isDark ? '#34D399' : '#16A34A');
 
-                const bgStyle = isElevated
-                  ? (isDark ? 'rgba(248,113,113,0.10)' : 'rgba(239,68,68,0.05)')
-                  : isModerate
-                  ? (isDark ? 'rgba(251,191,36,0.08)' : 'rgba(245,158,11,0.04)')
-                  : (isDark ? 'rgba(52,211,153,0.08)' : 'rgba(22,163,74,0.04)');
+              const bgStyle = isElevated
+                ? (isDark ? 'rgba(248,113,113,0.10)' : 'rgba(239,68,68,0.05)')
+                : isModerate
+                ? (isDark ? 'rgba(251,191,36,0.08)' : 'rgba(245,158,11,0.04)')
+                : (isDark ? 'rgba(52,211,153,0.08)' : 'rgba(22,163,74,0.04)');
 
-                const borderStyle = isElevated
-                  ? (isDark ? 'rgba(248,113,113,0.22)' : 'rgba(239,68,68,0.14)')
-                  : isModerate
-                  ? (isDark ? 'rgba(251,191,36,0.18)' : 'rgba(245,158,11,0.12)')
-                  : (isDark ? 'rgba(52,211,153,0.18)' : 'rgba(22,163,74,0.12)');
-
-                return (
-                  <View
-                    key={idx}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      backgroundColor: bgStyle,
-                      borderColor: borderStyle,
-                      borderWidth: 1,
-                      borderRadius: 10,
-                      paddingHorizontal: 9,
-                      paddingVertical: 5,
-                      gap: 6,
-                    }}
-                  >
-                    <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: tagColor }} />
-                    <Text style={{ color: tagColor, fontSize: 10, fontWeight: '900', letterSpacing: 0.2 }}>
-                      {eCode}
-                    </Text>
-                    <Text style={{ color: colors.text, fontSize: 11, fontWeight: '700' }}>
-                      {cleanName}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-
-            {/* Very short caution warnings mapped to clinical impact */}
-            {(() => {
-              const flagged = additives.filter(
-                (a) => a.riskLevel === 'elevated' || a.riskLevel === 'moderate'
-              );
-              if (flagged.length === 0) return null;
+              const borderStyle = isElevated
+                ? (isDark ? 'rgba(248,113,113,0.22)' : 'rgba(239,68,68,0.14)')
+                : isModerate
+                ? (isDark ? 'rgba(251,191,36,0.18)' : 'rgba(245,158,11,0.12)')
+                : (isDark ? 'rgba(52,211,153,0.18)' : 'rgba(22,163,74,0.12)');
 
               return (
                 <View
+                  key={idx}
                   style={{
-                    marginTop: 4,
-                    padding: 10,
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
-                    borderColor: innerBorder,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: bgStyle,
+                    borderColor: borderStyle,
                     borderWidth: 1,
-                    borderRadius: 12,
-                    gap: 5,
+                    borderRadius: 10,
+                    paddingHorizontal: 9,
+                    paddingVertical: 5,
+                    gap: 6,
                   }}
                 >
-                  {flagged.map((item, idx) => {
-                    const nameLower = (item.displayName || '').toLowerCase();
-                    const tag = parseENumber(item.tag, item.displayName);
-                    let caution = 'Gut irritant';
-
-                    if (
-                      nameLower.includes('carrageenan') ||
-                      nameLower.includes('polysorbate') ||
-                      nameLower.includes('cmc') ||
-                      nameLower.includes('cellulose') ||
-                      nameLower.includes('emulsifier')
-                    ) {
-                      caution = 'May compromise gut lining barrier';
-                    } else if (
-                      nameLower.includes('sucralose') ||
-                      nameLower.includes('aspartame') ||
-                      nameLower.includes('sweetener') ||
-                      nameLower.includes('acesulfame') ||
-                      nameLower.includes('saccharin')
-                    ) {
-                      caution = 'Alters healthy microbiome balance';
-                    } else if (
-                      nameLower.includes('benzoate') ||
-                      nameLower.includes('sorbate') ||
-                      nameLower.includes('preservative')
-                    ) {
-                      caution = 'Antimicrobial to beneficial bacteria';
-                    } else if (
-                      nameLower.includes('dye') ||
-                      nameLower.includes('color') ||
-                      nameLower.includes('yellow') ||
-                      nameLower.includes('red') ||
-                      nameLower.includes('blue')
-                    ) {
-                      caution = 'Potential immune/histamine trigger';
-                    }
-
-                    const itemColor =
-                      item.riskLevel === 'elevated'
-                        ? (isDark ? '#F87171' : '#DC2626')
-                        : (isDark ? '#FBBF24' : '#D97706');
-
-                    return (
-                      <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Text style={{ color: itemColor, fontSize: 10.5, fontWeight: '900' }}>
-                          {tag}:
-                        </Text>
-                        <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600' }}>
-                          {caution}
-                        </Text>
-                      </View>
-                    );
-                  })}
+                  <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: tagColor }} />
+                  <Text style={{ color: tagColor, fontSize: 10, fontWeight: '900', letterSpacing: 0.2 }}>
+                    {eCode}
+                  </Text>
+                  <Text style={{ color: colors.text, fontSize: 11, fontWeight: '700' }}>
+                    {cleanName}
+                  </Text>
                 </View>
               );
-            })()}
+            })}
           </View>
         )}
       </View>
