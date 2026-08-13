@@ -20,6 +20,7 @@ interface AppState {
   dietPreference: 'vegan' | 'vegetarian' | 'standard';
   trackEcoScore: boolean;
   trackOrganic: boolean;
+  activeScanResult: any | null;
 
   // Actions
   setOnboardingComplete: (complete: boolean) => void;
@@ -41,6 +42,7 @@ interface AppState {
   setDietPreference: (diet: 'vegan' | 'vegetarian' | 'standard') => void;
   setTrackEcoScore: (track: boolean) => void;
   setTrackOrganic: (track: boolean) => void;
+  setActiveScanResult: (result: any | null) => void;
 
   // Collection Actions
   addToCollection: (item: ScanHistoryItem, category?: BiteFixCategory, notes?: string) => void;
@@ -90,6 +92,7 @@ function normalizePersistedState(persistedState: unknown, version: number): Part
 
   return {
     ...state,
+    activeScanResult: null,
     onboardingComplete: typeof state.onboardingComplete === 'boolean' ? state.onboardingComplete : false,
     theme: THEMES.includes(state.theme) ? state.theme : 'light',
     sugarUnit: SUGAR_UNITS.includes(state.sugarUnit) ? state.sugarUnit : 'g',
@@ -126,6 +129,7 @@ export const useAppStore = create<AppState>()(
       dietPreference: 'standard',
       trackEcoScore: false,
       trackOrganic: false,
+      activeScanResult: null,
 
       setOnboardingComplete: (complete) => set({ onboardingComplete: complete }),
       setTheme: (theme) => set({ theme }),
@@ -176,6 +180,7 @@ export const useAppStore = create<AppState>()(
       setDietPreference: (diet) => set({ dietPreference: diet }),
       setTrackEcoScore: (track) => set({ trackEcoScore: track }),
       setTrackOrganic: (track) => set({ trackOrganic: track }),
+      setActiveScanResult: (result) => set({ activeScanResult: result }),
 
       addToCollection: (item, category, notes) => set((state) => {
         // Prevent duplicates by ID or barcode/name
@@ -217,12 +222,18 @@ export const useAppStore = create<AppState>()(
         stealthAdditivesAlert: true,
         isPremium: false,
         freeScansUsed: 0,
+        activeScanResult: null,
       }),
     }),
     {
       name: '@bitefix-storage',
       storage: createJSONStorage(() => AsyncStorage),
       version: 6,
+      partialize: (state) => {
+        // Exclude ephemeral in-memory activeScanResult from persistent storage
+        const { activeScanResult, ...rest } = state;
+        return rest as any;
+      },
       migrate: normalizePersistedState,
       merge: (persistedState, currentState) => ({
         ...currentState,

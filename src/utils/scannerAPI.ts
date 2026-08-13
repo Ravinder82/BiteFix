@@ -636,8 +636,6 @@ export function parseQuantityString(str: any): number | null {
   return val;
 }
 
-// In-memory session cache for lightning-fast rescan
-const productCache = new Map<string, ScanResultData | null>();
 
 /**
  * Converts an 8-digit UPC-E string to a standard 12-digit UPC-A string.
@@ -992,87 +990,52 @@ export function normalizeProductPayload(p: any): ScanResultData {
 
 export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal): Promise<ScanResultData | null> {
   const candidates = generateBarcodeCandidates(barcode);
-
-  // 1. Check in-memory session cache first for zero-latency rescan
-  for (const cand of candidates) {
-    if (productCache.has(cand)) {
-      return productCache.get(cand)!;
-    }
-  }
-
   let resData: any = null;
 
   try {
-    // ─── PASS 1: OpenFoodFacts v3 Priority across ALL candidates ───
-    for (const cand of candidates) {
-      if (signal.aborted) return null;
-
+    // ─── PASS 1: OpenFoodFacts v3 in Parallel ───
+    if (signal.aborted) return null;
+    const offPromises = candidates.map(async (cand) => {
       try {
         const responseV3 = await fetchWithTimeout(
           `https://world.openfoodfacts.org/api/v3/product/${encodeURIComponent(cand)}.json`,
-          API_TIMEOUT_MS,
+          6000,
           signal
         );
         if (signal.aborted) return null;
         if (responseV3.ok) {
           const data = await responseV3.json();
           if (data?.product) {
-            resData = data;
-            break;
+            return data;
           }
         }
       } catch (e) {
-        if (isAbortError(e)) return null;
-        console.warn(`OFF v3 query failed for candidate ${cand}`, e);
+        // ignore candidate failures
       }
-    }
+      return null;
+    });
 
-    // ─── PASS 2: OpenFoodFacts v2 Fallback ───
+    const offResults = await Promise.all(offPromises);
+    resData = offResults.find((r) => r?.product);
+
+    // ─── PASS 2: USDA Fallback in Parallel (If OFF returned no product) ───
     if (!resData?.product) {
-      for (const cand of candidates) {
-        if (signal.aborted) return null;
-
-        try {
-          const responseV2 = await fetchWithTimeout(
-            `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(cand)}.json`,
-            API_TIMEOUT_MS,
-            signal
-          );
-          if (signal.aborted) return null;
-          if (responseV2.ok) {
-            const data = await responseV2.json();
-            if (data?.product) {
-              resData = data;
-              break;
-            }
-          }
-        } catch (e) {
-          if (isAbortError(e)) return null;
-          console.warn(`OFF v2 query failed for candidate ${cand}`, e);
-        }
-      }
-    }
-
-    // ─── PASS 3: USDA FoodData Central Multi-Source Fallback (If OFF returns no product) ───
-    if (!resData?.product) {
-      for (const cand of candidates) {
-        if (signal.aborted) return null;
-        const usdaData = await fetchUsdaFoodData(cand, signal);
-        if (usdaData) {
-          resData = { product: usdaData };
-          break;
-        }
+      if (signal.aborted) return null;
+      const usdaPromises = candidates.map(async (cand) => {
+        return fetchUsdaFoodData(cand, signal);
+      });
+      const usdaResults = await Promise.all(usdaPromises);
+      const usdaFound = usdaResults.find((r) => r);
+      if (usdaFound) {
+        resData = { product: usdaFound };
       }
     }
 
     if (!resData?.product) {
-      for (const cand of candidates) {
-        productCache.set(cand, null);
-      }
       return null;
     }
 
-    // ─── PASS 4: Hybrid Merge — Enrich OFF Product with USDA Verified Nutrition & Ingredients ───
+    // ─── PASS 3: Hybrid Merge — Enrich OFF Product with USDA Verified Nutrition & Ingredients ───
     if (resData?.product) {
       let p = resData.product;
       const offNutriments = p.nutriments ?? p.nutrition_grades ?? p.nutrition_data ?? {};
@@ -1083,19 +1046,20 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
       const hasIngredients = typeof (p.ingredients_text_en || p.ingredients_text) === 'string' && (p.ingredients_text_en || p.ingredients_text).trim().length > 0;
 
       if ((!hasNutrimentData || !hasIngredients) && !signal.aborted) {
-        for (const cand of candidates) {
-          const usdaData = await fetchUsdaFoodData(cand, signal);
-          if (usdaData) {
-            console.log(`[BiteFix] Hybrid Merge: Enriched product "${p.product_name || cand}" with official USDA nutrition/ingredients specs.`);
-            p.nutriments = { ...(usdaData.nutriments || {}), ...(p.nutriments || {}) };
-            if (!hasIngredients && usdaData.ingredients_text) {
-              p.ingredients_text_en = usdaData.ingredients_text;
-              p.ingredients_text = usdaData.ingredients_text;
-            }
-            if (!p.serving_size && usdaData.serving_size) {
-              p.serving_size = usdaData.serving_size;
-            }
-            break;
+        const usdaPromises = candidates.map(async (cand) => {
+          return fetchUsdaFoodData(cand, signal);
+        });
+        const usdaResults = await Promise.all(usdaPromises);
+        const usdaData = usdaResults.find((r) => r);
+        if (usdaData) {
+          console.log(`[BiteFix] Hybrid Merge: Enriched product "${p.product_name}" with official USDA nutrition/ingredients specs.`);
+          p.nutriments = { ...(usdaData.nutriments || {}), ...(p.nutriments || {}) };
+          if (!hasIngredients && usdaData.ingredients_text) {
+            p.ingredients_text_en = usdaData.ingredients_text;
+            p.ingredients_text = usdaData.ingredients_text;
+          }
+          if (!p.serving_size && usdaData.serving_size) {
+            p.serving_size = usdaData.serving_size;
           }
         }
       }
@@ -1103,13 +1067,7 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
     }
 
     // Normalize raw payload through Universal Normalizer Pipeline
-    const resultData = normalizeProductPayload(resData.product);
-
-    for (const cand of candidates) {
-      productCache.set(cand, resultData);
-    }
-
-    return resultData;
+    return normalizeProductPayload(resData.product);
   } catch (err: any) {
     if (signal.aborted || isAbortError(err)) return null;
     throw err;

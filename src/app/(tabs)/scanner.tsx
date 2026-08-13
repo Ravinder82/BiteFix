@@ -96,7 +96,7 @@ const PRODUCT_BARCODE_TYPES = ['qr', 'upc_a', 'upc_e', 'ean13', 'ean8', 'code128
 // ─────────────────────────────────────────────────────────
 export default function ScannerScreen() {
   const { colors, isDark } = useTheme();
-  const { sugarUnit, addToCollection, collection, isPremium, freeScansUsed, incrementFreeScans, allergenFilters, dietPreference } = useAppStore();
+  const { sugarUnit, addToCollection, collection, isPremium, freeScansUsed, incrementFreeScans, allergenFilters, dietPreference, setActiveScanResult } = useAppStore();
 
   // Camera permission hook from expo-camera
   const [permission, requestPermission] = useCameraPermissions();
@@ -254,8 +254,7 @@ export default function ScannerScreen() {
   }, [mode, stopActiveScannerSession]);
 
   // Unconditionally reset scan lock whenever the scanner tab gains focus.
-  // This is the most important unlock: if the user navigated away and returned,
-  // isScanningRef must be false so the next barcode registers immediately.
+  // We also wipe out the previous activeScanResult so the home screen resets to empty immediately when a new scan session begins.
   useEffect(() => {
     if (scannerIsVisible && mode === 'camera') {
       isScanningRef.current = false;
@@ -263,10 +262,12 @@ export default function ScannerScreen() {
       setLoading(false);
       setLoadingText('Analyzing...');
       setErrorMsg(null);
+      setActiveScanResult(null);
     }
-  }, [mode, scannerIsVisible]);
+  }, [mode, scannerIsVisible, setActiveScanResult]);
 
-
+  // Helper to sleep/delay
+  const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
   // ─── Core barcode scan handler (Waterfall Lookup) ───────────────────────────
   const handleBarcodeScanned = useCallback(async ({ data }: BarcodeScanningResult) => {
@@ -293,21 +294,21 @@ export default function ScannerScreen() {
     if (!isCurrentLookup()) return;
     loadingRef.current = true;
     setLoading(true);
-    setLoadingText('Checking product databases...');
+    setLoadingText('Querying databases...');
     setErrorMsg(null);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     let productFound = false;
     let localErrorMsg = null;
+    let lookupResult: any = null;
 
     try {
       // --- PHASE 1: OpenFoodFacts ---
-      let result = await lookupOpenFoodFacts(barcode, lookupController.signal);
+      lookupResult = await lookupOpenFoodFacts(barcode, lookupController.signal);
 
       if (!isCurrentLookup()) return;
 
-      if (result) {
-
+      if (lookupResult) {
         if (!isPremium) {
           incrementFreeScans();
           const countAfterScan = (freeScansUsed || 0) + 1;
@@ -317,7 +318,7 @@ export default function ScannerScreen() {
         }
 
         if (isCurrentLookup()) {
-          setScanResult(result);
+          setScanResult(lookupResult);
           productFound = true;
         }
       }
@@ -332,15 +333,43 @@ export default function ScannerScreen() {
     } finally {
       if (!isCurrentLookup()) return;
 
-      activeLookupControllerRef.current = null;
-      loadingRef.current = false;
-      setLoading(false);
-      setLoadingText('Analyzing...');
-
       if (productFound) {
-        setMode('result');
+        const isStillValid = () => mountedRef.current && !lookupController.signal.aborted;
+
+        // Premium animated analysis step sequence
+        setLoadingText('Auditing ingredients & additives...');
+        await delay(700);
+        if (!isStillValid()) return;
+        
+        setLoadingText('Analyzing gut health safety...');
+        await delay(700);
+        if (!isStillValid()) return;
+        
+        setLoadingText('Calculating carbon footprint...');
+        await delay(700);
+        if (!isStillValid()) return;
+
+        // Force a completely fresh object clone with unique timestamp to guarantee React re-render
+        const freshResult = {
+          ...lookupResult,
+          id: `${barcode}_${Date.now()}`,
+          scanTimestamp: Date.now(),
+        };
+        setActiveScanResult(freshResult);
+        setMode('camera');
+        setScanResult(null);
+        isScanningRef.current = false;
+        loadingRef.current = false;
+        setLoading(false);
+        setLoadingText('Analyzing...');
+        activeLookupControllerRef.current = null;
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        router.push('/');
       } else {
+        activeLookupControllerRef.current = null;
+        loadingRef.current = false;
+        setLoading(false);
+        setLoadingText('Analyzing...');
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         setErrorMsg(localErrorMsg || 'Product not found.');
         setMode('not-found');
@@ -355,7 +384,7 @@ export default function ScannerScreen() {
         scanCooldownTimerRef.current = null;
       }, SCAN_COOLDOWN_MS);
     }
-  }, []);
+  }, [freeScansUsed, incrementFreeScans, isPremium, setActiveScanResult]);
 
 
 
@@ -611,194 +640,7 @@ export default function ScannerScreen() {
 
 
 
-      {/* ════════════════════════════════════════════════════
-          3. SCAN RESULT DISPLAY MODE
-          ════════════════════════════════════════════════════ */}
-      {mode === 'result' && scanResult && (
-        <SafeAreaView style={{ flex: 1 }}>
-          {/* Header */}
-          <View
-            style={{
-              borderColor: colors.border,
-              borderWidth: 1.5,
-              backgroundColor: colors.surface,
-              borderRadius: 24,
-              marginHorizontal: 16,
-              marginTop: 12,
-              marginBottom: 8,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 6 },
-              shadowOpacity: isDark ? 0.35 : 0.04,
-              shadowRadius: 12,
-              elevation: 4,
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingHorizontal: 20,
-              paddingVertical: 14,
-            }}
-          >
-            <TouchableOpacity
-              onPress={resetScanner}
-              style={{ backgroundColor: colors.surfaceRaised, padding: 8, borderRadius: 99 }}
-            >
-              <ArrowLeft size={18} color={colors.text} />
-            </TouchableOpacity>
-            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', marginLeft: 16 }}>Scan Result</Text>
-          </View>
 
-          <ScrollView
-            contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }}
-            showsVerticalScrollIndicator={false}
-          >
-            {/* 0. Proactive Shield Pill Cards (Allergens, Palm Oil, Diet) */}
-            <View style={{ marginBottom: 12 }}>
-              {scanResult.ingredientsText && allergenFilters.length > 0 && detectShieldAlerts(scanResult.ingredientsText, allergenFilters).map((alert, idx) => (
-                <ShieldPillCard key={`${alert.id}-${idx}`} alert={alert} index={idx} />
-              ))}
-              
-              {dietPreference === 'vegan' && scanResult.isVegan === false && (
-                <ShieldPillCard key="diet-vegan" alert={{ id: 'vegan', type: 'allergen', name: 'Non-Vegan Ingredients' }} index={5} />
-              )}
-              {dietPreference === 'vegetarian' && scanResult.isVegetarian === false && (
-                <ShieldPillCard key="diet-veg" alert={{ id: 'veg', type: 'allergen', name: 'Non-Vegetarian Ingredients' }} index={5} />
-              )}
-            </View>
-
-            {/* 1. Executive Telemetry: Purity & Additives Audit */}
-            <View style={{ marginBottom: 4 }}>
-              <ProductHeroCardDashboard
-                scanResult={scanResult}
-                colors={colors}
-                isDark={isDark}
-              />
-            </View>
-
-            {/* NEW: Eco-Score & Dietary Metrics */}
-            <EcoScoreCard 
-              grade={scanResult.ecoscoreGrade}
-              carbonFootprint={scanResult.carbonFootprint100g}
-              isOrganic={scanResult.isOrganic}
-              isVegan={scanResult.isVegan}
-              isVegetarian={scanResult.isVegetarian}
-              delayIndex={3}
-            />
-
-            {/* Gut Shield Pro Audit Card */}
-            {(() => {
-              const additives: AdditiveDetail[] = scanResult.additives ?? [];
-              const gut = evaluateGutHealth(additives);
-              return (
-                <GutShieldCard
-                  score={gut.score}
-                  insights={gut.insights}
-                  colors={colors}
-                  isDark={isDark}
-                />
-              );
-            })()}
-
-            {/* Additive Detective Audit Card */}
-            <AdditiveDetectiveCard
-              additives={scanResult.additives ?? []}
-              colors={colors}
-              isDark={isDark}
-            />
-
-            {/* 2. Sugar & Energy Telemetry (Includes integrated WHO & Burn Down metrics) */}
-            <NutritionFacts
-              colors={colors}
-              productName={scanResult.name}
-              sugarGrams={scanResult.sugarGrams ?? scanResult.sugarPer100g ?? 0}
-              calories={scanResult.calories}
-              servingSize={formatWeight(scanResult.servingSize, sugarUnit) || '100 g / 100 ml'}
-              totalWeightGrams={scanResult.totalWeightGrams}
-              totalSugarGrams={scanResult.totalSugarGrams}
-              sugarPer100g={scanResult.sugarPer100g}
-              whoLimitServingPercent={scanResult.whoLimitServingPercent ?? (scanResult.sugarTeaspoons !== undefined ? Math.round((scanResult.sugarTeaspoons / 12) * 100) : undefined)}
-              isDefaultServing={scanResult.isDefaultServing}
-              hasHiddenSugars={scanResult.hasHiddenSugars}
-              hiddenSugars={scanResult.hiddenSugars}
-              hiddenSugarCount={scanResult.hiddenSugarCount}
-              nutriScore={scanResult.nutriScore}
-            />
-
-            {/* 3. Action Dock: Save & Scan Another */}
-            <View style={{ flexDirection: 'row', gap: 12, width: '100%', marginTop: 12, marginBottom: 12 }}>
-              {/* Save to Collections Button */}
-              {(() => {
-                const isAlreadySaved = collection.some(
-                  (item) => item.name === scanResult.name && item.brand === scanResult.brand
-                );
-                return (
-                  <TouchableOpacity
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                      if (!isAlreadySaved) {
-                        addToCollection({
-                          ...scanResult,
-                          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                          name: scanResult.name,
-                          brand: scanResult.brand,
-                          sugarGrams: scanResult.sugarGrams ?? scanResult.sugarPer100g ?? 0,
-                          sugarTeaspoons: scanResult.sugarTeaspoons ?? 0,
-                          timestamp: Date.now(),
-                        });
-                      }
-                    }}
-                    disabled={isAlreadySaved}
-                    style={{
-                      flex: 1.2,
-                      backgroundColor: isAlreadySaved ? `${colors.primary}15` : colors.primary,
-                      borderWidth: 1.5,
-                      borderColor: colors.primary,
-                      paddingVertical: 14,
-                      borderRadius: 16,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexDirection: 'row',
-                      gap: 8,
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: isAlreadySaved ? 0.05 : 0.15,
-                      shadowRadius: 8,
-                      elevation: isAlreadySaved ? 1 : 3,
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <Bookmark size={16} color={isAlreadySaved ? colors.primary : '#FFFFFF'} fill={isAlreadySaved ? colors.primary : 'transparent'} />
-                    <Text style={{ color: isAlreadySaved ? colors.primary : '#FFFFFF', fontWeight: '900', fontSize: 13 }}>
-                      {isAlreadySaved ? 'Added to Basket' : 'Add to Basket'}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })()}
-
-              {/* Scan Again Button */}
-              <TouchableOpacity
-                onPress={resetScanner}
-                style={{
-                  flex: 1,
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                  paddingVertical: 14,
-                  borderRadius: 16,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderWidth: 1,
-                  borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
-                }}
-                activeOpacity={0.85}
-              >
-                <Text style={{ color: colors.text, fontWeight: '800', fontSize: 13 }}>Scan Another</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Attribution footer */}
-            <Text style={{ color: colors.textMuted, fontSize: 10, textAlign: 'center', marginTop: 24, fontWeight: '600' }}>
-              Data sourced from Open Food Facts (ODbL)
-            </Text>
-          </ScrollView>
-        </SafeAreaView>
-      )}
 
       {/* ─── Global Loading Overlay ─── */}
       {loading && (

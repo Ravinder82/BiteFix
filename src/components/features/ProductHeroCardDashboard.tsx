@@ -1,13 +1,14 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Animated as RNAnimated } from 'react-native';
 import { Image } from 'expo-image';
-import { Bookmark, Trash2 } from 'lucide-react-native';
+import { Bookmark, Trash2, Droplets, AlertOctagon } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { OrbMascot as Mascot } from './OrbMascot';
 import { useAppStore } from '../../stores/appStore';
 import { getNovaColor, getNovaShortLabel, getBiteFixScoreColor } from '../../utils/format';
 import { AdditiveDetail } from '../../types/app.types';
 import { NutriScoreTrafficLight } from './NutriScoreTrafficLight';
+import Svg, { Circle, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 
 export interface ProductHeroCardDashboardProps {
   scanResult: {
@@ -27,6 +28,7 @@ export interface ProductHeroCardDashboardProps {
     };
     [key: string]: any;
   };
+  alerts?: { id: string; type: 'allergen' | 'oil'; name: string }[];
   colors: any;
   isDark: boolean;
   width?: number | string;
@@ -39,6 +41,7 @@ export interface ProductHeroCardDashboardProps {
 
 export default function ProductHeroCardDashboard({
   scanResult,
+  alerts,
   colors,
   isDark,
   width,
@@ -249,92 +252,219 @@ export default function ProductHeroCardDashboard({
 
       <View style={{ height: 1, backgroundColor: borderDivider, marginVertical: 18 }} />
 
-      {/* ── BiteFix Telemetry Gauge ── */}
-      <View style={{ gap: 12 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-            <Text style={{ color: ratingColor, fontSize: 44, fontWeight: '900', letterSpacing: -1.5 }}>
-              {biteFixScore}
-            </Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 15, fontWeight: '800', marginLeft: 2 }}>
-              /100
-            </Text>
-          </View>
+      {/* Mascot Ring above Nutri-Score in place of score bar */}
+      {(() => {
+        const lighterScoreColor = biteFixScore >= 76
+          ? '#4ADE80'
+          : biteFixScore >= 51
+            ? '#2DD4BF'
+            : biteFixScore >= 26
+              ? '#FBBF24'
+              : '#F87171';
 
-          <View style={{ alignItems: 'flex-end', gap: 3, flexShrink: 1, maxWidth: '65%' }}>
-            <View
-              style={{
+        const mascotState = biteFixScore >= 76
+          ? 'happy'
+          : biteFixScore >= 41
+            ? 'idle'
+            : 'shocked';
+
+        return (
+          <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+            {/* Centered Mascot Ring */}
+            <View style={{ width: 180, height: 180, alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+              <Svg width={180} height={180} viewBox="0 0 120 120" style={{ position: 'absolute' }}>
+                <Defs>
+                  <RadialGradient id="ringGlow" cx="50%" cy="50%" rx="50%" ry="50%">
+                    <Stop offset="0%" stopColor={ratingColor} stopOpacity="0.4" />
+                    <Stop offset="70%" stopColor={ratingColor} stopOpacity="0.1" />
+                    <Stop offset="100%" stopColor={ratingColor} stopOpacity="0" />
+                  </RadialGradient>
+                  <SvgLinearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <Stop offset="0%" stopColor={ratingColor} />
+                    <Stop offset="100%" stopColor={lighterScoreColor} />
+                  </SvgLinearGradient>
+                </Defs>
+                <Circle cx="60" cy="60" r="54" fill="url(#ringGlow)" />
+                <Circle cx="60" cy="60" r="48" fill="none" stroke={isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)'} strokeWidth="12" />
+                <Circle cx="60" cy="60" r="56" fill="none" stroke={ratingColor} strokeWidth="1.5" opacity="0.25" />
+                <Circle cx="60" cy="60" r="40" fill="none" stroke={ratingColor} strokeWidth="1.5" opacity="0.15" />
+                <Circle
+                  cx="60"
+                  cy="60"
+                  r="48"
+                  fill="none"
+                  stroke="url(#progressGrad)"
+                  strokeWidth="12"
+                  strokeLinecap="round"
+                  strokeDasharray="301.6"
+                  strokeDashoffset={301.6 * (1 - Math.max(5, biteFixScore) / 100)}
+                  transform="rotate(-90 60 60)"
+                />
+              </Svg>
+
+              <View style={{ marginTop: 20 }}>
+                <Mascot state={mascotState} size={96} />
+              </View>
+
+              <View style={{
+                position: 'absolute',
+                bottom: -8,
+                backgroundColor: isDark ? 'rgba(31, 41, 55, 0.92)' : 'rgba(255, 255, 255, 0.95)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+                borderWidth: 1.5,
+                borderRadius: 14,
+                paddingHorizontal: 12,
+                paddingVertical: 4,
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: 6,
-                backgroundColor: ledColor + '15',
-                paddingHorizontal: 10,
-                paddingVertical: 5,
-                borderRadius: 99,
-                borderWidth: 1,
-                borderColor: ledColor + '30',
-                flexShrink: 1,
-              }}
-            >
-              <View
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: 3.5,
-                  backgroundColor: ledColor,
-                  flexShrink: 0,
-                }}
-              />
-              <Text
-                style={{ color: colors.text, fontSize: 10.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4, flexShrink: 1 }}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-              >
-                {ledLabel}
-              </Text>
+                gap: 5,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.15,
+                shadowRadius: 6,
+                elevation: 4,
+              }}>
+                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: ratingColor }} />
+                <Text style={{ color: colors.text, fontSize: 10, fontWeight: '900', letterSpacing: 0.4 }}>
+                  PURITY SCORE: {biteFixScore}
+                </Text>
+              </View>
             </View>
+
+            {/* Horizontal NOVA Score Component below Mascot */}
+            {novaClass ? (
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.02)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+                borderWidth: 1,
+                borderRadius: 14,
+                paddingHorizontal: 14,
+                paddingVertical: 8,
+                marginTop: 18,
+                marginBottom: 10,
+                width: '100%',
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <View style={{
+                    backgroundColor: getNovaColor(novaClass) + '20',
+                    borderColor: getNovaColor(novaClass) + '40',
+                    borderWidth: 1,
+                    paddingHorizontal: 7,
+                    paddingVertical: 2.5,
+                    borderRadius: 6,
+                  }}>
+                    <Text style={{ color: getNovaColor(novaClass), fontSize: 9.5, fontWeight: '900', letterSpacing: 0.3 }}>
+                      NOVA {novaClass}
+                    </Text>
+                  </View>
+                  <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>
+                    {getNovaShortLabel(novaClass)}
+                  </Text>
+                </View>
+
+                {/* 4 Horizontal Capsule Street Lights */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                  {[1, 2, 3, 4].map((level) => {
+                    const isActive = novaClass === level;
+                    const isPast = novaClass >= level;
+                    const levelColor = level === 4 ? '#EF4444' : level === 3 ? '#F59E0B' : level === 2 ? '#3BB5A0' : '#22C55E';
+                    return (
+                      <View
+                        key={level}
+                        style={{
+                          width: 20,
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: isPast ? levelColor : (isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)'),
+                          opacity: isActive ? 1 : isPast ? 0.6 : 0.25,
+                          borderWidth: isActive ? 1 : 0,
+                          borderColor: '#FFFFFF',
+                          shadowColor: isActive ? levelColor : 'transparent',
+                          shadowRadius: 4,
+                          shadowOpacity: 0.5,
+                        }}
+                      />
+                    );
+                  })}
+                </View>
+              </View>
+            ) : null}
           </View>
-        </View>
+        );
+      })()}
 
-        {/* Progress Bar Track */}
-        <View
-          style={{
-            height: 6,
-            backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-            borderRadius: 3,
-            overflow: 'hidden',
-            position: 'relative',
-          }}
-        >
-          <View
-            style={{
-              width: `${Math.min(100, Math.max(0, biteFixScore))}%`,
-              height: '100%',
-              backgroundColor: ratingColor,
-              borderRadius: 3,
-            }}
-          />
-          {/* Halfway indicator mark (50 points) */}
-          <View
-            style={{
-              position: 'absolute',
-              left: '50%',
-              top: 0,
-              bottom: 0,
-              width: 1,
-              backgroundColor: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.15)',
-            }}
-          />
-        </View>
+      {/* ── Compact Oil Watchlist & Dietary/Allergen Alerts Banner ── */}
+      {alerts && alerts.length > 0 && (
+        <View style={{ marginBottom: 16, gap: 8 }}>
+          {alerts.map((alert, idx) => {
+            const isAllergen = alert.type === 'allergen';
+            const alertColor = isAllergen ? '#EF4444' : '#F59E0B';
+            const IconComp = isAllergen ? AlertOctagon : Droplets;
 
-        {/* Gauge Ticks */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 2 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700', textTransform: 'uppercase' }}>0 Ultra-Processed</Text>
-          <Text style={{ color: colors.textSecondary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase' }}>50 Processed</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '700', textTransform: 'uppercase' }}>100 Whole Food</Text>
+            return (
+              <View
+                key={`${alert.id}-${idx}`}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.02)',
+                  borderColor: isDark ? `${alertColor}35` : `${alertColor}25`,
+                  borderWidth: 1.2,
+                  borderRadius: 16,
+                  paddingVertical: 9,
+                  paddingHorizontal: 12,
+                  gap: 10,
+                  shadowColor: alertColor,
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: isDark ? 0.2 : 0.04,
+                  shadowRadius: 6,
+                  elevation: 2,
+                }}
+              >
+                <View
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 14,
+                    backgroundColor: `${alertColor}18`,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <IconComp size={15} color={alertColor} strokeWidth={2.4} />
+                </View>
+
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: colors.text, fontSize: 12.5, fontWeight: '800', letterSpacing: -0.2 }}>
+                    {isAllergen ? 'Allergen Alert' : 'Oil Watchlist'}
+                  </Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 1 }}>
+                    Contains {alert.name}
+                  </Text>
+                </View>
+
+                <View
+                  style={{
+                    backgroundColor: `${alertColor}15`,
+                    borderColor: `${alertColor}30`,
+                    borderWidth: 1,
+                    paddingHorizontal: 8,
+                    paddingVertical: 3,
+                    borderRadius: 8,
+                  }}
+                >
+                  <Text style={{ color: alertColor, fontSize: 9.5, fontWeight: '900', letterSpacing: 0.4 }}>
+                    {isAllergen ? 'WARNING' : 'DETECTED'}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
         </View>
-      </View>
+      )}
 
       {/* ── EU Nutri-Score Traffic Light ── */}
       {nutriScore ? (

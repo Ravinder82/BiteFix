@@ -112,40 +112,48 @@ export function NutriScoreTrafficLight({
         backgroundColor: bentoBg,
         borderColor: borderDivider,
         borderWidth: 1,
-        borderRadius: 16,
-        padding: 16,
-        marginVertical: 8,
+        borderRadius: 18,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        marginTop: 6,
       }}
     >
       {/* Header */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 8 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
-          <Text
-            style={{
-              color: colors.textSecondary || '#A1A1AA',
-              fontSize: 10,
-              fontWeight: '800',
-              textTransform: 'uppercase',
-              letterSpacing: 0.8,
-            }}
-            numberOfLines={1}
-          >
-            NUTRI-SCORE
-          </Text>
-        </View>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, gap: 8 }}>
+        <Text
+          style={{
+            color: colors.textSecondary || '#A1A1AA',
+            fontSize: 10,
+            fontWeight: '800',
+            textTransform: 'uppercase',
+            letterSpacing: 0.8,
+          }}
+          numberOfLines={1}
+        >
+          NUTRI-SCORE
+        </Text>
         {activeConfig ? (
-          <Text style={{ color: activeConfig.color, fontSize: 11, fontWeight: '900', flexShrink: 1, textAlign: 'right' }} numberOfLines={1}>
-            Grade {activeConfig.letter} • {activeConfig.label}
-          </Text>
+          <View style={{
+            backgroundColor: `${activeConfig.color}15`,
+            borderColor: `${activeConfig.color}35`,
+            borderWidth: 1,
+            paddingHorizontal: 8,
+            paddingVertical: 2,
+            borderRadius: 6,
+          }}>
+            <Text style={{ color: activeConfig.color, fontSize: 10.5, fontWeight: '900' }} numberOfLines={1}>
+              Grade {activeConfig.letter} • {activeConfig.label}
+            </Text>
+          </View>
         ) : (
-          <Text style={{ color: colors.textMuted || '#71717A', fontSize: 11, fontWeight: '700', flexShrink: 1, textAlign: 'right' }} numberOfLines={1}>
+          <Text style={{ color: colors.textMuted || '#71717A', fontSize: 10.5, fontWeight: '700' }} numberOfLines={1}>
             Not Evaluated
           </Text>
         )}
       </View>
 
       {/* 5-Block Traffic Light Row */}
-      <View style={{ flexDirection: 'row', gap: 6, height: 42, alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', gap: 5, height: 34, alignItems: 'center' }}>
         {gradesList.map((itemGrade) => {
           const cfg = NUTRI_SCORE_CONFIG[itemGrade];
           const isActive = normalizedGrade === itemGrade;
@@ -156,40 +164,40 @@ export function NutriScoreTrafficLight({
               key={itemGrade}
               style={[
                 {
-                  flex: isActive ? 1.4 : 1,
-                  height: isActive ? 40 : 32,
-                  borderRadius: 10,
+                  flex: isActive ? 1.35 : 1,
+                  height: isActive ? 34 : 28,
+                  borderRadius: 8,
                   backgroundColor: isActive
                     ? cfg.color
                     : isKnown
-                      ? cfg.color + '25'
+                      ? cfg.color + '20'
                       : isDark
                         ? 'rgba(255,255,255,0.06)'
                         : 'rgba(0,0,0,0.06)',
-                  borderWidth: isActive ? 2 : 1,
+                  borderWidth: isActive ? 1.5 : 0.5,
                   borderColor: isActive
                     ? '#FFFFFF'
                     : isKnown
-                      ? cfg.color + '40'
+                      ? cfg.color + '35'
                       : isDark
-                        ? 'rgba(255,255,255,0.1)'
-                        : 'rgba(0,0,0,0.08)',
+                        ? 'rgba(255,255,255,0.08)'
+                        : 'rgba(0,0,0,0.06)',
                   alignItems: 'center',
                   justifyContent: 'center',
                   shadowColor: isActive ? cfg.color : 'transparent',
-                  shadowOffset: { width: 0, height: isActive ? 4 : 0 },
-                  shadowOpacity: isActive ? 0.6 : 0,
-                  shadowRadius: isActive ? 8 : 0,
-                  elevation: isActive ? 4 : 0,
+                  shadowOffset: { width: 0, height: isActive ? 3 : 0 },
+                  shadowOpacity: isActive ? 0.5 : 0,
+                  shadowRadius: isActive ? 6 : 0,
+                  elevation: isActive ? 3 : 0,
                 },
               ]}
             >
               <Text
                 style={{
                   color: isActive ? '#FFFFFF' : isKnown ? cfg.color : colors.textMuted || '#71717A',
-                  fontSize: isActive ? 18 : 13,
+                  fontSize: isActive ? 15 : 12,
                   fontWeight: '900',
-                  letterSpacing: -0.5,
+                  letterSpacing: -0.3,
                 }}
               >
                 {cfg.letter}
@@ -204,27 +212,16 @@ export function NutriScoreTrafficLight({
         <Text
           style={{
             color: colors.textSecondary || '#A1A1AA',
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: '600',
-            marginTop: 10,
-            lineHeight: 16,
+            marginTop: 8,
+            lineHeight: 15,
           }}
+          numberOfLines={2}
         >
           {activeConfig.desc}
         </Text>
-      ) : (
-        <Text
-          style={{
-            color: colors.textMuted || '#71717A',
-            fontSize: 11,
-            fontWeight: '500',
-            marginTop: 10,
-            lineHeight: 15,
-          }}
-        >
-          Open Food Facts grade unavailable for this product. Score is estimated from sugar and additives.
-        </Text>
-      )}
+      ) : null}
     </View>
   );
 }
