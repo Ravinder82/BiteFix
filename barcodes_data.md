@@ -1,36 +1,29 @@
 # BiteFix Test Barcodes Collection
 
-This file maintains 100% verified food product barcodes for testing the BiteFix hybrid scanner engine, NOVA classification, allergen alerts, Eco-Scores, and score calibration.
+This is the official collection of verified food product barcodes for testing all features of the BiteFix app, including the Hybrid Scanner (OpenFoodFacts + USDA), Nutri-Score, NOVA class, Additive Detective, Gut Shield Pro, and Eco-Score metrics.
 
 ---
 
-### 1. Beyond Burger Plant-Based Patties (Retail 2-Pack)
-- **Barcode (UPC-A):** `0852629004583`
-- **Category:** Plant-Based / Vegan Meat Alternative
-- **What it verifies:** 
-  - Triggers OpenFoodFacts + USDA **Hybrid Data Merge** (OFF for images + USDA for exact nutrition).
-  - Verifies correct **0g Sugar** representation (preventing carbs from promoting to sugar).
-  - Verifies **Gut Shield Pro** alerts (detects **E461 Methylcellulose** emulsifier).
-  - Verifies **Eco-Score B** and carbon footprint fallback.
+## 🥤 Beverages
+- **Coca-Cola Classic (12 oz can):** `049000028904`
+- **Pepsi Cola (20 oz bottle):** `012000000133`
+- **Gatorade Thirst Quencher Fruit Punch (32 oz):** `052000338775`
+- **Arizona Ginseng & Honey Green Tea (23 oz can):** `0613008738501`
 
 ---
 
-### 2. Coca-Cola Classic (355ml Can)
-- **Barcode (UPC-A):** `049000028904`
-- **Category:** Soda / Carbonated Beverage
-- **What it verifies:**
-  - Verifies high sugar load (~39g per serving / ~9.3 teaspoons) and **Red WHO Limit Warning**.
-  - Verifies high jogging burn-down offset time.
-  - Verifies **Nutri-Score E** color rendering.
-  - Verifies **Watch List Compounds** (E150d Caramel Color) vs **Generally Accepted** (Phosphoric Acid).
+## 🍿 Snacks & Cookies
+- **Pringles Original Potato Crisps (5.68 oz):** `038000138431`
+- **Pringles Fried Onion Ring Potato Crisps:** `0038000218798`
+- **Oreos Chocolate Sandwich Cookies (Regular 14.3 oz):** `044000032029`
+- **Doritos Nacho Cheese Tortilla Chips (9.25 oz):** `028400517464`
+- **Cheetos Crunchy Cheese Flavored Snacks (8.5 oz):** `028400040115`
 
 ---
 
-### 3. Quaker Organic Whole Oats (18 oz)
-- **Barcode (UPC-A):** `070734053157`
-- **Category:** Organic Oats / Whole Grains
-- **What it verifies:**
-  - Verifies **Clean Label Badge** (0 additives found).
-  - Verifies **Gut Shield Pro 100/100** ("Microbiome Friendly").
-  - Verifies **Organic** dietary badge activation.
-  - Verifies **Nutri-Score A** (Green) and **NOVA 1** (Minimally processed).
+## 🥣 Pantry Staples & Cereals
+- **Campbell’s Condensed Tomato Soup (10.75 oz):** `051000000114`
+- **Heinz Tomato Ketchup (20 oz):** `013000006034`
+- **Kraft Macaroni & Cheese Dinner (Original 7.25 oz):** `021000658831`
+- **Borden Extra Sharp White Cheddar Cheese:** `0053000000556`
+- **Whole Foods Early Bird Multi Seed Organic Bread:** `099482430948`
