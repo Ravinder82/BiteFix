@@ -975,32 +975,6 @@ export default function HomeScreen() {
                     </Text>
                   </View>
                 </LinearGradient>
-
-                {/* Card 4: Brisk Walk */}
-                <LinearGradient
-                  colors={isDark ? ['rgba(16, 185, 129, 0.15)', 'rgba(16, 185, 129, 0.04)'] : ['#ECFDF5', '#D1FAE5']}
-                  style={{
-                    width: 110,
-                    padding: 12,
-                    borderRadius: 16,
-                    borderWidth: 1,
-                    borderColor: 'rgba(16, 185, 129, 0.3)',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <View style={{ backgroundColor: '#10B981', padding: 6, borderRadius: 10 }}>
-                      <Footprints size={14} color="#FFFFFF" />
-                    </View>
-                    <Text style={{ color: '#10B981', fontSize: 9, fontWeight: '900', textTransform: 'uppercase' }}>LOW</Text>
-                  </View>
-                  <View style={{ marginTop: 12 }}>
-                    <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>Brisk Walk</Text>
-                    <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', marginTop: 2 }}>
-                      {formatBurnTime(burnDownActivities?.walkMins ?? 0)}
-                    </Text>
-                  </View>
-                </LinearGradient>
               </ScrollView>
             </View>
             <View
