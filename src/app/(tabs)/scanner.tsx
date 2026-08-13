@@ -32,7 +32,12 @@ import AnimatedReanimated, {
   withSequence,
   Easing,
   withSpring,
+  useAnimatedProps,
+  cancelAnimation,
 } from 'react-native-reanimated';
+import Svg, { Rect, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
+
+const AnimatedRect = AnimatedReanimated.createAnimatedComponent(Rect);
 import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
 import { formatSugar } from '../../utils/sugar';
@@ -198,7 +203,68 @@ export default function ScannerScreen() {
   }, [scannerIsLive]);
 
   const laserStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: laserY.value * 230 }],
+    transform: [{ translateY: laserY.value * 212 }],
+  }));
+
+  // Liquid Energy Border Animations - Double Counter-Rotating Paths
+  const borderOffsetCW = useSharedValue(0);
+  const borderOffsetCCW = useSharedValue(0);
+  const solidOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (scannerIsLive) {
+      if (loading) {
+        cancelAnimation(borderOffsetCW);
+        cancelAnimation(borderOffsetCCW);
+        borderOffsetCW.value = withRepeat(
+          withTiming(1140, { duration: 650, easing: Easing.linear }),
+          -1,
+          false
+        );
+        borderOffsetCCW.value = withRepeat(
+          withTiming(-1140, { duration: 500, easing: Easing.linear }),
+          -1,
+          false
+        );
+        solidOpacity.value = withTiming(1, { duration: 250 });
+      } else {
+        cancelAnimation(borderOffsetCW);
+        cancelAnimation(borderOffsetCCW);
+        borderOffsetCW.value = withRepeat(
+          withTiming(1140, { duration: 4000, easing: Easing.linear }),
+          -1,
+          false
+        );
+        borderOffsetCCW.value = withRepeat(
+          withTiming(-1140, { duration: 3200, easing: Easing.linear }),
+          -1,
+          false
+        );
+        solidOpacity.value = withTiming(0, { duration: 200 });
+      }
+    } else {
+      cancelAnimation(borderOffsetCW);
+      cancelAnimation(borderOffsetCCW);
+      borderOffsetCW.value = 0;
+      borderOffsetCCW.value = 0;
+      solidOpacity.value = 0;
+    }
+  }, [scannerIsLive, loading]);
+
+  const energyCWProps = useAnimatedProps(() => ({
+    strokeDashoffset: borderOffsetCW.value,
+  }));
+
+  const energyCCWProps = useAnimatedProps(() => ({
+    strokeDashoffset: borderOffsetCCW.value,
+  }));
+
+  const solidGlowProps = useAnimatedProps(() => ({
+    opacity: solidOpacity.value * 0.45,
+  }));
+
+  const solidCoreProps = useAnimatedProps(() => ({
+    opacity: solidOpacity.value,
   }));
 
   // Torch button pulse
@@ -445,24 +511,86 @@ export default function ScannerScreen() {
                 <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.55)' }}>
                   {/* Scanning Reticle Box — landscape-wide for EAN-13 grocery barcodes */}
                   <View style={{
-                    width: 340,
-                    height: 190,
-                    borderColor: cameraReady ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.08)',
-                    borderWidth: 1,
-                    borderRadius: 24,
+                    width: 350,
+                    height: 220,
                     alignItems: 'center',
                     justifyContent: 'center',
                     backgroundColor: 'transparent',
                     position: 'relative',
                   }}>
-                    {/* Corner: Top Left */}
-                    <View style={{ borderColor: cameraReady ? colors.primary : 'rgba(255,255,255,0.3)', position: 'absolute', top: 0, left: 0, width: 32, height: 32, borderTopWidth: 5, borderLeftWidth: 5, borderTopLeftRadius: 20 }} />
-                    {/* Corner: Top Right */}
-                    <View style={{ borderColor: cameraReady ? colors.primary : 'rgba(255,255,255,0.3)', position: 'absolute', top: 0, right: 0, width: 32, height: 32, borderTopWidth: 5, borderRightWidth: 5, borderTopRightRadius: 20 }} />
-                    {/* Corner: Bottom Left */}
-                    <View style={{ borderColor: cameraReady ? colors.primary : 'rgba(255,255,255,0.3)', position: 'absolute', bottom: 0, left: 0, width: 32, height: 32, borderBottomWidth: 5, borderLeftWidth: 5, borderBottomLeftRadius: 20 }} />
-                    {/* Corner: Bottom Right */}
-                    <View style={{ borderColor: cameraReady ? colors.primary : 'rgba(255,255,255,0.3)', position: 'absolute', bottom: 0, right: 0, width: 32, height: 32, borderBottomWidth: 5, borderRightWidth: 5, borderBottomRightRadius: 20 }} />
+                    {/* Liquid Energy Border SVG */}
+                    {cameraReady && (
+                      <Svg width={358} height={228} style={{ position: 'absolute', top: -4, left: -4 }}>
+                        <Defs>
+                          <SvgLinearGradient id="energyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <Stop offset="0%" stopColor={colors.primary} stopOpacity={1} />
+                            <Stop offset="50%" stopColor="#A3E66F" stopOpacity={0.8} />
+                            <Stop offset="100%" stopColor={colors.primary} stopOpacity={1} />
+                          </SvgLinearGradient>
+                        </Defs>
+                        {/* Faint static/breathing background border path */}
+                        <Rect
+                          x={4}
+                          y={4}
+                          width={350}
+                          height={220}
+                          rx={24}
+                          fill="none"
+                          stroke="rgba(255, 255, 255, 0.12)"
+                          strokeWidth={2}
+                        />
+                        {/* Active running energy border path 1 (Clockwise - Emerald) */}
+                        <AnimatedRect
+                          x={4}
+                          y={4}
+                          width={350}
+                          height={220}
+                          rx={24}
+                          fill="none"
+                          stroke="url(#energyGrad)"
+                          strokeWidth={3}
+                          strokeDasharray="180, 960"
+                          animatedProps={energyCWProps}
+                        />
+                        {/* Active running energy border path 2 (Counter-Clockwise - Gold) */}
+                        <AnimatedRect
+                          x={4}
+                          y={4}
+                          width={350}
+                          height={220}
+                          rx={24}
+                          fill="none"
+                          stroke="#FBBF24"
+                          strokeWidth={2.5}
+                          strokeDasharray="120, 1020"
+                          animatedProps={energyCCWProps}
+                        />
+                        {/* Solid neon outer glow (fades in on detection/loading) */}
+                        <AnimatedRect
+                          x={4}
+                          y={4}
+                          width={350}
+                          height={220}
+                          rx={24}
+                          fill="none"
+                          stroke={colors.primary}
+                          strokeWidth={6}
+                          animatedProps={solidGlowProps}
+                        />
+                        {/* Solid white core focus line (fades in on detection/loading) */}
+                        <AnimatedRect
+                          x={4}
+                          y={4}
+                          width={350}
+                          height={220}
+                          rx={24}
+                          fill="none"
+                          stroke="#FFFFFF"
+                          strokeWidth={2.5}
+                          animatedProps={solidCoreProps}
+                        />
+                      </Svg>
+                    )}
 
                     {/* Animated Scanning Laser Line — only show after camera is ready */}
                     {cameraReady && (
@@ -470,9 +598,9 @@ export default function ScannerScreen() {
                         style={[
                           {
                             position: 'absolute',
-                            top: 2,
-                            left: 8,
-                            right: 8,
+                            top: 4,
+                            left: 10,
+                            right: 10,
                             height: 3,
                             backgroundColor: colors.primary,
                             shadowColor: colors.primary,
@@ -494,9 +622,27 @@ export default function ScannerScreen() {
                       </View>
                     )}
 
-                    <Text style={{ color: cameraReady ? 'rgba(255,255,255,0.65)' : 'rgba(255,255,255,0.3)', fontSize: 11, fontWeight: '700', textAlign: 'center', position: 'absolute', bottom: -44 }}>
-                      {cameraReady ? 'Hold barcode steady inside the box' : 'Please wait...'}
-                    </Text>
+                    {/* Floating Blur Badge Instructions */}
+                    <BlurView
+                      intensity={40}
+                      tint="dark"
+                      style={{
+                        position: 'absolute',
+                        bottom: -54,
+                        borderRadius: 20,
+                        paddingHorizontal: 16,
+                        paddingVertical: 8,
+                        borderWidth: 1,
+                        borderColor: 'rgba(255, 255, 255, 0.08)',
+                        overflow: 'hidden',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Text style={{ color: cameraReady ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: '800', letterSpacing: 0.2 }}>
+                        {cameraReady ? 'Hold barcode steady inside the box' : 'System Booting...'}
+                      </Text>
+                    </BlurView>
                   </View>
                 </View>
               </CameraView>
