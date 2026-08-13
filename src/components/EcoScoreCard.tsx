@@ -1,8 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { CloudRain, CheckCircle, Globe, Sparkles, Leaf } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Globe, Leaf, CheckCircle } from 'lucide-react-native';
 import { useTheme } from '../hooks/useTheme';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 
 interface EcoScoreCardProps {
   grade?: 'a' | 'b' | 'c' | 'd' | 'e' | 'unknown' | string;
@@ -17,213 +24,281 @@ export function EcoScoreCard({ grade, carbonFootprint, isOrganic, isVegan, isVeg
 
   const normalizedGrade = grade?.toLowerCase();
 
+  // Aurora pulse animation
+  const auroraScale = useSharedValue(1);
+  const auroraOpacity = useSharedValue(0.18);
+
+  useEffect(() => {
+    auroraScale.value = withRepeat(
+      withSequence(
+        withTiming(1.35, { duration: 3800, easing: Easing.inOut(Easing.sin) }),
+        withTiming(1.0,  { duration: 3800, easing: Easing.inOut(Easing.sin) }),
+      ),
+      -1,
+      false,
+    );
+    auroraOpacity.value = withRepeat(
+      withSequence(
+        withTiming(0.28, { duration: 3800, easing: Easing.inOut(Easing.sin) }),
+        withTiming(0.10, { duration: 3800, easing: Easing.inOut(Easing.sin) }),
+      ),
+      -1,
+      false,
+    );
+  }, []);
+
+  const auroraStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: auroraScale.value }],
+    opacity: auroraOpacity.value,
+  }));
+
   const getEcoColor = (g?: string) => {
     switch (g) {
-      case 'a': return '#1E8F4E';
-      case 'b': return '#2ECC71';
-      case 'c': return '#F1C40F';
-      case 'd': return '#E67E22';
-      case 'e': return '#E74C3C';
-      default: return '#10B981';
+      case 'a': return isDark ? '#34D399' : '#16A34A';
+      case 'b': return isDark ? '#86EFAC' : '#22C55E';
+      case 'c': return isDark ? '#FBBF24' : '#D97706';
+      case 'd': return isDark ? '#FB923C' : '#EA580C';
+      case 'e': return isDark ? '#F87171' : '#DC2626';
+      default:  return isDark ? '#2DD4BF' : '#0F766E';
     }
   };
 
   const ecoColor = getEcoColor(normalizedGrade);
 
   const getImpactText = (co2?: number, g?: string) => {
-    if (g === 'a' || (co2 !== undefined && co2 <= 100)) {
-      return '🍃 Ultra-Low Climate Footprint';
-    }
-    if (g === 'b' || (co2 !== undefined && co2 <= 250)) {
-      return '🌱 Low Environmental Impact';
-    }
-    if (g === 'c' || (co2 !== undefined && co2 <= 500)) {
-      return '⚖️ Moderate Ecological Footprint';
-    }
-    return '🏭 High Carbon Intensity';
+    if (g === 'a' || (co2 !== undefined && co2 <= 100)) return 'Ultra-Low Climate Footprint';
+    if (g === 'b' || (co2 !== undefined && co2 <= 250)) return 'Low Environmental Impact';
+    if (g === 'c' || (co2 !== undefined && co2 <= 500)) return 'Moderate Ecological Footprint';
+    return 'High Carbon Intensity';
   };
 
-  const borderDivider = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
-  const innerBg = isDark ? 'rgba(255, 255, 255, 0.03)' : '#FFFFFF';
+  // Thermometer bar: map CO2 to 0–100% (0g=best, 800g+=worst)
+  const thermPercent = carbonFootprint !== undefined
+    ? Math.min(100, Math.round((carbonFootprint / 800) * 100))
+    : normalizedGrade === 'a' ? 10 : normalizedGrade === 'b' ? 28 : normalizedGrade === 'c' ? 52 : normalizedGrade === 'd' ? 72 : 88;
+
+  const thermColor = thermPercent <= 30
+    ? (isDark ? '#34D399' : '#16A34A')
+    : thermPercent <= 60
+      ? (isDark ? '#FBBF24' : '#D97706')
+      : (isDark ? '#F87171' : '#DC2626');
+
+  // Card surface
+  const cardBg = isDark ? 'rgba(5, 18, 10, 0.95)' : '#FFFFFF';
+  const cardBorder = isDark ? 'rgba(45, 212, 191, 0.22)' : 'rgba(15, 118, 110, 0.15)';
+  const innerBg = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(248,250,248,0.95)';
+  const innerBorder = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
 
   return (
-    <LinearGradient
-      colors={isDark ? ['rgba(16, 185, 129, 0.09)', 'rgba(6, 182, 212, 0.03)'] : ['rgba(255, 255, 255, 0.95)', 'rgba(240, 253, 250, 0.95)']}
+    <View
       style={{
-        borderColor: isDark ? 'rgba(16, 185, 129, 0.25)' : 'rgba(16, 185, 129, 0.2)',
-        borderWidth: 1.5,
         borderRadius: 24,
-        padding: 18,
-        shadowColor: '#10B981',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: isDark ? 0.25 : 0.06,
-        shadowRadius: 16,
-        elevation: 6,
+        borderWidth: 1.5,
+        borderColor: cardBorder,
+        backgroundColor: cardBg,
+        overflow: 'hidden',
+        shadowColor: isDark ? '#2DD4BF' : '#0F766E',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: isDark ? 0.22 : 0.08,
+        shadowRadius: 20,
+        elevation: 8,
         marginBottom: 16,
-        gap: 12,
       }}
     >
-      {/* Top Header: Unique Carbon-Footprint Badge */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <View style={{
-            width: 32,
-            height: 32,
-            borderRadius: 10,
-            backgroundColor: 'rgba(16, 185, 129, 0.15)',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <Globe size={18} color="#10B981" strokeWidth={2.4} />
-          </View>
-          <View>
-            <Text style={{ color: colors.text, fontSize: 15, fontWeight: '900', letterSpacing: -0.3 }}>
-              Carbon-Footprint
-            </Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '700' }}>
-              Exclusive Planetary Audit
-            </Text>
-          </View>
-        </View>
+      {/* Aurora Radial Pulse (positioned behind content) */}
+      <Animated.View
+        style={[
+          {
+            position: 'absolute',
+            top: -60,
+            right: -60,
+            width: 220,
+            height: 220,
+            borderRadius: 110,
+            backgroundColor: isDark ? '#2DD4BF' : '#1E9E8A',
+          },
+          auroraStyle,
+        ]}
+        pointerEvents="none"
+      />
+      <Animated.View
+        style={[
+          {
+            position: 'absolute',
+            bottom: -40,
+            left: -40,
+            width: 160,
+            height: 160,
+            borderRadius: 80,
+            backgroundColor: isDark ? '#6EE041' : '#4A8A1A',
+          },
+          auroraStyle,
+        ]}
+        pointerEvents="none"
+      />
 
-        {/* Eco-Score Grade Badge */}
-        {normalizedGrade && normalizedGrade !== 'unknown' ? (
+      <View style={{ padding: 18, gap: 12 }}>
+        {/* ── Header Row ── */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <View style={{
+              width: 36,
+              height: 36,
+              borderRadius: 12,
+              backgroundColor: isDark ? 'rgba(45,212,191,0.14)' : 'rgba(15,118,110,0.10)',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 1,
+              borderColor: isDark ? 'rgba(45,212,191,0.25)' : 'rgba(15,118,110,0.18)',
+            }}>
+              <Globe size={18} color={isDark ? '#2DD4BF' : '#0F766E'} strokeWidth={2.2} />
+            </View>
+            <View>
+              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', letterSpacing: -0.4 }}>
+                Carbon Footprint
+              </Text>
+              <Text style={{ color: isDark ? '#2DD4BF' : '#0F766E', fontSize: 10, fontWeight: '800', letterSpacing: 1.2 }}>
+                EXCLUSIVE PLANETARY AUDIT
+              </Text>
+            </View>
+          </View>
+
+          {/* World's First Badge */}
           <View style={{
-            backgroundColor: `${ecoColor}18`,
-            borderColor: `${ecoColor}40`,
-            borderWidth: 1.2,
+            backgroundColor: isDark ? 'rgba(110,224,65,0.12)' : 'rgba(74,138,26,0.10)',
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(110,224,65,0.28)' : 'rgba(74,138,26,0.22)',
             paddingHorizontal: 9,
-            paddingVertical: 3.5,
+            paddingVertical: 4,
             borderRadius: 8,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 4,
           }}>
-            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: ecoColor }} />
-            <Text style={{ color: ecoColor, fontSize: 11.5, fontWeight: '900', letterSpacing: 0.3 }}>
-              GRADE {normalizedGrade.toUpperCase()}
-            </Text>
-          </View>
-        ) : null}
-      </View>
-
-      {/* 5-Step Mini Eco Bar */}
-      <View style={{ flexDirection: 'row', gap: 4, height: 6, alignItems: 'center' }}>
-        {[
-          { key: 'a', color: '#1E8F4E' },
-          { key: 'b', color: '#2ECC71' },
-          { key: 'c', color: '#F1C40F' },
-          { key: 'd', color: '#E67E22' },
-          { key: 'e', color: '#E74C3C' }
-        ].map((g) => {
-          const isActive = normalizedGrade === g.key;
-          return (
-            <View
-              key={g.key}
-              style={{
-                flex: 1,
-                height: isActive ? 6 : 4,
-                borderRadius: 3,
-                backgroundColor: g.color,
-                opacity: isActive ? 1 : 0.25,
-              }}
-            />
-          );
-        })}
-      </View>
-
-      {/* CO2 Emissions Metric Row */}
-      <View style={{
-        backgroundColor: innerBg,
-        borderRadius: 14,
-        padding: 12,
-        borderWidth: 1,
-        borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <CloudRain size={18} color={isDark ? '#34D399' : '#059669'} />
-          <View>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
-              <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900', letterSpacing: -0.4 }}>
-                {carbonFootprint !== undefined ? `${carbonFootprint.toFixed(1)} g` : 'Minimal'}
-              </Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700' }}>
-                CO₂ eq / 100g
-              </Text>
-            </View>
-            <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '600', marginTop: 1 }}>
-              {getImpactText(carbonFootprint, normalizedGrade)}
+            <Text style={{ color: isDark ? '#6EE041' : '#4A8A1A', fontSize: 9, fontWeight: '900', letterSpacing: 0.8 }}>
+              🌍 WORLD FIRST
             </Text>
           </View>
         </View>
 
+        {/* ── Eco Grade + Thermometer ── */}
         <View style={{
-          backgroundColor: 'rgba(16, 185, 129, 0.12)',
-          paddingHorizontal: 8,
-          paddingVertical: 4,
-          borderRadius: 8,
+          backgroundColor: innerBg,
+          borderRadius: 16,
+          padding: 14,
+          borderWidth: 1,
+          borderColor: innerBorder,
+          gap: 10,
         }}>
-          <Text style={{ color: '#10B981', fontSize: 10, fontWeight: '900', letterSpacing: 0.3 }}>
-            ECO AUDIT
-          </Text>
-        </View>
-      </View>
+          {/* Grade + CO2 value row */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+              <Text style={{ color: colors.text, fontSize: 28, fontWeight: '900', letterSpacing: -1 }}>
+                {carbonFootprint !== undefined ? `${carbonFootprint.toFixed(1)}` : '—'}
+              </Text>
+              <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
+                g CO₂ / 100g
+              </Text>
+            </View>
+            {normalizedGrade && normalizedGrade !== 'unknown' && (
+              <View style={{
+                width: 42,
+                height: 42,
+                borderRadius: 12,
+                backgroundColor: `${ecoColor}18`,
+                borderWidth: 2,
+                borderColor: `${ecoColor}40`,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <Text style={{ color: ecoColor, fontSize: 18, fontWeight: '900' }}>
+                  {normalizedGrade.toUpperCase()}
+                </Text>
+              </View>
+            )}
+          </View>
 
-      {/* Sustainable Badges */}
-      {(isOrganic || isVegan || isVegetarian) && (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-          {isOrganic && (
-            <View style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 4,
-              backgroundColor: 'rgba(0, 194, 136, 0.1)',
-              borderColor: 'rgba(0, 194, 136, 0.25)',
-              borderWidth: 1,
-              paddingHorizontal: 9,
-              paddingVertical: 3,
-              borderRadius: 8,
-            }}>
-              <CheckCircle size={12} color="#00C288" />
-              <Text style={{ color: '#00C288', fontSize: 10.5, fontWeight: '800' }}>Organic Certified</Text>
+          {/* Planetary Thermometer Gauge */}
+          <View style={{ gap: 6 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '700' }}>
+                Planetary Scale
+              </Text>
+              <Text style={{ color: thermColor, fontSize: 10.5, fontWeight: '900' }}>
+                {getImpactText(carbonFootprint, normalizedGrade)}
+              </Text>
             </View>
-          )}
-          {isVegan && (
+            {/* Track */}
             <View style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 4,
-              backgroundColor: 'rgba(46, 204, 113, 0.1)',
-              borderColor: 'rgba(46, 204, 113, 0.25)',
-              borderWidth: 1,
-              paddingHorizontal: 9,
-              paddingVertical: 3,
-              borderRadius: 8,
+              height: 10,
+              borderRadius: 5,
+              overflow: 'hidden',
+              backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
             }}>
-              <Leaf size={12} color="#2ECC71" />
-              <Text style={{ color: '#2ECC71', fontSize: 10.5, fontWeight: '800' }}>Vegan Friendly</Text>
+              {/* Gradient fill bar */}
+              <View style={{
+                height: '100%',
+                width: `${thermPercent}%`,
+                backgroundColor: thermColor,
+                borderRadius: 5,
+              }} />
             </View>
-          )}
-          {isVegetarian && !isVegan && (
-            <View style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 4,
-              backgroundColor: 'rgba(77, 141, 232, 0.1)',
-              borderColor: 'rgba(77, 141, 232, 0.25)',
-              borderWidth: 1,
-              paddingHorizontal: 9,
-              paddingVertical: 3,
-              borderRadius: 8,
-            }}>
-              <Text style={{ color: '#4D8DE8', fontSize: 10.5, fontWeight: '800' }}>Vegetarian</Text>
+            {/* Scale labels */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              {['A', 'B', 'C', 'D', 'E'].map((l, i) => {
+                const lColor = i === 0 ? (isDark ? '#34D399' : '#16A34A')
+                  : i === 1 ? (isDark ? '#86EFAC' : '#22C55E')
+                  : i === 2 ? (isDark ? '#FBBF24' : '#D97706')
+                  : i === 3 ? (isDark ? '#FB923C' : '#EA580C')
+                  : (isDark ? '#F87171' : '#DC2626');
+                return (
+                  <Text key={l} style={{
+                    color: normalizedGrade === l.toLowerCase() ? lColor : colors.textMuted,
+                    fontSize: 9.5,
+                    fontWeight: normalizedGrade === l.toLowerCase() ? '900' : '600',
+                  }}>{l}</Text>
+                );
+              })}
             </View>
-          )}
+          </View>
         </View>
-      )}
-    </LinearGradient>
+
+        {/* ── Sustainable Badges ── */}
+        {(isOrganic || isVegan || isVegetarian) && (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            {isOrganic && (
+              <View style={{
+                flexDirection: 'row', alignItems: 'center', gap: 4,
+                backgroundColor: isDark ? 'rgba(52,211,153,0.10)' : 'rgba(34,197,94,0.10)',
+                borderColor: isDark ? 'rgba(52,211,153,0.22)' : 'rgba(34,197,94,0.22)',
+                borderWidth: 1, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8,
+              }}>
+                <CheckCircle size={11} color={isDark ? '#34D399' : '#16A34A'} />
+                <Text style={{ color: isDark ? '#34D399' : '#16A34A', fontSize: 10.5, fontWeight: '800' }}>Organic</Text>
+              </View>
+            )}
+            {isVegan && (
+              <View style={{
+                flexDirection: 'row', alignItems: 'center', gap: 4,
+                backgroundColor: isDark ? 'rgba(45,212,191,0.10)' : 'rgba(20,184,166,0.10)',
+                borderColor: isDark ? 'rgba(45,212,191,0.22)' : 'rgba(20,184,166,0.22)',
+                borderWidth: 1, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8,
+              }}>
+                <Leaf size={11} color={isDark ? '#2DD4BF' : '#0F766E'} />
+                <Text style={{ color: isDark ? '#2DD4BF' : '#0F766E', fontSize: 10.5, fontWeight: '800' }}>Vegan</Text>
+              </View>
+            )}
+            {isVegetarian && !isVegan && (
+              <View style={{
+                flexDirection: 'row', alignItems: 'center', gap: 4,
+                backgroundColor: isDark ? 'rgba(110,224,65,0.10)' : 'rgba(74,138,26,0.10)',
+                borderColor: isDark ? 'rgba(110,224,65,0.22)' : 'rgba(74,138,26,0.22)',
+                borderWidth: 1, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8,
+              }}>
+                <Leaf size={11} color={isDark ? '#6EE041' : '#4A8A1A'} />
+                <Text style={{ color: isDark ? '#6EE041' : '#4A8A1A', fontSize: 10.5, fontWeight: '800' }}>Vegetarian</Text>
+              </View>
+            )}
+          </View>
+        )}
+      </View>
+    </View>
   );
 }

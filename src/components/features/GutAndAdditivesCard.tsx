@@ -32,20 +32,21 @@ export function GutAndAdditivesCard({
   const innerBg = isDark ? 'rgba(255, 255, 255, 0.03)' : '#FFFFFF';
 
   return (
-    <LinearGradient
-      colors={isDark ? ['rgba(168, 85, 247, 0.07)', 'rgba(99, 102, 241, 0.02)'] : ['rgba(255, 255, 255, 0.95)', 'rgba(250, 245, 255, 0.95)']}
+    <View
       style={{
-        borderColor: borderDivider,
+        backgroundColor: isDark ? 'rgba(5, 10, 6, 0.96)' : '#FFFFFF',
+        borderColor: isDark ? `${gutColor}30` : `${gutColor}20`,
         borderWidth: 1.5,
         borderRadius: 24,
         padding: 18,
-        shadowColor: '#000',
+        shadowColor: gutColor,
         shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: isDark ? 0.3 : 0.04,
-        shadowRadius: 16,
-        elevation: 5,
+        shadowOpacity: isDark ? 0.18 : 0.06,
+        shadowRadius: 18,
+        elevation: 6,
         marginBottom: 16,
         gap: 14,
+        overflow: 'hidden',
       }}
     >
       {/* ── SECTION 1: Gut Shield Pro ── */}
@@ -128,7 +129,7 @@ export function GutAndAdditivesCard({
         ) : (
           <View style={{ gap: 6 }}>
             {gutInsights.map((insight, idx) => {
-              const severityColor = insight.severity === 'high' ? '#EF4444' : insight.severity === 'medium' ? '#F59E0B' : '#3B82F6';
+              const severityColor = insight.severity === 'high' ? (isDark ? '#F87171' : '#DC2626') : insight.severity === 'medium' ? (isDark ? '#FBBF24' : '#D97706') : (isDark ? '#22D3EE' : '#0891B2');
               return (
                 <View
                   key={idx}
@@ -182,14 +183,14 @@ export function GutAndAdditivesCard({
               width: 30,
               height: 30,
               borderRadius: 10,
-              backgroundColor: isCleanAdditives ? 'rgba(34, 197, 94, 0.15)' : 'rgba(139, 92, 246, 0.15)',
+              backgroundColor: isCleanAdditives ? (isDark ? 'rgba(52,211,153,0.12)' : 'rgba(34,197,94,0.10)') : (isDark ? 'rgba(34,211,238,0.12)' : 'rgba(8,145,178,0.10)'),
               alignItems: 'center',
               justifyContent: 'center',
             }}>
               {isCleanAdditives ? (
-                <CheckCircle2 size={17} color="#22C55E" strokeWidth={2.4} />
+                <CheckCircle2 size={17} color={isDark ? '#34D399' : '#16A34A'} strokeWidth={2.4} />
               ) : (
-                <Search size={17} color="#8B5CF6" strokeWidth={2.4} />
+                <Search size={17} color={isDark ? '#22D3EE' : '#0891B2'} strokeWidth={2.4} />
               )}
             </View>
             <View>
@@ -203,14 +204,14 @@ export function GutAndAdditivesCard({
           </View>
 
           <View style={{
-            backgroundColor: isCleanAdditives ? 'rgba(34, 197, 94, 0.15)' : 'rgba(139, 92, 246, 0.15)',
-            borderColor: isCleanAdditives ? 'rgba(34, 197, 94, 0.3)' : 'rgba(139, 92, 246, 0.3)',
+            backgroundColor: isCleanAdditives ? (isDark ? 'rgba(52,211,153,0.12)' : 'rgba(34,197,94,0.10)') : (isDark ? 'rgba(34,211,238,0.12)' : 'rgba(8,145,178,0.10)'),
+            borderColor: isCleanAdditives ? (isDark ? 'rgba(52,211,153,0.28)' : 'rgba(34,197,94,0.25)') : (isDark ? 'rgba(34,211,238,0.28)' : 'rgba(8,145,178,0.25)'),
             borderWidth: 1,
             paddingHorizontal: 8,
             paddingVertical: 3,
             borderRadius: 8,
           }}>
-            <Text style={{ color: isCleanAdditives ? '#22C55E' : '#8B5CF6', fontSize: 11, fontWeight: '900', letterSpacing: 0.3 }}>
+            <Text style={{ color: isCleanAdditives ? (isDark ? '#34D399' : '#16A34A') : (isDark ? '#22D3EE' : '#0891B2'), fontSize: 11, fontWeight: '900', letterSpacing: 0.3 }}>
               {isCleanAdditives ? 'CLEAN LABEL' : `${elevatedAdditives.length + moderateAdditives.length} DETECTED`}
             </Text>
           </View>
@@ -248,15 +249,15 @@ export function GutAndAdditivesCard({
                   <View
                     key={idx}
                     style={{
-                      backgroundColor: 'rgba(239, 68, 68, 0.12)',
-                      borderColor: 'rgba(239, 68, 68, 0.25)',
+                      backgroundColor: isDark ? 'rgba(248,113,113,0.12)' : 'rgba(239,68,68,0.10)',
+                      borderColor: isDark ? 'rgba(248,113,113,0.28)' : 'rgba(239,68,68,0.22)',
                       borderWidth: 1,
                       paddingHorizontal: 8,
                       paddingVertical: 2.5,
                       borderRadius: 8,
                     }}
                   >
-                    <Text style={{ color: '#EF4444', fontSize: 10.5, fontWeight: '800' }}>
+                    <Text style={{ color: isDark ? '#F87171' : '#DC2626', fontSize: 10.5, fontWeight: '800' }}>
                       {item.displayName}
                     </Text>
                   </View>
@@ -294,6 +295,6 @@ export function GutAndAdditivesCard({
           </View>
         )}
       </View>
-    </LinearGradient>
+    </View>
   );
 }

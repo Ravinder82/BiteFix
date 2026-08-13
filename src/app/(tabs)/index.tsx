@@ -477,32 +477,38 @@ export default function HomeScreen() {
             />
 
             {/* 5. Sugar Impact Card */}
-            <LinearGradient
-              colors={isDark ? ['rgba(251, 191, 36, 0.08)', 'rgba(251, 191, 36, 0.02)'] : ['rgba(255, 255, 255, 0.95)', 'rgba(255, 251, 235, 0.95)']}
+            <View
               style={{
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+                backgroundColor: isDark ? 'rgba(5, 10, 6, 0.96)' : '#FFFFFF',
+                borderColor: isDark ? 'rgba(251,191,36,0.22)' : 'rgba(217,119,6,0.15)',
                 borderWidth: 1.5,
                 borderRadius: 24,
                 padding: 20,
-                shadowColor: '#000',
+                shadowColor: isDark ? '#FBBF24' : '#D97706',
                 shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: isDark ? 0.3 : 0.04,
-                shadowRadius: 16,
-                elevation: 5,
+                shadowOpacity: isDark ? 0.18 : 0.07,
+                shadowRadius: 18,
+                elevation: 6,
+                overflow: 'hidden',
               }}
             >
+              {/* Subtle amber aurora */}
+              <View style={{
+                position: 'absolute', top: -50, right: -50,
+                width: 160, height: 160, borderRadius: 80,
+                backgroundColor: isDark ? 'rgba(251,191,36,0.07)' : 'rgba(217,119,6,0.05)',
+              }} pointerEvents="none" />
+
               {/* Header */}
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                   <View style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 12,
-                    backgroundColor: 'rgba(251, 191, 36, 0.18)',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    width: 36, height: 36, borderRadius: 12,
+                    backgroundColor: isDark ? 'rgba(251,191,36,0.14)' : 'rgba(217,119,6,0.10)',
+                    alignItems: 'center', justifyContent: 'center',
+                    borderWidth: 1, borderColor: isDark ? 'rgba(251,191,36,0.25)' : 'rgba(217,119,6,0.18)',
                   }}>
-                    <Candy size={20} color="#F59E0B" strokeWidth={2.4} />
+                    <Candy size={18} color={isDark ? '#FBBF24' : '#D97706'} strokeWidth={2.2} />
                   </View>
                   <View>
                     <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', letterSpacing: -0.3 }}>
@@ -515,25 +521,25 @@ export default function HomeScreen() {
                 </View>
 
                 <View style={{
-                  backgroundColor: 'rgba(251, 191, 36, 0.15)',
-                  borderColor: 'rgba(251, 191, 36, 0.3)',
-                  borderWidth: 1,
-                  paddingHorizontal: 10,
+                  backgroundColor: isDark ? 'rgba(251,191,36,0.12)' : 'rgba(217,119,6,0.10)',
+                  borderColor: isDark ? 'rgba(251,191,36,0.28)' : 'rgba(217,119,6,0.22)',
+                  borderWidth: 1.5,
+                  paddingHorizontal: 11,
                   paddingVertical: 5,
                   borderRadius: 10,
                 }}>
-                  <Text style={{ color: '#F59E0B', fontSize: 13, fontWeight: '900', letterSpacing: 0.3 }}>
+                  <Text style={{ color: isDark ? '#FBBF24' : '#D97706', fontSize: 13, fontWeight: '900', letterSpacing: 0.3 }}>
                     {totalSugarTeaspoons.toFixed(1)} tsp
                   </Text>
                 </View>
               </View>
 
               {/* Main Teaspoons & Grams Row */}
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginBottom: 12 }}>
-                <Text style={{ color: colors.text, fontSize: 32, fontWeight: '900', letterSpacing: -1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginBottom: 14 }}>
+                <Text style={{ color: colors.text, fontSize: 40, fontWeight: '900', letterSpacing: -1.5 }}>
                   {totalSugarTeaspoons.toFixed(1)}
                 </Text>
-                <Text style={{ color: '#F59E0B', fontSize: 15, fontWeight: '800' }}>
+                <Text style={{ color: isDark ? '#FBBF24' : '#D97706', fontSize: 16, fontWeight: '800' }}>
                   teaspoons
                 </Text>
                 <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', marginLeft: 'auto' }}>
@@ -544,15 +550,12 @@ export default function HomeScreen() {
               {/* WHO Limit Gauge */}
               {(() => {
                 const whoPercent = activeScanResult.whoLimitServingPercent ?? Math.min(500, Math.round((totalSugarTeaspoons / 12) * 100));
-                const gaugeColor = whoPercent > 100 ? '#EF4444' : whoPercent > 50 ? '#F59E0B' : '#10B981';
+                const gaugeColor = whoPercent > 100 ? (isDark ? '#F87171' : '#DC2626') : whoPercent > 50 ? (isDark ? '#FBBF24' : '#D97706') : (isDark ? '#34D399' : '#16A34A');
                 return (
                   <View style={{
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#FFFFFF',
-                    padding: 14,
-                    borderRadius: 16,
-                    borderWidth: 1,
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
-                    gap: 8,
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(248,250,248,0.95)',
+                    padding: 14, borderRadius: 16, borderWidth: 1,
+                    borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', gap: 8,
                   }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Text style={{ color: colors.textSecondary, fontSize: 11.5, fontWeight: '700' }}>
@@ -562,20 +565,8 @@ export default function HomeScreen() {
                         {whoPercent}% of 50g max
                       </Text>
                     </View>
-
-                    <View style={{
-                      height: 8,
-                      width: '100%',
-                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
-                      borderRadius: 4,
-                      overflow: 'hidden',
-                    }}>
-                      <View style={{
-                        height: '100%',
-                        width: `${Math.min(100, whoPercent)}%`,
-                        backgroundColor: gaugeColor,
-                        borderRadius: 4,
-                      }} />
+                    <View style={{ height: 8, borderRadius: 4, overflow: 'hidden', backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}>
+                      <View style={{ height: '100%', width: `${Math.min(100, whoPercent)}%`, backgroundColor: gaugeColor, borderRadius: 4 }} />
                     </View>
                   </View>
                 );
@@ -585,59 +576,60 @@ export default function HomeScreen() {
               {activeScanResult.hasHiddenSugars && activeScanResult.hiddenSugars && activeScanResult.hiddenSugars.length > 0 && (
                 <View style={{
                   marginTop: 10,
-                  backgroundColor: 'rgba(239, 68, 68, 0.08)',
-                  borderColor: 'rgba(239, 68, 68, 0.25)',
-                  borderWidth: 1,
-                  borderRadius: 14,
-                  padding: 12,
-                  gap: 6,
+                  backgroundColor: isDark ? 'rgba(248,113,113,0.08)' : 'rgba(239,68,68,0.06)',
+                  borderColor: isDark ? 'rgba(248,113,113,0.22)' : 'rgba(239,68,68,0.18)',
+                  borderWidth: 1, borderRadius: 14, padding: 12, gap: 6,
                 }}>
-                  <Text style={{ color: '#EF4444', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  <Text style={{ color: isDark ? '#F87171' : '#DC2626', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                     ⚠️ Stealth Sugars Detected ({activeScanResult.hiddenSugarCount || activeScanResult.hiddenSugars.length})
                   </Text>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                     {activeScanResult.hiddenSugars.map((s: string, idx: number) => (
                       <View key={idx} style={{
-                        backgroundColor: 'rgba(239, 68, 68, 0.12)',
-                        paddingHorizontal: 8,
-                        paddingVertical: 3,
-                        borderRadius: 8,
+                        backgroundColor: isDark ? 'rgba(248,113,113,0.12)' : 'rgba(239,68,68,0.10)',
+                        paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8,
                       }}>
-                        <Text style={{ color: '#EF4444', fontSize: 10.5, fontWeight: '700' }}>{s}</Text>
+                        <Text style={{ color: isDark ? '#F87171' : '#DC2626', fontSize: 10.5, fontWeight: '700' }}>{s}</Text>
                       </View>
                     ))}
                   </View>
                 </View>
               )}
-            </LinearGradient>
-
+            </View>
             {/* 6. Burn Down Activity Card */}
-            <LinearGradient
-              colors={isDark ? ['rgba(249, 115, 22, 0.08)', 'rgba(249, 115, 22, 0.02)'] : ['rgba(255, 255, 255, 0.95)', 'rgba(255, 247, 237, 0.95)']}
+            <View
               style={{
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+                backgroundColor: isDark ? 'rgba(5, 10, 6, 0.96)' : '#FFFFFF',
+
+                borderColor: isDark ? 'rgba(251,146,60,0.22)' : 'rgba(234,88,12,0.15)',
                 borderWidth: 1.5,
                 borderRadius: 24,
                 padding: 20,
-                shadowColor: '#000',
+                shadowColor: isDark ? '#FB923C' : '#EA580C',
                 shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: isDark ? 0.3 : 0.04,
-                shadowRadius: 16,
-                elevation: 5,
+                shadowOpacity: isDark ? 0.18 : 0.07,
+                shadowRadius: 18,
+                elevation: 6,
+                overflow: 'hidden',
               }}
             >
+              {/* Subtle orange aurora */}
+              <View style={{
+                position: 'absolute', bottom: -50, left: -50,
+                width: 160, height: 160, borderRadius: 80,
+                backgroundColor: isDark ? 'rgba(251,146,60,0.07)' : 'rgba(234,88,12,0.05)',
+              }} pointerEvents="none" />
+
               {/* Header */}
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                   <View style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 12,
-                    backgroundColor: 'rgba(249, 115, 22, 0.18)',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    width: 36, height: 36, borderRadius: 12,
+                    backgroundColor: isDark ? 'rgba(251,146,60,0.14)' : 'rgba(234,88,12,0.10)',
+                    alignItems: 'center', justifyContent: 'center',
+                    borderWidth: 1, borderColor: isDark ? 'rgba(251,146,60,0.25)' : 'rgba(234,88,12,0.18)',
                   }}>
-                    <Flame size={20} color="#F97316" strokeWidth={2.4} />
+                    <Flame size={18} color={isDark ? '#FB923C' : '#EA580C'} strokeWidth={2.2} />
                   </View>
                   <View>
                     <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', letterSpacing: -0.3 }}>
@@ -650,14 +642,14 @@ export default function HomeScreen() {
                 </View>
 
                 <View style={{
-                  backgroundColor: 'rgba(249, 115, 22, 0.15)',
-                  borderColor: 'rgba(249, 115, 22, 0.3)',
-                  borderWidth: 1,
-                  paddingHorizontal: 10,
+                  backgroundColor: isDark ? 'rgba(251,146,60,0.12)' : 'rgba(234,88,12,0.10)',
+                  borderColor: isDark ? 'rgba(251,146,60,0.28)' : 'rgba(234,88,12,0.22)',
+                  borderWidth: 1.5,
+                  paddingHorizontal: 11,
                   paddingVertical: 5,
                   borderRadius: 10,
                 }}>
-                  <Text style={{ color: '#F97316', fontSize: 13, fontWeight: '900', letterSpacing: 0.3 }}>
+                  <Text style={{ color: isDark ? '#FB923C' : '#EA580C', fontSize: 13, fontWeight: '900', letterSpacing: 0.3 }}>
                     {totalBasketCalories} kcal
                   </Text>
                 </View>
@@ -666,48 +658,41 @@ export default function HomeScreen() {
               {/* Workout Burn Times Grid */}
               <View style={{ gap: 8 }}>
                 {[
-                  { key: 'jog', label: 'Jogging (8.5 kcal/min)', mins: burnDownActivities?.jogMins ?? 0, color: '#F97316' },
-                  { key: 'cycle', label: 'Cycling (6.5 kcal/min)', mins: burnDownActivities?.cycleMins ?? 0, color: '#06B6D4' },
-                  { key: 'swim', label: 'Swimming (7.5 kcal/min)', mins: burnDownActivities?.swimMins ?? 0, color: '#3B82F6' },
-                  { key: 'walk', label: 'Brisk Walking (4.2 kcal/min)', mins: burnDownActivities?.walkMins ?? 0, color: '#10B981' },
+                  { key: 'jog',   label: 'Jogging',       rate: '8.5 kcal/min', mins: burnDownActivities?.jogMins ?? 0,   color: isDark ? '#FB923C' : '#EA580C' },
+                  { key: 'cycle', label: 'Cycling',       rate: '6.5 kcal/min', mins: burnDownActivities?.cycleMins ?? 0, color: isDark ? '#22D3EE' : '#0891B2' },
+                  { key: 'swim',  label: 'Swimming',      rate: '7.5 kcal/min', mins: burnDownActivities?.swimMins ?? 0,  color: isDark ? '#34D399' : '#16A34A' },
+                  { key: 'walk',  label: 'Brisk Walking', rate: '4.2 kcal/min', mins: burnDownActivities?.walkMins ?? 0,  color: isDark ? '#2DD4BF' : '#0F766E' },
                 ].map((act) => (
                   <View
                     key={act.key}
                     style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#FFFFFF',
-                      paddingVertical: 10,
-                      paddingHorizontal: 14,
-                      borderRadius: 14,
-                      borderWidth: 1,
-                      borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+                      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(248,250,248,0.95)',
+                      paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14,
+                      borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
                     }}
                   >
-                    <Text style={{ color: colors.text, fontSize: 12.5, fontWeight: '700' }}>
-                      {act.label}
-                    </Text>
+                    <View>
+                      <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700' }}>{act.label}</Text>
+                      <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '600' }}>{act.rate}</Text>
+                    </View>
                     <View style={{
-                      backgroundColor: `${act.color}15`,
+                      backgroundColor: `${act.color}18`,
                       borderColor: `${act.color}30`,
                       borderWidth: 1,
-                      paddingHorizontal: 10,
-                      paddingVertical: 3,
-                      borderRadius: 8,
+                      paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8,
                     }}>
-                      <Text style={{ color: act.color, fontSize: 12, fontWeight: '900' }}>
+                      <Text style={{ color: act.color, fontSize: 13, fontWeight: '900' }}>
                         {formatBurnTime(act.mins)}
                       </Text>
                     </View>
                   </View>
                 ))}
               </View>
-            </LinearGradient>
+            </View>
           </View>
         )}
       </ScrollView>
     </SafeAreaView>
   );
 }
-

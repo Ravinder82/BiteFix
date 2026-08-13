@@ -119,17 +119,17 @@ export default function ProductHeroCardDashboard({
   const cardContent = (
     <View
       style={{
-        backgroundColor: colors.surface,
-        borderColor: borderDivider,
-        borderWidth: 1,
+        backgroundColor: isDark ? 'rgba(5, 10, 6, 0.96)' : '#FFFFFF',
+        borderColor: isDark ? `${ratingColor}28` : `${ratingColor}18`,
+        borderWidth: 1.5,
         borderRadius: 24,
         padding: 20,
         width: (width as any) || '100%',
-        shadowColor: '#000',
+        shadowColor: ratingColor,
         shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: isDark ? 0.35 : 0.04,
-        shadowRadius: 18,
-        elevation: 5,
+        shadowOpacity: isDark ? 0.22 : 0.06,
+        shadowRadius: 20,
+        elevation: 6,
         overflow: 'hidden',
       }}
     >
@@ -333,12 +333,13 @@ export default function ProductHeroCardDashboard({
 
             {/* Horizontal NOVA Score Component below Mascot */}
             {novaClass ? (
-              <View style={{
+              <View
+              style={{
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.02)',
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(248, 250, 248, 0.95)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(0, 0, 0, 0.05)',
                 borderWidth: 1,
                 borderRadius: 14,
                 paddingHorizontal: 14,

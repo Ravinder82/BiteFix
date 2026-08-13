@@ -103,6 +103,12 @@ export default function ScannerScreen() {
   const { colors, isDark } = useTheme();
   const { sugarUnit, addToCollection, collection, isPremium, freeScansUsed, incrementFreeScans, allergenFilters, dietPreference, setActiveScanResult } = useAppStore();
 
+  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+  const reticleWidth = 350;
+  const reticleHeight = 220;
+  const reticleTop = (screenHeight - reticleHeight) / 2;
+  const reticleLeft = (screenWidth - reticleWidth) / 2;
+
   // Camera permission hook from expo-camera
   const [permission, requestPermission] = useCameraPermissions();
   const isFocused = useIsFocused();
@@ -518,6 +524,19 @@ export default function ScannerScreen() {
                     backgroundColor: 'transparent',
                     position: 'relative',
                   }}>
+                    {/* Glass Bevel Outer Frame (High-end Liquid Glass highlight) */}
+                    <View style={{
+                      position: 'absolute',
+                      top: -2,
+                      left: -2,
+                      width: 354,
+                      height: 224,
+                      borderRadius: 26,
+                      borderWidth: 1.5,
+                      borderColor: 'rgba(255, 255, 255, 0.18)',
+                      backgroundColor: 'transparent',
+                    }} pointerEvents="none" />
+
                     {/* Liquid Energy Border SVG */}
                     {cameraReady && (
                       <Svg width={358} height={228} style={{ position: 'absolute', top: -4, left: -4 }}>
@@ -539,6 +558,18 @@ export default function ScannerScreen() {
                           stroke="rgba(255, 255, 255, 0.12)"
                           strokeWidth={2}
                         />
+                        {/* Background Static Glowing Aura */}
+                        <Rect
+                          x={4}
+                          y={4}
+                          width={350}
+                          height={220}
+                          rx={24}
+                          fill="none"
+                          stroke="url(#energyGrad)"
+                          strokeWidth={8}
+                          opacity={0.16}
+                        />
                         {/* Active running energy border path 1 (Clockwise - Emerald) */}
                         <AnimatedRect
                           x={4}
@@ -548,7 +579,7 @@ export default function ScannerScreen() {
                           rx={24}
                           fill="none"
                           stroke="url(#energyGrad)"
-                          strokeWidth={3}
+                          strokeWidth={3.8}
                           strokeDasharray="180, 960"
                           animatedProps={energyCWProps}
                         />
@@ -561,7 +592,7 @@ export default function ScannerScreen() {
                           rx={24}
                           fill="none"
                           stroke="#FBBF24"
-                          strokeWidth={2.5}
+                          strokeWidth={3.2}
                           strokeDasharray="120, 1020"
                           animatedProps={energyCCWProps}
                         />
@@ -574,7 +605,7 @@ export default function ScannerScreen() {
                           rx={24}
                           fill="none"
                           stroke={colors.primary}
-                          strokeWidth={6}
+                          strokeWidth={6.5}
                           animatedProps={solidGlowProps}
                         />
                         {/* Solid white core focus line (fades in on detection/loading) */}
@@ -586,7 +617,7 @@ export default function ScannerScreen() {
                           rx={24}
                           fill="none"
                           stroke="#FFFFFF"
-                          strokeWidth={2.5}
+                          strokeWidth={2.8}
                           animatedProps={solidCoreProps}
                         />
                       </Svg>
@@ -623,26 +654,28 @@ export default function ScannerScreen() {
                     )}
 
                     {/* Floating Blur Badge Instructions */}
-                    <BlurView
-                      intensity={40}
-                      tint="dark"
-                      style={{
-                        position: 'absolute',
-                        bottom: -54,
-                        borderRadius: 20,
-                        paddingHorizontal: 16,
-                        paddingVertical: 8,
-                        borderWidth: 1,
-                        borderColor: 'rgba(255, 255, 255, 0.08)',
-                        overflow: 'hidden',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Text style={{ color: cameraReady ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: '800', letterSpacing: 0.2 }}>
-                        {cameraReady ? 'Hold barcode steady inside the box' : 'System Booting...'}
-                      </Text>
-                    </BlurView>
+                    {cameraReady && (
+                      <BlurView
+                        intensity={40}
+                        tint="dark"
+                        style={{
+                          position: 'absolute',
+                          bottom: -54,
+                          borderRadius: 20,
+                          paddingHorizontal: 16,
+                          paddingVertical: 8,
+                          borderWidth: 1,
+                          borderColor: 'rgba(255, 255, 255, 0.08)',
+                          overflow: 'hidden',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 11, fontWeight: '800', letterSpacing: 0.2 }}>
+                          Hold barcode steady inside the box
+                        </Text>
+                      </BlurView>
+                    )}
                   </View>
                 </View>
               </CameraView>
