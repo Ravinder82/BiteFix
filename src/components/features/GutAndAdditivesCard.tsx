@@ -220,7 +220,7 @@ export function GutAndAdditivesCard({
       <View style={{ height: 1, backgroundColor: innerBorder }} />
 
       {/* ── SECTION 2: Additive Detective ── */}
-      <View style={{ gap: 10 }}>
+      <View style={{ gap: 12 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <View
@@ -305,82 +305,58 @@ export function GutAndAdditivesCard({
             </Text>
           </View>
         ) : (
-          <View style={{ gap: 8 }}>
-            {/* Elevated Additive Pill Tags */}
-            {elevatedAdditives.length > 0 && (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginRight: 2 }}>
-                  <AlertTriangle size={13} color={isDark ? '#F87171' : '#DC2626'} />
-                  <Text style={{ color: isDark ? '#F87171' : '#DC2626', fontSize: 10, fontWeight: '900', letterSpacing: 0.5 }}>
-                    WATCHLIST:
-                  </Text>
-                </View>
-                {elevatedAdditives.map((item, idx) => {
-                  const eCode = parseENumber(item.tag, item.displayName);
-                  return (
-                    <View
-                      key={idx}
-                      style={{
-                        backgroundColor: isDark ? 'rgba(248,113,113,0.12)' : 'rgba(239,68,68,0.08)',
-                        borderColor: isDark ? 'rgba(248,113,113,0.28)' : 'rgba(239,68,68,0.20)',
-                        borderWidth: 1,
-                        paddingHorizontal: 9,
-                        paddingVertical: 4,
-                        borderRadius: 8,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 5,
-                      }}
-                    >
-                      <Text style={{ color: isDark ? '#F87171' : '#DC2626', fontSize: 10, fontWeight: '900' }}>
-                        [{eCode}]
-                      </Text>
-                      <Text style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>
-                        {item.displayName}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-            )}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            {additives.map((item, idx) => {
+              const isElevated = item.riskLevel === 'elevated';
+              const isModerate = item.riskLevel === 'moderate';
+              const eCode = parseENumber(item.tag, item.displayName);
+              
+              // Clean displayName by removing redundant (E...) suffix
+              const cleanName = (item.displayName || '').replace(/\s*\(e\d{3,4}[a-z]?\)/i, '');
 
-            {/* Moderate Additive Pill Tags */}
-            {moderateAdditives.length > 0 && (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginRight: 2 }}>
-                  <Zap size={13} color={isDark ? '#FBBF24' : '#D97706'} />
-                  <Text style={{ color: isDark ? '#FBBF24' : '#D97706', fontSize: 10, fontWeight: '900', letterSpacing: 0.5 }}>
-                    CAUTION:
+              const tagColor = isElevated
+                ? (isDark ? '#F87171' : '#DC2626')
+                : isModerate
+                ? (isDark ? '#FBBF24' : '#D97706')
+                : (isDark ? '#34D399' : '#16A34A');
+
+              const bgStyle = isElevated
+                ? (isDark ? 'rgba(248,113,113,0.10)' : 'rgba(239,68,68,0.05)')
+                : isModerate
+                ? (isDark ? 'rgba(251,191,36,0.08)' : 'rgba(245,158,11,0.04)')
+                : (isDark ? 'rgba(52,211,153,0.08)' : 'rgba(22,163,74,0.04)');
+
+              const borderStyle = isElevated
+                ? (isDark ? 'rgba(248,113,113,0.22)' : 'rgba(239,68,68,0.14)')
+                : isModerate
+                ? (isDark ? 'rgba(251,191,36,0.18)' : 'rgba(245,158,11,0.12)')
+                : (isDark ? 'rgba(52,211,153,0.18)' : 'rgba(22,163,74,0.12)');
+
+              return (
+                <View
+                  key={idx}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: bgStyle,
+                    borderColor: borderStyle,
+                    borderWidth: 1,
+                    borderRadius: 10,
+                    paddingHorizontal: 9,
+                    paddingVertical: 5,
+                    gap: 6,
+                  }}
+                >
+                  <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: tagColor }} />
+                  <Text style={{ color: tagColor, fontSize: 10, fontWeight: '900', letterSpacing: 0.2 }}>
+                    {eCode}
+                  </Text>
+                  <Text style={{ color: colors.text, fontSize: 11, fontWeight: '700' }}>
+                    {cleanName}
                   </Text>
                 </View>
-                {moderateAdditives.map((item, idx) => {
-                  const eCode = parseENumber(item.tag, item.displayName);
-                  return (
-                    <View
-                      key={idx}
-                      style={{
-                        backgroundColor: isDark ? 'rgba(251,191,36,0.10)' : 'rgba(245,158,11,0.06)',
-                        borderColor: isDark ? 'rgba(251,191,36,0.24)' : 'rgba(245,158,11,0.18)',
-                        borderWidth: 1,
-                        paddingHorizontal: 9,
-                        paddingVertical: 4,
-                        borderRadius: 8,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 5,
-                      }}
-                    >
-                      <Text style={{ color: isDark ? '#FBBF24' : '#D97706', fontSize: 9.5, fontWeight: '900' }}>
-                        [{eCode}]
-                      </Text>
-                      <Text style={{ color: colors.text, fontSize: 11, fontWeight: '700' }}>
-                        {item.displayName}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-            )}
+              );
+            })}
           </View>
         )}
       </View>
