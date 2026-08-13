@@ -151,7 +151,7 @@ export function EcoScoreCard({ grade, carbonFootprint, isOrganic, isVegan, isVeg
               borderWidth: 1,
               borderColor: isDark ? 'rgba(45,212,191,0.25)' : 'rgba(15,118,110,0.18)',
             }}>
-              <Globe size={18} color={isDark ? '#2DD4BF' : '#0F766E'} strokeWidth={2.2} />
+              <Text style={{ fontSize: 18 }}>🌍</Text>
             </View>
             <View>
               <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', letterSpacing: -0.4 }}>
@@ -161,20 +161,6 @@ export function EcoScoreCard({ grade, carbonFootprint, isOrganic, isVegan, isVeg
                 EXCLUSIVE PLANETARY AUDIT
               </Text>
             </View>
-          </View>
-
-          {/* World's First Badge */}
-          <View style={{
-            backgroundColor: isDark ? 'rgba(110,224,65,0.12)' : 'rgba(74,138,26,0.10)',
-            borderWidth: 1,
-            borderColor: isDark ? 'rgba(110,224,65,0.28)' : 'rgba(74,138,26,0.22)',
-            paddingHorizontal: 9,
-            paddingVertical: 4,
-            borderRadius: 8,
-          }}>
-            <Text style={{ color: isDark ? '#6EE041' : '#4A8A1A', fontSize: 9, fontWeight: '900', letterSpacing: 0.8 }}>
-              🌍 WORLD FIRST
-            </Text>
           </View>
         </View>
 
