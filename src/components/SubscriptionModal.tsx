@@ -19,11 +19,6 @@ import * as Haptics from 'expo-haptics';
 import { getIapService, getLoadedIapService } from '../services/iapLoader';
 import { PRODUCT_IDS, type IAPProduct, type PlanTier } from '../services/iapProducts';
 
-const FALLBACK_PRICES: Record<PlanTier, { displayPrice: string; subtitle: string }> = {
-  monthly: { displayPrice: '$5.99', subtitle: 'Billed monthly · Cancel Anytime' },
-  annual: { displayPrice: '$17.99', subtitle: '$1.50 / month · Billed yearly · Cancel Anytime' },
-};
-
 export interface SubscriptionModalProps {
   visible: boolean;
   onClose: () => void;
@@ -50,10 +45,12 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
     products.find(p => p.productId === PRODUCT_IDS[tier === 'monthly' ? 'MONTHLY' : 'ANNUAL']);
 
   const getDisplayPrice = (tier: PlanTier): string =>
-    getProduct(tier)?.displayPrice ?? FALLBACK_PRICES[tier].displayPrice;
+    getProduct(tier)?.displayPrice ?? '—';
 
   const getSubtitle = (tier: PlanTier): string =>
-    FALLBACK_PRICES[tier].subtitle;
+    tier === 'monthly'
+      ? 'Billed monthly · Cancel Anytime'
+      : 'Billed yearly · Cancel Anytime';
 
   // ── Lifecycle ────────────────────────────────────────────
   const initialise = useCallback(async () => {
@@ -67,7 +64,7 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
 
       await service.connect();
       const fetched = await service.fetchSubscriptions();
-      
+
       if (mountedRef.current) {
         setProducts(fetched);
       }
@@ -115,10 +112,12 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
         Alert.alert(
           '✨ Premium Unlocked!',
           'Welcome to BiteFix Premium. You now have full access to Gut Shield, Sugar Detective, and all premium features.',
-          [{ text: 'Start Scanning', onPress: () => {
-            onClose();
-            router.replace('/(tabs)');
-          } }],
+          [{
+            text: 'Start Scanning', onPress: () => {
+              onClose();
+              router.replace('/(tabs)');
+            }
+          }],
         );
       } else if (!result.userCancelled) {
         Alert.alert('Purchase Unsuccessful', result.error ?? 'Something went wrong. Please try again.', [{ text: 'OK' }]);
@@ -151,10 +150,12 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
         Alert.alert(
           'Purchase Restored ✅',
           'Your BiteFix Premium subscription has been restored.',
-          [{ text: 'Continue', onPress: () => {
-            onClose();
-            router.replace('/(tabs)');
-          } }],
+          [{
+            text: 'Continue', onPress: () => {
+              onClose();
+              router.replace('/(tabs)');
+            }
+          }],
         );
       } else if (result.success) {
         Alert.alert('No Subscription Found', 'No active subscription was found for your Apple ID. If you believe this is an error, contact support.');
@@ -210,108 +211,108 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
             }}>
               {/* Grab Handle */}
               <View style={{ alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border, marginBottom: 20 }} />
-          
-          {/* Modal Header */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-            <View style={{ flex: 1, paddingRight: 16 }}>
-              <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', marginBottom: 8, letterSpacing: -0.5 }}>
-                Unlock Unlimited Scanning
-              </Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 20, fontWeight: '500' }}>
-                {hasFreeScansAvailable 
-                  ? 'Get full access to all premium features without any limits.' 
-                  : "That was your last free scan. Keep the streak going with unlimited scanning."}
-              </Text>
-            </View>
-            {showCloseButton && (
-              <TouchableOpacity 
-                onPress={onClose} 
-                style={{ padding: 8, backgroundColor: colors.surfaceRaised, borderRadius: 20 }}
-              >
-                <X size={20} color={colors.text} />
-              </TouchableOpacity>
-            )}
-          </View>
 
-          {/* Plan Selection */}
-          <View style={{ gap: 12, marginBottom: 24 }}>
-            {isFetchingProducts && (
-              <View style={{ alignItems: 'center', paddingVertical: 12 }}>
-                <ActivityIndicator size="small" color={colors.primary} />
+              {/* Modal Header */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+                <View style={{ flex: 1, paddingRight: 16 }}>
+                  <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', marginBottom: 8, letterSpacing: -0.5 }}>
+                    Unlock Unlimited Scanning
+                  </Text>
+                  <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 20, fontWeight: '500' }}>
+                    {hasFreeScansAvailable
+                      ? 'Get full access to all premium features without any limits.'
+                      : "That was your last free scan. Keep the streak going with unlimited scanning."}
+                  </Text>
+                </View>
+                {showCloseButton && (
+                  <TouchableOpacity
+                    onPress={onClose}
+                    style={{ padding: 8, backgroundColor: colors.surfaceRaised, borderRadius: 20 }}
+                  >
+                    <X size={20} color={colors.text} />
+                  </TouchableOpacity>
+                )}
               </View>
-            )}
 
-            <PlanCard
-              tier="monthly"
-              title="Monthly Pass"
-              displayPrice={getDisplayPrice('monthly')}
-              subtitle={getSubtitle('monthly')}
-              badge={null}
-              isSelected={selectedPlan === 'monthly'}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setSelectedPlan('monthly');
-              }}
-              colors={colors}
-            />
-            <PlanCard
-              tier="annual"
-              title="Yearly Pass"
-              displayPrice={getDisplayPrice('annual')}
-              subtitle={getSubtitle('annual')}
-              badge="75% DISCOUNT"
-              isSelected={selectedPlan === 'annual'}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setSelectedPlan('annual');
-              }}
-              colors={colors}
-            />
-          </View>
+              {/* Plan Selection */}
+              <View style={{ gap: 12, marginBottom: 24 }}>
+                {isFetchingProducts && (
+                  <View style={{ alignItems: 'center', paddingVertical: 12 }}>
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  </View>
+                )}
 
-          {/* Subscribe CTA */}
-          <TouchableOpacity
-            onPress={handleSubscribe}
-            disabled={isProcessing}
-            activeOpacity={0.88}
-            style={{
-              backgroundColor: isProcessing ? colors.text + 'AA' : colors.text,
-              borderRadius: 24,
-              paddingVertical: 18,
-              alignItems: 'center',
-              justifyContent: 'center',
-              shadowColor: colors.text,
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.2,
-              shadowRadius: 12,
-              elevation: 4,
-            }}
-          >
-            {isProcessing
-              ? <ActivityIndicator color={colors.background} size="small" />
-              : <Text style={{ color: colors.background, fontSize: 16, fontWeight: '800' }}>
-                Subscribe
-              </Text>
-            }
-          </TouchableOpacity>
+                <PlanCard
+                  tier="monthly"
+                  title="Monthly Pass"
+                  displayPrice={getDisplayPrice('monthly')}
+                  subtitle={getSubtitle('monthly')}
+                  badge={null}
+                  isSelected={selectedPlan === 'monthly'}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setSelectedPlan('monthly');
+                  }}
+                  colors={colors}
+                />
+                <PlanCard
+                  tier="annual"
+                  title="Yearly Pass"
+                  displayPrice={getDisplayPrice('annual')}
+                  subtitle={getSubtitle('annual')}
+                  badge={null}
+                  isSelected={selectedPlan === 'annual'}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setSelectedPlan('annual');
+                  }}
+                  colors={colors}
+                />
+              </View>
 
-          {/* Legal Links */}
-          <View style={{ marginTop: 24, gap: 10 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 10, textAlign: 'center', lineHeight: 14 }}>
-              Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period.
-            </Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 4 }}>
-              <TouchableOpacity onPress={handleRestore} disabled={isProcessing}>
-                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textDecorationLine: 'underline' }}>Restore Purchases</Text>
+              {/* Subscribe CTA */}
+              <TouchableOpacity
+                onPress={handleSubscribe}
+                disabled={isProcessing}
+                activeOpacity={0.88}
+                style={{
+                  backgroundColor: isProcessing ? colors.text + 'AA' : colors.text,
+                  borderRadius: 24,
+                  paddingVertical: 18,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  shadowColor: colors.text,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 12,
+                  elevation: 4,
+                }}
+              >
+                {isProcessing
+                  ? <ActivityIndicator color={colors.background} size="small" />
+                  : <Text style={{ color: colors.background, fontSize: 16, fontWeight: '800' }}>
+                    Subscribe
+                  </Text>
+                }
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleOpenTermsOfUse}>
-                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textDecorationLine: 'underline' }}>Terms</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleOpenPrivacyPolicy}>
-                <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textDecorationLine: 'underline' }}>Privacy</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+
+              {/* Legal Links */}
+              <View style={{ marginTop: 24, gap: 10 }}>
+                <Text style={{ color: colors.textMuted, fontSize: 10, textAlign: 'center', lineHeight: 14 }}>
+                  Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period.
+                </Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 4 }}>
+                  <TouchableOpacity onPress={handleRestore} disabled={isProcessing}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textDecorationLine: 'underline' }}>Restore Purchases</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleOpenTermsOfUse}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textDecorationLine: 'underline' }}>Terms</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleOpenPrivacyPolicy}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textDecorationLine: 'underline' }}>Privacy</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
           </TouchableWithoutFeedback>
         </View>
@@ -351,7 +352,7 @@ function PlanCard({ title, displayPrice, subtitle, badge, isSelected, onPress, c
       }}
     >
       {isSelected && <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.success, opacity: 0.05 }]} />}
-      
+
       {/* Discount badge */}
       {badge && (
         <View style={{
