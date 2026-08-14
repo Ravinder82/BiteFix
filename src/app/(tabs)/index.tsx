@@ -184,13 +184,13 @@ export default function HomeScreen() {
     }
   }, [totalSugarTeaspoons, hasActiveResult]);
 
-  const animatedSugarProps = useAnimatedProps(() => {
+  const animatedSugarProps = useAnimatedProps<any>(() => {
     return {
       text: animatedSugarVal.value.toFixed(1),
     };
   });
   
-  const animatedSmallSugarProps = useAnimatedProps(() => {
+  const animatedSmallSugarProps = useAnimatedProps<any>(() => {
     return {
       text: `${animatedSugarVal.value.toFixed(1)} tsp`,
     };
