@@ -1499,43 +1499,32 @@ function WelcomeScreen({ onNext, isShort, insets, isDark }: { onNext: () => void
       {/* Content Container */}
       <View style={{ flex: 1, justifyContent: 'space-between', alignItems: 'center', paddingTop: insets.top + 12, paddingBottom: insets.bottom + 20, paddingHorizontal: 24 }}>
         
-        {/* Top: Cutting-Edge Premium Status Capsule */}
+        {/* Top: Centralized Premium Status Capsule with Miniature Mascot */}
         <View style={{
-          flexDirection: 'row',
           alignItems: 'center',
-          backgroundColor: 'rgba(255, 255, 255, 0.92)',
+          backgroundColor: 'rgba(255, 255, 255, 0.90)',
           borderColor: 'rgba(0, 0, 0, 0.05)',
           borderWidth: 1.2,
-          borderRadius: 24,
-          paddingHorizontal: 16,
-          paddingVertical: 7,
-          gap: 10,
+          borderRadius: 22,
+          paddingHorizontal: 20,
+          paddingVertical: 9,
+          gap: 6,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.04,
-          shadowRadius: 10,
-          elevation: 3,
+          shadowOpacity: 0.03,
+          shadowRadius: 8,
+          elevation: 2,
           marginTop: 6,
         }}>
-          {/* Micro-Badge Icon */}
-          <View style={{
-            width: 22,
-            height: 22,
-            borderRadius: 11,
-            backgroundColor: '#4A602F', // Olive Green
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <Svg width="11" height="11" viewBox="0 0 24 24" fill="none">
-              <Path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-              <Path d="m9 11 2 2 4-4" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-            </Svg>
-          </View>
-          <View style={{ gap: 1 }}>
-            <Text style={{ color: '#111827', fontSize: 13, fontWeight: '900', letterSpacing: 2.2, textTransform: 'uppercase' }}>
+          {/* Miniature Mascot */}
+          <OrbMascot state="idle" size={28} theme={isDark ? 'obsidian' : 'porcelain'} showShadow={false} />
+          
+          {/* Centralized Text */}
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ color: '#111827', fontSize: 13, fontWeight: '900', letterSpacing: 3, textTransform: 'uppercase' }}>
               BiteFix
             </Text>
-            <Text style={{ color: '#6B7280', fontSize: 8, fontWeight: '800', letterSpacing: 0.8, textTransform: 'uppercase' }}>
+            <Text style={{ color: '#6B7280', fontSize: 8, fontWeight: '800', letterSpacing: 0.8, textTransform: 'uppercase', marginTop: 1 }}>
               Scan to Eat-Clean
             </Text>
           </View>
