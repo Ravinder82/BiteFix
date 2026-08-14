@@ -20,7 +20,7 @@ export type { IAPProduct, PlanTier, PurchaseResult, RestoreResult };
 // ── Configuration ──────────────────────────────────────────
 const ENTITLEMENT_ID = 'BiteFix Premium';
 const API_KEY = Platform.select({
-  ios: 'test_AWlLopqUibnRlvfJTILfSwwAPzi',
+  ios: 'appl_sbJXeudNhKfrgWpHYRhDlppXwKt',
   android: 'test_AWlLopqUibnRlvfJTILfSwwAPzi',
 });
 
@@ -40,7 +40,7 @@ class BitefixIAPService {
         if (API_KEY) {
           Purchases.configure({ apiKey: API_KEY });
         }
-        
+
         await this.checkSubscriptionStatus();
         this.connected = true;
         console.log('[RevenueCat] ✅ Successfully configured.');
@@ -75,7 +75,7 @@ class BitefixIAPService {
             rcPackage: pkg,
           };
         });
-        
+
         console.log('[RevenueCat] ✅ Offerings fetched successfully.');
         return products;
       }
@@ -88,7 +88,7 @@ class BitefixIAPService {
 
   public async purchasePlan(planOrProduct: PlanTier | IAPProduct): Promise<PurchaseResult> {
     if (!this.connected) await this.connect();
-    
+
     let targetProduct: IAPProduct | undefined;
 
     if (typeof planOrProduct === 'string') {
@@ -112,9 +112,9 @@ class BitefixIAPService {
     try {
       console.log(`[RevenueCat] Attempting purchase of ${targetProduct.productId}...`);
       const { customerInfo } = await Purchases.purchasePackage(targetProduct.rcPackage);
-      
+
       const isEntitled = typeof customerInfo.entitlements.active[ENTITLEMENT_ID] !== 'undefined';
-      
+
       if (isEntitled) {
         console.log(`[RevenueCat] ✅ Purchase successful and entitled!`);
         useAppStore.getState().setPremium(true);
@@ -140,10 +140,10 @@ class BitefixIAPService {
       console.log('[RevenueCat] Restoring purchases...');
       const customerInfo = await Purchases.restorePurchases();
       const isEntitled = typeof customerInfo.entitlements.active[ENTITLEMENT_ID] !== 'undefined';
-      
+
       console.log(`[RevenueCat] Restore complete. Is Premium: ${isEntitled}`);
       useAppStore.getState().setPremium(isEntitled);
-      
+
       return { success: true, isEntitled };
     } catch (e: any) {
       console.error('[RevenueCat] ❌ Restore failed:', e.message);
@@ -155,7 +155,7 @@ class BitefixIAPService {
     try {
       const customerInfo = await Purchases.getCustomerInfo();
       const isEntitled = typeof customerInfo?.entitlements?.active?.[ENTITLEMENT_ID] !== 'undefined';
-      
+
       useAppStore.getState().setPremium(isEntitled);
       return isEntitled;
     } catch (e: any) {
