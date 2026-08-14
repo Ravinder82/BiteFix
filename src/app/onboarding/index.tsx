@@ -1499,28 +1499,46 @@ function WelcomeScreen({ onNext, isShort, insets, isDark }: { onNext: () => void
       {/* Content Container */}
       <View style={{ flex: 1, justifyContent: 'space-between', alignItems: 'center', paddingTop: insets.top + 12, paddingBottom: insets.bottom + 20, paddingHorizontal: 24 }}>
         
-        {/* Top: Glassmorphic Brand Container */}
+        {/* Top: Cutting-Edge Premium Status Capsule */}
         <View style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.88)',
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: 'rgba(255, 255, 255, 0.92)',
           borderColor: 'rgba(0, 0, 0, 0.05)',
           borderWidth: 1.2,
-          borderRadius: 20,
-          paddingHorizontal: 24,
-          paddingVertical: 8,
-          alignItems: 'center',
+          borderRadius: 24,
+          paddingHorizontal: 16,
+          paddingVertical: 7,
+          gap: 10,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.04,
-          shadowRadius: 8,
-          elevation: 2,
+          shadowRadius: 10,
+          elevation: 3,
           marginTop: 6,
         }}>
-          <Text style={{ color: '#111827', fontSize: 17, fontWeight: '900', letterSpacing: 3, textTransform: 'uppercase' }}>
-            BiteFix
-          </Text>
-          <Text style={{ color: '#4A602F', fontSize: 9, fontWeight: '800', letterSpacing: 1.2, marginTop: 2, textTransform: 'uppercase' }}>
-            Scan to Eat-Clean
-          </Text>
+          {/* Micro-Badge Icon */}
+          <View style={{
+            width: 22,
+            height: 22,
+            borderRadius: 11,
+            backgroundColor: '#4A602F', // Olive Green
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <Svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+              <Path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+              <Path d="m9 11 2 2 4-4" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+            </Svg>
+          </View>
+          <View style={{ gap: 1 }}>
+            <Text style={{ color: '#111827', fontSize: 13, fontWeight: '900', letterSpacing: 2.2, textTransform: 'uppercase' }}>
+              BiteFix
+            </Text>
+            <Text style={{ color: '#6B7280', fontSize: 8, fontWeight: '800', letterSpacing: 0.8, textTransform: 'uppercase' }}>
+              Scan to Eat-Clean
+            </Text>
+          </View>
         </View>
 
         {/* Center Section: App Icon with Glowing Backdrop */}
