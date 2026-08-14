@@ -50,9 +50,15 @@ RevenueCat **does not set prices**. Prices live in **App Store Connect**. Revenu
 
 ### Step 3 — Verify in Your App (Sandbox)
 
-1. On a physical iPhone: Settings → App Store → Sandbox Account → sign in with your **Sandbox Test Account**
-2. Open BiteFix → go to Paywall → confirm $35.99 is shown
-3. The "50% off" badge appears only if you set an Introductory Offer in Step 1
+1. On a physical iPhone: Settings → App Store → Sandbox Account → **Sign Out**
+2. Delete the app from the device
+3. Reinstall via dev build
+4. Sign into your **Sandbox account** when prompted
+5. Open BiteFix → go to Paywall → confirm new price is shown
+
+> **Still showing old price?** Go to RevenueCat → Products → your annual product → click **"Sync"**, then repeat steps above.
+
+> **No rebuild required.** StoreKit prices are fetched live from Apple at runtime — they are NOT baked into the binary. The cache lives in the Sandbox session. Production users always see the current price instantly.
 
 ---
 
