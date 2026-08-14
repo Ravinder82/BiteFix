@@ -254,24 +254,6 @@ function FullWidthPillCTA({
   );
 }
 
-function StepRail({ current, total, C }: { current: number; total: number; C: any }) {
-  return (
-    <View style={{ flex: 1, marginRight: 12, gap: 5 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={{ color: C.textMuted, fontSize: 10, fontWeight: '900', letterSpacing: 1.2 }}>
-          PROFILE FORGE
-        </Text>
-        <Text style={{ color: C.textSub, fontSize: 10.5, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
-          {String(current + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
-        </Text>
-      </View>
-      <View style={{ height: 4, borderRadius: 2, backgroundColor: C.cardBorder, overflow: 'hidden' }}>
-        <View style={{ width: `${((current + 1) / total) * 100}%`, height: '100%', borderRadius: 2, backgroundColor: current === total - 1 ? GOLD : MINT_DARK }} />
-      </View>
-    </View>
-  );
-}
-
 function MascotShadow({ size }: { size: number }) {
   return (
     <View style={{ width: size, height: size * 0.12, alignSelf: 'center' }}>
@@ -1773,8 +1755,7 @@ export default function OnboardingScreen() {
 
           <View style={{ flex: 1, paddingTop: insets.top + 6, paddingBottom: insets.bottom + 12, paddingHorizontal: 16 }}>
             {/* Header Bar */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, marginBottom: 4 }}>
-              <StepRail current={currentSlide - 1} total={SLIDES.length - 1} C={C} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, marginBottom: 4, justifyContent: 'flex-start' }}>
               {currentSlide > 1 && currentSlide !== 11 && (
                 <TouchableOpacity
                   accessibilityRole="button"
