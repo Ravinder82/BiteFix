@@ -1504,12 +1504,12 @@ function WelcomeScreen({ onNext, isShort, insets, isDark }: { onNext: () => void
 
         {/* Center Section: App Icon with Glowing Backdrop */}
         <View style={{ width: 320, height: 320, justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
-          {/* Subtle connecting dashed vector lines */}
+          {/* Beautifully visible connecting dashed vector lines */}
           <Svg style={StyleSheet.absoluteFillObject} pointerEvents="none">
-            <Line x1="160" y1="160" x2="68" y2="40" stroke="rgba(0, 0, 0, 0.05)" strokeWidth="1.2" strokeDasharray="4,4" />
-            <Line x1="160" y1="160" x2="252" y2="40" stroke="rgba(0, 0, 0, 0.05)" strokeWidth="1.2" strokeDasharray="4,4" />
-            <Line x1="160" y1="160" x2="68" y2="280" stroke="rgba(0, 0, 0, 0.05)" strokeWidth="1.2" strokeDasharray="4,4" />
-            <Line x1="160" y1="160" x2="252" y2="280" stroke="rgba(0, 0, 0, 0.05)" strokeWidth="1.2" strokeDasharray="4,4" />
+            <Line x1="160" y1="160" x2="68" y2="40" stroke="rgba(74, 96, 47, 0.35)" strokeWidth="1.8" strokeDasharray="5,5" />
+            <Line x1="160" y1="160" x2="252" y2="40" stroke="rgba(74, 96, 47, 0.35)" strokeWidth="1.8" strokeDasharray="5,5" />
+            <Line x1="160" y1="160" x2="68" y2="280" stroke="rgba(74, 96, 47, 0.35)" strokeWidth="1.8" strokeDasharray="5,5" />
+            <Line x1="160" y1="160" x2="252" y2="280" stroke="rgba(74, 96, 47, 0.35)" strokeWidth="1.8" strokeDasharray="5,5" />
           </Svg>
 
           {/* Yellow Radial Glow behind App Icon */}
