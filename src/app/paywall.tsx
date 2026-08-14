@@ -40,7 +40,8 @@ import {
   Crown,
   ShieldAlert,
   Zap,
-  Activity
+  Activity,
+  Globe
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
@@ -90,6 +91,13 @@ const FEATURES = [
     bg: 'rgba(52,199,89,0.08)',
     title: 'Unlimited Scanning',
     subtitle: 'No limits. Scan every product in your pantry.',
+  },
+  {
+    icon: Globe,
+    color: '#4D8DE8',
+    bg: 'rgba(77,141,232,0.08)',
+    title: 'Carbon Footprint',
+    subtitle: 'CO₂ impact score for every product you scan.',
   },
 ] as const;
 

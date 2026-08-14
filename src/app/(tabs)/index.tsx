@@ -23,10 +23,20 @@ import AnimatedReanimated, {
   withSequence,
   withTiming,
   Easing,
-  FadeInDown,
   useAnimatedProps,
   withDelay,
 } from 'react-native-reanimated';
+
+// ─── One-shot mount animation — runs ONCE, never during scroll ───
+function useMountAnim(delay: number) {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(14);
+  useEffect(() => {
+    opacity.value = withDelay(delay, withTiming(1, { duration: 320, easing: Easing.out(Easing.quad) }));
+    translateY.value = withDelay(delay, withTiming(0, { duration: 320, easing: Easing.out(Easing.quad) }));
+  }, []);
+  return useAnimatedStyle(() => ({ opacity: opacity.value, transform: [{ translateY: translateY.value }] }));
+}
 
 const AnimatedTextInput = AnimatedReanimated.createAnimatedComponent(TextInput);
 
@@ -364,9 +374,12 @@ export default function HomeScreen() {
       </View>
 
       <ScrollView
-        className="flex-1"
+        style={{ flex: 1 }}
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={32}
+        removeClippedSubviews
+        overScrollMode="never"
       >
         {!hasActiveResult ? (
           /* Empty / Fresh State */
@@ -478,41 +491,74 @@ export default function HomeScreen() {
           </View>
         ) : (
           /* Active Scanned Product Dashboard Layout */
-          <View style={{ gap: 16 }}>
-            {/* 1. Hero Card (Product Info, Centered Mascot, Horizontal NOVA Bar, Compact Oil Watchlist & Alerts, Sleek Nutri-Score) */}
-            <AnimatedReanimated.View entering={FadeInDown.springify().damping(16).mass(0.9).delay(100)}>
-              <ProductHeroCardDashboard
-                scanResult={activeScanResult}
-                alerts={alerts}
-                colors={colors}
-                isDark={isDark}
-              />
-            </AnimatedReanimated.View>
+          <ScanResultCards
+            activeScanResult={activeScanResult}
+            alerts={alerts}
+            colors={colors}
+            isDark={isDark}
+            gutHealthData={gutHealthData}
+            animatedSugarProps={animatedSugarProps}
+            animatedSmallSugarProps={animatedSmallSugarProps}
+            totalSugarTeaspoons={totalSugarTeaspoons}
+            totalBasketCalories={totalBasketCalories}
+            burnDownActivities={burnDownActivities}
+            formatBurnTime={formatBurnTime}
+          />
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
 
-            {/* 2. Highlighted & Impactful Carbon-Footprint Card */}
-            <AnimatedReanimated.View entering={FadeInDown.springify().damping(16).mass(0.9).delay(200)}>
-              <EcoScoreCard
-                grade={activeScanResult.ecoscoreGrade}
-                carbonFootprint={activeScanResult.carbonFootprint100g}
-                isOrganic={activeScanResult.isOrganic}
-                isVegan={activeScanResult.isVegan}
-                isVegetarian={activeScanResult.isVegetarian}
-              />
-            </AnimatedReanimated.View>
+// ─── Extracted result cards — each gets its own mount anim ───────
+// Keeps HomeScreen render lean; animations are isolated per-card.
+function ScanResultCards({
+  activeScanResult, alerts, colors, isDark, gutHealthData,
+  animatedSugarProps, animatedSmallSugarProps,
+  totalSugarTeaspoons, totalBasketCalories, burnDownActivities, formatBurnTime,
+}: any) {
+  const card1 = useMountAnim(60);
+  const card2 = useMountAnim(140);
+  const card3 = useMountAnim(220);
+  const card4 = useMountAnim(300);
+  const card5 = useMountAnim(380);
 
-            {/* 3. Combined Gut Shield & Additive Detective Card */}
-            <AnimatedReanimated.View entering={FadeInDown.springify().damping(16).mass(0.9).delay(300)}>
-              <GutAndAdditivesCard
-                gutScore={gutHealthData.score}
-                gutInsights={gutHealthData.insights}
-                additives={activeScanResult.additives ?? []}
-                colors={colors}
-                isDark={isDark}
-              />
-            </AnimatedReanimated.View>
+  return (
+    <View style={{ gap: 16 }}>
+      {/* 1. Hero Card */}
+      <AnimatedReanimated.View style={card1}>
+        <ProductHeroCardDashboard
+          scanResult={activeScanResult}
+          alerts={alerts}
+          colors={colors}
+          isDark={isDark}
+        />
+      </AnimatedReanimated.View>
 
-            {/* 5. Sugar Impact Card */}
-            <AnimatedReanimated.View entering={FadeInDown.springify().damping(16).mass(0.9).delay(400)}>
+      {/* 2. Gut Shield + Additive Detective */}
+      <AnimatedReanimated.View style={card2}>
+        <GutAndAdditivesCard
+          gutScore={gutHealthData.score}
+          gutInsights={gutHealthData.insights}
+          additives={activeScanResult.additives ?? []}
+          colors={colors}
+          isDark={isDark}
+        />
+      </AnimatedReanimated.View>
+
+      {/* 3. Carbon Footprint */}
+      <AnimatedReanimated.View style={card3}>
+        <EcoScoreCard
+          grade={activeScanResult.ecoscoreGrade}
+          carbonFootprint={activeScanResult.carbonFootprint100g}
+          isOrganic={activeScanResult.isOrganic}
+          isVegan={activeScanResult.isVegan}
+          isVegetarian={activeScanResult.isVegetarian}
+        />
+      </AnimatedReanimated.View>
+
+      {/* 4. Sugar Impact Card */}
+      <AnimatedReanimated.View style={card4}>
             <View
               style={{
                 backgroundColor: isDark ? 'rgba(5, 10, 6, 0.96)' : '#FFFFFF',
@@ -637,8 +683,9 @@ export default function HomeScreen() {
               )}
             </View>
             </AnimatedReanimated.View>
-            {/* 6. Burn Down Activity Card */}
-            <AnimatedReanimated.View entering={FadeInDown.springify().damping(16).mass(0.9).delay(500)}>
+
+      {/* 5. Burn Down Activity Card */}
+      <AnimatedReanimated.View style={card5}>
             <View
               style={{
                 backgroundColor: isDark ? 'rgba(5, 10, 6, 0.96)' : '#FFFFFF',
@@ -733,9 +780,6 @@ export default function HomeScreen() {
               </View>
             </View>
             </AnimatedReanimated.View>
-          </View>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

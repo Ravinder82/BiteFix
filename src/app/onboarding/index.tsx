@@ -59,6 +59,8 @@ import {
   Shield,
   CheckCircle,
   Info,
+  Leaf,
+  Globe,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Svg, {
@@ -948,10 +950,11 @@ function AdditivePrioritiesCard({ cardW, C, selected, onToggle }: { cardW: numbe
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 10: Personal Allergen Defense Card (REDESIGNED)
+// STEP 10: Personal Allergen Defense Card (REDESIGNED TO LIST STYLE)
 // ─────────────────────────────────────────────────────────
 function AllergenDefenseCard({ cardW, C, selected, onToggle }: { cardW: number; C: any; selected: string[]; onToggle: (a: string) => void }) {
   const items = [
+    { id: 'None', label: 'I do not have any Allergy', icon: <Shield size={18} color="#00C288" /> },
     { id: 'Gluten', label: 'Gluten & Wheat', icon: <Layers size={18} color="#D8B65C" /> },
     { id: 'Dairy', label: 'Dairy & Milk', icon: <Droplets size={18} color="#4D8DE8" /> },
     { id: 'Soy', label: 'Soy Derivatives', icon: <Layers3 size={18} color="#00C288" /> },
@@ -974,11 +977,11 @@ function AllergenDefenseCard({ cardW, C, selected, onToggle }: { cardW: number; 
         </View>
       </StickyNoteCard>
 
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+      <View style={{ gap: 8 }}>
         {items.map((item, idx) => {
           const active = selected.includes(item.id);
           return (
-            <AnimatedListItem key={item.id} index={idx} style={{ width: '48%' }}>
+            <AnimatedListItem key={item.id} index={idx}>
               <TouchableOpacity
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -987,82 +990,21 @@ function AllergenDefenseCard({ cardW, C, selected, onToggle }: { cardW: number; 
                 activeOpacity={0.85}
                 style={[
                   {
-                    padding: 12,
+                    padding: 10,
                     borderRadius: 16,
-                    gap: 8,
-                    minHeight: 88,
-                    justifyContent: 'space-between',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
                   },
                   getClayStyle(active, C),
                 ]}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: C.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
-                    {item.icon}
-                  </View>
-                  <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: active ? C.primaryDark : C.textMuted, backgroundColor: active ? C.primaryDark : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                    {active && <Check size={12} color="#FFF" strokeWidth={3} />}
-                  </View>
+                <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: C.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
+                  {item.icon}
                 </View>
-                <Text style={{ color: C.text, fontSize: 12.5, fontWeight: '800' }}>{item.label}</Text>
-              </TouchableOpacity>
-            </AnimatedListItem>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
-
-// ─────────────────────────────────────────────────────────
-// STEP 11: Dietary Guardrails (REDESIGNED)
-// ─────────────────────────────────────────────────────────
-function DietaryGuardrailsCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; selected: 'vegan' | 'vegetarian' | 'standard'; onSelect: (d: 'vegan' | 'vegetarian' | 'standard') => void }) {
-  const options = [
-    { id: 'vegan', label: 'Vegan Guard', subtitle: 'Strictly plant-based. No animal products.', icon: <Apple size={18} color="#00C288" /> },
-    { id: 'vegetarian', label: 'Vegetarian Guard', subtitle: 'No meat, poultry, or fish.', icon: <Droplets size={18} color="#4D8DE8" /> },
-    { id: 'standard', label: 'Standard Diet', subtitle: 'No dietary restrictions.', icon: <Layers size={18} color="#D8B65C" /> },
-  ] as const;
-
-  return (
-    <View style={{ width: cardW, gap: 12 }}>
-      <StickyNoteCard tilt={1}>
-        <View style={{ gap: 4 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Apple size={18} color={MINT_DARK} />
-            <Text style={{ color: C.text, fontSize: 14, fontWeight: '900' }}>Dietary Profile</Text>
-          </View>
-          <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600' }}>
-            Set your core lifestyle. We will immediately flag hidden animal ingredients on any scan.
-          </Text>
-        </View>
-      </StickyNoteCard>
-      
-      <View style={{ gap: 8 }}>
-        {options.map((opt, idx) => {
-          const active = selected === opt.id;
-          return (
-            <AnimatedListItem key={opt.id} index={idx}>
-              <TouchableOpacity
-                onPress={() => {
-                  Haptics.selectionAsync();
-                  onSelect(opt.id);
-                }}
-                activeOpacity={0.85}
-                style={[
-                  { padding: 14, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
-                  getClayStyle(active, C)
-                ]}
-              >
-                <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: C.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
-                  {opt.icon}
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: C.text, fontSize: 14, fontWeight: '800' }}>{opt.label}</Text>
-                  <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '500' }}>{opt.subtitle}</Text>
-                </View>
-                <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: active ? C.primaryDark : C.textMuted, backgroundColor: active ? C.primaryDark : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                  {active && <Check size={14} color="#FFF" strokeWidth={3} />}
+                <Text style={{ color: C.text, fontSize: 13, fontWeight: '800', flex: 1 }}>{item.label}</Text>
+                <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: active ? C.primaryDark : C.textMuted, backgroundColor: active ? C.primaryDark : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                  {active && <Check size={12} color="#FFF" strokeWidth={3} />}
                 </View>
               </TouchableOpacity>
             </AnimatedListItem>
@@ -1074,53 +1016,136 @@ function DietaryGuardrailsCard({ cardW, C, selected, onSelect }: { cardW: number
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 12: Sustainability & Quality
+// STEP 12: Carbon Footprint & Quality (POSITIVE POINTS ONLY)
 // ─────────────────────────────────────────────────────────
-function EcoQualityFocusCard({ cardW, C, trackOrganic, setTrackOrganic, trackEco, setTrackEco }: { cardW: number; C: any; trackOrganic: boolean; setTrackOrganic: (v: boolean) => void; trackEco: boolean; setTrackEco: (v: boolean) => void }) {
-  const options = [
-    { id: 'organic', label: 'Organic Pioneer', subtitle: 'Prioritize bio & USDA organic badges.', icon: <CheckCircle size={18} color="#00C288" />, active: trackOrganic, toggle: () => setTrackOrganic(!trackOrganic) },
-    { id: 'eco', label: 'Eco-Score Tracker', subtitle: 'Track carbon footprint & eco-packaging.', icon: <CircleAlert size={18} color="#4D8DE8" />, active: trackEco, toggle: () => setTrackEco(!trackEco) },
+function EcoQualityFocusCard({ cardW, C }: { cardW: number; C: any }) {
+  const points = [
+    {
+      label: 'CO₂ Impact Tracking',
+      desc: 'Highlights food choices with low global warming and gas footprint.',
+      icon: <Globe size={18} color="#4D8DE8" />,
+      tag: 'CARBON'
+    },
+    {
+      label: 'Organic & Sourcing Check',
+      desc: 'Verify bio labels, pesticide-free, and clean quality certifications.',
+      icon: <CheckCircle size={18} color="#00C288" />,
+      tag: 'SOURCING'
+    },
+    {
+      label: 'Eco-Packaging Detection',
+      desc: 'Flags single-use plastics and prioritizes fully recyclable packaging.',
+      icon: <Layers size={18} color="#D8B65C" />,
+      tag: 'PACKAGING'
+    },
   ];
 
   return (
     <View style={{ width: cardW, gap: 12 }}>
+      {/* Carbon Footprint & Clean Source mock scanner */}
       <StickyNoteCard tilt={-1}>
-        <View style={{ gap: 4 }}>
+        <View style={{ gap: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Layers size={18} color={MINT_DARK} />
-            <Text style={{ color: C.text, fontSize: 14, fontWeight: '900' }}>Sustainability & Quality</Text>
+            <Text style={{ color: C.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+              Carbon Footprint Shield
+            </Text>
           </View>
+
           <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600' }}>
-            Elevate your basket. We'll verify organic sourcing and display full Eco-Scores on every scan.
+            Instantly measure eco emissions and clean quality indicators during your scan.
           </Text>
+
+          {/* Liquid Glass Scanner status */}
+          <View style={{
+            backgroundColor: C.isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
+            borderRadius: 16,
+            padding: 12,
+            borderWidth: 1.5,
+            borderColor: C.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0,0,0,0.04)',
+            gap: 10
+          }}>
+            {/* Product Header */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View>
+                  <Text style={{ color: C.text, fontSize: 12.5, fontWeight: '800' }}>Organic Almond Milk</Text>
+                  <Text style={{ color: C.textSub, fontSize: 9.5, fontWeight: '500' }}>USDA Certified Organic</Text>
+                </View>
+              </View>
+              <View style={{ backgroundColor: 'rgba(0, 201, 139, 0.12)', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 8 }}>
+                <Text style={{ color: MINT_DARK, fontSize: 9, fontWeight: '900' }}>A+ ECO GRADE</Text>
+              </View>
+            </View>
+
+            {/* Liquid Glass Score tube */}
+            <View style={{ gap: 4 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '700' }}>Carbon Footprint</Text>
+                <Text style={{ color: MINT_DARK, fontSize: 10, fontWeight: '900' }}>LOW CO₂ IMPACT</Text>
+              </View>
+
+              {/* Glass progress bar */}
+              <View style={{
+                height: 10,
+                borderRadius: 5,
+                backgroundColor: C.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                borderWidth: 1,
+                borderColor: C.isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.8)',
+                overflow: 'hidden',
+                position: 'relative'
+              }}>
+                <Svg width="100%" height="8" style={{ position: 'absolute' }}>
+                  <Defs>
+                    <SvgLinearGradient id="liquidGrad" x1="0" y1="0" x2="1" y2="0">
+                      <Stop offset="0%" stopColor="#00C98B" />
+                      <Stop offset="100%" stopColor="#00E5A0" />
+                    </SvgLinearGradient>
+                  </Defs>
+                  <Rect x="0" y="0" width="37%" height="8" rx="4" fill="url(#liquidGrad)" />
+                </Svg>
+                <View style={{
+                  position: 'absolute',
+                  top: 0.5,
+                  left: '2%',
+                  width: '35%',
+                  height: 3,
+                  borderRadius: 1.5,
+                  backgroundColor: 'rgba(255, 255, 255, 0.35)'
+                }} />
+              </View>
+
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 1 }}>
+                <Text style={{ color: C.textMuted, fontSize: 9, fontWeight: '600' }}>0.2kg CO₂e per liter</Text>
+                <Text style={{ color: C.textMuted, fontSize: 9, fontWeight: '600' }}>Low Carbon Choice</Text>
+              </View>
+            </View>
+          </View>
         </View>
       </StickyNoteCard>
 
+      {/* Points list */}
       <View style={{ gap: 8 }}>
-        {options.map((opt, idx) => (
-          <AnimatedListItem key={opt.id} index={idx}>
-            <TouchableOpacity
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                opt.toggle();
-              }}
-              activeOpacity={0.85}
+        {points.map((pt, idx) => (
+          <AnimatedListItem key={pt.label} index={idx}>
+            <View
               style={[
-                { padding: 14, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
-                getClayStyle(opt.active, C)
+                { padding: 12, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
+                getClayStyle(true, C)
               ]}
             >
-              <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: C.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
-                {opt.icon}
+              <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: C.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
+                {pt.icon}
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: C.text, fontSize: 14, fontWeight: '800' }}>{opt.label}</Text>
-                <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '500' }}>{opt.subtitle}</Text>
+              <View style={{ flex: 1, gap: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={{ color: C.text, fontSize: 13, fontWeight: '800' }}>{pt.label}</Text>
+                  <View style={{ backgroundColor: 'rgba(0, 0, 0, 0.05)', paddingHorizontal: 5, paddingVertical: 1.5, borderRadius: 4 }}>
+                    <Text style={{ color: C.textSub, fontSize: 8, fontWeight: '800' }}>{pt.tag}</Text>
+                  </View>
+                </View>
+                <Text style={{ color: C.textSub, fontSize: 10.5, fontWeight: '500', lineHeight: 14 }}>{pt.desc}</Text>
               </View>
-              <View style={{ width: 42, height: 24, borderRadius: 12, backgroundColor: opt.active ? C.primaryDark : C.chrome, padding: 2 }}>
-                <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#FFF', transform: [{ translateX: opt.active ? 18 : 0 }], shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } }} />
-              </View>
-            </TouchableOpacity>
+            </View>
           </AnimatedListItem>
         ))}
       </View>
@@ -1128,56 +1153,6 @@ function EcoQualityFocusCard({ cardW, C, trackOrganic, setTrackOrganic, trackEco
   );
 }
 
-// ─────────────────────────────────────────────────────────
-// STEP 13: Healthy Basket Intro Card (REDESIGNED)
-// ─────────────────────────────────────────────────────────
-function HealthyBasketIntroCard({ cardW, C }: { cardW: number; C: any }) {
-  const basketItems = [
-    { title: 'Artisan Olive Oil Chips', tag: 'NOVA 3 Clean', clean: true },
-    { title: 'Organic Almond Milk', tag: 'Zero Emulsifiers', clean: true },
-    { title: 'Grass-fed Greek Yogurt', tag: 'High Protein', clean: true },
-  ];
-
-  return (
-    <View style={{ width: cardW, gap: 12 }}>
-      <StickyNoteCard tilt={1}>
-        <View style={{ gap: 10 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <ClayBasketSvg size={36} />
-              <View>
-                <Text style={{ color: C.text, fontSize: 14, fontWeight: '900' }}>Clean Basket Blueprint</Text>
-                <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '700' }}>Automatic Safe List</Text>
-              </View>
-            </View>
-            <View style={{ backgroundColor: MINT_LIGHT, borderBottomColor: MINT_DARK, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
-              <Text style={{ color: MINT_DARK, fontSize: 10, fontWeight: '900' }}>SCORE 98/100</Text>
-            </View>
-          </View>
-
-          <View style={{ gap: 6, marginTop: 4 }}>
-            {basketItems.map((item, idx) => (
-              <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: C.surfaceRaised, padding: 8, borderRadius: 10 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <CheckCircle size={14} color={MINT_DARK} />
-                  <Text style={{ color: C.text, fontSize: 11.5, fontWeight: '800' }}>{item.title}</Text>
-                </View>
-                <Text style={{ color: C.textSub, fontSize: 9.5, fontWeight: '700' }}>{item.tag}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      </StickyNoteCard>
-
-      <View style={{ backgroundColor: C.card, borderRadius: 16, padding: 12, borderWidth: 1, borderColor: C.cardBorder, gap: 8 }}>
-        <Text style={{ color: C.text, fontSize: 12.5, fontWeight: '900' }}>Why build a clean basket?</Text>
-        <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600', lineHeight: 16 }}>
-          Save items that meet your strict standards. Your next grocery run becomes 3x faster and stress-free.
-        </Text>
-      </View>
-    </View>
-  );
-}
 
 // ─────────────────────────────────────────────────────────
 // STEP 12: Calculation Loader Card (UPDATED WITH LOGO & SLOGAN)
@@ -1244,19 +1219,66 @@ function HealthAnalysisCalculationCard({ cardW, C, onComplete }: { cardW: number
           <Text style={{ color: C.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>BiteFix</Text>
         </View>
         <Text style={{ color: MINT_DARK, fontSize: 11, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase' }}>
-          Scan . Save . EatClean
+          Scan & Eat Clean
         </Text>
       </View>
 
-      {/* Orbital Loader */}
-      <View style={{ width: 130, height: 130, justifyContent: 'center', alignItems: 'center' }}>
-        <View style={{ position: 'absolute', width: 100, height: 100, borderRadius: 50, backgroundColor: MINT, opacity: 0.2, transform: [{ scale: 1.15 }] }} />
-        <Svg width="110" height="110" viewBox="0 0 100 100">
-          <Circle cx="50" cy="50" r="44" stroke="#E8EDE9" strokeWidth="6" fill="transparent" />
-          <Circle cx="50" cy="50" r="44" stroke={MINT_DARK} strokeWidth="6" fill="transparent" strokeDasharray={276} strokeDashoffset={276 - (276 * progress) / 100} strokeLinecap="round" transform="rotate(-90 50 50)" />
+      {/* Liquid Glass Loader */}
+      <View style={{
+        width: 140,
+        height: 140,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: MINT,
+        shadowOpacity: C.isDark ? 0.3 : 0.15,
+        shadowRadius: 20,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 6
+      }}>
+        {/* Glow behind glass */}
+        <View style={{
+          position: 'absolute',
+          width: 110,
+          height: 110,
+          borderRadius: 55,
+          backgroundColor: MINT,
+          opacity: 0.15,
+          transform: [{ scale: 1.1 + (progress * 0.001) }]
+        }} />
+
+        {/* Glass sphere outline/shimmer */}
+        <View style={{
+          position: 'absolute',
+          width: 120,
+          height: 120,
+          borderRadius: 60,
+          backgroundColor: C.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.7)',
+          borderWidth: 1.5,
+          borderColor: C.isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.6)',
+        }} />
+
+        <Svg width="124" height="124" viewBox="0 0 100 100" style={{ position: 'absolute' }}>
+          {/* Base Track */}
+          <Circle cx="50" cy="50" r="44" stroke={C.isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)'} strokeWidth="5" fill="transparent" />
+          {/* Progress liquid track */}
+          <Circle cx="50" cy="50" r="44" stroke={MINT} strokeWidth="5.5" fill="transparent" strokeDasharray={276} strokeDashoffset={276 - (276 * progress) / 100} strokeLinecap="round" transform="rotate(-90 50 50)" />
         </Svg>
+
+        {/* Liquid highlight / glass reflection */}
+        <View style={{
+          position: 'absolute',
+          top: 18,
+          width: 60,
+          height: 30,
+          borderRadius: 15,
+          backgroundColor: 'rgba(255, 255, 255, 0.18)',
+          transform: [{ scaleX: 1.2 }],
+          opacity: C.isDark ? 0.4 : 0.8
+        }} />
+
+        {/* Info inside the glass bubble */}
         <View style={{ position: 'absolute', alignItems: 'center' }}>
-          <Text style={{ color: C.text, fontSize: 22, fontWeight: '900' }}>{progress}%</Text>
+          <Text style={{ color: C.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>{progress}%</Text>
           <Text style={{ color: C.textSub, fontSize: 8, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8 }}>CONFIGURING</Text>
         </View>
       </View>
@@ -1296,6 +1318,7 @@ function InstantResultSummaryCard({ cardW, C }: { cardW: number; C: any }) {
     { id: '4', title: 'Additive Alerts', desc: 'Surfaces colours & emulsifiers', icon: <AlertTriangle size={20} color="#EF4444" /> },
     { id: '5', title: 'Gut Shield', desc: 'Checks against gut watchlist', icon: <ShieldCheck size={20} color={MINT_DARK} /> },
     { id: '6', title: 'Sugar Detective', desc: 'Detects hidden sugars & sweeteners', icon: <Apple size={20} color={MINT_DARK} /> },
+    { id: '7', title: 'Carbon Footprint', desc: 'CO₂ impact per product at a glance', icon: <Globe size={20} color="#4D8DE8" /> },
   ];
 
   return (
@@ -1388,12 +1411,10 @@ const SLIDES: SlideData[] = [
   { step: 5, title: 'How your food costing you?', highlight: 'costing you?', subtitle: 'Select the everyday fatigue signals you want BiteFix to keep in view.', buttonLabel: 'Add to My Profile', mascotState: 'thinking', mascotSpeech: 'Let us keep energy slumps and fog away.', isLast: false },
   { step: 6, title: 'Choose your ingredient watchlist', highlight: 'watchlist', subtitle: 'BiteFix will surface these ingredients clearly—without hiding them in fine print.', buttonLabel: 'Activate Watchlist', mascotState: 'caution', mascotSpeech: 'Watchlist active! No sneaky additives allowed.', isLast: false },
   { step: 7, title: 'Your personal ingredient shield', highlight: 'ingredient shield', subtitle: 'Choose allergens or ingredients that should never enter your basket.', buttonLabel: 'Lock My Shield', mascotState: 'happy', mascotSpeech: 'Locking down your personal allergen shield.', isLast: false },
-  { step: 8, title: 'Dietary Guardrails', highlight: 'Guardrails', subtitle: 'Set your primary diet. We will instantly flag products that violate your lifestyle.', buttonLabel: 'Set Diet', mascotState: 'happy', mascotSpeech: 'Your scanner is your dietary gatekeeper.', isLast: false },
-  { step: 9, title: 'Clean Quality & Eco Focus', highlight: 'Eco Focus', subtitle: 'Prioritize Organic sourcing and Earth-friendly packaging in every scan.', buttonLabel: 'Activate Eco Shield', mascotState: 'happy', mascotSpeech: 'Eating clean, saving green!', isLast: false },
-  { step: 10, title: 'Keep your basket clean', highlight: 'basket clean', subtitle: 'Save products that fit your profile and make every shop faster.', buttonLabel: 'Build My Basket', mascotState: 'happy', mascotSpeech: 'Build a basket full of foods you trust! Scan Barcode and Save it in your Basket', isLast: false },
-  { step: 11, title: 'Forging your Food Shield', highlight: 'Food Shield', subtitle: 'Mapping your NOVA parameters, Gut Shield, and additive watchlist engine.', buttonLabel: 'Analyzing', mascotState: 'scanning', mascotSpeech: 'Forging your BiteFix profile...', isLast: false },
-  { step: 12, title: 'Six layers of intelligence—ready', highlight: 'ready', subtitle: 'Every barcode now returns a clear, personal decision—not another label to decode.', buttonLabel: 'View My Shield', mascotState: 'happy', mascotSpeech: 'You get deep health checks per barcode!', isLast: false },
-  { step: 13, title: 'Your scanner now knows what matters', highlight: 'what matters', subtitle: 'Your Food Shield and Healthy Basket are configured and ready to use.', buttonLabel: 'Activate BiteFix', mascotState: 'happy', mascotSpeech: 'Your Food Shield is fully armed and ready!', isLast: true },
+  { step: 8, title: 'Carbon Footprint', highlight: 'Carbon Footprint', subtitle: 'See the Environmental impact of Packaged Food', buttonLabel: 'Activate Carbon Shield', mascotState: 'happy', mascotSpeech: 'Eating clean, saving the planet!', isLast: false },
+  { step: 9, title: 'Forging your Food Shield', highlight: 'Food Shield', subtitle: 'Mapping your NOVA parameters, Gut Shield, and additive watchlist engine.', buttonLabel: 'Analyzing', mascotState: 'scanning', mascotSpeech: 'Forging your BiteFix profile...', isLast: false },
+  { step: 10, title: 'Seven layers of intelligence—ready', highlight: 'ready', subtitle: 'Every barcode now returns a clear, personal decision—not another label to decode.', buttonLabel: 'View My Shield', mascotState: 'happy', mascotSpeech: 'You get deep health checks per barcode!', isLast: false },
+  { step: 11, title: 'Your scanner now knows what matters', highlight: 'what matters', subtitle: 'Your Food Shield and Healthy Basket are configured and ready to use.', buttonLabel: 'Activate BiteFix', mascotState: 'happy', mascotSpeech: 'Your Food Shield is fully armed and ready!', isLast: true },
 ];
 
 function DotIndicator({ active, C }: { active: boolean; C: any }) {
@@ -1495,10 +1516,10 @@ function WelcomeScreen({ onNext, isShort, insets, isDark }: { onNext: () => void
         style={StyleSheet.absoluteFillObject}
         contentFit="cover"
       />
-      
+
       {/* Content Container */}
       <View style={{ flex: 1, justifyContent: 'space-between', alignItems: 'center', paddingTop: insets.top + 12, paddingBottom: insets.bottom + 20, paddingHorizontal: 24 }}>
-        
+
         {/* Top: Centralized Premium Status Capsule with Miniature Mascot */}
         <View style={{
           alignItems: 'center',
@@ -1518,7 +1539,7 @@ function WelcomeScreen({ onNext, isShort, insets, isDark }: { onNext: () => void
         }}>
           {/* Miniature Mascot */}
           <OrbMascot state="idle" size={28} theme={isDark ? 'obsidian' : 'porcelain'} showShadow={false} />
-          
+
           {/* Centralized Text */}
           <View style={{ alignItems: 'center' }}>
             <Text style={{ color: '#111827', fontSize: 13, fontWeight: '900', letterSpacing: 3, textTransform: 'uppercase' }}>
@@ -1652,8 +1673,8 @@ function WelcomeScreen({ onNext, isShort, insets, isDark }: { onNext: () => void
 // MAIN ONBOARDING SCREEN COMPONENT
 // ─────────────────────────────────────────────────────────
 export default function OnboardingScreen() {
-  const { 
-    setProfile, setOnboardingComplete, 
+  const {
+    setProfile, setOnboardingComplete,
     toggleAllergenFilter, allergenFilters, setAllergenFilters,
     dietPreference, setDietPreference,
     trackEcoScore, setTrackEcoScore,
@@ -1663,8 +1684,18 @@ export default function OnboardingScreen() {
   useEffect(() => {
     try {
       Asset.loadAsync([
+        require('../../../assets/images/welcome_bg.png'),
+        require('../../../assets/icon.png'),
         require('../../../assets/images/ultra_chips.png'),
         require('../../../assets/images/artisan_swaps.png'),
+        require('../../../assets/images/oil_paint/additive_detective_oil.png'),
+        require('../../../assets/images/oil_paint/gut_shield_pro_oil.png'),
+        require('../../../assets/images/oil_paint/nutri_score_oil.png'),
+        require('../../../assets/images/oil_paint/allergen_alert_oil.png'),
+        require('../../../assets/images/oil_paint/eco_climate_oil.png'),
+        require('../../../assets/images/oil_paint/sugar_audit_oil.png'),
+        require('../../../assets/images/oil_paint/calorie_burn_oil.png'),
+        require('../../../assets/images/oil_paint/basket_score_impasto.png'),
       ]);
     } catch (e) { }
     // Ensure allergen filters start fresh/empty
@@ -1697,7 +1728,7 @@ export default function OnboardingScreen() {
   const hasRequestedCamera = React.useRef(false);
 
   useEffect(() => {
-    if ((currentSlide === 11 || currentSlide === 12) && !hasRequestedCamera.current) {
+    if ((currentSlide === 9 || currentSlide === 10) && !hasRequestedCamera.current) {
       if (cameraPermission && !cameraPermission.granted && cameraPermission.canAskAgain) {
         hasRequestedCamera.current = true;
         requestCameraPermission().catch(() => { });
@@ -1737,7 +1768,7 @@ export default function OnboardingScreen() {
         userName: userName.trim() || 'Friend',
         userGoal: mappedGoal,
       });
-      setDietPreference(dietPreference);
+      setDietPreference('standard');
       setTrackEcoScore(true);
       setTrackOrganic(true);
       setOnboardingComplete(true);
@@ -1784,7 +1815,7 @@ export default function OnboardingScreen() {
           <View style={{ flex: 1, paddingTop: insets.top + 6, paddingBottom: insets.bottom + 12, paddingHorizontal: 16 }}>
             {/* Header Bar */}
             <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, marginBottom: 4, justifyContent: 'flex-start' }}>
-              {currentSlide > 1 && currentSlide !== 11 && (
+              {currentSlide > 1 && currentSlide !== 9 && (
                 <TouchableOpacity
                   accessibilityRole="button"
                   accessibilityLabel="Go back"
@@ -1822,8 +1853,8 @@ export default function OnboardingScreen() {
                 </Animated.View>
               </View>
 
-              {/* Dynamic Mascot Header (On screens index 9, 11, and 12) */}
-              {currentSlide !== 9 && currentSlide !== 11 && currentSlide !== 12 && (
+              {/* Dynamic Mascot Header (On screens index 8, 9, 10, 11) */}
+              {currentSlide !== 8 && currentSlide !== 9 && currentSlide !== 10 && currentSlide !== 11 && (
                 <MascotDrawingBoardHeader state={slide.mascotState} speech={slide.mascotSpeech} C={C} isDark={isDark} />
               )}
 
@@ -1836,19 +1867,36 @@ export default function OnboardingScreen() {
                   {currentSlide === 4 && <NovaWakeUpCard cardW={cardW} C={C} />}
                   {currentSlide === 5 && <SymptomAuditCard cardW={cardW} C={C} selected={symptoms} onToggle={toggleSymptom} />}
                   {currentSlide === 6 && <AdditivePrioritiesCard cardW={cardW} C={C} selected={additives} onToggle={toggleAdditive} />}
-                  {currentSlide === 7 && <AllergenDefenseCard cardW={cardW} C={C} selected={allergenFilters} onToggle={toggleAllergenFilter} />}
-                  {currentSlide === 8 && <DietaryGuardrailsCard cardW={cardW} C={C} selected={dietPreference} onSelect={setDietPreference} />}
-                  {currentSlide === 9 && <EcoQualityFocusCard cardW={cardW} C={C} trackOrganic={trackOrganic} setTrackOrganic={setTrackOrganic} trackEco={trackEcoScore} setTrackEco={setTrackEcoScore} />}
-                  {currentSlide === 10 && <HealthyBasketIntroCard cardW={cardW} C={C} />}
-                  {currentSlide === 11 && <HealthAnalysisCalculationCard cardW={cardW} C={C} onComplete={() => setCurrentSlide(12)} />}
-                  {currentSlide === 12 && <InstantResultSummaryCard cardW={cardW} C={C} />}
-                  {currentSlide === 13 && <PaywallTransitionCard cardW={cardW} C={C} allergenFilters={allergenFilters} />}
+                  {currentSlide === 7 && (
+                    <AllergenDefenseCard
+                      cardW={cardW}
+                      C={C}
+                      selected={allergenFilters}
+                      onToggle={(id) => {
+                        if (id === 'None') {
+                          setAllergenFilters(['None']);
+                        } else {
+                          let next = allergenFilters.filter(x => x !== 'None');
+                          if (next.includes(id)) {
+                            next = next.filter(x => x !== id);
+                          } else {
+                            next.push(id);
+                          }
+                          setAllergenFilters(next);
+                        }
+                      }}
+                    />
+                  )}
+                  {currentSlide === 8 && <EcoQualityFocusCard cardW={cardW} C={C} />}
+                  {currentSlide === 9 && <HealthAnalysisCalculationCard cardW={cardW} C={C} onComplete={() => setCurrentSlide(10)} />}
+                  {currentSlide === 10 && <InstantResultSummaryCard cardW={cardW} C={C} />}
+                  {currentSlide === 11 && <PaywallTransitionCard cardW={cardW} C={C} allergenFilters={allergenFilters} />}
                 </Animated.View>
               </View>
             </ScrollView>
 
             {/* Pinned Bottom Navigation & CTA */}
-            {currentSlide !== 11 && (
+            {currentSlide !== 9 && (
               <View style={{ width: '100%', gap: 10, marginTop: 6, paddingTop: 8, borderTopWidth: 1, borderTopColor: C.cardBorder }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 5 }}>
                   {SLIDES.slice(1).map((_, idx) => (

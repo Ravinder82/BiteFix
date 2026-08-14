@@ -1,6 +1,9 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { ShieldCheck, ShieldAlert, Sparkles, AlertTriangle, CheckCircle2, Zap, FlaskConical } from 'lucide-react-native';
+import {
+  ShieldCheck, ShieldAlert, Sparkles,
+  CheckCircle2, FlaskConical, Search,
+} from 'lucide-react-native';
 import { AdditiveDetail } from '../../types/app.types';
 import { evaluateGutHealth, parseENumber } from '../../utils/gutShieldEvaluator';
 
@@ -12,346 +15,301 @@ interface GutAndAdditivesCardProps {
   isDark: boolean;
 }
 
-export function GutAndAdditivesCard({
-  gutScore: propGutScore,
-  gutInsights: propGutInsights,
-  additives = [],
+// ─────────────────────────────────────────────────────────
+// CARD A — GUT SHIELD PRO
+// Personality: Organic · Biomorphic · Living green system
+// ─────────────────────────────────────────────────────────
+function GutShieldCard({
+  gutScore,
+  gutInsights,
   colors,
   isDark,
-}: GutAndAdditivesCardProps) {
-  const evaluation = evaluateGutHealth(additives);
-  const gutScore = propGutScore !== undefined ? propGutScore : evaluation.score;
-  const gutInsights = propGutInsights !== undefined && propGutInsights.length > 0 ? propGutInsights : evaluation.insights;
-
+}: {
+  gutScore: number;
+  gutInsights: any[];
+  colors: any;
+  isDark: boolean;
+}) {
   const isHealthy = gutScore >= 80;
   const isModerate = gutScore >= 50 && gutScore < 80;
 
-  const gutColor = isHealthy
+  const accent = isHealthy
     ? (isDark ? '#34D399' : '#16A34A')
     : isModerate
     ? (isDark ? '#FBBF24' : '#D97706')
     : (isDark ? '#F87171' : '#DC2626');
 
-  const elevatedAdditives = additives.filter((a) => a.riskLevel === 'elevated');
-  const moderateAdditives = additives.filter((a) => a.riskLevel === 'moderate');
-  const isCleanAdditives = elevatedAdditives.length === 0 && moderateAdditives.length === 0;
-
-  const cardBg = isDark ? 'rgba(5, 12, 7, 0.96)' : '#FFFFFF';
-  const cardBorder = isDark ? `${gutColor}25` : `${gutColor}18`;
-  const innerBg = isDark ? 'rgba(255, 255, 255, 0.035)' : 'rgba(248, 250, 248, 0.95)';
-  const innerBorder = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)';
+  const label = isHealthy ? '100% Integrity' : isModerate ? 'Moderate' : 'Disrupted';
 
   return (
     <View
       style={{
-        backgroundColor: cardBg,
-        borderColor: cardBorder,
+        backgroundColor: isDark ? 'rgba(10,14,12,0.97)' : '#FFFFFF',
+        borderColor: isDark ? `${accent}22` : `${accent}30`,
         borderWidth: 1.5,
         borderRadius: 24,
         padding: 20,
-        shadowColor: gutColor,
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: isDark ? 0.18 : 0.05,
-        shadowRadius: 18,
-        elevation: 5,
-        marginBottom: 16,
-        gap: 16,
+        marginBottom: 12,
         overflow: 'hidden',
+        shadowColor: accent,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: isDark ? 0.18 : 0.07,
+        shadowRadius: 16,
+        elevation: 4,
       }}
     >
-      {/* ── SECTION 1: Gut Shield Pro ── */}
-      <View style={{ gap: 10 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <View
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 12,
-                backgroundColor: `${gutColor}14`,
-                borderWidth: 1,
-                borderColor: `${gutColor}28`,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {isHealthy ? (
-                <ShieldCheck size={19} color={gutColor} strokeWidth={2.2} />
-              ) : (
-                <ShieldAlert size={19} color={gutColor} strokeWidth={2.2} />
-              )}
-            </View>
-            <View>
-              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', letterSpacing: -0.3 }}>
-                Gut Shield Pro
-              </Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', marginTop: 1 }}>
-                {isHealthy ? 'Microbiome Friendly' : `${gutInsights.length} Biological Disruption${gutInsights.length !== 1 ? 's' : ''}`}
-              </Text>
-            </View>
-          </View>
+      {/* Ambient blob — organic feel */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute', top: -40, right: -40,
+          width: 150, height: 150, borderRadius: 75,
+          backgroundColor: accent, opacity: isDark ? 0.05 : 0.08,
+        }}
+      />
 
-          {/* Minimal Translucent Status Badge (NO SVG Rings) */}
-          <View
-            style={{
-              backgroundColor: `${gutColor}14`,
-              borderColor: `${gutColor}30`,
-              borderWidth: 1,
-              paddingHorizontal: 10,
-              paddingVertical: 5,
-              borderRadius: 10,
-            }}
-          >
-            <Text style={{ color: gutColor, fontSize: 12, fontWeight: '900', letterSpacing: 0.2 }}>
-              {gutScore}% Integrity
+      {/* Header row */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{
+            width: 40, height: 40, borderRadius: 20,
+            backgroundColor: `${accent}18`,
+            borderWidth: 1.5, borderColor: `${accent}35`,
+            alignItems: 'center', justifyContent: 'center',
+          }}>
+            {isHealthy
+              ? <ShieldCheck size={20} color={accent} strokeWidth={2.2} />
+              : <ShieldAlert size={20} color={accent} strokeWidth={2.2} />}
+          </View>
+          <View>
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', letterSpacing: -0.3 }}>
+              Gut Shield Pro
+            </Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', marginTop: 1 }}>
+              {isHealthy ? 'Microbiome Friendly' : `${gutInsights.length} Disruptor${gutInsights.length !== 1 ? 's' : ''} Found`}
             </Text>
           </View>
         </View>
 
-        {/* Minimal 4px Integrity Progress Bar */}
-        <View
-          style={{
-            height: 4,
-            width: '100%',
-            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
-            borderRadius: 2,
-            overflow: 'hidden',
-          }}
-        >
-          <View
-            style={{
-              height: '100%',
-              width: `${Math.max(6, gutScore)}%`,
-              backgroundColor: gutColor,
-              borderRadius: 2,
-            }}
-          />
+        {/* Score capsule */}
+        <View style={{
+          backgroundColor: `${accent}15`,
+          borderColor: `${accent}35`,
+          borderWidth: 1,
+          paddingHorizontal: 11,
+          paddingVertical: 5,
+          borderRadius: 20,
+        }}>
+          <Text style={{ color: accent, fontSize: 12, fontWeight: '900' }}>{label}</Text>
         </View>
-
-        {/* Insights / Disruptors List */}
-        {gutInsights.length === 0 ? (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 8,
-              backgroundColor: innerBg,
-              paddingVertical: 8,
-              paddingHorizontal: 12,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: innerBorder,
-            }}
-          >
-            <Sparkles size={14} color={isDark ? '#34D399' : '#16A34A'} />
-            <Text style={{ color: colors.text, fontSize: 11.5, fontWeight: '700' }}>
-              No gut barrier disruptors detected • Safe for intestinal lining
-            </Text>
-          </View>
-        ) : (
-          <View style={{ gap: 6, marginTop: 2 }}>
-            {gutInsights.map((insight: any, idx: number) => {
-              const severityColor =
-                insight.severity === 'high'
-                  ? (isDark ? '#F87171' : '#DC2626')
-                  : insight.severity === 'medium'
-                  ? (isDark ? '#FBBF24' : '#D97706')
-                  : (isDark ? '#22D3EE' : '#0891B2');
-
-              return (
-                <View
-                  key={idx}
-                  style={{
-                    backgroundColor: innerBg,
-                    paddingVertical: 9,
-                    paddingHorizontal: 12,
-                    borderRadius: 12,
-                    borderWidth: 1,
-                    borderColor: innerBorder,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 8,
-                  }}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-                    <View
-                      style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: 3,
-                        backgroundColor: severityColor,
-                      }}
-                    />
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>
-                        {insight.title}
-                      </Text>
-                      {insight.additivesFound && insight.additivesFound.length > 0 && (
-                        <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '600', marginTop: 1 }} numberOfLines={1}>
-                          {insight.additivesFound.map((a: any) => a.displayName).join(', ')}
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-
-                  <View
-                    style={{
-                      backgroundColor: `${severityColor}14`,
-                      borderColor: `${severityColor}25`,
-                      borderWidth: 1,
-                      paddingHorizontal: 7,
-                      paddingVertical: 2.5,
-                      borderRadius: 6,
-                    }}
-                  >
-                    <Text style={{ color: severityColor, fontSize: 9, fontWeight: '900', textTransform: 'uppercase' }}>
-                      {insight.severity || 'Caution'}
-                    </Text>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-        )}
       </View>
 
-      {/* Thin Divider */}
-      <View style={{ height: 1, backgroundColor: innerBorder }} />
-
-      {/* ── SECTION 2: Additive Detective ── */}
-      <View style={{ gap: 12 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <View
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 12,
-                backgroundColor: isCleanAdditives
-                  ? (isDark ? 'rgba(52,211,153,0.14)' : 'rgba(22,163,74,0.10)')
-                  : (isDark ? 'rgba(34,211,238,0.14)' : 'rgba(8,145,178,0.10)'),
-                borderWidth: 1,
-                borderColor: isCleanAdditives
-                  ? (isDark ? 'rgba(52,211,153,0.25)' : 'rgba(22,163,74,0.18)')
-                  : (isDark ? 'rgba(34,211,238,0.25)' : 'rgba(8,145,178,0.18)'),
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {isCleanAdditives ? (
-                <CheckCircle2 size={19} color={isDark ? '#34D399' : '#16A34A'} strokeWidth={2.2} />
-              ) : (
-                <FlaskConical size={19} color={isDark ? '#22D3EE' : '#0891B2'} strokeWidth={2.2} />
-              )}
-            </View>
-            <View>
-              <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', letterSpacing: -0.3 }}>
-                Additive Detective
-              </Text>
-              <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', marginTop: 1 }}>
-                {additives.length} Total Additives Audited
-              </Text>
-            </View>
-          </View>
-
+      {/* Organic segmented bar — not a rectangle, but living dots */}
+      <View style={{ flexDirection: 'row', gap: 3, marginBottom: 14 }}>
+        {Array.from({ length: 20 }).map((_, i) => (
           <View
+            key={i}
             style={{
-              backgroundColor: isCleanAdditives
-                ? (isDark ? 'rgba(52,211,153,0.12)' : 'rgba(22,163,74,0.10)')
-                : (isDark ? 'rgba(34,211,238,0.12)' : 'rgba(8,145,178,0.10)'),
-              borderColor: isCleanAdditives
-                ? (isDark ? 'rgba(52,211,153,0.28)' : 'rgba(22,163,74,0.22)')
-                : (isDark ? 'rgba(34,211,238,0.28)' : 'rgba(8,145,178,0.22)'),
-              borderWidth: 1,
-              paddingHorizontal: 10,
-              paddingVertical: 5,
-              borderRadius: 10,
+              flex: 1, height: 5,
+              borderRadius: 3,
+              backgroundColor: i < Math.round(gutScore / 5)
+                ? accent
+                : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'),
             }}
-          >
-            <Text
-              style={{
-                color: isCleanAdditives
-                  ? (isDark ? '#34D399' : '#16A34A')
-                  : (isDark ? '#22D3EE' : '#0891B2'),
-                fontSize: 10.5,
-                fontWeight: '900',
-                letterSpacing: 0.4,
-              }}
-            >
-              {isCleanAdditives ? 'CLEAN LABEL' : `${elevatedAdditives.length + moderateAdditives.length} DETECTED`}
+          />
+        ))}
+      </View>
+
+      {/* Insight row */}
+      {gutInsights.length === 0 ? (
+        <View style={{
+          flexDirection: 'row', alignItems: 'center', gap: 8,
+          backgroundColor: isDark ? 'rgba(52,211,153,0.07)' : 'rgba(22,163,74,0.06)',
+          paddingVertical: 9, paddingHorizontal: 12,
+          borderRadius: 14,
+          borderWidth: 1,
+          borderColor: isDark ? 'rgba(52,211,153,0.14)' : 'rgba(22,163,74,0.12)',
+        }}>
+          <Sparkles size={14} color={accent} />
+          <Text style={{ color: colors.text, fontSize: 11.5, fontWeight: '700', flex: 1 }}>
+            No gut barrier disruptors detected · Safe for intestinal lining
+          </Text>
+        </View>
+      ) : (
+        <View style={{ gap: 7 }}>
+          {gutInsights.map((ins: any, idx: number) => {
+            const sev = ins.severity === 'high'
+              ? (isDark ? '#F87171' : '#DC2626')
+              : ins.severity === 'medium'
+              ? (isDark ? '#FBBF24' : '#D97706')
+              : (isDark ? '#22D3EE' : '#0891B2');
+            return (
+              <View key={idx} style={{
+                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.025)',
+                paddingVertical: 9, paddingHorizontal: 12,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                gap: 8,
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                  <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: sev }} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>{ins.title}</Text>
+                    {ins.additivesFound?.length > 0 && (
+                      <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '600', marginTop: 1 }} numberOfLines={1}>
+                        {ins.additivesFound.map((a: any) => a.displayName).join(', ')}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+                <View style={{
+                  backgroundColor: `${sev}14`, borderColor: `${sev}28`,
+                  borderWidth: 1, paddingHorizontal: 7, paddingVertical: 2.5, borderRadius: 6,
+                }}>
+                  <Text style={{ color: sev, fontSize: 9, fontWeight: '900', textTransform: 'uppercase' }}>
+                    {ins.severity || 'Caution'}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      )}
+    </View>
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// CARD B — ADDITIVE DETECTIVE
+// Personality: Forensic · Clinical · Lab audit report
+// Dark surface, monospace E-codes, sharp pill tags
+// ─────────────────────────────────────────────────────────
+function AdditiveDetectiveCard({
+  additives,
+  colors,
+  isDark,
+}: {
+  additives: AdditiveDetail[];
+  colors: any;
+  isDark: boolean;
+}) {
+  const elevated = additives.filter(a => a.riskLevel === 'elevated');
+  const moderate = additives.filter(a => a.riskLevel === 'moderate');
+  const isClean = elevated.length === 0 && moderate.length === 0;
+
+  const accentClean = isDark ? '#34D399' : '#16A34A';
+  const accentAlert = isDark ? '#22D3EE' : '#0891B2';
+  const accent = isClean ? accentClean : accentAlert;
+
+  return (
+    <View
+      style={{
+        backgroundColor: isDark ? 'rgba(4,10,16,0.97)' : '#F8FAFF',
+        borderColor: isDark ? `${accent}20` : `${accent}28`,
+        borderWidth: 1.5,
+        borderRadius: 20,
+        marginBottom: 12,
+        overflow: 'hidden',
+        shadowColor: accent,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: isDark ? 0.15 : 0.06,
+        shadowRadius: 16,
+        elevation: 4,
+      }}
+    >
+      {/* Top strip — lab header bar */}
+      <View style={{
+        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+        paddingHorizontal: 18, paddingVertical: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+      }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{
+            width: 38, height: 38, borderRadius: 10,
+            backgroundColor: isDark ? `${accent}14` : `${accent}10`,
+            borderWidth: 1, borderColor: `${accent}28`,
+            alignItems: 'center', justifyContent: 'center',
+          }}>
+            {isClean
+              ? <CheckCircle2 size={19} color={accent} strokeWidth={2.2} />
+              : <Search size={19} color={accent} strokeWidth={2.2} />}
+          </View>
+          <View>
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', letterSpacing: -0.3 }}>
+              Additive Detective
+            </Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', marginTop: 1 }}>
+              {additives.length} Total Additives Audited
             </Text>
           </View>
         </View>
 
-        {/* Clean Label OR Minimal Pill Tag Cloud */}
-        {isCleanAdditives ? (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 8,
-              backgroundColor: innerBg,
-              paddingVertical: 9,
-              paddingHorizontal: 12,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: innerBorder,
-            }}
-          >
-            <CheckCircle2 size={15} color={isDark ? '#34D399' : '#16A34A'} />
+        {/* Verdict tag — sharp corners, uppercase */}
+        <View style={{
+          backgroundColor: isClean
+            ? (isDark ? 'rgba(52,211,153,0.12)' : 'rgba(22,163,74,0.09)')
+            : (isDark ? 'rgba(34,211,238,0.12)' : 'rgba(8,145,178,0.09)'),
+          borderColor: isDark ? `${accent}30` : `${accent}28`,
+          borderWidth: 1,
+          paddingHorizontal: 10, paddingVertical: 4,
+          borderRadius: 7,
+        }}>
+          <Text style={{ color: accent, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 }}>
+            {isClean ? 'CLEAN LABEL' : `${elevated.length + moderate.length} DETECTED`}
+          </Text>
+        </View>
+      </View>
+
+      {/* Body */}
+      <View style={{ paddingHorizontal: 18, paddingVertical: 14 }}>
+        {isClean ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <CheckCircle2 size={14} color={accentClean} />
             <Text style={{ color: colors.text, fontSize: 11.5, fontWeight: '700', flex: 1 }}>
               No artificial dyes, chemical preservatives, or high-risk emulsifiers detected.
             </Text>
           </View>
         ) : (
+          // Pill tag cloud — each additive as a forensic chip
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {additives.map((item, idx) => {
-              const isElevated = item.riskLevel === 'elevated';
-              const isModerate = item.riskLevel === 'moderate';
-              const eCode = parseENumber(item.tag, item.displayName);
-              
-              // Clean displayName by removing redundant (E...) suffix
-              const cleanName = (item.displayName || '').replace(/\s*\(e\d{3,4}[a-z]?\)/i, '');
-
-              const tagColor = isElevated
+              const isEl = item.riskLevel === 'elevated';
+              const isMod = item.riskLevel === 'moderate';
+              const tagColor = isEl
                 ? (isDark ? '#F87171' : '#DC2626')
-                : isModerate
+                : isMod
                 ? (isDark ? '#FBBF24' : '#D97706')
                 : (isDark ? '#34D399' : '#16A34A');
-
-              const bgStyle = isElevated
-                ? (isDark ? 'rgba(248,113,113,0.10)' : 'rgba(239,68,68,0.05)')
-                : isModerate
+              const tagBg = isEl
+                ? (isDark ? 'rgba(248,113,113,0.09)' : 'rgba(239,68,68,0.05)')
+                : isMod
                 ? (isDark ? 'rgba(251,191,36,0.08)' : 'rgba(245,158,11,0.04)')
                 : (isDark ? 'rgba(52,211,153,0.08)' : 'rgba(22,163,74,0.04)');
-
-              const borderStyle = isElevated
-                ? (isDark ? 'rgba(248,113,113,0.22)' : 'rgba(239,68,68,0.14)')
-                : isModerate
-                ? (isDark ? 'rgba(251,191,36,0.18)' : 'rgba(245,158,11,0.12)')
-                : (isDark ? 'rgba(52,211,153,0.18)' : 'rgba(22,163,74,0.12)');
+              const eCode = parseENumber(item.tag, item.displayName);
+              const cleanName = (item.displayName || '').replace(/\s*\(e\d{3,4}[a-z]?\)/i, '');
 
               return (
                 <View
                   key={idx}
                   style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    backgroundColor: bgStyle,
-                    borderColor: borderStyle,
+                    flexDirection: 'row', alignItems: 'center',
+                    backgroundColor: tagBg,
+                    borderColor: isDark ? `${tagColor}28` : `${tagColor}20`,
                     borderWidth: 1,
-                    borderRadius: 10,
-                    paddingHorizontal: 9,
-                    paddingVertical: 5,
-                    gap: 6,
+                    borderRadius: 8,
+                    paddingHorizontal: 8, paddingVertical: 5,
+                    gap: 5,
                   }}
                 >
-                  <View style={{ width: 5, height: 5, borderRadius: 2.5, backgroundColor: tagColor }} />
-                  <Text style={{ color: tagColor, fontSize: 10, fontWeight: '900', letterSpacing: 0.2 }}>
+                  {/* Monospace E-code chip */}
+                  <Text style={{ color: tagColor, fontSize: 9.5, fontWeight: '900', letterSpacing: 0.3 }}>
                     {eCode}
                   </Text>
-                  <Text style={{ color: colors.text, fontSize: 11, fontWeight: '700' }}>
+                  <View style={{ width: 1, height: 10, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }} />
+                  <Text style={{ color: colors.text, fontSize: 10.5, fontWeight: '700' }}>
                     {cleanName}
                   </Text>
                 </View>
@@ -364,3 +322,27 @@ export function GutAndAdditivesCard({
   );
 }
 
+// ─────────────────────────────────────────────────────────
+// EXPORT — backward-compatible wrapper (single import)
+// ─────────────────────────────────────────────────────────
+export function GutAndAdditivesCard({
+  gutScore: propGutScore,
+  gutInsights: propGutInsights,
+  additives = [],
+  colors,
+  isDark,
+}: GutAndAdditivesCardProps) {
+  const evaluation = evaluateGutHealth(additives);
+  const gutScore = propGutScore !== undefined ? propGutScore : evaluation.score;
+  const gutInsights =
+    propGutInsights !== undefined && propGutInsights.length > 0
+      ? propGutInsights
+      : evaluation.insights;
+
+  return (
+    <View>
+      <GutShieldCard gutScore={gutScore} gutInsights={gutInsights} colors={colors} isDark={isDark} />
+      <AdditiveDetectiveCard additives={additives} colors={colors} isDark={isDark} />
+    </View>
+  );
+}

@@ -15,7 +15,6 @@ export default function Index() {
     const handleHydration = () => {
       if (mounted) {
         setHydrated(true);
-        useAppStore.getState().setOnboardingComplete(false);
       }
     };
 

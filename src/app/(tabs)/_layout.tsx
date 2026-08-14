@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Platform, Text } from 'react-native';
 import { Tabs, Redirect, usePathname, router } from 'expo-router';
 import { useTheme } from '../../hooks/useTheme';
 import { useAppStore } from '../../stores/appStore';
@@ -41,17 +41,17 @@ function FloatingScannerButton({ onPress, accessibilityState }: any) {
         }}
         activeOpacity={0.85}
         style={{
-          top: -15, // Floats above the bar
-          width: 60,
-          height: 60,
-          borderRadius: 30,
+          top: -14,
+          width: 160,
+          height: 52,
+          borderRadius: 26,
           backgroundColor: colors.primary,
           shadowColor: colors.primary,
           shadowOffset: { width: 0, height: 6 },
           shadowOpacity: isDark ? 0.45 : 0.25,
           shadowRadius: 10,
           elevation: 8,
-          borderWidth: 3.5,
+          borderWidth: 2.5,
           borderColor: colors.background,
         }}
       >
@@ -60,11 +60,16 @@ function FloatingScannerButton({ onPress, accessibilityState }: any) {
             colors={[colors.primary, '#3BB5A0']}
             style={{
               flex: 1,
+              flexDirection: 'row',
               justifyContent: 'center',
               alignItems: 'center',
+              gap: 8,
             }}
           >
-            {isScanner ? <Home size={24} color="white" /> : <ScanBarcode size={24} color="white" />}
+            {isScanner ? <Home size={22} color="white" /> : <ScanBarcode size={22} color="white" />}
+            <Text style={{ color: 'white', fontWeight: '800', fontSize: 16 }}>
+              {isScanner ? 'Home' : 'Scan'}
+            </Text>
           </LinearGradient>
         </Animated.View>
       </TouchableOpacity>
