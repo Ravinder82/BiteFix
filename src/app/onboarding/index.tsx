@@ -115,22 +115,11 @@ function DrawingBoardTape() {
 function LuxuryBackdrop({ C }: { C: any }) {
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
-      <Svg width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
-        <Defs>
-          <SvgRadialGradient id="ambientMint" cx="88%" cy="5%" rx="75%" ry="50%">
-            <Stop offset="0%" stopColor={MINT} stopOpacity={C.isDark ? 0.12 : 0.08} />
-            <Stop offset="60%" stopColor={MINT} stopOpacity="0.015" />
-            <Stop offset="100%" stopColor={MINT} stopOpacity="0" />
-          </SvgRadialGradient>
-          <SvgRadialGradient id="ambientGold" cx="5%" cy="95%" rx="60%" ry="45%">
-            <Stop offset="0%" stopColor={GOLD} stopOpacity={C.isDark ? 0.08 : 0.05} />
-            <Stop offset="100%" stopColor={GOLD} stopOpacity="0" />
-          </SvgRadialGradient>
-        </Defs>
-        <Rect width="100%" height="100%" fill={C.bg} />
-        <Rect width="100%" height="100%" fill="url(#ambientMint)" />
-        <Rect width="100%" height="100%" fill="url(#ambientGold)" />
-      </Svg>
+      <ExpoImage
+        source={require('../../../assets/images/onboarding_bg.png')}
+        style={StyleSheet.absoluteFillObject}
+        contentFit="cover"
+      />
     </View>
   );
 }
@@ -1677,20 +1666,20 @@ export default function OnboardingScreen() {
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
   const C = {
-    bg: isDark ? '#080A0C' : '#F6F7F8',
-    card: isDark ? '#14171A' : '#FFFFFF',
-    cardInner: isDark ? '#181C20' : '#FFFFFF',
-    surfaceRaised: isDark ? '#1D2226' : '#F1F3F4',
-    cardBorder: isDark ? '#2B3136' : '#E1E5E8',
-    chrome: isDark ? 'rgba(255,255,255,0.16)' : '#D9DEE2',
+    bg: '#F6F7F8',
+    card: '#FFFFFF',
+    cardInner: '#FFFFFF',
+    surfaceRaised: '#F1F3F4',
+    cardBorder: '#E1E5E8',
+    chrome: '#D9DEE2',
     primary: MINT,
-    primaryDark: isDark ? '#49E5B1' : MINT_DARK,
+    primaryDark: MINT_DARK,
     red: RED,
     gold: GOLD,
-    text: isDark ? '#F2F5F4' : DARK_TEXT,
-    textSub: isDark ? '#A3ABB2' : SUB_TEXT,
-    textMuted: isDark ? '#727B83' : '#7A848D',
-    isDark,
+    text: DARK_TEXT,
+    textSub: SUB_TEXT,
+    textMuted: '#7A848D',
+    isDark: false,
   };
 
   const [currentSlide, setCurrentSlide] = useState(0);

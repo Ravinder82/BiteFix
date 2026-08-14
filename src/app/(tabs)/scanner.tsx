@@ -40,6 +40,7 @@ import Svg, { Rect, Defs, LinearGradient as SvgLinearGradient, Stop } from 'reac
 const AnimatedRect = AnimatedReanimated.createAnimatedComponent(Rect);
 import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
+import { Colors } from '../../constants/Colors';
 import { formatSugar } from '../../utils/sugar';
 import { formatWeight, getNovaShortLabel, getNovaColor, getNovaLabel } from '../../utils/format';
 
@@ -100,7 +101,9 @@ const PRODUCT_BARCODE_TYPES = ['qr', 'upc_a', 'upc_e', 'ean13', 'ean8', 'code128
 // Main Scanner Screen
 // ─────────────────────────────────────────────────────────
 export default function ScannerScreen() {
-  const { colors, isDark } = useTheme();
+  const { colors: systemColors } = useTheme();
+  const colors = Colors.light;
+  const isDark = false;
   const { sugarUnit, addToCollection, collection, isPremium, freeScansUsed, incrementFreeScans, allergenFilters, dietPreference, setActiveScanResult } = useAppStore();
 
   const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -487,7 +490,15 @@ export default function ScannerScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: '#F6F7F8' }}>
+      {/* Background Image behind camera overlay */}
+      <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+        <Image
+          source={require('../../../assets/images/scanner_bg.png')}
+          style={{ width: '100%', height: '100%' }}
+          contentFit="cover"
+        />
+      </View>
 
       {/* ════════════════════════════════════════════════════
           1. BARCODE CAMERA MODE
