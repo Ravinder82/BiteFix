@@ -1497,10 +1497,31 @@ function WelcomeScreen({ onNext, isShort, insets, isDark }: { onNext: () => void
       />
       
       {/* Content Container */}
-      <View style={{ flex: 1, justifyContent: 'space-between', alignItems: 'center', paddingTop: insets.top + 30, paddingBottom: insets.bottom + 20, paddingHorizontal: 24 }}>
+      <View style={{ flex: 1, justifyContent: 'space-between', alignItems: 'center', paddingTop: insets.top + 12, paddingBottom: insets.bottom + 20, paddingHorizontal: 24 }}>
         
-        {/* Spacer */}
-        <View style={{ height: 10 }} />
+        {/* Top: Glassmorphic Brand Container */}
+        <View style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.88)',
+          borderColor: 'rgba(0, 0, 0, 0.05)',
+          borderWidth: 1.2,
+          borderRadius: 20,
+          paddingHorizontal: 24,
+          paddingVertical: 8,
+          alignItems: 'center',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.04,
+          shadowRadius: 8,
+          elevation: 2,
+          marginTop: 6,
+        }}>
+          <Text style={{ color: '#111827', fontSize: 17, fontWeight: '900', letterSpacing: 3, textTransform: 'uppercase' }}>
+            BiteFix
+          </Text>
+          <Text style={{ color: '#4A602F', fontSize: 9, fontWeight: '800', letterSpacing: 1.2, marginTop: 2, textTransform: 'uppercase' }}>
+            Scan to Eat-Clean
+          </Text>
+        </View>
 
         {/* Center Section: App Icon with Glowing Backdrop */}
         <View style={{ width: 320, height: 320, justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
