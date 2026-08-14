@@ -1,12 +1,11 @@
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
-import { View, ScrollView, TouchableOpacity, SafeAreaView, FlatList, Dimensions, TextInput, StyleSheet } from 'react-native';
+import { View, ScrollView, TouchableOpacity, SafeAreaView, FlatList, Dimensions, TextInput } from 'react-native';
 import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
-import { Colors } from '../../constants/Colors';
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import ProductHeroCardDashboard from '../../components/features/ProductHeroCardDashboard';
 import { GutAndAdditivesCard } from '../../components/features/GutAndAdditivesCard';
@@ -107,9 +106,7 @@ const CAROUSEL_ITEMS = [
 ];
 
 export default function HomeScreen() {
-  const { colors: systemColors } = useTheme();
-  const colors = Colors.light;
-  const isDark = false;
+  const { colors, isDark } = useTheme();
   const {
     dietPreference,
     allergenFilters,
@@ -316,15 +313,7 @@ export default function HomeScreen() {
   }, [cardWidth, cardHeight, isDark, colors]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F7F8' }}>
-      {/* Background Image */}
-      <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-        <Image
-          source={require('../../../assets/images/home_bg.png')}
-          style={{ width: '100%', height: '100%' }}
-          contentFit="cover"
-        />
-      </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Top App Header */}
       <View
         style={{
