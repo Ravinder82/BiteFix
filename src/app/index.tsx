@@ -13,7 +13,10 @@ export default function Index() {
   useEffect(() => {
     let mounted = true;
     const handleHydration = () => {
-      if (mounted) setHydrated(true);
+      if (mounted) {
+        setHydrated(true);
+        useAppStore.getState().setOnboardingComplete(false);
+      }
     };
 
     if (useAppStore.persist?.hasHydrated?.()) {
