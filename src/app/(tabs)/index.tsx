@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
-import { View, ScrollView, TouchableOpacity, SafeAreaView, FlatList, Dimensions } from 'react-native';
+import { View, ScrollView, TouchableOpacity, SafeAreaView, FlatList, Dimensions, TextInput } from 'react-native';
 import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { Image } from 'expo-image';
@@ -23,7 +23,12 @@ import AnimatedReanimated, {
   withSequence,
   withTiming,
   Easing,
+  FadeInDown,
+  useAnimatedProps,
+  withDelay,
 } from 'react-native-reanimated';
+
+const AnimatedTextInput = AnimatedReanimated.createAnimatedComponent(TextInput);
 
 const CAROUSEL_ITEMS = [
   {
@@ -166,6 +171,30 @@ export default function HomeScreen() {
 
   const totalSugarTeaspoons = hasActiveResult ? (activeScanResult.sugarTeaspoons ?? 0) : 0;
   const totalBasketCalories = hasActiveResult ? Math.round(activeScanResult.calories ?? 0) : 0;
+
+  const animatedSugarVal = useSharedValue(0);
+
+  useEffect(() => {
+    if (hasActiveResult) {
+      animatedSugarVal.value = 0;
+      animatedSugarVal.value = withDelay(
+        500, // Wait for cards to slide in
+        withTiming(totalSugarTeaspoons, { duration: 1500, easing: Easing.out(Easing.cubic) })
+      );
+    }
+  }, [totalSugarTeaspoons, hasActiveResult]);
+
+  const animatedSugarProps = useAnimatedProps(() => {
+    return {
+      text: animatedSugarVal.value.toFixed(1),
+    };
+  });
+  
+  const animatedSmallSugarProps = useAnimatedProps(() => {
+    return {
+      text: `${animatedSugarVal.value.toFixed(1)} tsp`,
+    };
+  });
 
   const burnDownActivities = useMemo(() => {
     if (!hasActiveResult || !activeScanResult.calories) return null;
@@ -451,32 +480,39 @@ export default function HomeScreen() {
           /* Active Scanned Product Dashboard Layout */
           <View style={{ gap: 16 }}>
             {/* 1. Hero Card (Product Info, Centered Mascot, Horizontal NOVA Bar, Compact Oil Watchlist & Alerts, Sleek Nutri-Score) */}
-            <ProductHeroCardDashboard
-              scanResult={activeScanResult}
-              alerts={alerts}
-              colors={colors}
-              isDark={isDark}
-            />
+            <AnimatedReanimated.View entering={FadeInDown.springify().damping(16).mass(0.9).delay(100)}>
+              <ProductHeroCardDashboard
+                scanResult={activeScanResult}
+                alerts={alerts}
+                colors={colors}
+                isDark={isDark}
+              />
+            </AnimatedReanimated.View>
 
             {/* 2. Highlighted & Impactful Carbon-Footprint Card */}
-            <EcoScoreCard
-              grade={activeScanResult.ecoscoreGrade}
-              carbonFootprint={activeScanResult.carbonFootprint100g}
-              isOrganic={activeScanResult.isOrganic}
-              isVegan={activeScanResult.isVegan}
-              isVegetarian={activeScanResult.isVegetarian}
-            />
+            <AnimatedReanimated.View entering={FadeInDown.springify().damping(16).mass(0.9).delay(200)}>
+              <EcoScoreCard
+                grade={activeScanResult.ecoscoreGrade}
+                carbonFootprint={activeScanResult.carbonFootprint100g}
+                isOrganic={activeScanResult.isOrganic}
+                isVegan={activeScanResult.isVegan}
+                isVegetarian={activeScanResult.isVegetarian}
+              />
+            </AnimatedReanimated.View>
 
             {/* 3. Combined Gut Shield & Additive Detective Card */}
-            <GutAndAdditivesCard
-              gutScore={gutHealthData.score}
-              gutInsights={gutHealthData.insights}
-              additives={activeScanResult.additives ?? []}
-              colors={colors}
-              isDark={isDark}
-            />
+            <AnimatedReanimated.View entering={FadeInDown.springify().damping(16).mass(0.9).delay(300)}>
+              <GutAndAdditivesCard
+                gutScore={gutHealthData.score}
+                gutInsights={gutHealthData.insights}
+                additives={activeScanResult.additives ?? []}
+                colors={colors}
+                isDark={isDark}
+              />
+            </AnimatedReanimated.View>
 
             {/* 5. Sugar Impact Card */}
+            <AnimatedReanimated.View entering={FadeInDown.springify().damping(16).mass(0.9).delay(400)}>
             <View
               style={{
                 backgroundColor: isDark ? 'rgba(5, 10, 6, 0.96)' : '#FFFFFF',
@@ -528,17 +564,21 @@ export default function HomeScreen() {
                   paddingVertical: 5,
                   borderRadius: 10,
                 }}>
-                  <Text style={{ color: isDark ? '#FBBF24' : '#D97706', fontSize: 13, fontWeight: '900', letterSpacing: 0.3 }}>
-                    {totalSugarTeaspoons.toFixed(1)} tsp
-                  </Text>
+                  <AnimatedTextInput
+                    animatedProps={animatedSmallSugarProps}
+                    editable={false}
+                    style={{ color: isDark ? '#FBBF24' : '#D97706', fontSize: 13, fontWeight: '900', letterSpacing: 0.3, padding: 0, margin: 0 }}
+                  />
                 </View>
               </View>
 
               {/* Main Teaspoons & Grams Row */}
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginBottom: 14 }}>
-                <Text style={{ color: colors.text, fontSize: 40, fontWeight: '900', letterSpacing: -1.5 }}>
-                  {totalSugarTeaspoons.toFixed(1)}
-                </Text>
+                <AnimatedTextInput
+                  animatedProps={animatedSugarProps}
+                  editable={false}
+                  style={{ color: colors.text, fontSize: 40, fontWeight: '900', letterSpacing: -1.5, padding: 0, margin: 0 }}
+                />
                 <Text style={{ color: isDark ? '#FBBF24' : '#D97706', fontSize: 16, fontWeight: '800' }}>
                   teaspoons
                 </Text>
@@ -596,7 +636,9 @@ export default function HomeScreen() {
                 </View>
               )}
             </View>
+            </AnimatedReanimated.View>
             {/* 6. Burn Down Activity Card */}
+            <AnimatedReanimated.View entering={FadeInDown.springify().damping(16).mass(0.9).delay(500)}>
             <View
               style={{
                 backgroundColor: isDark ? 'rgba(5, 10, 6, 0.96)' : '#FFFFFF',
@@ -690,6 +732,7 @@ export default function HomeScreen() {
                 ))}
               </View>
             </View>
+            </AnimatedReanimated.View>
           </View>
         )}
       </ScrollView>

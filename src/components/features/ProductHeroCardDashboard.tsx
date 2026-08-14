@@ -9,6 +9,17 @@ import { getNovaColor, getNovaShortLabel, getBiteFixScoreColor } from '../../uti
 import { AdditiveDetail } from '../../types/app.types';
 import { NutriScoreTrafficLight } from './NutriScoreTrafficLight';
 import Svg, { Circle, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
+import AnimatedReanimated, {
+  useSharedValue,
+  withTiming,
+  withSpring,
+  useAnimatedProps,
+  useAnimatedStyle,
+  Easing,
+  withDelay,
+} from 'react-native-reanimated';
+
+const AnimatedCircle = AnimatedReanimated.createAnimatedComponent(Circle);
 
 export interface ProductHeroCardDashboardProps {
   scanResult: {
@@ -59,6 +70,34 @@ export default function ProductHeroCardDashboard({
     setImageError(false);
     setImageLoaded(false);
   }, [scanResult.imageUrl]);
+
+  const progressVal = useSharedValue(0);
+  const mascotScale = useSharedValue(0.1);
+
+  React.useEffect(() => {
+    // Delay slightly to let the card slide up first, then animate
+    const targetScore = scanResult.biteFixScore !== undefined ? scanResult.biteFixScore : 0;
+    progressVal.value = withDelay(
+      300,
+      withTiming(Math.max(5, targetScore), { duration: 1200, easing: Easing.out(Easing.cubic) })
+    );
+    mascotScale.value = withDelay(
+      500,
+      withSpring(1, { damping: 12, stiffness: 100 })
+    );
+  }, [scanResult.biteFixScore]);
+
+  const animatedCircleProps = useAnimatedProps(() => {
+    return {
+      strokeDashoffset: 301.6 * (1 - progressVal.value / 100),
+    };
+  });
+
+  const mascotAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: mascotScale.value }],
+    };
+  });
 
   // Shimmer pulse animation (like Instagram/social media skeleton loading)
   React.useEffect(() => {
@@ -288,7 +327,7 @@ export default function ProductHeroCardDashboard({
                 <Circle cx="60" cy="60" r="48" fill="none" stroke={isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)'} strokeWidth="12" />
                 <Circle cx="60" cy="60" r="56" fill="none" stroke={ratingColor} strokeWidth="1.5" opacity="0.25" />
                 <Circle cx="60" cy="60" r="40" fill="none" stroke={ratingColor} strokeWidth="1.5" opacity="0.15" />
-                <Circle
+                <AnimatedCircle
                   cx="60"
                   cy="60"
                   r="48"
@@ -297,14 +336,14 @@ export default function ProductHeroCardDashboard({
                   strokeWidth="12"
                   strokeLinecap="round"
                   strokeDasharray="301.6"
-                  strokeDashoffset={301.6 * (1 - Math.max(5, biteFixScore) / 100)}
+                  animatedProps={animatedCircleProps}
                   transform="rotate(-90 60 60)"
                 />
               </Svg>
 
-              <View style={{ marginTop: 20 }}>
+              <AnimatedReanimated.View style={[{ marginTop: 20 }, mascotAnimatedStyle]}>
                 <Mascot state={mascotState} size={96} />
-              </View>
+              </AnimatedReanimated.View>
 
               <View style={{
                 position: 'absolute',
