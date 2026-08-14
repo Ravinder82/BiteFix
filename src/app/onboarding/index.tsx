@@ -1398,6 +1398,7 @@ interface SlideData {
 }
 
 const SLIDES: SlideData[] = [
+  { step: 0, title: 'Welcome', highlight: '', subtitle: '', buttonLabel: 'Get Started', mascotState: 'idle', mascotSpeech: '', isLast: false },
   { step: 1, title: 'BiteFix: Your Personel Food Intelligence Assistant!', highlight: 'Food Intelligence', subtitle: 'Tell us your name. BiteFix will shape every scan around your priorities.', buttonLabel: 'Personalize My Scanner', mascotState: 'happy', mascotSpeech: "Hey! I'm your BiteFix scanner mascot.", isLast: false },
   { step: 2, title: 'How often do you read store labels?', highlight: 'read store labels?', subtitle: 'Fine print ingredient lists can hide artificial additives behind complex numbers.', buttonLabel: 'Continue', mascotState: 'scanning', mascotSpeech: 'I decode hidden fine-print ingredients for you!', isLast: false },
   { step: 3, title: 'What should every scan protect?', highlight: 'protect?', subtitle: 'Select your core health focus. BiteFix will highlight it on every barcode.', buttonLabel: 'Set My Priority', mascotState: 'happy', mascotSpeech: 'Your priorities guide every single scan!', isLast: false },
@@ -1423,6 +1424,218 @@ function DotIndicator({ active, C }: { active: boolean; C: any }) {
   );
 
   return <Animated.View style={[{ height: 6, borderRadius: 3 }, dotAnimStyle]} />;
+}
+
+// ─────────────────────────────────────────────────────────
+// Custom SVG Icons for HUD
+// ─────────────────────────────────────────────────────────
+function ShieldCheckSvg({ size = 16, color = '#00E5A0' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="m9 11 2 2 4-4" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function GlobeSvg({ size = 16, color = '#4D8DE8' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth={2.5} />
+      <Path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke={color} strokeWidth={2.5} />
+      <Path d="M2 12h20" stroke={color} strokeWidth={2.5} />
+    </Svg>
+  );
+}
+
+function WarningSvg({ size = 16, color = '#D84C5B' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="m10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+      <Line x1="12" y1="9" x2="12" y2="13" stroke={color} strokeWidth={2.5} strokeLinecap="round" />
+      <Line x1="12" y1="17" x2="12.01" y2="17" stroke={color} strokeWidth={2.5} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function CandySvg({ size = 16, color = '#D8B65C' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M3 7l4 3V7l-4 3zM21 7l-4 3V7l4 3z" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx="12" cy="12" r="6" stroke={color} strokeWidth={2.5} />
+      <Path d="M12 9a3 3 0 0 0-3 3" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+function ButtonArrowSvg({ size = 18, color = '#FFFFFF' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M5 12h14M12 5l7 7-7 7" stroke={color} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+function WelcomeHudBadge({ label, icon: IconComponent, color, style }: { label: string; icon: any; color: string; style: any }) {
+  return (
+    <View style={[
+      {
+        position: 'absolute',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderColor: 'rgba(0, 0, 0, 0.05)',
+        borderWidth: 1.5,
+        borderRadius: 16,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+        elevation: 2,
+      },
+      style
+    ]}>
+      <IconComponent size={14} color={color} />
+      <Text style={{ color: '#111827', fontSize: 11.5, fontWeight: '800' }}>{label}</Text>
+    </View>
+  );
+}
+
+function WelcomeScreen({ onNext, isShort, insets, isDark }: { onNext: () => void; isShort: boolean; insets: any; isDark: boolean }) {
+  return (
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      {/* Background Image */}
+      <ExpoImage
+        source={require('../../../assets/images/welcome_bg.png')}
+        style={StyleSheet.absoluteFillObject}
+        contentFit="cover"
+      />
+      
+      {/* Content Container */}
+      <View style={{ flex: 1, justifyContent: 'space-between', alignItems: 'center', paddingTop: insets.top + 30, paddingBottom: insets.bottom + 20, paddingHorizontal: 24 }}>
+        
+        {/* Spacer */}
+        <View style={{ height: 10 }} />
+
+        {/* Center Section: App Icon with Glowing Backdrop */}
+        <View style={{ width: 320, height: 320, justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+          {/* Subtle connecting dashed vector lines */}
+          <Svg style={StyleSheet.absoluteFillObject} pointerEvents="none">
+            <Line x1="160" y1="160" x2="68" y2="40" stroke="rgba(0, 0, 0, 0.05)" strokeWidth="1.2" strokeDasharray="4,4" />
+            <Line x1="160" y1="160" x2="252" y2="40" stroke="rgba(0, 0, 0, 0.05)" strokeWidth="1.2" strokeDasharray="4,4" />
+            <Line x1="160" y1="160" x2="68" y2="280" stroke="rgba(0, 0, 0, 0.05)" strokeWidth="1.2" strokeDasharray="4,4" />
+            <Line x1="160" y1="160" x2="252" y2="280" stroke="rgba(0, 0, 0, 0.05)" strokeWidth="1.2" strokeDasharray="4,4" />
+          </Svg>
+
+          {/* Yellow Radial Glow behind App Icon */}
+          <View style={{ position: 'absolute', width: 280, height: 280, borderRadius: 140, overflow: 'hidden' }}>
+            <Svg width="280" height="280" viewBox="0 0 100 100">
+              <Defs>
+                <SvgRadialGradient id="glowG" cx="50%" cy="50%" rx="50%" ry="50%">
+                  <Stop offset="0%" stopColor="#F5A623" stopOpacity="0.45" />
+                  <Stop offset="65%" stopColor="#F5A623" stopOpacity="0.12" />
+                  <Stop offset="100%" stopColor="#F5A623" stopOpacity="0" />
+                </SvgRadialGradient>
+              </Defs>
+              <Circle cx="50" cy="50" r="50" fill="url(#glowG)" />
+            </Svg>
+          </View>
+
+          {/* Squircle App Icon */}
+          <ExpoImage
+            source={require('../../../assets/icon.png')}
+            style={{
+              width: 144,
+              height: 144,
+              borderRadius: 34,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.15,
+              shadowRadius: 16,
+              borderWidth: 1.5,
+              borderColor: 'rgba(255,255,255,0.2)',
+            }}
+            contentFit="contain"
+          />
+
+          {/* 4 Floating HUD Badges */}
+          <WelcomeHudBadge label="Gut Shield" icon={ShieldCheckSvg} color="#4A602F" style={{ top: 22, left: -6 }} />
+          <WelcomeHudBadge label="Eco-Score" icon={GlobeSvg} color="#4D8DE8" style={{ top: 22, right: -6 }} />
+          <WelcomeHudBadge label="NOVA-4 Alert" icon={WarningSvg} color="#D84C5B" style={{ bottom: 22, left: -6 }} />
+          <WelcomeHudBadge label="Sugar Load" icon={CandySvg} color="#D8B65C" style={{ bottom: 22, right: -6 }} />
+        </View>
+
+        {/* Bottom Section: Typography & CTA */}
+        <View style={{ width: '100%', alignItems: 'center', gap: 20, marginBottom: 10 }}>
+          {/* Title */}
+          <View style={{ alignItems: 'center', gap: 4 }}>
+            <Text style={{
+              color: '#111827',
+              fontSize: 34,
+              fontWeight: '900',
+              textAlign: 'center',
+              letterSpacing: -0.6,
+              lineHeight: 40
+            }}>
+              Know What's
+            </Text>
+            <Text style={{
+              color: '#4A602F', // Deep Leaf Green
+              fontSize: 34,
+              fontWeight: '900',
+              textAlign: 'center',
+              letterSpacing: -0.6,
+              lineHeight: 40
+            }}>
+              Inside Your Food
+            </Text>
+          </View>
+
+          {/* Subtitle */}
+          <Text style={{
+            color: '#4B5563',
+            fontSize: 14,
+            fontWeight: '600',
+            textAlign: 'center',
+            lineHeight: 20.5,
+            paddingHorizontal: 16
+          }}>
+            Scan a Barcode. See the Nova Score, Additives, Carbon Footprint and Sugar at a glance
+          </Text>
+
+          {/* CTA Button */}
+          <TouchableOpacity
+            onPress={onNext}
+            activeOpacity={0.85}
+            style={{
+              width: '90%',
+              height: 56,
+              borderRadius: 28,
+              backgroundColor: '#4A602F', // Core light mode green color
+              shadowColor: '#4A602F',
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.28,
+              shadowRadius: 16,
+              elevation: 4,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              marginTop: 10
+            }}
+          >
+            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900' }}>
+              Get Started
+            </Text>
+            <ButtonArrowSvg size={18} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
 }
 
 // ─────────────────────────────────────────────────────────
@@ -1474,7 +1687,7 @@ export default function OnboardingScreen() {
   const hasRequestedCamera = React.useRef(false);
 
   useEffect(() => {
-    if ((currentSlide === 10 || currentSlide === 11) && !hasRequestedCamera.current) {
+    if ((currentSlide === 11 || currentSlide === 12) && !hasRequestedCamera.current) {
       if (cameraPermission && !cameraPermission.granted && cameraPermission.canAskAgain) {
         hasRequestedCamera.current = true;
         requestCameraPermission().catch(() => { });
@@ -1491,7 +1704,7 @@ export default function OnboardingScreen() {
   const [additives, setAdditives] = useState<string[]>([]);
 
   const handleNext = async () => {
-    if (currentSlide === 0 && !userName.trim()) {
+    if (currentSlide === 1 && !userName.trim()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
@@ -1523,12 +1736,12 @@ export default function OnboardingScreen() {
   };
 
   const isNextDisabled = () => {
-    if (currentSlide === 0 && !userName.trim()) return true;
-    if (currentSlide === 1 && !labelRoutine) return true;
-    if (currentSlide === 2 && userGoals.length === 0) return true;
-    if (currentSlide === 4 && symptoms.length === 0) return true;
-    if (currentSlide === 5 && additives.length === 0) return true;
-    if (currentSlide === 6 && allergenFilters.length === 0) return true;
+    if (currentSlide === 1 && !userName.trim()) return true;
+    if (currentSlide === 2 && !labelRoutine) return true;
+    if (currentSlide === 3 && userGoals.length === 0) return true;
+    if (currentSlide === 5 && symptoms.length === 0) return true;
+    if (currentSlide === 6 && additives.length === 0) return true;
+    if (currentSlide === 7 && allergenFilters.length === 0) return true;
     return false;
   };
 
@@ -1540,97 +1753,108 @@ export default function OnboardingScreen() {
   const toggleAdditive = (id: string) => setAdditives((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   return (
-    <KeyboardAvoidingView accessibilityLabel={`BiteFix onboarding step ${currentSlide + 1}`} style={{ flex: 1, backgroundColor: C.bg }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <LuxuryBackdrop C={C} />
+    <KeyboardAvoidingView accessibilityLabel={`BiteFix onboarding`} style={{ flex: 1, backgroundColor: C.bg }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      {currentSlide === 0 ? (
+        <WelcomeScreen
+          onNext={handleNext}
+          isShort={isShort}
+          insets={insets}
+          isDark={isDark}
+        />
+      ) : (
+        <>
+          <LuxuryBackdrop C={C} />
 
-      {/* Pre-warm images for slide 6 (ChipSwapDemoCard) off-screen to avoid mounting layout flash */}
-      <View style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }} pointerEvents="none">
-        <ExpoImage source={require('../../../assets/images/ultra_chips.png')} style={{ width: 1, height: 1 }} />
-        <ExpoImage source={require('../../../assets/images/artisan_swaps.png')} style={{ width: 1, height: 1 }} />
-      </View>
-
-      <View style={{ flex: 1, paddingTop: insets.top + 6, paddingBottom: insets.bottom + 12, paddingHorizontal: 16 }}>
-        {/* Header Bar */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, marginBottom: 4 }}>
-          <StepRail current={currentSlide} total={SLIDES.length} C={C} />
-          {currentSlide > 0 && currentSlide !== 9 && (
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
-              activeOpacity={0.75}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setCurrentSlide((s) => s - 1);
-              }}
-              style={{
-                backgroundColor: C.card,
-                paddingHorizontal: 14,
-                minHeight: 34,
-                borderRadius: 12,
-                borderWidth: 1.5,
-                borderColor: C.chrome,
-                alignItems: 'center' as const,
-                justifyContent: 'center' as const,
-              }}
-            >
-              <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '700' }}>Back</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Scrollable Center Content */}
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 8 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-
-          {/* Headline Typography */}
-          <View style={{ alignItems: 'center', gap: 6, marginBottom: 12 }}>
-            <Animated.View key={`title-${currentSlide}`} entering={FadeInDown.duration(360).easing(Easing.bezier(0.16, 1, 0.3, 1))} style={{ alignItems: 'center', gap: 6 }}>
-              <HeadlineHighlight title={slide.title} highlight={slide.highlight} C={C} />
-              <Text style={{ color: C.textSub, fontSize: isShort ? 12.5 : 14, lineHeight: isShort ? 17 : 20, fontWeight: '500', textAlign: 'center', paddingHorizontal: 10 }}>
-                {slide.subtitle}
-              </Text>
-            </Animated.View>
+          {/* Pre-warm images for slide 6 (ChipSwapDemoCard) off-screen to avoid mounting layout flash */}
+          <View style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }} pointerEvents="none">
+            <ExpoImage source={require('../../../assets/images/ultra_chips.png')} style={{ width: 1, height: 1 }} />
+            <ExpoImage source={require('../../../assets/images/artisan_swaps.png')} style={{ width: 1, height: 1 }} />
           </View>
 
-          {/* Dynamic Mascot Header (On screens 0..8, 10, and 13) */}
-          {currentSlide !== 8 && currentSlide !== 10 && currentSlide !== 11 && (
-            <MascotDrawingBoardHeader state={slide.mascotState} speech={slide.mascotSpeech} C={C} isDark={isDark} />
-          )}
-
-          {/* Interactive Card Slots */}
-          <View style={{ width: '100%', alignItems: 'center', marginTop: 8 }}>
-            <Animated.View key={`card-${currentSlide}`} entering={FadeInDown.duration(380).easing(Easing.bezier(0.16, 1, 0.3, 1))} style={{ width: '100%', alignItems: 'center' }}>
-              {currentSlide === 0 && <NameCard cardW={cardW} C={C} value={userName} onChange={setUserName} />}
-              {currentSlide === 1 && <LabelInspectionRoutineCard cardW={cardW} C={C} value={labelRoutine} onSelect={setLabelRoutine} />}
-              {currentSlide === 2 && <GoalCard cardW={cardW} C={C} selected={userGoals} onSelect={setUserGoals} />}
-              {currentSlide === 3 && <NovaWakeUpCard cardW={cardW} C={C} />}
-              {currentSlide === 4 && <SymptomAuditCard cardW={cardW} C={C} selected={symptoms} onToggle={toggleSymptom} />}
-              {currentSlide === 5 && <AdditivePrioritiesCard cardW={cardW} C={C} selected={additives} onToggle={toggleAdditive} />}
-              {currentSlide === 6 && <AllergenDefenseCard cardW={cardW} C={C} selected={allergenFilters} onToggle={toggleAllergenFilter} />}
-              {currentSlide === 7 && <DietaryGuardrailsCard cardW={cardW} C={C} selected={dietPreference} onSelect={setDietPreference} />}
-              {currentSlide === 8 && <EcoQualityFocusCard cardW={cardW} C={C} trackOrganic={trackOrganic} setTrackOrganic={setTrackOrganic} trackEco={trackEcoScore} setTrackEco={setTrackEcoScore} />}
-              {currentSlide === 9 && <HealthyBasketIntroCard cardW={cardW} C={C} />}
-              {currentSlide === 10 && <HealthAnalysisCalculationCard cardW={cardW} C={C} onComplete={() => setCurrentSlide(11)} />}
-              {currentSlide === 11 && <InstantResultSummaryCard cardW={cardW} C={C} />}
-              {currentSlide === 12 && <PaywallTransitionCard cardW={cardW} C={C} allergenFilters={allergenFilters} />}
-            </Animated.View>
-          </View>
-        </ScrollView>
-
-        {/* Pinned Bottom Navigation & CTA */}
-        {currentSlide !== 10 && (
-          <View style={{ width: '100%', gap: 10, marginTop: 6, paddingTop: 8, borderTopWidth: 1, borderTopColor: C.cardBorder }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 5 }}>
-              {SLIDES.map((_, idx) => (
-                <DotIndicator key={idx} active={currentSlide === idx} C={C} />
-              ))}
+          <View style={{ flex: 1, paddingTop: insets.top + 6, paddingBottom: insets.bottom + 12, paddingHorizontal: 16 }}>
+            {/* Header Bar */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, marginBottom: 4 }}>
+              <StepRail current={currentSlide - 1} total={SLIDES.length - 1} C={C} />
+              {currentSlide > 1 && currentSlide !== 11 && (
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="Go back"
+                  activeOpacity={0.75}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setCurrentSlide((s) => s - 1);
+                  }}
+                  style={{
+                    backgroundColor: C.card,
+                    paddingHorizontal: 14,
+                    minHeight: 34,
+                    borderRadius: 12,
+                    borderWidth: 1.5,
+                    borderColor: C.chrome,
+                    alignItems: 'center' as const,
+                    justifyContent: 'center' as const,
+                  }}
+                >
+                  <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '700' }}>Back</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
-            <View style={{ width: '100%', alignItems: 'stretch' }}>
-              <FullWidthPillCTA label={slide.buttonLabel} disabled={isNextDisabled()} isLast={slide.isLast} compact={isShort} onPress={handleNext} />
-            </View>
+            {/* Scrollable Center Content */}
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 8 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+
+              {/* Headline Typography */}
+              <View style={{ alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                <Animated.View key={`title-${currentSlide}`} entering={FadeInDown.duration(360).easing(Easing.bezier(0.16, 1, 0.3, 1))} style={{ alignItems: 'center', gap: 6 }}>
+                  <HeadlineHighlight title={slide.title} highlight={slide.highlight} C={C} />
+                  <Text style={{ color: C.textSub, fontSize: isShort ? 12.5 : 14, lineHeight: isShort ? 17 : 20, fontWeight: '500', textAlign: 'center', paddingHorizontal: 10 }}>
+                    {slide.subtitle}
+                  </Text>
+                </Animated.View>
+              </View>
+
+              {/* Dynamic Mascot Header (On screens index 9, 11, and 12) */}
+              {currentSlide !== 9 && currentSlide !== 11 && currentSlide !== 12 && (
+                <MascotDrawingBoardHeader state={slide.mascotState} speech={slide.mascotSpeech} C={C} isDark={isDark} />
+              )}
+
+              {/* Interactive Card Slots */}
+              <View style={{ width: '100%', alignItems: 'center', marginTop: 8 }}>
+                <Animated.View key={`card-${currentSlide}`} entering={FadeInDown.duration(380).easing(Easing.bezier(0.16, 1, 0.3, 1))} style={{ width: '100%', alignItems: 'center' }}>
+                  {currentSlide === 1 && <NameCard cardW={cardW} C={C} value={userName} onChange={setUserName} />}
+                  {currentSlide === 2 && <LabelInspectionRoutineCard cardW={cardW} C={C} value={labelRoutine} onSelect={setLabelRoutine} />}
+                  {currentSlide === 3 && <GoalCard cardW={cardW} C={C} selected={userGoals} onSelect={setUserGoals} />}
+                  {currentSlide === 4 && <NovaWakeUpCard cardW={cardW} C={C} />}
+                  {currentSlide === 5 && <SymptomAuditCard cardW={cardW} C={C} selected={symptoms} onToggle={toggleSymptom} />}
+                  {currentSlide === 6 && <AdditivePrioritiesCard cardW={cardW} C={C} selected={additives} onToggle={toggleAdditive} />}
+                  {currentSlide === 7 && <AllergenDefenseCard cardW={cardW} C={C} selected={allergenFilters} onToggle={toggleAllergenFilter} />}
+                  {currentSlide === 8 && <DietaryGuardrailsCard cardW={cardW} C={C} selected={dietPreference} onSelect={setDietPreference} />}
+                  {currentSlide === 9 && <EcoQualityFocusCard cardW={cardW} C={C} trackOrganic={trackOrganic} setTrackOrganic={setTrackOrganic} trackEco={trackEcoScore} setTrackEco={setTrackEcoScore} />}
+                  {currentSlide === 10 && <HealthyBasketIntroCard cardW={cardW} C={C} />}
+                  {currentSlide === 11 && <HealthAnalysisCalculationCard cardW={cardW} C={C} onComplete={() => setCurrentSlide(12)} />}
+                  {currentSlide === 12 && <InstantResultSummaryCard cardW={cardW} C={C} />}
+                  {currentSlide === 13 && <PaywallTransitionCard cardW={cardW} C={C} allergenFilters={allergenFilters} />}
+                </Animated.View>
+              </View>
+            </ScrollView>
+
+            {/* Pinned Bottom Navigation & CTA */}
+            {currentSlide !== 11 && (
+              <View style={{ width: '100%', gap: 10, marginTop: 6, paddingTop: 8, borderTopWidth: 1, borderTopColor: C.cardBorder }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 5 }}>
+                  {SLIDES.slice(1).map((_, idx) => (
+                    <DotIndicator key={idx + 1} active={currentSlide === idx + 1} C={C} />
+                  ))}
+                </View>
+
+                <View style={{ width: '100%', alignItems: 'stretch' }}>
+                  <FullWidthPillCTA label={slide.buttonLabel} disabled={isNextDisabled()} isLast={slide.isLast} compact={isShort} onPress={handleNext} />
+                </View>
+              </View>
+            )}
           </View>
-        )}
-      </View>
+        </>
+      )}
     </KeyboardAvoidingView>
   );
 }
