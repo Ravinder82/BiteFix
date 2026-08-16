@@ -122,7 +122,7 @@ function AnimatedListItem({ children, index, style }: { children: React.ReactNod
 }
 
 export default function PaywallScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { isPremium, freeScansUsed } = useAppStore();
 
   const remainingFreeScans = Math.max(0, 5 - (freeScansUsed || 0));
