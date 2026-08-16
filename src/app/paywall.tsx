@@ -54,51 +54,51 @@ const FEATURES = [
   {
     icon: Activity,
     color: '#FF9500',
-    bg: 'rgba(255,149,0,0.08)',
-    title: 'NOVA Processing Audit',
-    subtitle: 'Decodes industrial food processing levels.',
+    bg: 'rgba(255,149,0,0.09)',
+    title: 'Processing Level',
+    subtitle: 'NOVA 1–4 classification based on available product data.',
   },
   {
     icon: Crown,
     color: '#34C759',
-    bg: 'rgba(52,199,89,0.08)',
-    title: 'Nutri-Score Rating',
-    subtitle: 'A–E traffic light food quality grade.',
+    bg: 'rgba(52,199,89,0.09)',
+    title: 'Nutri-Score',
+    subtitle: 'A–E nutrition profile grade from available nutrient data.',
   },
   {
     icon: ShieldAlert,
-    color: '#FF3B30',
-    bg: 'rgba(255,59,48,0.08)',
-    title: 'Gut Shield Pro',
-    subtitle: 'Flags barrier-eroding emulsifiers & gums.',
+    color: '#FF6B6B',
+    bg: 'rgba(255,107,107,0.09)',
+    title: 'Ingredient Review',
+    subtitle: 'Identifies emulsifiers, sweeteners, and selected additives in the ingredient list.',
   },
   {
     icon: Search,
     color: '#AF52DE',
-    bg: 'rgba(175,82,222,0.08)',
-    title: 'Additive Detective',
-    subtitle: 'Audits synthetic food dyes & preservatives.',
+    bg: 'rgba(175,82,222,0.09)',
+    title: 'Additives Identified',
+    subtitle: 'Lists colours, preservatives, and acidity regulators found in available data.',
   },
   {
     icon: Zap,
     color: '#FFCC00',
-    bg: 'rgba(255,204,0,0.08)',
-    title: 'Sugar & Hidden Sugar',
-    subtitle: 'Unmasks hidden sugar teaspoon counts.',
+    bg: 'rgba(255,204,0,0.09)',
+    title: 'Sugar Insights',
+    subtitle: 'Estimated sugar equivalent and hidden sweetener identification.',
   },
   {
     icon: ShieldCheck,
     color: '#34C759',
-    bg: 'rgba(52,199,89,0.08)',
+    bg: 'rgba(52,199,89,0.09)',
     title: 'Unlimited Scanning',
-    subtitle: 'No limits. Scan every product in your pantry.',
+    subtitle: 'Scan as many products as you like with no daily limit.',
   },
   {
     icon: Globe,
     color: '#4D8DE8',
-    bg: 'rgba(77,141,232,0.08)',
-    title: 'Carbon Footprint',
-    subtitle: 'CO₂ impact score for every product you scan.',
+    bg: 'rgba(77,141,232,0.09)',
+    title: 'Environmental Impact',
+    subtitle: 'Available CO₂ estimate and eco-sourcing signals per product.',
   },
 ] as const;
 
@@ -203,41 +203,39 @@ export default function PaywallScreen() {
           </View>
 
           <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', textAlign: 'center', letterSpacing: -0.5 }}>
-            Protect Your Gut. Scan Cleaner.
+            Scan Once. Know More.
           </Text>
           <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '500', textAlign: 'center', marginTop: 6, maxWidth: 300, lineHeight: 19 }}>
-            Instant NOVA classification, Nutri-Score, Gut Shield & additive auditing.
+            Processing level, nutrition grade, ingredient review, and more — from one barcode scan.
           </Text>
         </View>
 
-        {/* ── Feature List ─────────────────────────────────── */}
         <View style={{
           backgroundColor: colors.surface,
-          borderRadius: 28,
-          borderWidth: 2,
-          borderColor: colors.success,
-          padding: 24,
-          gap: 16,
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
+          paddingVertical: 8,
           marginBottom: 24,
-          shadowColor: colors.success,
-          shadowOffset: { width: 0, height: 12 },
-          shadowOpacity: 0.2,
-          shadowRadius: 24,
-          elevation: 10,
           overflow: 'hidden',
         }}>
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.success, opacity: 0.05 }]} />
           {FEATURES.map((f, idx) => {
             const Icon = f.icon;
+            const isLast = idx === FEATURES.length - 1;
             return (
               <AnimatedListItem key={f.title} index={idx}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: f.bg, alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon size={16} color={f.color} />
+                <View style={{
+                  flexDirection: 'row', alignItems: 'center', gap: 12,
+                  paddingHorizontal: 16, paddingVertical: 11,
+                  borderBottomWidth: isLast ? 0 : 1,
+                  borderBottomColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                }}>
+                  <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: f.bg, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon size={17} color={f.color} strokeWidth={2.1} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.text, fontSize: 12.5, fontWeight: '800' }}>{f.title}</Text>
-                    <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '600', marginTop: 2 }}>{f.subtitle}</Text>
+                    <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800', letterSpacing: -0.1 }}>{f.title}</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 2, lineHeight: 15 }}>{f.subtitle}</Text>
                   </View>
                 </View>
               </AnimatedListItem>
