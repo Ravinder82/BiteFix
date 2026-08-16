@@ -22,7 +22,9 @@ import {
   ScrollView,
   SafeAreaView,
   Platform,
-  StyleSheet
+  StyleSheet,
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 import { Text } from '@/components/Text';
@@ -33,6 +35,7 @@ import { OrbMascot } from '../components/features/OrbMascot';
 import { MagicalBackground } from '../components/features/MagicalBackground';
 import { SubscriptionModal } from '../components/SubscriptionModal';
 import { PaywallDisclaimerModal } from '../components/PaywallDisclaimerModal';
+import { getIapService } from '../services/iapLoader';
 import {
   ShieldCheck,
   RefreshCw,
@@ -125,18 +128,59 @@ export default function PaywallScreen() {
   const { colors, isDark } = useTheme();
   const { isPremium, freeScansUsed } = useAppStore();
 
+  const [isCheckingEntitlement, setIsCheckingEntitlement] = useState(true);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [disclaimerVisible, setDisclaimerVisible] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
   const remainingFreeScans = Math.max(0, 5 - (freeScansUsed || 0));
   const hasFreeScansAvailable = !isPremium && remainingFreeScans > 0;
 
-  const [isModalVisible, setIsModalVisible] = useState(!hasFreeScansAvailable);
-  const [disclaimerVisible, setDisclaimerVisible] = useState(false);
-
-  // If the user is already premium after the status check, redirect immediately
+  // ── Verify RevenueCat Entitlement on Mount ────────────────
   useEffect(() => {
-    if (isPremium) {
-      router.replace('/(tabs)');
-    }
-  }, [isPremium]);
+    let isMounted = true;
+
+    const verifyEntitlementOnMount = async () => {
+      try {
+        const service = await getIapService();
+        if (!service) {
+          if (isMounted) {
+            useAppStore.getState().setPremium(false);
+            setIsCheckingEntitlement(false);
+            if (!hasFreeScansAvailable) setIsModalVisible(true);
+          }
+          return;
+        }
+
+        const isEntitled = await service.checkSubscriptionStatus();
+        if (!isMounted) return;
+
+        if (isEntitled) {
+          useAppStore.getState().setPremium(true);
+          router.replace('/(tabs)');
+        } else {
+          useAppStore.getState().setPremium(false);
+          setIsCheckingEntitlement(false);
+          if (!hasFreeScansAvailable) {
+            setIsModalVisible(true);
+          }
+        }
+      } catch (err) {
+        console.warn('[Paywall] Entitlement verification error on mount:', err);
+        if (isMounted) {
+          useAppStore.getState().setPremium(false);
+          setIsCheckingEntitlement(false);
+          if (!hasFreeScansAvailable) setIsModalVisible(true);
+        }
+      }
+    };
+
+    verifyEntitlementOnMount();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [hasFreeScansAvailable]);
 
   // ── Handlers ─────────────────────────────────────────────
 
@@ -149,7 +193,60 @@ export default function PaywallScreen() {
     }
   };
 
-  // ── Render ───────────────────────────────────────────────
+  const handleRestore = async () => {
+    if (isRestoring) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setIsRestoring(true);
+    try {
+      const service = await getIapService();
+      if (!service) {
+        Alert.alert('Store Unavailable', 'Unable to connect to the App Store. Please check your internet connection and try again.');
+        return;
+      }
+
+      const result = await service.restorePurchases();
+      if (result.isEntitled) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert(
+          'Purchase Restored ✅',
+          'Your BiteFix Premium subscription has been restored.',
+          [{
+            text: 'Continue',
+            onPress: () => {
+              router.replace('/(tabs)');
+            }
+          }]
+        );
+      } else if (result.success) {
+        Alert.alert(
+          'No Subscription Found',
+          'We could not find an active subscription linked to this Apple ID.\n\nIf you purchased under a different Apple ID, please sign in with that account in your device settings.'
+        );
+      } else {
+        Alert.alert('Restore Failed', result.error ?? 'Could not restore purchases. Please try again.');
+      }
+    } catch (e: any) {
+      Alert.alert('Restore Error', e?.message ?? 'An unexpected error occurred while restoring purchases.');
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
+  // ── Render Loading State ─────────────────────────────────
+  if (isCheckingEntitlement) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
+        <MagicalBackground />
+        <OrbMascot state="scanning" size={80} />
+        <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 24 }} />
+        <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700', marginTop: 12, letterSpacing: 0.2 }}>
+          Checking subscription status...
+        </Text>
+      </SafeAreaView>
+    );
+  }
+
+  // ── Render Paywall ───────────────────────────────────────
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -307,18 +404,35 @@ export default function PaywallScreen() {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setDisclaimerVisible(true);
-          }}
-          activeOpacity={0.75}
-          style={{ alignSelf: 'center', marginTop: 12, paddingVertical: 4, paddingHorizontal: 8 }}
-        >
-          <Text style={{ color: colors.textSecondary, fontSize: 11.5, fontWeight: '800', textDecorationLine: 'underline' }}>
-            Disclaimer
-          </Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 20, marginTop: 12 }}>
+          <TouchableOpacity
+            onPress={handleRestore}
+            disabled={isRestoring}
+            activeOpacity={0.75}
+            style={{ paddingVertical: 4, paddingHorizontal: 8 }}
+          >
+            {isRestoring ? (
+              <ActivityIndicator size="small" color={colors.textSecondary} />
+            ) : (
+              <Text style={{ color: colors.textSecondary, fontSize: 11.5, fontWeight: '800', textDecorationLine: 'underline' }}>
+                Restore Purchases
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setDisclaimerVisible(true);
+            }}
+            activeOpacity={0.75}
+            style={{ paddingVertical: 4, paddingHorizontal: 8 }}
+          >
+            <Text style={{ color: colors.textSecondary, fontSize: 11.5, fontWeight: '800', textDecorationLine: 'underline' }}>
+              Disclaimer
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* ── Subscription Bottom Sheet Modal ───────────────── */}

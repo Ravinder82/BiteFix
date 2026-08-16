@@ -7,7 +7,6 @@ export default function Index() {
   const { onboardingComplete, isPremium, freeScansUsed, trialStarted } = useAppStore();
   const [hydrated, setHydrated] = useState(false);
   const rootNavigationState = useRootNavigationState();
-  const [subChecked, setSubChecked] = useState<boolean | null>(null);
 
   // Handle store hydration status
   useEffect(() => {
@@ -42,55 +41,18 @@ export default function Index() {
     }
   }, [hydrated]);
 
-  // Check StoreKit IAP subscription status
-  useEffect(() => {
-    if (!hydrated) {
-      setSubChecked(null);
-      return;
-    }
-
-    if (isPremium) {
-      setSubChecked(true);
-      return;
-    }
-
-    let cancelled = false;
-    (async () => {
-      try {
-        const { getIapService } = await import('../services/iapLoader');
-        const service = await getIapService();
-        if (service && !cancelled) {
-          await service.checkSubscriptionStatus();
-        }
-      } catch {
-        // Fail silently if StoreKit unavailable
-      } finally {
-        if (!cancelled) setSubChecked(false);
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, [hydrated, isPremium]);
-
   const isReady = hydrated && !!rootNavigationState?.key;
-  const waitingForSubCheck = isReady && onboardingComplete && !isPremium && subChecked === null;
 
   // Return a clean blank view during the split-second hydration check
-  if (!isReady || waitingForSubCheck) {
+  if (!isReady) {
     return <View style={{ flex: 1, backgroundColor: '#FFFFFF' }} />;
   }
 
-  // Route 1: Onboarding
+  // Route 1: Onboarding (if not completed)
   if (!onboardingComplete) {
     return <Redirect href="/onboarding" />;
   }
 
-  // Route 2: Paywall (Gated Free Tier Users)
-  const isTrialActive = trialStarted || (freeScansUsed || 0) > 0;
-  if (!isPremium && ((freeScansUsed || 0) >= 5 || !isTrialActive)) {
-    return <Redirect href="/paywall" />;
-  }
-
-  // Route 3: Tabs Dashboard (Onboarded + Premium/Active Trial)
-  return <Redirect href="/(tabs)" />;
+  // Route 2: Paywall — RevenueCat entitlement verification is the source of truth
+  return <Redirect href="/paywall" />;
 }

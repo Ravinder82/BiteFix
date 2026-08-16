@@ -92,18 +92,14 @@ export default function RootLayout() {
       appStateRef.current = nextState;
 
       if (wasBackground && isForeground) {
-        // Prevent Simulator/Dev environment from forcefully dropping bypassed subscriptions 
-        // when foregrounding from external apps (e.g. returning from Mail app).
-        if (!__DEV__) {
-          try {
-            const { getLoadedIapService } = await import('../services/iapLoader');
-            const service = getLoadedIapService();
-            if (service) {
-              await service.checkSubscriptionStatus();
-            }
-          } catch {
-            // Best-effort — don't crash the app
+        try {
+          const { getIapService } = await import('../services/iapLoader');
+          const service = await getIapService();
+          if (service) {
+            await service.checkSubscriptionStatus();
           }
+        } catch {
+          // Best-effort — don't crash the app
         }
       }
     });

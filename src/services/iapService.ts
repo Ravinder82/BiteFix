@@ -18,7 +18,7 @@ export { PRODUCT_IDS, ALL_PRODUCT_SKUS };
 export type { IAPProduct, PlanTier, PurchaseResult, RestoreResult };
 
 // ── Configuration ──────────────────────────────────────────
-const ENTITLEMENT_ID = 'BiteFix Premium';
+export const ENTITLEMENT_ID = 'BiteFix Premium';
 const API_KEY = Platform.select({
   ios: 'appl_sbJXeudNhKfrgWpHYRhDlppXwKt',
   android: 'test_AWlLopqUibnRlvfJTILfSwwAPzi',
@@ -152,16 +152,20 @@ class BitefixIAPService {
   }
 
   public async checkSubscriptionStatus(): Promise<boolean> {
+    if (!this.connected) await this.connect();
+
     try {
       const customerInfo = await Purchases.getCustomerInfo();
       const isEntitled = typeof customerInfo?.entitlements?.active?.[ENTITLEMENT_ID] !== 'undefined';
 
+      console.log(`[RevenueCat] Entitlement check: ${isEntitled ? 'ACTIVE' : 'INACTIVE'}`);
       useAppStore.getState().setPremium(isEntitled);
       return isEntitled;
     } catch (e: any) {
-      console.warn('[RevenueCat] Subscription check bypassed/offline:', e?.message || e);
-      // Preserve current local premium state if network or store SDK fails
-      return useAppStore.getState().isPremium;
+      console.warn('[RevenueCat] Subscription check error:', e?.message || e);
+      // Safe fallback: Do not falsely grant premium on error
+      useAppStore.getState().setPremium(false);
+      return false;
     }
   }
 
