@@ -15,7 +15,6 @@ import {
   AccessibilityInfo,
 } from 'react-native';
 import { router } from 'expo-router';
-import { useCameraPermissions } from 'expo-camera';
 import Animated, {
   cancelAnimation,
   useSharedValue,
@@ -1602,7 +1601,6 @@ export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const { isDark } = useTheme();
-  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
   const C = {
     bg: isDark ? '#080A0C' : '#F6F7F8',
@@ -1622,16 +1620,6 @@ export default function OnboardingScreen() {
   };
 
   const [currentSlide, setCurrentSlide] = useState(0);
-  const hasRequestedCamera = React.useRef(false);
-
-  useEffect(() => {
-    if ((currentSlide === 8 || currentSlide === 9) && !hasRequestedCamera.current) {
-      if (cameraPermission && !cameraPermission.granted && cameraPermission.canAskAgain) {
-        hasRequestedCamera.current = true;
-        requestCameraPermission().catch(() => { });
-      }
-    }
-  }, [currentSlide, cameraPermission]);
 
   // User Form State
   const [userName, setUserName] = useState('');

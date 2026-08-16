@@ -161,6 +161,15 @@ export default function ScannerScreen() {
     return () => subscription.remove();
   }, []);
 
+  // Request camera permission immediately when Scanner screen opens/focuses
+  const hasRequestedPermissionRef = useRef(false);
+  useEffect(() => {
+    if (isFocused && permission && !permission.granted && permission.canAskAgain && !hasRequestedPermissionRef.current) {
+      hasRequestedPermissionRef.current = true;
+      requestPermission();
+    }
+  }, [isFocused, permission, requestPermission]);
+
   // Auto-trigger modal if they are out of scans
   useEffect(() => {
     if (scannerIsVisible && !isPremium && typeof freeScansUsed === 'number' && freeScansUsed >= 5) {
