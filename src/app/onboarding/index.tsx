@@ -26,7 +26,6 @@ import Animated, {
   withSequence,
   withDelay,
   Easing,
-  runOnJS,
   FadeInDown,
   interpolate,
 } from 'react-native-reanimated';
@@ -42,24 +41,20 @@ import {
   ShieldCheck,
   ShieldAlert,
   Activity,
-  Zap,
   Layers,
   Heart,
   Flame,
   ShoppingCart,
-  ArrowRightLeft,
   ArrowDown,
   Apple,
   CircleAlert,
   Droplets,
   Layers3,
   X,
-  Users,
   Award,
   Shield,
   CheckCircle,
   Info,
-  Leaf,
   Globe,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -79,7 +74,6 @@ import Svg, {
 // ─────────────────────────────────────────────────────────
 const MINT = '#00E5A0';
 const MINT_DARK = '#008F67';
-const MINT_LIGHT = '#EAFBF5';
 const GOLD = '#D8B65C';
 const RED = '#D84C5B';
 const DARK_TEXT = '#101418';
@@ -256,22 +250,6 @@ function FullWidthPillCTA({
   );
 }
 
-function MascotShadow({ size }: { size: number }) {
-  return (
-    <View style={{ width: size, height: size * 0.12, alignSelf: 'center' }}>
-      <Svg width="100%" height="100%" viewBox="0 0 100 15">
-        <Defs>
-          <SvgRadialGradient id="shadowG" cx="50%" cy="50%" rx="50%" ry="50%">
-            <Stop offset="0%" stopColor="#000000" stopOpacity="0.18" />
-            <Stop offset="100%" stopColor="#000000" stopOpacity="0" />
-          </SvgRadialGradient>
-        </Defs>
-        <Circle cx="50" cy="7.5" r="50" fill="url(#shadowG)" />
-      </Svg>
-    </View>
-  );
-}
-
 function HeadlineHighlight({ title, highlight, C }: { title: string; highlight: string; C: any }) {
   if (!highlight) {
     return (
@@ -389,14 +367,6 @@ function ClayAppleSvg({ size = 44 }: { size?: number }) {
   );
 }
 
-function ClayBasketSvg({ size = 44 }: { size?: number }) {
-  return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: '#F7F3E9', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#D8B65C', shadowColor: '#D8B65C', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 4 }}>
-      <ShoppingCart size={size * 0.55} color="#F5A623" strokeWidth={2.5} />
-    </View>
-  );
-}
-
 // ─────────────────────────────────────────────────────────
 // UI FEATURE COMPONENTS
 // ─────────────────────────────────────────────────────────
@@ -430,7 +400,7 @@ function GutShieldCard({ status = 'ACTIVE' }: { status?: string }) {
       </View>
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={{ color: '#101418', fontSize: 15.5, fontWeight: '900' }}>Personal Gut Shield</Text>
+          <Text style={{ color: '#101418', fontSize: 15.5, fontWeight: '900' }}>Personal Ingredient Watch</Text>
           <View style={{ backgroundColor: '#A1F3D5', paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6 }}>
             <Text style={{ color: '#101418', fontSize: 9.5, fontWeight: '900' }}>{status}</Text>
           </View>
@@ -517,7 +487,7 @@ function NameCard({ cardW, C, value, onChange }: { cardW: number; C: any; value:
   return (
     <View style={{ width: cardW, gap: 16 }}>
       <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.2 }}>
-        Personal Account Profile
+        Personalize Your BiteFix
       </Text>
       <View style={[{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: Platform.OS === 'ios' ? 14 : 10 }, getClayStyle(value.trim().length > 0, C)]}>
         <TextInput
@@ -535,50 +505,10 @@ function NameCard({ cardW, C, value, onChange }: { cardW: number; C: any; value:
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <Info size={22} color={C.primaryDark} />
           <Text style={{ color: C.text, fontSize: 13, fontWeight: '800', flex: 1, lineHeight: 18 }}>
-            {value.trim() ? `Welcome, ${value.trim()}! Let's shape your scanner around your daily food choices.` : 'Type your name above to personalize your BiteFix scanner!'}
+            {value.trim() ? `Welcome, ${value.trim()}! Let’s personalize how BiteFix works for you.` : 'Tell us your name to personalize your BiteFix experience.'}
           </Text>
         </View>
       </StickyNoteCard>
-    </View>
-  );
-}
-
-// ─────────────────────────────────────────────────────────
-// STEP 2: Daily Meal Sourcing
-// ─────────────────────────────────────────────────────────
-function DailyMealSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C: any; value: string; onSelect: (v: string) => void }) {
-  const options = [
-    { label: 'Fresh home cooking', desc: 'Cook meals mostly from raw ingredients', val: 'fresh_home' },
-    { label: 'Mix of home & packaged', desc: 'Combine fresh cooking with store-bought items', val: 'mixed' },
-    { label: 'Takeout & delivery', desc: 'Order restaurant food or meal kits frequently', val: 'takeout' },
-    { label: 'Ready-to-eat packaged', desc: 'Rely heavily on convenient shelf-stable foods', val: 'packaged' },
-  ];
-
-  return (
-    <View style={{ width: cardW, gap: 10 }}>
-      {options.map((opt, idx) => {
-        const isSelected = value === opt.val;
-        return (
-          <AnimatedListItem key={opt.val} index={idx}>
-            <TouchableOpacity
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                onSelect(opt.val);
-              }}
-              activeOpacity={0.85}
-              style={[{ padding: 14, gap: 3 }, getClayStyle(isSelected, C)]}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={{ color: C.text, fontSize: 14.5, fontWeight: '800' }}>{opt.label}</Text>
-                <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: isSelected ? C.primaryDark : C.textMuted, backgroundColor: isSelected ? C.primaryDark : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                  {isSelected && <Check size={13} color="#FFF" strokeWidth={3} />}
-                </View>
-              </View>
-              <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '600', lineHeight: 15 }}>{opt.desc}</Text>
-            </TouchableOpacity>
-          </AnimatedListItem>
-        );
-      })}
     </View>
   );
 }
@@ -588,10 +518,10 @@ function DailyMealSourcingCard({ cardW, C, value, onSelect }: { cardW: number; C
 // ─────────────────────────────────────────────────────────
 function LabelInspectionRoutineCard({ cardW, C, value, onSelect }: { cardW: number; C: any; value: string; onSelect: (v: string) => void }) {
   const options = [
-    { label: 'Always — inspect every line', desc: 'Turn every pack around to read fine print ingredients', val: 'always' },
-    { label: 'Sometimes — if suspicious', desc: 'Check ingredients only on unfamiliar or high-risk brands', val: 'sometimes' },
-    { label: 'Rarely — labels are confusing', desc: 'Hard to understand synthetic terms and additive codes', val: 'rarely' },
-    { label: 'Never — trust front labels', desc: 'Rely on claims like "Natural", "Organic" or "Low Fat"', val: 'never' },
+    { label: 'Always — I read the full label', desc: 'I check the ingredient list before buying', val: 'always' },
+    { label: 'Sometimes — I scan the important parts', desc: 'I check labels when something catches my attention', val: 'sometimes' },
+    { label: 'Rarely — I want a faster way', desc: 'Ingredient lists take too much time to decode', val: 'rarely' },
+    { label: 'Never — I usually decide quickly', desc: 'I prefer a quick overview instead of reading every line', val: 'never' },
   ];
 
   return (
@@ -630,10 +560,10 @@ type GoalOption = 'energy' | 'gut_microbiome' | 'weight_management' | 'maintain_
 
 function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; selected: GoalOption[]; onSelect: (vals: GoalOption[]) => void }) {
   const options: { label: string; tag: string; icon: React.ReactNode; value: GoalOption }[] = [
-    { label: 'Feel more energized', tag: 'Avoid foods causing afternoon slumps', icon: <Flame size={20} color="#FF6D00" />, value: 'energy' },
-    { label: 'Better digestion', tag: 'Stay away from gut-irritating emulsifiers', icon: <Activity size={20} color="#00C288" />, value: 'gut_microbiome' },
-    { label: 'Manage weight easily', tag: 'Flag hidden sugars and cheap syrups', icon: <Layers size={20} color="#F5A623" />, value: 'weight_management' },
-    { label: 'Maintain Health', tag: 'Keep artificial colors out of your kitchen', icon: <ShieldCheck size={20} color="#EF4444" />, value: 'maintain_health' },
+    { label: 'Energy', tag: 'Highlight nutrition factors linked to your energy goals', icon: <Flame size={20} color="#FF6D00" />, value: 'energy' },
+    { label: 'Digestion', tag: 'Keep an eye on ingredients you choose to limit', icon: <Activity size={20} color="#00C288" />, value: 'gut_microbiome' },
+    { label: 'Weight management', tag: 'Highlight sugar and sweetening ingredients', icon: <Layers size={20} color="#F5A623" />, value: 'weight_management' },
+    { label: 'Everyday nutrition', tag: 'Spot ingredients you prefer to avoid', icon: <ShieldCheck size={20} color="#EF4444" />, value: 'maintain_health' },
   ];
 
   const handleToggle = (val: GoalOption) => {
@@ -677,16 +607,16 @@ function GoalCard({ cardW, C, selected, onSelect }: { cardW: number; C: any; sel
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 5: NOVA 4 Wake-Up Call Alert Dashboard
+// STEP 4: Processing Level Wake-Up
 // ─────────────────────────────────────────────────────────
 function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
   return (
     <View style={{ width: cardW, gap: 12, alignItems: 'center' }}>
       <AnimatedListItem index={0}>
         <View style={{ alignItems: 'center' }}>
-          <Text style={{ color: C.red, fontSize: 46, fontWeight: '900', letterSpacing: -1.5 }}>73%</Text>
-          <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1, marginTop: -4 }}>
-            OF STORE FOODS ARE NOVA 4
+          <Text style={{ color: C.red, fontSize: 34, fontWeight: '900', letterSpacing: -1.2 }}>NOVA 1–4</Text>
+          <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1, marginTop: -2 }}>
+            PROCESSING LEVEL
           </Text>
         </View>
       </AnimatedListItem>
@@ -694,16 +624,16 @@ function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
       <AnimatedListItem index={1}>
         <StickyNoteCard tilt={1}>
           <Text style={{ color: C.text, fontSize: 13, fontWeight: '700', textAlign: 'center', lineHeight: 18 }}>
-            Factory formulations use cheap synthetic ingredients you would never keep in your own home kitchen.
+            Packaged foods can contain processing and ingredient details that are easy to miss when you’re short on time.
           </Text>
         </StickyNoteCard>
       </AnimatedListItem>
 
       <View style={{ width: '100%', gap: 8 }}>
         {[
-          'Emulsifiers that disrupt stomach lining',
-          'Synthetic dyes affecting focus & behavior',
-          'Refined sweeteners tricking metabolism',
+          'Emulsifiers',
+          'Colours',
+          'Sweeteners and syrups',
         ].map((point, idx) => (
           <AnimatedListItem key={idx} index={idx + 2}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: C.card, padding: 12, borderRadius: 14, borderWidth: 1, borderColor: C.cardBorder }}>
@@ -718,7 +648,7 @@ function NovaWakeUpCard({ cardW, C }: { cardW: number; C: any }) {
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 6: Category Smart Swap Demo Component
+// SUPPORT: Category Smart Swap Demo Component
 // ─────────────────────────────────────────────────────────
 export type SwapDemoTheme = {
   text?: string;
@@ -865,56 +795,14 @@ function ProtectLovedOnesCard({ cardW, C }: { cardW: number; C: any }) {
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 8: Symptom Audit
-// ─────────────────────────────────────────────────────────
-function SymptomAuditCard({ cardW, C, selected, onToggle }: { cardW: number; C: any; selected: string[]; onToggle: (s: string) => void }) {
-  const symptoms = [
-    { id: 'slumps', label: 'Afternoon energy crashes', icon: <Zap size={18} color="#F5A623" /> },
-    { id: 'bloating', label: 'Bloating & tummy discomfort', icon: <AlertTriangle size={18} color="#EF4444" /> },
-    { id: 'brainfog', label: 'Hard to focus / brain fog', icon: <Search size={18} color="#00C288" /> },
-    { id: 'cravings', label: "Can't stop sugar cravings", icon: <Heart size={18} color="#4D8DE8" /> },
-  ];
-
-  return (
-    <View style={{ width: cardW, gap: 10 }}>
-      {symptoms.map((s, idx) => {
-        const active = selected.includes(s.id);
-        return (
-          <AnimatedListItem key={s.id} index={idx}>
-            <TouchableOpacity
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                onToggle(s.id);
-              }}
-              activeOpacity={0.85}
-              style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 12 }, getClayStyle(active, C)]}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-                <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: C.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
-                  {s.icon}
-                </View>
-                <Text style={{ color: C.text, fontSize: 13.5, fontWeight: '800', flex: 1 }}>{s.label}</Text>
-              </View>
-              <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: active ? C.primaryDark : C.textMuted, backgroundColor: active ? C.primaryDark : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                {active && <Check size={13} color="#FFF" strokeWidth={3} />}
-              </View>
-            </TouchableOpacity>
-          </AnimatedListItem>
-        );
-      })}
-    </View>
-  );
-}
-
-// ─────────────────────────────────────────────────────────
-// STEP 9: Additive Priorities Card
+// STEP 5: Ingredient Watchlist
 // ─────────────────────────────────────────────────────────
 function AdditivePrioritiesCard({ cardW, C, selected, onToggle }: { cardW: number; C: any; selected: string[]; onToggle: (a: string) => void }) {
   const additives = [
-    { id: 'dyes', label: 'Synthetic colours', desc: 'Red 40, Yellow 5, Blue 1' },
-    { id: 'hfcs', label: 'Added sugars & syrups', desc: 'Concentrated high fructose corn syrup' },
-    { id: 'emulsifiers', label: 'Selected emulsifiers', desc: 'Gut disruptors like Polysorbate 80' },
-    { id: 'oils', label: 'Refined seed oils', desc: 'Palm oil, canola & hydrogenated oils' },
+    { id: 'dyes', label: 'Colours', desc: 'Red 40, Yellow 5, Blue 1' },
+    { id: 'hfcs', label: 'Added sugars & sweeteners', desc: 'Sweeteners and syrups' },
+    { id: 'emulsifiers', label: 'Emulsifiers', desc: 'Ingredients such as Polysorbate 80' },
+    { id: 'oils', label: 'Oils you choose to watch', desc: 'Selected cooking and processing oils' },
   ];
 
   return (
@@ -950,17 +838,17 @@ function AdditivePrioritiesCard({ cardW, C, selected, onToggle }: { cardW: numbe
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 10: Personal Allergen Defense Card (REDESIGNED TO LIST STYLE)
+// STEP 6: Personal Ingredient Preferences
 // ─────────────────────────────────────────────────────────
 function AllergenDefenseCard({ cardW, C, selected, onToggle }: { cardW: number; C: any; selected: string[]; onToggle: (a: string) => void }) {
   const items = [
-    { id: 'None', label: 'I do not have any Allergy', icon: <Shield size={18} color="#00C288" /> },
+    { id: 'None', label: 'No allergies to flag', icon: <Shield size={18} color="#00C288" /> },
     { id: 'Gluten', label: 'Gluten & Wheat', icon: <Layers size={18} color="#D8B65C" /> },
     { id: 'Dairy', label: 'Dairy & Milk', icon: <Droplets size={18} color="#4D8DE8" /> },
-    { id: 'Soy', label: 'Soy Derivatives', icon: <Layers3 size={18} color="#00C288" /> },
+    { id: 'Soy', label: 'Soy', icon: <Layers3 size={18} color="#00C288" /> },
     { id: 'Nuts', label: 'Tree Nuts & Peanuts', icon: <Shield size={18} color="#FF6D00" /> },
-    { id: 'Eggs', label: 'Egg Products', icon: <CircleAlert size={18} color="#F5A623" /> },
-    { id: 'Palm Oil', label: 'Palm & Seed Oils', icon: <Droplets size={18} color="#EF4444" /> },
+    { id: 'Eggs', label: 'Eggs', icon: <CircleAlert size={18} color="#F5A623" /> },
+    { id: 'Palm Oil', label: 'Oils', icon: <Droplets size={18} color="#EF4444" /> },
   ];
 
   return (
@@ -972,7 +860,7 @@ function AllergenDefenseCard({ cardW, C, selected, onToggle }: { cardW: number; 
             <Text style={{ color: C.text, fontSize: 14, fontWeight: '900' }}>Ingredient & Allergen Shield</Text>
           </View>
           <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600' }}>
-            BiteFix alerts you the moment any scanned product contains checked items.
+            BiteFix can flag selected allergens and ingredients when they appear in available product data.
           </Text>
         </View>
       </StickyNoteCard>
@@ -1016,25 +904,25 @@ function AllergenDefenseCard({ cardW, C, selected, onToggle }: { cardW: number; 
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 12: Carbon Footprint & Quality (POSITIVE POINTS ONLY)
+// STEP 7: Environmental Impact
 // ─────────────────────────────────────────────────────────
 function EcoQualityFocusCard({ cardW, C }: { cardW: number; C: any }) {
   const points = [
     {
       label: 'CO₂ Impact Tracking',
-      desc: 'Highlights food choices with low global warming and gas footprint.',
+      desc: 'Shows available carbon-impact information for the product.',
       icon: <Globe size={18} color="#4D8DE8" />,
       tag: 'CARBON'
     },
     {
-      label: 'Organic & Sourcing Check',
-      desc: 'Verify bio labels, pesticide-free, and clean quality certifications.',
+      label: 'Sourcing Signals',
+      desc: 'Highlights available sourcing and certification information.',
       icon: <CheckCircle size={18} color="#00C288" />,
       tag: 'SOURCING'
     },
     {
       label: 'Eco-Packaging Detection',
-      desc: 'Flags single-use plastics and prioritizes fully recyclable packaging.',
+      desc: 'Highlights available packaging information and recyclability signals.',
       icon: <Layers size={18} color="#D8B65C" />,
       tag: 'PACKAGING'
     },
@@ -1047,12 +935,12 @@ function EcoQualityFocusCard({ cardW, C }: { cardW: number; C: any }) {
         <View style={{ gap: 8 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Text style={{ color: C.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase' }}>
-              Carbon Footprint Shield
+              Environmental Impact
             </Text>
           </View>
 
           <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600' }}>
-            Instantly measure eco emissions and clean quality indicators during your scan.
+            Review available carbon, sourcing, and packaging signals when they are provided.
           </Text>
 
           {/* Liquid Glass Scanner status */}
@@ -1073,7 +961,7 @@ function EcoQualityFocusCard({ cardW, C }: { cardW: number; C: any }) {
                 </View>
               </View>
               <View style={{ backgroundColor: 'rgba(0, 201, 139, 0.12)', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 8 }}>
-                <Text style={{ color: MINT_DARK, fontSize: 9, fontWeight: '900' }}>A+ ECO GRADE</Text>
+                <Text style={{ color: MINT_DARK, fontSize: 9, fontWeight: '900' }}>ECO ESTIMATE</Text>
               </View>
             </View>
 
@@ -1081,7 +969,7 @@ function EcoQualityFocusCard({ cardW, C }: { cardW: number; C: any }) {
             <View style={{ gap: 4 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Text style={{ color: C.textSub, fontSize: 10, fontWeight: '700' }}>Carbon Footprint</Text>
-                <Text style={{ color: MINT_DARK, fontSize: 10, fontWeight: '900' }}>LOW CO₂ IMPACT</Text>
+                <Text style={{ color: MINT_DARK, fontSize: 10, fontWeight: '900' }}>LOWER CO₂ ESTIMATE</Text>
               </View>
 
               {/* Glass progress bar */}
@@ -1116,7 +1004,7 @@ function EcoQualityFocusCard({ cardW, C }: { cardW: number; C: any }) {
 
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 1 }}>
                 <Text style={{ color: C.textMuted, fontSize: 9, fontWeight: '600' }}>0.2kg CO₂e per liter</Text>
-                <Text style={{ color: C.textMuted, fontSize: 9, fontWeight: '600' }}>Low Carbon Choice</Text>
+                <Text style={{ color: C.textMuted, fontSize: 9, fontWeight: '600' }}>Carbon estimate</Text>
               </View>
             </View>
           </View>
@@ -1155,23 +1043,23 @@ function EcoQualityFocusCard({ cardW, C }: { cardW: number; C: any }) {
 
 
 // ─────────────────────────────────────────────────────────
-// STEP 12: Calculation Loader Card (UPDATED WITH LOGO & SLOGAN)
+// STEP 8: Profile Preparation
 // ─────────────────────────────────────────────────────────
 function HealthAnalysisCalculationCard({ cardW, C, onComplete }: { cardW: number; C: any; onComplete: () => void }) {
   const [progress, setProgress] = useState(0);
   const [phases, setPhases] = useState([
-    { label: 'Mapping Additive Defense & Shield...', status: 'loading' },
-    { label: 'Indexing Ingredient Safety Database...', status: 'pending' },
-    { label: 'Building Personal Healthy Basket Engine...', status: 'pending' },
+    { label: 'Preparing ingredient and product analysis...', status: 'loading' },
+    { label: 'Reviewing available product data...', status: 'pending' },
+    { label: 'Preparing your personalized scan view...', status: 'pending' },
   ]);
 
   useEffect(() => {
     const t1 = setTimeout(() => {
       setProgress(38);
       setPhases([
-        { label: 'Mapping Additive Defense & Shield...', status: 'done' },
-        { label: 'Indexing Ingredient Safety Database...', status: 'loading' },
-        { label: 'Building Personal Healthy Basket Engine...', status: 'pending' },
+        { label: 'Preparing ingredient and product analysis...', status: 'done' },
+        { label: 'Reviewing available product data...', status: 'loading' },
+        { label: 'Preparing your personalized scan view...', status: 'pending' },
       ]);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }, 1800);
@@ -1179,9 +1067,9 @@ function HealthAnalysisCalculationCard({ cardW, C, onComplete }: { cardW: number
     const t2 = setTimeout(() => {
       setProgress(74);
       setPhases([
-        { label: 'Mapping Additive Defense & Shield...', status: 'done' },
-        { label: 'Indexing Ingredient Safety Database...', status: 'done' },
-        { label: 'Building Personal Healthy Basket Engine...', status: 'loading' },
+        { label: 'Preparing ingredient and product analysis...', status: 'done' },
+        { label: 'Reviewing available product data...', status: 'done' },
+        { label: 'Preparing your personalized scan view...', status: 'loading' },
       ]);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }, 3600);
@@ -1189,9 +1077,9 @@ function HealthAnalysisCalculationCard({ cardW, C, onComplete }: { cardW: number
     const t3 = setTimeout(() => {
       setProgress(100);
       setPhases([
-        { label: 'Mapping Additive Defense & Shield...', status: 'done' },
-        { label: 'Indexing Ingredient Safety Database...', status: 'done' },
-        { label: 'Building Personal Healthy Basket Engine...', status: 'done' },
+        { label: 'Preparing ingredient and product analysis...', status: 'done' },
+        { label: 'Reviewing available product data...', status: 'done' },
+        { label: 'Preparing your personalized scan view...', status: 'done' },
       ]);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }, 5000);
@@ -1219,7 +1107,7 @@ function HealthAnalysisCalculationCard({ cardW, C, onComplete }: { cardW: number
           <Text style={{ color: C.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.5 }}>BiteFix</Text>
         </View>
         <Text style={{ color: MINT_DARK, fontSize: 11, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase' }}>
-          Scan & Eat Clean
+          Food Data, Decoded
         </Text>
       </View>
 
@@ -1308,17 +1196,17 @@ function HealthAnalysisCalculationCard({ cardW, C, onComplete }: { cardW: number
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 13: Instant Result Summary
+// STEP 9: Instant Result Summary
 // ─────────────────────────────────────────────────────────
 function InstantResultSummaryCard({ cardW, C }: { cardW: number; C: any }) {
   const features = [
-    { id: '1', title: 'Health Score', desc: 'Instant 0-100 quality gauge', icon: <Activity size={20} color={MINT_DARK} /> },
+    { id: '1', title: 'BiteFix Food Score', desc: 'A quick snapshot based on available product data', icon: <Activity size={20} color={MINT_DARK} /> },
     { id: '2', title: 'NOVA Scale', desc: 'Processing level detection (1 to 4)', icon: <Layers size={20} color="#F5A623" /> },
     { id: '3', title: 'Nutri-Score', desc: 'European nutrition grades (A to E)', icon: <Heart size={20} color="#00C288" /> },
-    { id: '4', title: 'Additive Alerts', desc: 'Surfaces colours & emulsifiers', icon: <AlertTriangle size={20} color="#EF4444" /> },
-    { id: '5', title: 'Gut Shield', desc: 'Checks against gut watchlist', icon: <ShieldCheck size={20} color={MINT_DARK} /> },
-    { id: '6', title: 'Sugar Detective', desc: 'Detects hidden sugars & sweeteners', icon: <Apple size={20} color={MINT_DARK} /> },
-    { id: '7', title: 'Carbon Footprint', desc: 'CO₂ impact per product at a glance', icon: <Globe size={20} color="#4D8DE8" /> },
+    { id: '4', title: 'Additive Review', desc: 'Highlights identified colours and emulsifiers', icon: <AlertTriangle size={20} color="#EF4444" /> },
+    { id: '5', title: 'Ingredient Watch', desc: 'Checks selected ingredients against your watchlist', icon: <ShieldCheck size={20} color={MINT_DARK} /> },
+    { id: '6', title: 'Sugar Insights', desc: 'Highlights listed sugars and sweetening ingredients', icon: <Apple size={20} color={MINT_DARK} /> },
+    { id: '7', title: 'Carbon Footprint', desc: 'Available CO₂ impact information at a glance', icon: <Globe size={20} color="#4D8DE8" /> },
   ];
 
   return (
@@ -1342,7 +1230,7 @@ function InstantResultSummaryCard({ cardW, C }: { cardW: number; C: any }) {
 }
 
 // ─────────────────────────────────────────────────────────
-// STEP 14: Paywall Blueprint Summary Card (REDESIGNED)
+// STEP 10: Final Activation Summary
 // ─────────────────────────────────────────────────────────
 function PaywallTransitionCard({ cardW, C, allergenFilters }: { cardW: number; C: any; allergenFilters: string[] }) {
   return (
@@ -1352,10 +1240,10 @@ function PaywallTransitionCard({ cardW, C, allergenFilters }: { cardW: number; C
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Award size={22} color={GOLD} />
-              <Text style={{ color: C.text, fontSize: 15, fontWeight: '900' }}>BiteFix Food Blueprint</Text>
+              <Text style={{ color: C.text, fontSize: 15, fontWeight: '900' }}>Your BiteFix Profile</Text>
             </View>
             <View style={{ backgroundColor: GOLD, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
-              <Text style={{ color: '#0B0D0F', fontSize: 9.5, fontWeight: '900' }}>VERIFIED</Text>
+              <Text style={{ color: '#0B0D0F', fontSize: 9.5, fontWeight: '900' }}>READY</Text>
             </View>
           </View>
 
@@ -1363,15 +1251,15 @@ function PaywallTransitionCard({ cardW, C, allergenFilters }: { cardW: number; C
 
           <View style={{ gap: 8 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '700' }}>Allergen Shields Active</Text>
+              <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '700' }}>Ingredient Preferences</Text>
               <Text style={{ color: C.text, fontSize: 12, fontWeight: '900' }}>{allergenFilters.length} Configured</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '700' }}>NOVA 4 Ultra-Processed Guard</Text>
+              <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '700' }}>NOVA Processing View</Text>
               <Text style={{ color: MINT_DARK, fontSize: 12, fontWeight: '900' }}>ACTIVE</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '700' }}>Sugar Detective</Text>
+              <Text style={{ color: C.textSub, fontSize: 11.5, fontWeight: '700' }}>Sugar Insights</Text>
               <Text style={{ color: MINT_DARK, fontSize: 12, fontWeight: '900' }}>READY</Text>
             </View>
           </View>
@@ -1381,7 +1269,7 @@ function PaywallTransitionCard({ cardW, C, allergenFilters }: { cardW: number; C
       <View style={{ backgroundColor: C.card, borderRadius: 16, padding: 12, borderWidth: 1, borderColor: C.cardBorder, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <Info size={18} color={MINT_DARK} />
         <Text style={{ color: C.textSub, fontSize: 11, fontWeight: '600', flex: 1 }}>
-          Your profile is locked and synced with your camera scanner.
+          Your preferences are saved and ready for your first scan.
         </Text>
       </View>
     </View>
@@ -1404,17 +1292,16 @@ interface SlideData {
 
 const SLIDES: SlideData[] = [
   { step: 0, title: 'Welcome', highlight: '', subtitle: '', buttonLabel: 'Get Started', mascotState: 'idle', mascotSpeech: '', isLast: false },
-  { step: 1, title: 'BiteFix: Your Personel Food Intelligence Assistant!', highlight: 'Food Intelligence', subtitle: 'Tell us your name. BiteFix will shape every scan around your priorities.', buttonLabel: 'Personalize My Scanner', mascotState: 'happy', mascotSpeech: "Hey! I'm your BiteFix scanner mascot.", isLast: false },
-  { step: 2, title: 'How often do you read store labels?', highlight: 'read store labels?', subtitle: 'Fine print ingredient lists can hide artificial additives behind complex numbers.', buttonLabel: 'Continue', mascotState: 'scanning', mascotSpeech: 'I decode hidden fine-print ingredients for you!', isLast: false },
-  { step: 3, title: 'What should every scan protect?', highlight: 'protect?', subtitle: 'Select your core health focus. BiteFix will highlight it on every barcode.', buttonLabel: 'Set My Priority', mascotState: 'happy', mascotSpeech: 'Your priorities guide every single scan!', isLast: false },
-  { step: 4, title: 'The label rarely tells the whole story', highlight: 'whole story', subtitle: 'Processing levels and cosmetic additives lurk behind bright packaging.', buttonLabel: 'Show Me What I Miss', mascotState: 'caution', mascotSpeech: '73% of supermarket foods are ultra-processed!', isLast: false },
-  { step: 5, title: 'How your food costing you?', highlight: 'costing you?', subtitle: 'Select the everyday fatigue signals you want BiteFix to keep in view.', buttonLabel: 'Add to My Profile', mascotState: 'thinking', mascotSpeech: 'Let us keep energy slumps and fog away.', isLast: false },
-  { step: 6, title: 'Choose your ingredient watchlist', highlight: 'watchlist', subtitle: 'BiteFix will surface these ingredients clearly—without hiding them in fine print.', buttonLabel: 'Activate Watchlist', mascotState: 'caution', mascotSpeech: 'Watchlist active! No sneaky additives allowed.', isLast: false },
-  { step: 7, title: 'Your personal ingredient shield', highlight: 'ingredient shield', subtitle: 'Choose allergens or ingredients that should never enter your basket.', buttonLabel: 'Lock My Shield', mascotState: 'happy', mascotSpeech: 'Locking down your personal allergen shield.', isLast: false },
-  { step: 8, title: 'Carbon Footprint', highlight: 'Carbon Footprint', subtitle: 'See the Environmental impact of Packaged Food', buttonLabel: 'Activate Carbon Shield', mascotState: 'happy', mascotSpeech: 'Eating clean, saving the planet!', isLast: false },
-  { step: 9, title: 'Forging your Food Shield', highlight: 'Food Shield', subtitle: 'Mapping your NOVA parameters, Gut Shield, and additive watchlist engine.', buttonLabel: 'Analyzing', mascotState: 'scanning', mascotSpeech: 'Forging your BiteFix profile...', isLast: false },
-  { step: 10, title: 'Seven layers of intelligence—ready', highlight: 'ready', subtitle: 'Every barcode now returns a clear, personal decision—not another label to decode.', buttonLabel: 'View My Shield', mascotState: 'happy', mascotSpeech: 'You get deep health checks per barcode!', isLast: false },
-  { step: 11, title: 'Your scanner now knows what matters', highlight: 'what matters', subtitle: 'Your Food Shield and Healthy Basket are configured and ready to use.', buttonLabel: 'Activate BiteFix', mascotState: 'happy', mascotSpeech: 'Your Food Shield is fully armed and ready!', isLast: true },
+  { step: 1, title: 'Let’s Make BiteFix Yours', highlight: 'BiteFix Yours', subtitle: 'Tell us your name so we can personalize your BiteFix experience.', buttonLabel: 'Personalize My Scanner', mascotState: 'happy', mascotSpeech: "Hey! I’m your BiteFix scanner mascot.", isLast: false },
+  { step: 2, title: 'How Much Label Reading Do You Do?', highlight: 'Label Reading', subtitle: 'Tell us how much time you usually spend decoding ingredient labels while shopping.', buttonLabel: 'Continue', mascotState: 'scanning', mascotSpeech: 'I’ll turn the fine print into a faster overview.', isLast: false },
+  { step: 3, title: 'What Matters Most to You?', highlight: 'Matters Most', subtitle: 'Choose what you want BiteFix to emphasize when you scan.', buttonLabel: 'Set My Priority', mascotState: 'happy', mascotSpeech: 'Your priorities guide what I highlight.', isLast: false },
+  { step: 4, title: 'There’s More Behind the Front of the Pack', highlight: 'More Behind', subtitle: 'Processing level and ingredient details can be difficult to judge quickly while shopping.', buttonLabel: 'Show Me What I Miss', mascotState: 'caution', mascotSpeech: 'I’ll help you spot processing levels at a glance.', isLast: false },
+  { step: 5, title: 'Choose Your Ingredient Watchlist', highlight: 'Ingredient Watchlist', subtitle: 'BiteFix will bring these ingredients into view so you can review them faster.', buttonLabel: 'Activate Watchlist', mascotState: 'caution', mascotSpeech: 'Your ingredient watchlist is ready.', isLast: false },
+  { step: 6, title: 'Set Your Ingredient Preferences', highlight: 'Ingredient Preferences', subtitle: 'Choose allergens or ingredients you want BiteFix to flag during scans.', buttonLabel: 'Set My Preferences', mascotState: 'happy', mascotSpeech: 'I’ll keep your selected preferences in view.', isLast: false },
+  { step: 7, title: 'See Environmental Signals Too', highlight: 'Environmental Signals', subtitle: 'See environmental signals alongside your food data.', buttonLabel: 'Continue', mascotState: 'happy', mascotSpeech: 'I’ll surface available environmental signals too.', isLast: false },
+  { step: 8, title: 'Building Your BiteFix Profile', highlight: 'BiteFix Profile', subtitle: 'Preparing the settings and analysis view for your scanner.', buttonLabel: 'Preparing', mascotState: 'scanning', mascotSpeech: 'Setting up your BiteFix experience...', isLast: false },
+  { step: 9, title: 'Your Scan, At a Glance', highlight: 'At a Glance', subtitle: 'Every barcode turns available food data into a clear, easy-to-read snapshot.', buttonLabel: 'View My Scanner', mascotState: 'happy', mascotSpeech: 'Ready to turn product data into useful insights.', isLast: false },
+  { step: 10, title: 'Your BiteFix Scanner Is Ready', highlight: 'Scanner Is Ready', subtitle: 'Your preferences are saved. Scan your first product to see BiteFix in action.', buttonLabel: 'Activate BiteFix', mascotState: 'happy', mascotSpeech: 'You’re ready for your first scan.', isLast: true },
 ];
 
 function DotIndicator({ active, C }: { active: boolean; C: any }) {
@@ -1546,7 +1433,7 @@ function WelcomeScreen({ onNext, isShort, insets, isDark }: { onNext: () => void
               BiteFix
             </Text>
             <Text style={{ color: '#6B7280', fontSize: 8, fontWeight: '800', letterSpacing: 0.8, textTransform: 'uppercase', marginTop: 1 }}>
-              Scan to Eat-Clean
+              Food, decoded.
             </Text>
           </View>
         </View>
@@ -1593,9 +1480,9 @@ function WelcomeScreen({ onNext, isShort, insets, isDark }: { onNext: () => void
           />
 
           {/* 4 Floating HUD Badges */}
-          <WelcomeHudBadge label="Gut Shield" icon={ShieldCheckSvg} color="#4A602F" style={{ top: 22, left: -6 }} />
-          <WelcomeHudBadge label="Eco-Score" icon={GlobeSvg} color="#4D8DE8" style={{ top: 22, right: -6 }} />
-          <WelcomeHudBadge label="NOVA-4 Alert" icon={WarningSvg} color="#D84C5B" style={{ bottom: 22, left: -6 }} />
+          <WelcomeHudBadge label="Ingredient Watch" icon={ShieldCheckSvg} color="#4A602F" style={{ top: 22, left: -6 }} />
+          <WelcomeHudBadge label="Eco Impact" icon={GlobeSvg} color="#4D8DE8" style={{ top: 22, right: -6 }} />
+          <WelcomeHudBadge label="Processing Level" icon={WarningSvg} color="#D84C5B" style={{ bottom: 22, left: -6 }} />
           <WelcomeHudBadge label="Sugar Load" icon={CandySvg} color="#D8B65C" style={{ bottom: 22, right: -6 }} />
         </View>
 
@@ -1611,7 +1498,7 @@ function WelcomeScreen({ onNext, isShort, insets, isDark }: { onNext: () => void
               letterSpacing: -0.6,
               lineHeight: 40
             }}>
-              Know What's
+              Stop Reading.
             </Text>
             <Text style={{
               color: '#4A602F', // Deep Leaf Green
@@ -1621,7 +1508,17 @@ function WelcomeScreen({ onNext, isShort, insets, isDark }: { onNext: () => void
               letterSpacing: -0.6,
               lineHeight: 40
             }}>
-              Inside Your Food
+              Start Scanning.
+            </Text>
+            <Text style={{
+              color: '#4A602F',
+              fontSize: 34,
+              fontWeight: '900',
+              textAlign: 'center',
+              letterSpacing: -0.6,
+              lineHeight: 40
+            }}>
+              Get Instant Insights.
             </Text>
           </View>
 
@@ -1675,10 +1572,10 @@ function WelcomeScreen({ onNext, isShort, insets, isDark }: { onNext: () => void
 export default function OnboardingScreen() {
   const {
     setProfile, setOnboardingComplete,
-    toggleAllergenFilter, allergenFilters, setAllergenFilters,
-    dietPreference, setDietPreference,
-    trackEcoScore, setTrackEcoScore,
-    trackOrganic, setTrackOrganic
+    allergenFilters, setAllergenFilters,
+    setDietPreference,
+    setTrackEcoScore,
+    setTrackOrganic
   } = useAppStore();
 
   useEffect(() => {
@@ -1728,7 +1625,7 @@ export default function OnboardingScreen() {
   const hasRequestedCamera = React.useRef(false);
 
   useEffect(() => {
-    if ((currentSlide === 9 || currentSlide === 10) && !hasRequestedCamera.current) {
+    if ((currentSlide === 8 || currentSlide === 9) && !hasRequestedCamera.current) {
       if (cameraPermission && !cameraPermission.granted && cameraPermission.canAskAgain) {
         hasRequestedCamera.current = true;
         requestCameraPermission().catch(() => { });
@@ -1738,10 +1635,8 @@ export default function OnboardingScreen() {
 
   // User Form State
   const [userName, setUserName] = useState('');
-  const [dailyMealSource, setDailyMealSource] = useState('');
   const [labelRoutine, setLabelRoutine] = useState('');
   const [userGoals, setUserGoals] = useState<GoalOption[]>([]);
-  const [symptoms, setSymptoms] = useState<string[]>([]);
   const [additives, setAdditives] = useState<string[]>([]);
 
   const handleNext = async () => {
@@ -1780,9 +1675,8 @@ export default function OnboardingScreen() {
     if (currentSlide === 1 && !userName.trim()) return true;
     if (currentSlide === 2 && !labelRoutine) return true;
     if (currentSlide === 3 && userGoals.length === 0) return true;
-    if (currentSlide === 5 && symptoms.length === 0) return true;
-    if (currentSlide === 6 && additives.length === 0) return true;
-    if (currentSlide === 7 && allergenFilters.length === 0) return true;
+    if (currentSlide === 5 && additives.length === 0) return true;
+    if (currentSlide === 6 && allergenFilters.length === 0) return true;
     return false;
   };
 
@@ -1790,7 +1684,6 @@ export default function OnboardingScreen() {
   const isShort = height < 700;
   const cardW = Math.min(width - 32, 380);
 
-  const toggleSymptom = (id: string) => setSymptoms((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   const toggleAdditive = (id: string) => setAdditives((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   return (
@@ -1806,7 +1699,7 @@ export default function OnboardingScreen() {
         <>
           <LuxuryBackdrop C={C} />
 
-          {/* Pre-warm images for slide 6 (ChipSwapDemoCard) off-screen to avoid mounting layout flash */}
+          {/* Pre-warm images for the demo assets (ChipSwapDemoCard) off-screen to avoid mounting layout flash */}
           <View style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }} pointerEvents="none">
             <ExpoImage source={require('../../../assets/images/ultra_chips.png')} style={{ width: 1, height: 1 }} />
             <ExpoImage source={require('../../../assets/images/artisan_swaps.png')} style={{ width: 1, height: 1 }} />
@@ -1815,7 +1708,7 @@ export default function OnboardingScreen() {
           <View style={{ flex: 1, paddingTop: insets.top + 6, paddingBottom: insets.bottom + 12, paddingHorizontal: 16 }}>
             {/* Header Bar */}
             <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, marginBottom: 4, justifyContent: 'flex-start' }}>
-              {currentSlide > 1 && currentSlide !== 9 && (
+              {currentSlide > 1 && currentSlide !== 8 && (
                 <TouchableOpacity
                   accessibilityRole="button"
                   accessibilityLabel="Go back"
@@ -1854,7 +1747,7 @@ export default function OnboardingScreen() {
               </View>
 
               {/* Dynamic Mascot Header (On screens index 8, 9, 10, 11) */}
-              {currentSlide !== 8 && currentSlide !== 9 && currentSlide !== 10 && currentSlide !== 11 && (
+              {currentSlide !== 7 && currentSlide !== 8 && currentSlide !== 9 && currentSlide !== 10 && (
                 <MascotDrawingBoardHeader state={slide.mascotState} speech={slide.mascotSpeech} C={C} isDark={isDark} />
               )}
 
@@ -1865,9 +1758,8 @@ export default function OnboardingScreen() {
                   {currentSlide === 2 && <LabelInspectionRoutineCard cardW={cardW} C={C} value={labelRoutine} onSelect={setLabelRoutine} />}
                   {currentSlide === 3 && <GoalCard cardW={cardW} C={C} selected={userGoals} onSelect={setUserGoals} />}
                   {currentSlide === 4 && <NovaWakeUpCard cardW={cardW} C={C} />}
-                  {currentSlide === 5 && <SymptomAuditCard cardW={cardW} C={C} selected={symptoms} onToggle={toggleSymptom} />}
-                  {currentSlide === 6 && <AdditivePrioritiesCard cardW={cardW} C={C} selected={additives} onToggle={toggleAdditive} />}
-                  {currentSlide === 7 && (
+                  {currentSlide === 5 && <AdditivePrioritiesCard cardW={cardW} C={C} selected={additives} onToggle={toggleAdditive} />}
+                  {currentSlide === 6 && (
                     <AllergenDefenseCard
                       cardW={cardW}
                       C={C}
@@ -1887,16 +1779,16 @@ export default function OnboardingScreen() {
                       }}
                     />
                   )}
-                  {currentSlide === 8 && <EcoQualityFocusCard cardW={cardW} C={C} />}
-                  {currentSlide === 9 && <HealthAnalysisCalculationCard cardW={cardW} C={C} onComplete={() => setCurrentSlide(10)} />}
-                  {currentSlide === 10 && <InstantResultSummaryCard cardW={cardW} C={C} />}
-                  {currentSlide === 11 && <PaywallTransitionCard cardW={cardW} C={C} allergenFilters={allergenFilters} />}
+                  {currentSlide === 7 && <EcoQualityFocusCard cardW={cardW} C={C} />}
+                  {currentSlide === 8 && <HealthAnalysisCalculationCard cardW={cardW} C={C} onComplete={() => setCurrentSlide(9)} />}
+                  {currentSlide === 9 && <InstantResultSummaryCard cardW={cardW} C={C} />}
+                  {currentSlide === 10 && <PaywallTransitionCard cardW={cardW} C={C} allergenFilters={allergenFilters} />}
                 </Animated.View>
               </View>
             </ScrollView>
 
             {/* Pinned Bottom Navigation & CTA */}
-            {currentSlide !== 9 && (
+            {currentSlide !== 8 && (
               <View style={{ width: '100%', gap: 10, marginTop: 6, paddingTop: 8, borderTopWidth: 1, borderTopColor: C.cardBorder }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 5 }}>
                   {SLIDES.slice(1).map((_, idx) => (

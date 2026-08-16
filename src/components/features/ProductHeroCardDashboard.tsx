@@ -8,6 +8,7 @@ import { useAppStore } from '../../stores/appStore';
 import { getNovaColor, getNovaShortLabel, getBiteFixScoreColor } from '../../utils/format';
 import { AdditiveDetail } from '../../types/app.types';
 import { NutriScoreTrafficLight } from './NutriScoreTrafficLight';
+import { ProductDataSourcePill, ProductDataStatusPill } from './ProductDataPills';
 import Svg, { Circle, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import AnimatedReanimated, {
   useSharedValue,
@@ -34,6 +35,8 @@ export interface ProductHeroCardDashboardProps {
     servingSize?: string;
     whoLimitServingPercent?: number;
     isDefaultServing?: boolean;
+    productDataStatus?: 'complete' | 'partial';
+    productDataSources?: ('open_food_facts' | 'usda_fooddata_central')[];
     analysis?: {
       summary?: string;
     };
@@ -286,6 +289,20 @@ export default function ProductHeroCardDashboard({
           >
             {scanResult.name}
           </Text>
+          {(scanResult.productDataStatus || (scanResult.productDataSources && scanResult.productDataSources.length > 0)) && (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+              <ProductDataStatusPill
+                status={scanResult.productDataStatus}
+                colors={colors}
+                isDark={isDark}
+              />
+              <ProductDataSourcePill
+                sources={scanResult.productDataSources}
+                colors={colors}
+                isDark={isDark}
+              />
+            </View>
+          )}
         </View>
       </View>
 
@@ -365,7 +382,7 @@ export default function ProductHeroCardDashboard({
               }}>
                 <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: ratingColor }} />
                 <Text style={{ color: colors.text, fontSize: 10, fontWeight: '900', letterSpacing: 0.4 }}>
-                  PURITY SCORE: {biteFixScore}
+                  BITEFIX FOOD SCORE: {biteFixScore}
                 </Text>
               </View>
             </View>

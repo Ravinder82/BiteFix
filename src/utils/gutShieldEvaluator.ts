@@ -54,43 +54,43 @@ export function evaluateGutHealth(additives: AdditiveDetail[]): {
   const vectorMap: Record<GutDisruptorType, GutVectorDetail> = {
     emulsifier: {
       id: 'emulsifier',
-      title: 'Mucosal Barrier Integrity',
-      shortLabel: 'Mucus Barrier',
+      title: 'Emulsifiers / Stabilizers',
+      shortLabel: 'Emulsifiers',
       icon: 'ShieldAlert',
       status: 'clean',
       additivesFound: [],
-      description: 'Disrupts protective gut lining mucus layers.',
-      clinicalImpact: 'Synthetic emulsifiers like Carrageenan & CMC strip protective mucin layers, allowing bacterial translocation & low-grade intestinal inflammation.'
+      description: 'Ingredient review for emulsifiers and stabilizers.',
+      clinicalImpact: 'Identified emulsifiers or stabilizers in the available ingredient information.'
     },
     sweetener: {
       id: 'sweetener',
-      title: 'Microbiome Balance & Glycemic',
-      shortLabel: 'Microbiome Balance',
+      title: 'Sweeteners / Sugar Alternatives',
+      shortLabel: 'Sweeteners',
       icon: 'Heart',
       status: 'clean',
       additivesFound: [],
-      description: 'Alters beneficial flora diversity and glucose signaling.',
-      clinicalImpact: 'Non-nutritive artificial sweeteners (Sucralose, Saccharin) alter Bacteroidetes/Firmicutes ratios and disrupt glycemic homeostatic signals.'
+      description: 'Ingredient review for sweeteners and sugar alternatives.',
+      clinicalImpact: 'Identified sweeteners or sugar alternatives in the available ingredient information.'
     },
     preservative: {
       id: 'preservative',
-      title: 'Bacterial Flora Preservation',
-      shortLabel: 'Bacterial Flora',
+      title: 'Additives / Acidity Regulators',
+      shortLabel: 'Additives',
       icon: 'Activity',
       status: 'clean',
       additivesFound: [],
-      description: 'Antimicrobial chemicals inhibit beneficial probiotics.',
-      clinicalImpact: 'Industrial food preservatives designed to inhibit mold & bacteria in packaging also act as broad-spectrum antimicrobial agents against gut probiotics.'
+      description: 'Ingredient review for preservatives and acidity regulators.',
+      clinicalImpact: 'Identified preservatives or acidity regulators in the available ingredient information.'
     },
     dye: {
       id: 'dye',
-      title: 'Cellular Sensitivities & Dyes',
-      shortLabel: 'Cellular Sensitivity',
+      title: 'Colours / Additives',
+      shortLabel: 'Colours',
       icon: 'Sparkles',
       status: 'clean',
       additivesFound: [],
-      description: 'Synthetic colorants with potential immune hypersensitivity.',
-      clinicalImpact: 'Azo-dyes and petroleum-derived colorants offer zero nutrition and are linked to mast cell degranulation & histamine responses in sensitive guts.'
+      description: 'Ingredient review for colours and related additives.',
+      clinicalImpact: 'Identified colours or related additives in the available ingredient information.'
     }
   };
 
@@ -100,7 +100,7 @@ export function evaluateGutHealth(additives: AdditiveDetail[]): {
       score: 100,
       insights: [],
       vectors: defaultVectors,
-      statusLabel: 'Pristine Microbiome Safe',
+      statusLabel: 'No Ingredients Flagged',
       statusColor: '#10B981',
     };
   }
@@ -158,14 +158,14 @@ export function evaluateGutHealth(additives: AdditiveDetail[]): {
       severity: v.status === 'disrupted' ? 'high' : 'medium'
     }));
 
-  let statusLabel = 'Pristine Microbiome Safe';
+  let statusLabel = 'No Ingredients Flagged';
   let statusColor = '#10B981';
 
   if (score < 50) {
-    statusLabel = 'HIGH INFLAMMATION RISK';
+    statusLabel = 'Flagged';
     statusColor = '#EF4444';
   } else if (score < 80) {
-    statusLabel = 'MODERATE DISRUPTION';
+    statusLabel = 'Review';
     statusColor = '#F59E0B';
   }
 
@@ -177,4 +177,3 @@ export function evaluateGutHealth(additives: AdditiveDetail[]): {
     statusColor
   };
 }
-

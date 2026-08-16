@@ -119,15 +119,20 @@ To test the app, please point the camera at any of the barcodes below.
 These are printed on common grocery products available worldwide.
 
 Test Barcodes (EAN/UPC — point camera directly at these numbers):
-
+EAN-13
 1. Coca-Cola 330ml Can       → 5449000000996
-2. Lay's Classic Chips       → 028400090179
-3. Kellogg's Corn Flakes     → 5010029211300
-4. Nutella 400g              → 3017620422003
-5. Quaker Oats               → 030000010686
+2. Nutella 400g              → 3017620422003
+3. Sanitarium Weet-Bix 575 g.  9300652805048
+
+UPC-A
+3. Cheerios Cinnamon Oat Crunch 18.2 oz	016000163614
+4. Kraft Peanut Butter   068100084214
+
+This is just so reviewer can test the barcode scanner because this website needs the type of barcodes first and then it show real product barcode, click refresh to create barcode after input of digits of barcode in a particular type selected from left sidebar of the website.
 
 To display a barcode without a physical product:
-1. Open https://barcode.tec-it.com/en/EAN13 on a second screen
+1. Open https://barcode.tec-it.com/en/EAN13 for EAN-13 and https://barcode.tec-it.com/en/UPCA?data=72527273070
+for UPC-A on a second screen. 
 2. Enter any barcode number above → Generate
 3. Point the test device camera at the barcode on screen
 

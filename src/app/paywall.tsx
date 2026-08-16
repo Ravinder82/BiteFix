@@ -32,6 +32,7 @@ import { useAppStore } from '../stores/appStore';
 import { OrbMascot } from '../components/features/OrbMascot';
 import { MagicalBackground } from '../components/features/MagicalBackground';
 import { SubscriptionModal } from '../components/SubscriptionModal';
+import { PaywallDisclaimerModal } from '../components/PaywallDisclaimerModal';
 import {
   ShieldCheck,
   RefreshCw,
@@ -128,6 +129,7 @@ export default function PaywallScreen() {
   const hasFreeScansAvailable = !isPremium && remainingFreeScans > 0;
 
   const [isModalVisible, setIsModalVisible] = useState(!hasFreeScansAvailable);
+  const [disclaimerVisible, setDisclaimerVisible] = useState(false);
 
   // If the user is already premium after the status check, redirect immediately
   useEffect(() => {
@@ -306,6 +308,19 @@ export default function PaywallScreen() {
             Subscribe to Premium
           </Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setDisclaimerVisible(true);
+          }}
+          activeOpacity={0.75}
+          style={{ alignSelf: 'center', marginTop: 12, paddingVertical: 4, paddingHorizontal: 8 }}
+        >
+          <Text style={{ color: colors.textSecondary, fontSize: 11.5, fontWeight: '800', textDecorationLine: 'underline' }}>
+            Disclaimer
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* ── Subscription Bottom Sheet Modal ───────────────── */}
@@ -313,6 +328,11 @@ export default function PaywallScreen() {
         visible={isModalVisible} 
         onClose={() => setIsModalVisible(false)} 
         showCloseButton={hasFreeScansAvailable}
+      />
+
+      <PaywallDisclaimerModal
+        visible={disclaimerVisible}
+        onClose={() => setDisclaimerVisible(false)}
       />
     </SafeAreaView>
   );

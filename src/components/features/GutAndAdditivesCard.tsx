@@ -83,10 +83,12 @@ function GutShieldCard({
           </View>
           <View>
             <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', letterSpacing: -0.3 }}>
-              Gut Shield Pro
+              Gut Ingredient Review
             </Text>
             <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', marginTop: 1 }}>
-              {isHealthy ? 'Microbiome Friendly' : `${gutInsights.length} Disruptor${gutInsights.length !== 1 ? 's' : ''} Found`}
+              {gutInsights.length === 0
+                ? 'Based on available ingredient information'
+                : `${gutInsights.length} Ingredient${gutInsights.length !== 1 ? 's' : ''} Flagged for Review`}
             </Text>
           </View>
         </View>
@@ -100,7 +102,9 @@ function GutShieldCard({
           paddingVertical: 5,
           borderRadius: 20,
         }}>
-          <Text style={{ color: accent, fontSize: 12, fontWeight: '900' }}>{label}</Text>
+          <Text style={{ color: accent, fontSize: 12, fontWeight: '900' }}>
+            {isHealthy ? 'No Flags' : isModerate ? 'Review' : 'Flagged'}
+          </Text>
         </View>
       </View>
 
@@ -132,7 +136,7 @@ function GutShieldCard({
         }}>
           <Sparkles size={14} color={accent} />
           <Text style={{ color: colors.text, fontSize: 11.5, fontWeight: '700', flex: 1 }}>
-            No gut barrier disruptors detected · Safe for intestinal lining
+            No ingredients were flagged in this review based on available ingredient information.
           </Text>
         </View>
       ) : (
@@ -156,7 +160,7 @@ function GutShieldCard({
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
                   <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: sev }} />
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>{ins.title}</Text>
+                  <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>{ins.title}</Text>
                     {ins.additivesFound?.length > 0 && (
                       <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '600', marginTop: 1 }} numberOfLines={1}>
                         {ins.additivesFound.map((a: any) => a.displayName).join(', ')}
@@ -169,7 +173,7 @@ function GutShieldCard({
                   borderWidth: 1, paddingHorizontal: 7, paddingVertical: 2.5, borderRadius: 6,
                 }}>
                   <Text style={{ color: sev, fontSize: 9, fontWeight: '900', textTransform: 'uppercase' }}>
-                    {ins.severity || 'Caution'}
+                    {ins.severity === 'high' ? 'Flagged' : 'Review'}
                   </Text>
                 </View>
               </View>
@@ -242,7 +246,7 @@ function AdditiveDetectiveCard({
               Additive Detective
             </Text>
             <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', marginTop: 1 }}>
-              {additives.length} Total Additives Audited
+              {additives.length} Additives Identified
             </Text>
           </View>
         </View>
@@ -258,7 +262,7 @@ function AdditiveDetectiveCard({
           borderRadius: 7,
         }}>
           <Text style={{ color: accent, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 }}>
-            {isClean ? 'CLEAN LABEL' : `${elevated.length + moderate.length} DETECTED`}
+            {isClean ? 'NONE FLAGGED' : `${elevated.length + moderate.length} FLAGGED`}
           </Text>
         </View>
       </View>
@@ -269,12 +273,15 @@ function AdditiveDetectiveCard({
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <CheckCircle2 size={14} color={accentClean} />
             <Text style={{ color: colors.text, fontSize: 11.5, fontWeight: '700', flex: 1 }}>
-              No artificial dyes, chemical preservatives, or high-risk emulsifiers detected.
+              No additives were identified from the available ingredient information.
             </Text>
           </View>
         ) : (
-          // Pill tag cloud — each additive as a forensic chip
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+          <View style={{ gap: 10 }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '700' }}>
+              Based on available ingredient information.
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {additives.map((item, idx) => {
               const isEl = item.riskLevel === 'elevated';
               const isMod = item.riskLevel === 'moderate';
@@ -315,6 +322,7 @@ function AdditiveDetectiveCard({
                 </View>
               );
             })}
+          </View>
           </View>
         )}
       </View>

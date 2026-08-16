@@ -21,6 +21,8 @@ interface AppState {
   trackEcoScore: boolean;
   trackOrganic: boolean;
   activeScanResult: any | null;
+  totalProductsScanned: number;
+  totalProductsNotFound: number;
 
   // Actions
   setOnboardingComplete: (complete: boolean) => void;
@@ -43,6 +45,8 @@ interface AppState {
   setTrackEcoScore: (track: boolean) => void;
   setTrackOrganic: (track: boolean) => void;
   setActiveScanResult: (result: any | null) => void;
+  incrementProductsScanned: () => void;
+  incrementProductsNotFound: () => void;
 
   // Collection Actions
   addToCollection: (item: ScanHistoryItem, category?: BiteFixCategory, notes?: string) => void;
@@ -89,6 +93,10 @@ function normalizePersistedState(persistedState: unknown, version: number): Part
     state.trackEcoScore = state.trackEcoScore ?? false;
     state.trackOrganic = state.trackOrganic ?? false;
   }
+  if (version < 7) {
+    state.totalProductsScanned = state.totalProductsScanned ?? 0;
+    state.totalProductsNotFound = state.totalProductsNotFound ?? 0;
+  }
 
   return {
     ...state,
@@ -108,6 +116,8 @@ function normalizePersistedState(persistedState: unknown, version: number): Part
     dietPreference: ['vegan', 'vegetarian', 'standard'].includes(state.dietPreference) ? state.dietPreference : 'standard',
     trackEcoScore: typeof state.trackEcoScore === 'boolean' ? state.trackEcoScore : false,
     trackOrganic: typeof state.trackOrganic === 'boolean' ? state.trackOrganic : false,
+    totalProductsScanned: typeof state.totalProductsScanned === 'number' ? state.totalProductsScanned : 0,
+    totalProductsNotFound: typeof state.totalProductsNotFound === 'number' ? state.totalProductsNotFound : 0,
   };
 }
 
@@ -130,6 +140,8 @@ export const useAppStore = create<AppState>()(
       trackEcoScore: false,
       trackOrganic: false,
       activeScanResult: null,
+      totalProductsScanned: 0,
+      totalProductsNotFound: 0,
 
       setOnboardingComplete: (complete) => set({ onboardingComplete: complete }),
       setTheme: (theme) => set({ theme }),
@@ -181,6 +193,8 @@ export const useAppStore = create<AppState>()(
       setTrackEcoScore: (track) => set({ trackEcoScore: track }),
       setTrackOrganic: (track) => set({ trackOrganic: track }),
       setActiveScanResult: (result) => set({ activeScanResult: result }),
+      incrementProductsScanned: () => set((state) => ({ totalProductsScanned: state.totalProductsScanned + 1 })),
+      incrementProductsNotFound: () => set((state) => ({ totalProductsNotFound: state.totalProductsNotFound + 1 })),
 
       addToCollection: (item, category, notes) => set((state) => {
         // Prevent duplicates by ID or barcode/name
@@ -223,12 +237,14 @@ export const useAppStore = create<AppState>()(
         isPremium: false,
         freeScansUsed: 0,
         activeScanResult: null,
+        totalProductsScanned: 0,
+        totalProductsNotFound: 0,
       }),
     }),
     {
       name: '@bitefix-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 6,
+      version: 7,
       partialize: (state) => {
         // Exclude ephemeral in-memory activeScanResult from persistent storage
         const { activeScanResult, ...rest } = state;
@@ -237,7 +253,7 @@ export const useAppStore = create<AppState>()(
       migrate: normalizePersistedState,
       merge: (persistedState, currentState) => ({
         ...currentState,
-        ...normalizePersistedState(persistedState, 6),
+        ...normalizePersistedState(persistedState, 7),
       }),
       onRehydrateStorage: () => (_state, error) => {
         if (error) {

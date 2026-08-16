@@ -1,22 +1,3 @@
-<p align="center">
-  <img src="assets/icon.png" width="100" style="border-radius: 22px" />
-</p>
-
-<h1 align="center">BiteFix</h1>
-<p align="center">
-  <strong>Scan any food barcode. Get an instant, personalised health verdict.</strong><br/>
-  Built with Expo · React Native · RevenueCat · OpenFoodFacts
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Expo-51-black?logo=expo" />
-  <img src="https://img.shields.io/badge/React%20Native-0.74-blue?logo=react" />
-  <img src="https://img.shields.io/badge/TypeScript-5-blue?logo=typescript" />
-  <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey" />
-</p>
-
----
-
 ## What is BiteFix?
 
 BiteFix is a food intelligence scanner. Point your camera at any packaged food barcode and instantly see:

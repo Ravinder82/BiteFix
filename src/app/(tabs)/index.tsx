@@ -8,6 +8,7 @@ import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import ProductHeroCardDashboard from '../../components/features/ProductHeroCardDashboard';
+import { MainDisclaimerModal } from '../../components/MainDisclaimerModal';
 import { GutAndAdditivesCard } from '../../components/features/GutAndAdditivesCard';
 import { EcoScoreCard } from '../../components/EcoScoreCard';
 import { ScanBarcode, Settings, Flame, Candy, ShieldAlert, Globe, Activity, Award, Heart } from 'lucide-react-native';
@@ -121,12 +122,15 @@ export default function HomeScreen() {
     dietPreference,
     allergenFilters,
     activeScanResult,
-    setActiveScanResult
+    setActiveScanResult,
+    totalProductsScanned,
+    totalProductsNotFound,
   } = useAppStore();
 
   const hasActiveResult = activeScanResult !== null && activeScanResult !== undefined;
 
   const [activeIndex, setActiveIndex] = useState(0);
+  const [disclaimerModalVisible, setDisclaimerModalVisible] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   const screenWidth = Dimensions.get('window').width;
@@ -433,6 +437,48 @@ export default function HomeScreen() {
                 <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', lineHeight: 15, marginTop: 2 }}>
                   Scan a barcode to audit ingredients, additives, sugars, and environmental impact.
                 </Text>
+
+                <View
+                  style={{
+                    marginTop: 14,
+                    borderRadius: 14,
+                    paddingHorizontal: 12,
+                    paddingVertical: 10,
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                    borderWidth: 1,
+                    borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                    gap: 8,
+                  }}
+                  accessible
+                  accessibilityLabel={`Products scanned ${totalProductsScanned}. Products not found ${totalProductsNotFound}.`}
+                >
+                  {[
+                    { label: 'PRODUCTS SCANNED', value: totalProductsScanned, color: colors.primary },
+                    { label: 'NOT FOUND', value: totalProductsNotFound, color: isDark ? '#FBBF24' : '#D97706' },
+                  ].map((item) => (
+                    <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <View
+                        style={{
+                          width: 7,
+                          height: 7,
+                          borderRadius: 3.5,
+                          backgroundColor: item.color,
+                          shadowColor: item.color,
+                          shadowOffset: { width: 0, height: 0 },
+                          shadowOpacity: 0.9,
+                          shadowRadius: 4,
+                          marginRight: 8,
+                        }}
+                      />
+                      <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', letterSpacing: 1.2 }}>
+                        {item.label}
+                      </Text>
+                      <Text style={{ color: colors.text, fontSize: 15, fontWeight: '900', marginLeft: 'auto', letterSpacing: -0.3 }}>
+                        {item.value}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
               </View>
 
               <View style={{ width: 100, height: 100, alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
@@ -491,14 +537,15 @@ export default function HomeScreen() {
           </View>
         ) : (
           /* Active Scanned Product Dashboard Layout */
-          <ScanResultCards
-            activeScanResult={activeScanResult}
-            alerts={alerts}
-            colors={colors}
-            isDark={isDark}
-            gutHealthData={gutHealthData}
-            animatedSugarProps={animatedSugarProps}
-            animatedSmallSugarProps={animatedSmallSugarProps}
+        <ScanResultCards
+          activeScanResult={activeScanResult}
+          alerts={alerts}
+          colors={colors}
+          isDark={isDark}
+          onOpenDisclaimer={() => setDisclaimerModalVisible(true)}
+          gutHealthData={gutHealthData}
+          animatedSugarProps={animatedSugarProps}
+          animatedSmallSugarProps={animatedSmallSugarProps}
             totalSugarTeaspoons={totalSugarTeaspoons}
             totalBasketCalories={totalBasketCalories}
             burnDownActivities={burnDownActivities}
@@ -506,6 +553,10 @@ export default function HomeScreen() {
           />
         )}
       </ScrollView>
+      <MainDisclaimerModal
+        visible={disclaimerModalVisible}
+        onClose={() => setDisclaimerModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -515,7 +566,7 @@ export default function HomeScreen() {
 function ScanResultCards({
   activeScanResult, alerts, colors, isDark, gutHealthData,
   animatedSugarProps, animatedSmallSugarProps,
-  totalSugarTeaspoons, totalBasketCalories, burnDownActivities, formatBurnTime,
+  totalSugarTeaspoons, totalBasketCalories, burnDownActivities, formatBurnTime, onOpenDisclaimer,
 }: any) {
   const card1 = useMountAnim(60);
   const card2 = useMountAnim(140);
@@ -594,7 +645,7 @@ function ScanResultCards({
                   </View>
                   <View>
                     <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', letterSpacing: -0.3 }}>
-                      Total Sugar Load
+                      Estimated Sugar Equivalent
                     </Text>
                     <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', marginTop: 1 }}>
                       Serving: {activeScanResult.servingSize || '100 g / 100 ml'}
@@ -619,17 +670,27 @@ function ScanResultCards({
               </View>
 
               {/* Main Teaspoons & Grams Row */}
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginBottom: 14 }}>
-                <AnimatedTextInput
-                  animatedProps={animatedSugarProps}
-                  editable={false}
-                  style={{ color: colors.text, fontSize: 40, fontWeight: '900', letterSpacing: -1.5, padding: 0, margin: 0 }}
-                />
-                <Text style={{ color: isDark ? '#FBBF24' : '#D97706', fontSize: 16, fontWeight: '800' }}>
-                  teaspoons
-                </Text>
-                <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', marginLeft: 'auto' }}>
-                  {activeScanResult.sugarGrams ?? activeScanResult.sugarPer100g ?? 0}g per serving
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10, marginBottom: 14 }}>
+                <View>
+                  <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+                    <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.8 }}>
+                      ≈
+                    </Text>
+                    <AnimatedTextInput
+                      animatedProps={animatedSugarProps}
+                      editable={false}
+                      style={{ color: colors.text, fontSize: 40, fontWeight: '900', letterSpacing: -1.5, padding: 0, margin: 0 }}
+                    />
+                    <Text style={{ color: isDark ? '#FBBF24' : '#D97706', fontSize: 16, fontWeight: '800' }}>
+                      tsp
+                    </Text>
+                  </View>
+                  <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '700', marginTop: 2 }}>
+                    sugar equivalent
+                  </Text>
+                </View>
+                <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', marginBottom: 4 }}>
+                  {activeScanResult.sugarGrams ?? activeScanResult.sugarPer100g ?? 0} g per serving
                 </Text>
               </View>
 
@@ -645,10 +706,10 @@ function ScanResultCards({
                   }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Text style={{ color: colors.textSecondary, fontSize: 11.5, fontWeight: '700' }}>
-                        WHO Daily Limit Impact
+                        Daily Reference Comparison
                       </Text>
                       <Text style={{ color: gaugeColor, fontSize: 12, fontWeight: '900' }}>
-                        {whoPercent}% of 50g max
+                        {whoPercent}% of 50 g reference
                       </Text>
                     </View>
                     <View style={{ height: 8, borderRadius: 4, overflow: 'hidden', backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}>
@@ -667,7 +728,7 @@ function ScanResultCards({
                   borderWidth: 1, borderRadius: 14, padding: 12, gap: 6,
                 }}>
                   <Text style={{ color: isDark ? '#F87171' : '#DC2626', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    ⚠️ Stealth Sugars Detected ({activeScanResult.hiddenSugarCount || activeScanResult.hiddenSugars.length})
+                    Sugar-Related Ingredients Found ({activeScanResult.hiddenSugarCount || activeScanResult.hiddenSugars.length})
                   </Text>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                     {activeScanResult.hiddenSugars.map((s: string, idx: number) => (
@@ -722,10 +783,10 @@ function ScanResultCards({
                   </View>
                   <View>
                     <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', letterSpacing: -0.3 }}>
-                      Burn Down Energy
+                      Activity Equivalent
                     </Text>
                     <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', marginTop: 1 }}>
-                      Activity Required to Burn
+                      Approximate Activity Time
                     </Text>
                   </View>
                 </View>
@@ -772,7 +833,7 @@ function ScanResultCards({
                       paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8,
                     }}>
                       <Text style={{ color: act.color, fontSize: 13, fontWeight: '900' }}>
-                        {formatBurnTime(act.mins)}
+                        ≈{formatBurnTime(act.mins)}
                       </Text>
                     </View>
                   </View>
@@ -780,6 +841,19 @@ function ScanResultCards({
               </View>
             </View>
             </AnimatedReanimated.View>
+
+      <AnimatedReanimated.View style={card5}>
+        <View style={{ alignItems: 'center', paddingTop: 2, paddingBottom: 6 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '600', marginBottom: 6 }}>
+            Results are based on available product data.
+          </Text>
+          <TouchableOpacity onPress={onOpenDisclaimer} activeOpacity={0.75}>
+            <Text style={{ color: colors.textSecondary, fontSize: 11.5, fontWeight: '800', textDecorationLine: 'underline' }}>
+              Disclaimer
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </AnimatedReanimated.View>
     </View>
   );
 }

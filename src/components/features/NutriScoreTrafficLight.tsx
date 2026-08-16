@@ -25,32 +25,32 @@ export const NUTRI_SCORE_CONFIG: Record<string, GradeConfig> = {
   a: {
     letter: 'A',
     color: '#038141', // Dark Green
-    label: 'Excellent Quality',
-    desc: 'Optimal nutrient balance rich in fiber & protein',
+    label: 'Stronger Nutrition Profile',
+    desc: 'More favorable nutrition profile based on available data',
   },
   b: {
     letter: 'B',
     color: '#85BB2F', // Light Green
-    label: 'Good Quality',
-    desc: 'Healthy nutritional profile with low negative factors',
+    label: 'Balanced Nutrition Profile',
+    desc: 'Balanced nutrition profile based on available data',
   },
   c: {
     letter: 'C',
     color: '#FECB02', // Yellow / Amber
-    label: 'Moderate Quality',
-    desc: 'Average balance of sugars, fats, and positive nutrients',
+    label: 'Moderate Nutrition Profile',
+    desc: 'Mixed nutrition profile based on available data',
   },
   d: {
     letter: 'D',
     color: '#EE8100', // Orange
-    label: 'Poor Quality',
-    desc: 'High in sugars, saturated fats, calories, or salt',
+    label: 'Lower Nutrition Profile',
+    desc: 'Higher in sugar, saturated fat, calories, or salt',
   },
   e: {
     letter: 'E',
     color: '#E63E11', // Red
-    label: 'Lowest Quality',
-    desc: 'Heavy nutritional penalty; consume sparingly',
+    label: 'Lowest Nutrition Profile',
+    desc: 'Less favorable nutrition profile based on available data',
   },
 };
 

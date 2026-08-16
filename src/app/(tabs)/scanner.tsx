@@ -101,7 +101,7 @@ const PRODUCT_BARCODE_TYPES = ['qr', 'upc_a', 'upc_e', 'ean13', 'ean8', 'code128
 // ─────────────────────────────────────────────────────────
 export default function ScannerScreen() {
   const { colors, isDark } = useTheme();
-  const { sugarUnit, addToCollection, collection, isPremium, freeScansUsed, incrementFreeScans, allergenFilters, dietPreference, setActiveScanResult } = useAppStore();
+  const { sugarUnit, addToCollection, collection, isPremium, freeScansUsed, incrementFreeScans, allergenFilters, dietPreference, setActiveScanResult, incrementProductsScanned, incrementProductsNotFound } = useAppStore();
 
   const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
   const reticleWidth = 350;
@@ -427,6 +427,7 @@ export default function ScannerScreen() {
           id: `${barcode}_${Date.now()}`,
           scanTimestamp: Date.now(),
         };
+        incrementProductsScanned();
         setActiveScanResult(freshResult);
         setMode('camera');
         setScanResult(null);
@@ -438,6 +439,9 @@ export default function ScannerScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         router.push('/');
       } else {
+        if (!localErrorMsg) {
+          incrementProductsNotFound();
+        }
         activeLookupControllerRef.current = null;
         loadingRef.current = false;
         setLoading(false);
@@ -456,7 +460,7 @@ export default function ScannerScreen() {
         scanCooldownTimerRef.current = null;
       }, SCAN_COOLDOWN_MS);
     }
-  }, [freeScansUsed, incrementFreeScans, isPremium, setActiveScanResult]);
+  }, [freeScansUsed, incrementFreeScans, incrementProductsNotFound, incrementProductsScanned, isPremium, setActiveScanResult]);
 
 
 
@@ -785,10 +789,13 @@ export default function ScannerScreen() {
           <View style={{ alignItems: 'center', marginBottom: 32 }}>
             <Mascot state="dizzy" size={140} />
             <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', marginTop: 24, textAlign: 'center' }}>
-              Product Not Found!
+              Product Not Found
             </Text>
             <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginTop: 12, lineHeight: 22, paddingHorizontal: 24 }}>
-              We couldn't find this barcode in our global OpenFoodFacts or USDA databases. Please ensure good lighting and try scanning another barcode!
+              We couldn't find a matching product in the food databases currently available to BiteFix, including Open Food Facts and USDA FoodData Central.
+            </Text>
+            <Text style={{ color: 'rgba(255,255,255,0.72)', fontSize: 15, textAlign: 'center', lineHeight: 21, marginTop: 10 }}>
+              This does not mean the product is unsafe or unavailable. The product may simply not be present in the available databases.
             </Text>
           </View>
 

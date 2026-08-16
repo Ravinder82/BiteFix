@@ -34,6 +34,12 @@ export interface AdditiveDetail {
 }
 
 // ─────────────────────────────────────────────────────────
+// Scan Result Data Provenance
+// ─────────────────────────────────────────────────────────
+export type ProductDataStatus = 'complete' | 'partial';
+export type ProductDataSource = 'open_food_facts' | 'usda_fooddata_central';
+
+// ─────────────────────────────────────────────────────────
 // Scan History Item (BiteFix-aware)
 // ─────────────────────────────────────────────────────────
 export interface ScanHistoryItem {
@@ -64,6 +70,8 @@ export interface ScanHistoryItem {
   hasHiddenSugars?: boolean;
   hiddenSugars?: string[];
   hiddenSugarCount?: number;
+  productDataStatus?: ProductDataStatus;
+  productDataSources?: ProductDataSource[];
 
   // ── BiteFix Extensions ──────────────────────────────
   /** NOVA processing class (1-4). undefined = unknown */

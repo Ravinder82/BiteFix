@@ -66,10 +66,10 @@ export function EcoScoreCard({ grade, carbonFootprint, isOrganic, isVegan, isVeg
   const ecoColor = getEcoColor(normalizedGrade);
 
   const getImpactText = (co2?: number, g?: string) => {
-    if (g === 'a' || (co2 !== undefined && co2 <= 100)) return 'Ultra-Low Climate Footprint';
-    if (g === 'b' || (co2 !== undefined && co2 <= 250)) return 'Low Environmental Impact';
-    if (g === 'c' || (co2 !== undefined && co2 <= 500)) return 'Moderate Ecological Footprint';
-    return 'High Carbon Intensity';
+    if (g === 'a' || (co2 !== undefined && co2 <= 100)) return 'Lower Carbon Estimate';
+    if (g === 'b' || (co2 !== undefined && co2 <= 250)) return 'Moderate Carbon Estimate';
+    if (g === 'c' || (co2 !== undefined && co2 <= 500)) return 'Higher Carbon Estimate';
+    return 'Highest Carbon Estimate';
   };
 
   // Thermometer bar: map CO2 to 0–100% (0g=best, 800g+=worst)
@@ -157,8 +157,8 @@ export function EcoScoreCard({ grade, carbonFootprint, isOrganic, isVegan, isVeg
               <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', letterSpacing: -0.4 }}>
                 Carbon Footprint
               </Text>
-              <Text style={{ color: isDark ? '#2DD4BF' : '#0F766E', fontSize: 10, fontWeight: '800', letterSpacing: 1.2 }}>
-                EXCLUSIVE PLANETARY AUDIT
+              <Text style={{ color: isDark ? '#2DD4BF' : '#0F766E', fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
+                Carbon Footprint Estimate
               </Text>
             </View>
           </View>
@@ -205,7 +205,7 @@ export function EcoScoreCard({ grade, carbonFootprint, isOrganic, isVegan, isVeg
           <View style={{ gap: 6 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '700' }}>
-                Planetary Scale
+                Reference Scale
               </Text>
               <Text style={{ color: thermColor, fontSize: 10.5, fontWeight: '900' }}>
                 {getImpactText(carbonFootprint, normalizedGrade)}

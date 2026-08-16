@@ -8,6 +8,7 @@ import { ChevronRight, ArrowLeft, ShieldAlert, HeartHandshake, Eye, Moon, Layers
 import * as Haptics from 'expo-haptics';
 import { getIapService } from '../../services/iapLoader';
 import Constants from 'expo-constants';
+import { MainDisclaimerModal } from '../../components/MainDisclaimerModal';
 
 export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   const { colors, theme, toggleTheme, isDark } = useTheme();
@@ -19,6 +20,7 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
   const [supportModalVisible, setSupportModalVisible] = useState(false);
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
+  const [disclaimerModalVisible, setDisclaimerModalVisible] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [subDetails, setSubDetails] = useState<{ planType: string; purchaseDate: string; autoRenew: boolean } | null>(null);
 
@@ -336,6 +338,12 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
             colors={colors}
           />
           <SettingsRowItem
+            label="Disclaimer"
+            icon={<Info size={16} color={colors.primary} />}
+            onPress={() => setDisclaimerModalVisible(true)}
+            colors={colors}
+          />
+          <SettingsRowItem
             label="Data Attribution & Licenses"
             icon={<Info size={16} color={colors.primary} />}
             onPress={() => {
@@ -641,6 +649,11 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
           </ScrollView>
         </SafeAreaView>
       </Modal>
+
+      <MainDisclaimerModal
+        visible={disclaimerModalVisible}
+        onClose={() => setDisclaimerModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -701,4 +714,3 @@ function SettingsRowItem({ label, icon, onPress, textColor = 'normal', colors, i
     </TouchableOpacity>
   );
 }
-

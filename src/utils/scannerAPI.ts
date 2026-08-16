@@ -1,4 +1,4 @@
-import { NOVAClass, AdditiveDetail, AdditiveRiskLevel } from '../types/app.types';
+import { NOVAClass, AdditiveDetail, AdditiveRiskLevel, ProductDataSource, ProductDataStatus } from '../types/app.types';
 import { detectStealthSugars } from './stealthSugarDetector';
 
 export interface ScanResultData {
@@ -23,6 +23,8 @@ export interface ScanResultData {
   hasHiddenSugars?: boolean;
   hiddenSugars?: string[];
   hiddenSugarCount?: number;
+  productDataStatus?: ProductDataStatus;
+  productDataSources?: ProductDataSource[];
 
   // ── BiteFix Extensions ──────────────────────────────
   novaClass?: NOVAClass;
@@ -798,10 +800,92 @@ async function fetchUsdaFoodData(barcode: string, signal: AbortSignal): Promise<
   return null;
 }
 
+type ProductDataCoverage = {
+  hasIdentity: boolean;
+  hasIngredients: boolean;
+  hasSugar: boolean;
+  hasCalories: boolean;
+  hasCarbs: boolean;
+  hasFat: boolean;
+  hasProtein: boolean;
+};
+
+function hasNonEmptyString(value: unknown): boolean {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function getNutritionPayload(p: any): Record<string, any> {
+  if (!p || typeof p !== 'object') return {};
+  const nutriments = p.nutriments ?? p.nutrition_grades ?? p.nutrition_data ?? {};
+  return nutriments && typeof nutriments === 'object' ? nutriments : {};
+}
+
+function hasNumericValue(value: unknown): boolean {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function getProductDataCoverage(p: any): ProductDataCoverage {
+  const nutriments = getNutritionPayload(p);
+  const caloriesKj = extractNumberFromKeys(nutriments, ['energy-kj_100g', 'energy-kj', 'energy_100g']);
+
+  return {
+    hasIdentity: hasNonEmptyString(p?.product_name) ||
+      hasNonEmptyString(p?.description) ||
+      hasNonEmptyString(p?.brands) ||
+      hasNonEmptyString(p?.brandOwner) ||
+      hasNonEmptyString(p?.brandName) ||
+      hasNonEmptyString(p?.image_front_url) ||
+      hasNonEmptyString(p?.image_url),
+    hasIngredients: hasNonEmptyString(p?.ingredients_text_en) || hasNonEmptyString(p?.ingredients_text) || hasNonEmptyString(p?.ingredients),
+    hasSugar: hasNumericValue(extractNumberFromKeys(nutriments, ['sugars_100g', 'sugars', 'sugars_value', 'sugars-total_100g', 'sugars-total', 'added-sugars_100g', 'added-sugars', 'added-sugars_value'])),
+    hasCalories: hasNumericValue(extractNumberFromKeys(nutriments, ['energy-kcal_100g', 'energy-kcal', 'energy-kcal_value', 'energy-kcal_serving'])) || hasNumericValue(caloriesKj),
+    hasCarbs: hasNumericValue(extractNumberFromKeys(nutriments, ['carbohydrates_100g', 'carbohydrates', 'carbohydrates_value', 'carbohydrates_serving'])),
+    hasFat: hasNumericValue(extractNumberFromKeys(nutriments, ['fat_100g', 'fat', 'fat_value', 'fat_serving'])),
+    hasProtein: hasNumericValue(extractNumberFromKeys(nutriments, ['proteins_100g', 'proteins', 'proteins_value', 'proteins_serving'])),
+  };
+}
+
+function hasMeaningfulProductDataContribution(coverage: ProductDataCoverage): boolean {
+  return coverage.hasIdentity ||
+    coverage.hasIngredients ||
+    coverage.hasSugar ||
+    coverage.hasCalories ||
+    coverage.hasCarbs ||
+    coverage.hasFat ||
+    coverage.hasProtein;
+}
+
+function didUsdaContributeEnrichment(offCoverage: ProductDataCoverage, usdaCoverage: ProductDataCoverage): boolean {
+  return (!offCoverage.hasIngredients && usdaCoverage.hasIngredients) ||
+    (!offCoverage.hasSugar && usdaCoverage.hasSugar) ||
+    (!offCoverage.hasCalories && usdaCoverage.hasCalories) ||
+    (!offCoverage.hasCarbs && usdaCoverage.hasCarbs) ||
+    (!offCoverage.hasFat && usdaCoverage.hasFat) ||
+    (!offCoverage.hasProtein && usdaCoverage.hasProtein);
+}
+
+function resolveProductDataStatus(coverage: ProductDataCoverage): ProductDataStatus {
+  return coverage.hasIdentity &&
+    coverage.hasIngredients &&
+    coverage.hasSugar &&
+    coverage.hasCalories &&
+    coverage.hasCarbs &&
+    coverage.hasFat &&
+    coverage.hasProtein
+    ? 'complete'
+    : 'partial';
+}
+
 // ─────────────────────────────────────────────────────────
 // UNIVERSAL DATA NORMALIZATION ENGINE
 // ─────────────────────────────────────────────────────────
-export function normalizeProductPayload(p: any): ScanResultData {
+export function normalizeProductPayload(
+  p: any,
+  metadata?: {
+    productDataStatus?: ProductDataStatus;
+    productDataSources?: ProductDataSource[];
+  }
+): ScanResultData {
   const name = extractUniversalName(p);
   const brand = extractUniversalBrand(p);
   const imageUrl = p.image_front_url || p.image_url || p.image_front_small_url || undefined;
@@ -974,6 +1058,8 @@ export function normalizeProductPayload(p: any): ScanResultData {
     hasHiddenSugars: stealthAnalysis.hasHiddenSugars,
     hiddenSugars: stealthAnalysis.matches,
     hiddenSugarCount: stealthAnalysis.hiddenSugarCount,
+    productDataStatus: metadata?.productDataStatus,
+    productDataSources: metadata?.productDataSources,
     novaClass,
     additives,
     additiveCount,
@@ -991,6 +1077,8 @@ export function normalizeProductPayload(p: any): ScanResultData {
 export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal): Promise<ScanResultData | null> {
   const candidates = generateBarcodeCandidates(barcode);
   let resData: any = null;
+  const productDataSources = new Set<ProductDataSource>();
+  let offCoverage: ProductDataCoverage | null = null;
 
   try {
     // ─── PASS 1: OpenFoodFacts v3 in Parallel ───
@@ -1017,6 +1105,12 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
 
     const offResults = await Promise.all(offPromises);
     resData = offResults.find((r) => r?.product);
+    if (resData?.product) {
+      offCoverage = getProductDataCoverage(resData.product);
+      if (hasMeaningfulProductDataContribution(offCoverage)) {
+        productDataSources.add('open_food_facts');
+      }
+    }
 
     // ─── PASS 2: USDA Fallback in Parallel (If OFF returned no product) ───
     if (!resData?.product) {
@@ -1028,6 +1122,10 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
       const usdaFound = usdaResults.find((r) => r);
       if (usdaFound) {
         resData = { product: usdaFound };
+        const usdaCoverage = getProductDataCoverage(usdaFound);
+        if (hasMeaningfulProductDataContribution(usdaCoverage)) {
+          productDataSources.add('usda_fooddata_central');
+        }
       }
     }
 
@@ -1052,6 +1150,10 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
         const usdaResults = await Promise.all(usdaPromises);
         const usdaData = usdaResults.find((r) => r);
         if (usdaData) {
+          const usdaCoverage = getProductDataCoverage(usdaData);
+          if (!offCoverage || didUsdaContributeEnrichment(offCoverage, usdaCoverage)) {
+            productDataSources.add('usda_fooddata_central');
+          }
           console.log(`[BiteFix] Hybrid Merge: Enriched product "${p.product_name}" with official USDA nutrition/ingredients specs.`);
           p.nutriments = { ...(usdaData.nutriments || {}), ...(p.nutriments || {}) };
           if (!hasIngredients && usdaData.ingredients_text) {
@@ -1067,7 +1169,11 @@ export async function lookupOpenFoodFacts(barcode: string, signal: AbortSignal):
     }
 
     // Normalize raw payload through Universal Normalizer Pipeline
-    return normalizeProductPayload(resData.product);
+    const finalCoverage = getProductDataCoverage(resData.product);
+    return normalizeProductPayload(resData.product, {
+      productDataStatus: resolveProductDataStatus(finalCoverage),
+      productDataSources: Array.from(productDataSources),
+    });
   } catch (err: any) {
     if (signal.aborted || isAbortError(err)) return null;
     throw err;
