@@ -273,7 +273,9 @@ export default function HomeScreen() {
             source={item.image}
             style={{ width: '100%', height: '100%' }}
             contentFit="cover"
-            transition={300}
+            priority="high"
+            cachePolicy="memory-disk"
+            transition={0}
           />
           <LinearGradient
             colors={['rgba(0,0,0,0)', isDark ? 'rgba(17, 20, 23, 0.95)' : 'rgba(255, 255, 255, 0.95)']}
@@ -512,6 +514,9 @@ export default function HomeScreen() {
                 snapToInterval={cardWidth + 12}
                 snapToAlignment="center"
                 decelerationRate="fast"
+                initialNumToRender={2}
+                maxToRenderPerBatch={2}
+                windowSize={3}
                 contentContainerStyle={{
                   paddingHorizontal: 14,
                 }}

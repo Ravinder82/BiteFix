@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Animated,
+  Easing,
   Image,
   AccessibilityInfo,
   StatusBar,
@@ -64,17 +65,34 @@ function useReduceMotion() {
 }
 
 // ── Screen 0: Welcome ─────────────────────────────────────
-function WelcomeScreen({ colors }: { colors: any }) {
+function WelcomeScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28 }}>
-      <View style={{ width: 100, height: 100, borderRadius: 28, backgroundColor: GREEN_DIM, alignItems: 'center', justifyContent: 'center', marginBottom: 28, borderWidth: 1, borderColor: GREEN + '40' }}>
-        <Image source={require('../../../assets/icon.png')} style={{ width: 76, height: 76, borderRadius: 20 }} resizeMode="contain" />
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28, overflow: 'hidden' }}>
+      {/* Background layer */}
+      <Image
+        source={require('../../../assets/images/welcome_bg.png')}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100%',
+          height: '100%',
+          opacity: isDark ? 0.16 : 0.38,
+        }}
+        resizeMode="cover"
+      />
+
+      <View style={{ width: 92, height: 92, borderRadius: 26, backgroundColor: GREEN_DIM, alignItems: 'center', justifyContent: 'center', marginBottom: 24, borderWidth: 1, borderColor: GREEN + '40' }}>
+        <Image source={require('../../../assets/icon.png')} style={{ width: 70, height: 70, borderRadius: 18 }} resizeMode="contain" />
       </View>
+
       <Text style={{ color: GREEN, fontSize: 11, fontWeight: '800', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>BiteFix</Text>
-      <Text style={{ color: colors.text, fontSize: 28, fontWeight: '900', textAlign: 'center', lineHeight: 36, letterSpacing: -0.5, marginBottom: 16 }} numberOfLines={4} adjustsFontSizeToFit>
+      <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', textAlign: 'center', lineHeight: 34, letterSpacing: -0.5, marginBottom: 16 }} numberOfLines={3} adjustsFontSizeToFit>
         Stop Reading.{'\n'}Start Scanning.{'\n'}Get Instant Insights.
       </Text>
-      <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '500', textAlign: 'center', lineHeight: 21 }}>
+      <Text style={{ color: colors.textSecondary, fontSize: 13.5, fontWeight: '500', textAlign: 'center', lineHeight: 20 }}>
         Scan any barcode and BiteFix turns available food data into a clear, readable snapshot — in seconds.
       </Text>
     </View>
@@ -350,13 +368,15 @@ function ResultPreviewScreen({ colors, isDark }: { colors: any; isDark: boolean 
         <View style={{ height: 1, backgroundColor: borderDivider, marginBottom: 10 }} />
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
           {[
-            { label: 'BiteFix Score', value: '54', color: '#FBBF24' },
+            { label: 'BiteFix Intelligence Score™', value: '54', color: '#FBBF24' },
             { label: 'NOVA', value: '4', color: '#F87171' },
             { label: 'Nutri-Score', value: 'D', color: '#FB923C' },
           ].map((item) => (
             <View key={item.label} style={{ flex: 1, minWidth: 70, backgroundColor: item.color + '15', borderRadius: 10, padding: 8, alignItems: 'center', borderWidth: 1, borderColor: item.color + '30' }}>
               <Text style={{ color: item.color, fontSize: 16, fontWeight: '900' }}>{item.value}</Text>
-              <Text style={{ color: colors.textMuted, fontSize: 8.5, fontWeight: '700', marginTop: 2 }}>{item.label}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 8, fontWeight: '700', marginTop: 2, textAlign: 'center' }} numberOfLines={1}>
+                {item.label}
+              </Text>
             </View>
           ))}
         </View>
@@ -377,6 +397,33 @@ function ResultPreviewScreen({ colors, isDark }: { colors: any; isDark: boolean 
 
 // ── Screen 9: Final Activation ────────────────────────────
 function FinalScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
+  const reduceMotion = useReduceMotion();
+  const orbitAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (reduceMotion) return;
+    const animation = Animated.loop(
+      Animated.timing(orbitAnim, {
+        toValue: 1,
+        duration: 22000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [reduceMotion, orbitAnim]);
+
+  const rotate = orbitAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const counterRotate = orbitAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '-360deg'],
+  });
+
   const RADIUS = 118;
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
@@ -388,29 +435,55 @@ function FinalScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
       </Text>
       <View style={{ width: RADIUS * 2, height: RADIUS * 2, alignItems: 'center', justifyContent: 'center' }}>
         <OrbMascot state="happy" size={90} />
-        {FEATURE_PILLS.map((pill, i) => {
-          const angle = (i / FEATURE_PILLS.length) * 2 * Math.PI;
-          const x = Math.cos(angle) * (RADIUS - 16) - 36;
-          const y = Math.sin(angle) * (RADIUS - 16) - 12;
-          return (
-            <View
-              key={pill}
-              style={{
-                position: 'absolute',
-                left: RADIUS + x,
-                top: RADIUS + y,
-                backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-                borderRadius: 20,
-                paddingHorizontal: 8,
-                paddingVertical: 4,
-                borderWidth: 1,
-                borderColor: GREEN + '40',
-              }}
-            >
-              <Text style={{ color: colors.text, fontSize: 9, fontWeight: '700' }}>{pill}</Text>
-            </View>
-          );
-        })}
+
+        {/* Orbit track */}
+        <Animated.View
+          style={{
+            position: 'absolute',
+            width: RADIUS * 2,
+            height: RADIUS * 2,
+            transform: reduceMotion ? [] : [{ rotate }],
+          }}
+          pointerEvents="none"
+        >
+          {FEATURE_PILLS.map((pill, i) => {
+            const angle = (i / FEATURE_PILLS.length) * 2 * Math.PI;
+            const r = RADIUS - 16;
+            const x = Math.cos(angle) * r;
+            const y = Math.sin(angle) * r;
+            return (
+              <Animated.View
+                key={pill}
+                style={{
+                  position: 'absolute',
+                  left: RADIUS + x - 34,
+                  top: RADIUS + y - 12,
+                  width: 68,
+                  alignItems: 'center',
+                  transform: reduceMotion ? [] : [{ rotate: counterRotate }],
+                }}
+              >
+                <View
+                  style={{
+                    backgroundColor: isDark ? 'rgba(20, 24, 22, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                    borderRadius: 12,
+                    paddingHorizontal: 7,
+                    paddingVertical: 4,
+                    borderWidth: 1,
+                    borderColor: GREEN + '50',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: isDark ? 0.25 : 0.08,
+                    shadowRadius: 4,
+                    elevation: 2,
+                  }}
+                >
+                  <Text style={{ color: colors.text, fontSize: 9.5, fontWeight: '800' }}>{pill}</Text>
+                </View>
+              </Animated.View>
+            );
+          })}
+        </Animated.View>
       </View>
     </View>
   );
@@ -509,7 +582,7 @@ export default function OnboardingScreen() {
     currentScreen === 8 ? 'Almost There' : 'Next';
 
   const screenContent = [
-    <WelcomeScreen key={0} colors={colors} />,
+    <WelcomeScreen key={0} colors={colors} isDark={isDark} />,
     <TheProblemScreen key={1} colors={colors} isDark={isDark} />,
     <TwoScoresScreen key={2} colors={colors} isDark={isDark} />,
     <AllergyScreen key={3} selected={allergens} onToggle={toggleAllergen} colors={colors} isDark={isDark} />,
