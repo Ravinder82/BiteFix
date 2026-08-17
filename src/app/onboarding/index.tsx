@@ -222,12 +222,12 @@ function WelcomeScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
           <Text style={{ color: isDark ? '#FFFFFF' : '#102017', fontSize: 10.5, fontWeight: '800' }} numberOfLines={1}>Nutrition</Text>
         </View>
 
-        <View style={[pillBase, { left: 10, bottom: mockupHeight * 0.18, maxWidth: mockupWidth * 0.47 }]}>
+        <View style={[pillBase, { left: 10, bottom: mockupHeight * 0.26, maxWidth: mockupWidth * 0.47 }]}>
           <ShieldCheck size={14} color={GREEN} strokeWidth={2.2} />
           <Text style={{ color: isDark ? '#FFFFFF' : '#102017', fontSize: 10.5, fontWeight: '800', flexShrink: 1 }} numberOfLines={1}>Ingredient Review</Text>
         </View>
 
-        <View style={[pillBase, { right: 10, bottom: mockupHeight * 0.18, borderColor: '#D97706' + '55', maxWidth: mockupWidth * 0.42 }]}>
+        <View style={[pillBase, { right: 10, bottom: mockupHeight * 0.26, borderColor: '#D97706' + '55', maxWidth: mockupWidth * 0.42 }]}>
           <Droplets size={14} color={isDark ? '#FBBF24' : '#D97706'} strokeWidth={2.2} />
           <Text style={{ color: isDark ? '#FFFFFF' : '#102017', fontSize: 10.5, fontWeight: '800', flexShrink: 1 }} numberOfLines={1}>Sugar Insights</Text>
         </View>
@@ -274,10 +274,12 @@ function WelcomeScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
           numberOfLines={3}
           adjustsFontSizeToFit
         >
-          Stop Reading.{"\n"}Start Scanning.{"\n"}Get Instant Insights.
+          <Text style={{ color: GREEN }}>Stop</Text> Reading.{"\n"}
+          <Text style={{ color: GREEN }}>Start</Text> Scanning.{"\n"}
+          Get <Text style={{ color: GREEN }}>Instant Insights</Text>.
         </Text>
         <Text style={{ color: colors.textSecondary, fontSize: 13.5, fontWeight: '600', textAlign: 'center', lineHeight: 20, maxWidth: 370, marginTop: 12 }}>
-          Scan any barcode and BiteFix turns available food data into a clear, readable snapshot — in seconds.
+          Scan any <Text style={{ fontWeight: '800', color: isDark ? '#FFFFFF' : '#102017' }}>barcode</Text> and BiteFix turns available <Text style={{ fontWeight: '800', color: GREEN }}>food data</Text> into a clear, <Text style={{ fontWeight: '800', color: GREEN }}>readable snapshot</Text> — in seconds.
         </Text>
       </View>
     </View>
