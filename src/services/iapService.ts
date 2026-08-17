@@ -26,39 +26,71 @@ const API_KEY = Platform.select({
 
 // ── IAP Service Singleton ─────────────────────────────────
 class BitefixIAPService {
-  private connected = false;
-  private connectionPromise: Promise<void> | null = null;
+  private isConfigured = false;
+  private initPromise: Promise<boolean> | null = null;
 
-  public async connect(): Promise<void> {
-    if (this.connected) return;
-    if (this.connectionPromise) return this.connectionPromise;
+  /**
+   * Initializes RevenueCat Purchases EXACTLY ONCE per application lifecycle.
+   * Checks both local JS state and native Purchases.isConfigured() before
+   * attempting any configuration.
+   */
+  public async initialize(): Promise<boolean> {
+    if (this.isConfigured) return true;
+    if (this.initPromise) return this.initPromise;
 
-    this.connectionPromise = (async () => {
+    this.initPromise = (async () => {
       try {
-        console.log('[RevenueCat] Initialising connection...');
-        Purchases.setLogLevel(LOG_LEVEL.DEBUG);
-        if (API_KEY) {
-          Purchases.configure({ apiKey: API_KEY });
+        const nativeConfigured = await Purchases.isConfigured();
+        if (nativeConfigured) {
+          console.log('[RevenueCat] Native Purchases SDK is already configured. Reusing instance.');
+          this.isConfigured = true;
+          return true;
         }
 
-        await this.checkSubscriptionStatus();
-        this.connected = true;
-        console.log('[RevenueCat] ✅ Successfully configured.');
+        if (!API_KEY) {
+          console.warn('[RevenueCat] No API key available for current platform:', Platform.OS);
+          return false;
+        }
+
+        console.log('[RevenueCat] Configuring Purchases SDK (canonical single init)...');
+        Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+        Purchases.configure({ apiKey: API_KEY });
+        this.isConfigured = true;
+        console.log('[RevenueCat] ✅ Purchases SDK successfully configured.');
+        return true;
       } catch (err: any) {
-        console.error('[RevenueCat] ❌ Failed to configure:', err);
+        console.error('[RevenueCat] ❌ Failed to initialize Purchases SDK:', err?.message ?? err);
+        return false;
+      } finally {
+        this.initPromise = null;
       }
     })();
 
-    return this.connectionPromise;
+    return this.initPromise;
   }
 
-  public async disconnect(): Promise<void> {
-    this.connected = false;
-    this.connectionPromise = null;
+  /**
+   * Backward-compatible alias for initialize().
+   * Guaranteed to be idempotent and never reconfigures.
+   */
+  public async connect(): Promise<void> {
+    await this.initialize();
   }
 
+  public isReady(): boolean {
+    return this.isConfigured;
+  }
+
+  /**
+   * Pure offering fetch: Only requests offerings from the configured SDK.
+   * Does NOT configure or reconfigure RevenueCat.
+   */
   public async fetchSubscriptions(): Promise<IAPProduct[]> {
-    if (!this.connected) await this.connect();
+    const ready = this.isConfigured || (await Purchases.isConfigured()) || (await this.initialize());
+    if (!ready) {
+      console.warn('[RevenueCat] Cannot fetch offerings: SDK is not configured.');
+      return [];
+    }
 
     try {
       console.log('[RevenueCat] Fetching offerings...');
@@ -86,8 +118,15 @@ class BitefixIAPService {
     }
   }
 
+  /**
+   * Pure purchase flow: Executes purchase package via StoreKit/Google Play.
+   * Does NOT configure or reconfigure RevenueCat.
+   */
   public async purchasePlan(planOrProduct: PlanTier | IAPProduct): Promise<PurchaseResult> {
-    if (!this.connected) await this.connect();
+    const ready = this.isConfigured || (await Purchases.isConfigured()) || (await this.initialize());
+    if (!ready) {
+      return { success: false, error: 'Store purchase service is not available.' };
+    }
 
     let targetProduct: IAPProduct | undefined;
 
@@ -133,13 +172,20 @@ class BitefixIAPService {
     }
   }
 
+  /**
+   * Pure restore flow: Restores purchases and checks entitlement.
+   * Does NOT configure or reconfigure RevenueCat.
+   */
   public async restorePurchases(): Promise<RestoreResult> {
-    if (!this.connected) await this.connect();
+    const ready = this.isConfigured || (await Purchases.isConfigured()) || (await this.initialize());
+    if (!ready) {
+      return { success: false, isEntitled: false, error: 'Store purchase service is not available.' };
+    }
 
     try {
       console.log('[RevenueCat] Restoring purchases...');
       const customerInfo = await Purchases.restorePurchases();
-      const isEntitled = typeof customerInfo.entitlements.active[ENTITLEMENT_ID] !== 'undefined';
+      const isEntitled = typeof customerInfo?.entitlements?.active?.[ENTITLEMENT_ID] !== 'undefined';
 
       console.log(`[RevenueCat] Restore complete. Is Premium: ${isEntitled}`);
       useAppStore.getState().setPremium(isEntitled);
@@ -151,8 +197,17 @@ class BitefixIAPService {
     }
   }
 
+  /**
+   * Pure entitlement status check: Reads CustomerInfo from RevenueCat cache/server.
+   * Does NOT configure or reconfigure RevenueCat.
+   */
   public async checkSubscriptionStatus(): Promise<boolean> {
-    if (!this.connected) await this.connect();
+    const ready = this.isConfigured || (await Purchases.isConfigured()) || (await this.initialize());
+    if (!ready) {
+      console.warn('[RevenueCat] Cannot check subscription status: SDK is not configured.');
+      useAppStore.getState().setPremium(false);
+      return false;
+    }
 
     try {
       const customerInfo = await Purchases.getCustomerInfo();
@@ -170,9 +225,12 @@ class BitefixIAPService {
   }
 
   public async getActiveSubscriptionDetails(): Promise<{ planType: string; purchaseDate: string; autoRenew: boolean } | null> {
+    const ready = this.isConfigured || (await Purchases.isConfigured());
+    if (!ready) return null;
+
     try {
       const customerInfo = await Purchases.getCustomerInfo();
-      const entitlement = customerInfo.entitlements.active[ENTITLEMENT_ID];
+      const entitlement = customerInfo?.entitlements?.active?.[ENTITLEMENT_ID];
       if (!entitlement) return null;
       return {
         planType: entitlement.productIdentifier.includes('yearly') ? 'Yearly Pass' : 'Monthly Pass',

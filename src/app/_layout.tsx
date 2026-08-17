@@ -75,6 +75,22 @@ export default function RootLayout() {
     }
   }, [fontsLoaded, fontError]);
 
+  // ── Canonical One-Time RevenueCat Initialization ──────────────────────
+  // Configures RevenueCat Purchases exactly once per app session on startup
+  useEffect(() => {
+    (async () => {
+      try {
+        const { getIapService } = await import('../services/iapLoader');
+        const service = await getIapService();
+        if (service) {
+          await service.checkSubscriptionStatus();
+        }
+      } catch (err) {
+        console.warn('[RootLayout] RevenueCat initial sync error:', err);
+      }
+    })();
+  }, []);
+
   // ── Foreground-resume subscription check ──────────────────────────────
   // When the user returns from background (e.g. they went to Apple Settings
   // to cancel their subscription, or a subscription just renewed), we

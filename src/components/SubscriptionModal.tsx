@@ -62,7 +62,6 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
       const service = await getIapService();
       if (!service) return;
 
-      await service.connect();
       const fetched = await service.fetchSubscriptions();
 
       if (mountedRef.current) {
