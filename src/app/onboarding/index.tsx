@@ -16,6 +16,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useTheme } from '../../hooks/useTheme';
 import { useAppStore } from '../../stores/appStore';
@@ -66,7 +67,7 @@ function useReduceMotion() {
 }
 
 // ── Screen 0: Welcome ─────────────────────────────────────
-// Flagship hero: product mockup + live scan beam + floating capability pills.
+// Flagship hero: transparent floating product scene + live scan beam + floating capability pills.
 function WelcomeScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
   const { width, height } = useWindowDimensions();
   const scanY = useRef(new Animated.Value(0)).current;
@@ -104,83 +105,73 @@ function WelcomeScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
     borderWidth: 1,
     paddingHorizontal: 11,
     paddingVertical: 7,
-    backgroundColor: isDark ? 'rgba(12,17,14,0.90)' : 'rgba(255,255,255,0.95)',
+    backgroundColor: isDark ? 'rgba(12,17,14,0.78)' : 'rgba(255,255,255,0.76)',
     borderColor: GREEN + '55',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: isDark ? 0.18 : 0.08,
+    shadowOpacity: isDark ? 0.18 : 0.07,
     shadowRadius: 12,
-    elevation: 4,
+    elevation: 3,
   };
 
-  const mockupWidth = Math.min(width - 44, 382);
-  const mockupHeight = Math.min(Math.max(height * 0.57, 420), 500);
+  const heroWidth = Math.min(width - 18, 430);
+  const heroHeight = Math.min(Math.max(height * 0.57, 470), 555);
+  const bottomFadeHeight = Math.min(185, Math.max(140, heroHeight * 0.34));
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background, paddingHorizontal: 18, paddingTop: 10 }}>
-      {/* Quiet atmospheric glows — intentionally not a full-screen image. */}
-      <View pointerEvents="none" style={{ position: 'absolute', top: -70, left: -70, width: 220, height: 220, borderRadius: 110, backgroundColor: isDark ? 'rgba(0,194,136,0.08)' : 'rgba(0,194,136,0.10)' }} />
-      <View pointerEvents="none" style={{ position: 'absolute', top: 70, right: -80, width: 230, height: 230, borderRadius: 115, backgroundColor: isDark ? 'rgba(246,183,66,0.07)' : 'rgba(246,183,66,0.10)' }} />
-
-      {/* Product mockup card — the visual hero. */}
+    <View style={{ flex: 1, backgroundColor: colors.background, overflow: 'hidden' }}>
+      {/* Entire hero is visually open: no card shell, no hard frame, no visible section boundary. */}
       <View
         style={{
-          width: mockupWidth,
-          height: mockupHeight,
+          width: heroWidth,
+          height: heroHeight,
           alignSelf: 'center',
-          borderRadius: 34,
+          position: 'relative',
+          borderTopLeftRadius: 42,
+          borderTopRightRadius: 42,
           overflow: 'hidden',
-          backgroundColor: isDark ? '#121817' : '#EAF2EA',
-          borderWidth: 1,
-          borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(15,52,31,0.12)',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 18 },
-          shadowOpacity: isDark ? 0.30 : 0.12,
-          shadowRadius: 28,
-          elevation: 8,
         }}
       >
-        {/* Soft image wash around the product — makes it feel like a photographed premium mockup. */}
-        <View pointerEvents="none" style={{ position: 'absolute', inset: 0, backgroundColor: isDark ? '#18221B' : '#DCEBD4' }} />
+        {/* Product scene */}
         <Image
           source={require('../../../assets/images/onboarding_welcome_product.png')}
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: isDark ? 0.84 : 0.98 }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            width: '100%',
+            height: '100%',
+            opacity: isDark ? 0.86 : 1,
+          }}
           resizeMode="cover"
         />
 
-        {/* Phone-like glass frame to echo the reference without copying its branding/UI. */}
+        {/* Very soft atmospheric wash so the image feels integrated into the page. */}
         <View
           pointerEvents="none"
           style={{
             position: 'absolute',
-            top: 12,
-            left: 12,
-            right: 12,
-            bottom: 12,
-            borderRadius: 26,
-            borderWidth: 1,
-            borderColor: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.72)',
+            inset: 0,
+            backgroundColor: isDark ? 'rgba(9,14,11,0.10)' : 'rgba(255,255,255,0.02)',
           }}
         />
 
-        {/* Tiny top sensor/detail pill. */}
-        <View pointerEvents="none" style={{ position: 'absolute', top: 20, alignSelf: 'center', width: 58, height: 8, borderRadius: 99, backgroundColor: 'rgba(255,255,255,0.58)' }} />
-
-        {/* Live barcode scan beam. */}
+        {/* Live barcode scanning beam */}
         <Animated.View
           pointerEvents="none"
           style={{
             position: 'absolute',
-            left: 30,
-            right: 30,
-            top: 82,
+            left: heroWidth * 0.10,
+            right: heroWidth * 0.10,
+            top: heroHeight * 0.18,
             height: 2,
             transform: [{ translateY: scanY }],
             backgroundColor: GREEN,
             shadowColor: GREEN,
             shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: 0.95,
-            shadowRadius: 10,
+            shadowOpacity: 0.9,
+            shadowRadius: 9,
             elevation: 4,
           }}
         />
@@ -188,76 +179,146 @@ function WelcomeScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
           pointerEvents="none"
           style={{
             position: 'absolute',
-            left: 30,
-            right: 30,
-            top: 74,
+            left: heroWidth * 0.10,
+            right: heroWidth * 0.10,
+            top: heroHeight * 0.18 - 8,
             height: 18,
-            opacity: 0.22,
+            opacity: 0.18,
             transform: [{ translateY: scanY }],
             backgroundColor: GREEN,
           }}
         />
 
-        {/* Scanner focus corners. */}
-        <View pointerEvents="none" style={{ position: 'absolute', left: 42, top: 96, width: 38, height: 38, borderTopWidth: 2, borderLeftWidth: 2, borderColor: '#FFFFFF', borderTopLeftRadius: 8 }} />
-        <View pointerEvents="none" style={{ position: 'absolute', right: 42, top: 96, width: 38, height: 38, borderTopWidth: 2, borderRightWidth: 2, borderColor: '#FFFFFF', borderTopRightRadius: 8 }} />
-        <View pointerEvents="none" style={{ position: 'absolute', left: 42, bottom: 96, width: 38, height: 38, borderBottomWidth: 2, borderLeftWidth: 2, borderColor: '#FFFFFF', borderBottomLeftRadius: 8 }} />
-        <View pointerEvents="none" style={{ position: 'absolute', right: 42, bottom: 96, width: 38, height: 38, borderBottomWidth: 2, borderRightWidth: 2, borderColor: '#FFFFFF', borderBottomRightRadius: 8 }} />
+        {/* Lightweight scanner framing — intentionally borderless overall. */}
+        <View pointerEvents="none" style={{ position: 'absolute', left: heroWidth * 0.14, top: heroHeight * 0.23, width: 34, height: 34, borderTopWidth: 2, borderLeftWidth: 2, borderColor: '#FFFFFF', borderTopLeftRadius: 7 }} />
+        <View pointerEvents="none" style={{ position: 'absolute', right: heroWidth * 0.14, top: heroHeight * 0.23, width: 34, height: 34, borderTopWidth: 2, borderRightWidth: 2, borderColor: '#FFFFFF', borderTopRightRadius: 7 }} />
+        <View pointerEvents="none" style={{ position: 'absolute', left: heroWidth * 0.14, bottom: heroHeight * 0.25, width: 34, height: 34, borderBottomWidth: 2, borderLeftWidth: 2, borderColor: '#FFFFFF', borderBottomLeftRadius: 7 }} />
+        <View pointerEvents="none" style={{ position: 'absolute', right: heroWidth * 0.14, bottom: heroHeight * 0.25, width: 34, height: 34, borderBottomWidth: 2, borderRightWidth: 2, borderColor: '#FFFFFF', borderBottomRightRadius: 7 }} />
 
-        {/* A quiet scan status — deliberately not AI language. */}
-        <View style={{ position: 'absolute', top: 58, alignSelf: 'center', borderRadius: 999, backgroundColor: isDark ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.86)', borderWidth: 1, borderColor: GREEN + '55', paddingHorizontal: 10, paddingVertical: 5 }}>
-          <Text style={{ color: isDark ? '#FFFFFF' : '#11301F', fontSize: 9, fontWeight: '900', letterSpacing: 0.9, textTransform: 'uppercase' }}>
+        {/* Small scanner status — no AI wording. */}
+        <View
+          style={{
+            position: 'absolute',
+            top: heroHeight * 0.13,
+            alignSelf: 'center',
+            borderRadius: 999,
+            backgroundColor: isDark ? 'rgba(0,0,0,0.38)' : 'rgba(255,255,255,0.78)',
+            borderWidth: 1,
+            borderColor: GREEN + '45',
+            paddingHorizontal: 10,
+            paddingVertical: 5,
+          }}
+        >
+          <Text
+            style={{
+              color: isDark ? '#FFFFFF' : '#11301F',
+              fontSize: 9,
+              fontWeight: '900',
+              letterSpacing: 0.9,
+              textTransform: 'uppercase',
+            }}
+          >
             Scanning Product
           </Text>
         </View>
 
-        {/* Capability pills. Each stays single-line. */}
-        <View style={[pillBase, { left: 10, top: mockupHeight * 0.22 }]}>
+        {/* Floating capability pills */}
+        <View style={[pillBase, { left: heroWidth * 0.03, top: heroHeight * 0.35 }]}>
           <Package size={14} color={GREEN} strokeWidth={2.2} />
-          <Text style={{ color: isDark ? '#FFFFFF' : '#102017', fontSize: 10.5, fontWeight: '800' }} numberOfLines={1}>Processing</Text>
+          <Text style={{ color: isDark ? '#FFFFFF' : '#102017', fontSize: 10.5, fontWeight: '800' }} numberOfLines={1}>
+            Processing Level
+          </Text>
         </View>
 
-        <View style={[pillBase, { right: 10, top: mockupHeight * 0.17 }]}>
+        <View style={[pillBase, { right: heroWidth * 0.03, top: heroHeight * 0.25 }]}>
           <Activity size={14} color={GREEN} strokeWidth={2.2} />
-          <Text style={{ color: isDark ? '#FFFFFF' : '#102017', fontSize: 10.5, fontWeight: '800' }} numberOfLines={1}>Nutrition</Text>
+          <Text style={{ color: isDark ? '#FFFFFF' : '#102017', fontSize: 10.5, fontWeight: '800' }} numberOfLines={1}>
+            Nutrition
+          </Text>
         </View>
 
-        <View style={[pillBase, { left: 10, bottom: mockupHeight * 0.26, maxWidth: mockupWidth * 0.47 }]}>
+        <View style={[pillBase, { left: heroWidth * 0.04, bottom: heroHeight * 0.25, maxWidth: heroWidth * 0.44 }]}>
           <ShieldCheck size={14} color={GREEN} strokeWidth={2.2} />
-          <Text style={{ color: isDark ? '#FFFFFF' : '#102017', fontSize: 10.5, fontWeight: '800', flexShrink: 1 }} numberOfLines={1}>Ingredient Review</Text>
+          <Text style={{ color: isDark ? '#FFFFFF' : '#102017', fontSize: 10.5, fontWeight: '800', flexShrink: 1 }} numberOfLines={1}>
+            Ingredient Review
+          </Text>
         </View>
 
-        <View style={[pillBase, { right: 10, bottom: mockupHeight * 0.26, borderColor: '#D97706' + '55', maxWidth: mockupWidth * 0.42 }]}>
+        <View style={[pillBase, { right: heroWidth * 0.04, bottom: heroHeight * 0.32, borderColor: '#D97706' + '55', maxWidth: heroWidth * 0.40 }]}>
           <Droplets size={14} color={isDark ? '#FBBF24' : '#D97706'} strokeWidth={2.2} />
-          <Text style={{ color: isDark ? '#FFFFFF' : '#102017', fontSize: 10.5, fontWeight: '800', flexShrink: 1 }} numberOfLines={1}>Sugar Insights</Text>
+          <Text style={{ color: isDark ? '#FFFFFF' : '#102017', fontSize: 10.5, fontWeight: '800', flexShrink: 1 }} numberOfLines={1}>
+            Sugar Insights
+          </Text>
         </View>
 
-        {/* BiteFix hero mark sits inside the mockup instead of being cut off. */}
-        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 22, alignItems: 'center' }}>
+        {/* Soft bottom fade: this is atmospheric, NOT a divider. */}
+        <LinearGradient
+          pointerEvents="none"
+          colors={[
+            isDark ? 'rgba(12,17,14,0)' : 'rgba(255,255,255,0)',
+            isDark ? 'rgba(12,17,14,0.10)' : 'rgba(255,255,255,0.16)',
+            isDark ? 'rgba(12,17,14,0.55)' : 'rgba(255,255,255,0.70)',
+            colors.background,
+          ]}
+          locations={[0, 0.36, 0.76, 1]}
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: bottomFadeHeight,
+          }}
+        />
+
+        {/* BiteFix icon floats ABOVE the fade. */}
+        <View
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: Math.max(8, bottomFadeHeight * 0.10),
+            alignItems: 'center',
+            zIndex: 10,
+          }}
+        >
           <View
             style={{
               width: 96,
               height: 96,
               borderRadius: 28,
-              backgroundColor: isDark ? 'rgba(17,23,19,0.86)' : 'rgba(255,255,255,0.90)',
+              backgroundColor: isDark ? 'rgba(17,23,19,0.84)' : 'rgba(255,255,255,0.72)',
               borderWidth: 1.5,
-              borderColor: GREEN + '75',
+              borderColor: GREEN + '70',
               alignItems: 'center',
               justifyContent: 'center',
               shadowColor: GREEN,
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.20,
-              shadowRadius: 15,
+              shadowOffset: { width: 0, height: 5 },
+              shadowOpacity: 0.18,
+              shadowRadius: 16,
               elevation: 6,
             }}
           >
-            <Image source={require('../../../assets/icon.png')} style={{ width: 72, height: 72, borderRadius: 20 }} resizeMode="contain" />
+            <Image
+              source={require('../../../assets/icon.png')}
+              style={{ width: 72, height: 72, borderRadius: 20 }}
+              resizeMode="contain"
+            />
           </View>
         </View>
       </View>
 
-      {/* Editorial brand/message block. */}
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10, paddingTop: 10, paddingBottom: 4 }}>
+      {/* Editorial brand/message block — visually grows out of the image fade. */}
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingHorizontal: 22,
+          paddingTop: 0,
+          paddingBottom: 6,
+          marginTop: -6,
+        }}
+      >
         <Text style={{ color: GREEN, fontSize: 10.5, fontWeight: '900', letterSpacing: 3.4, textTransform: 'uppercase', marginBottom: 10 }}>
           BITEFIX
         </Text>
@@ -274,12 +335,12 @@ function WelcomeScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
           numberOfLines={3}
           adjustsFontSizeToFit
         >
-          Stop <Text style={{ color: GREEN }}>Reading</Text>.{"\n"}
-          Start <Text style={{ color: GREEN }}>Scanning</Text>.{"\n"}
-          Get <Text style={{ color: GREEN }}>Instant Insights</Text>.
+          Stop <Text style={{ fontWeight: '900', color: GREEN }}>Reading</Text>.{'\n'}
+          Start <Text style={{ fontWeight: '900', color: GREEN }}>Scanning</Text>.{'\n'}
+          Get <Text style={{ fontWeight: '900', color: GREEN }}>Instant Insights</Text>.
         </Text>
         <Text style={{ color: colors.textSecondary, fontSize: 13.5, fontWeight: '600', textAlign: 'center', lineHeight: 20, maxWidth: 370, marginTop: 12 }}>
-          Scan any barcode and BiteFix turns available food data into clear, Insights — in seconds.
+          Scan any barcode. See the NOVA Score, Additives, Nutritional Value and more. In seconds!
         </Text>
       </View>
     </View>
