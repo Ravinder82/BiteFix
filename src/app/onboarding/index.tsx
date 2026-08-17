@@ -66,178 +66,217 @@ function useReduceMotion() {
 }
 
 // ── Screen 0: Welcome ─────────────────────────────────────
-// Welcome is intentionally the visual hero of the onboarding.
-// Screens 1–8 remain information-first and surface-based.
+// Flagship hero: product mockup + live scan beam + floating capability pills.
 function WelcomeScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
   const { width, height } = useWindowDimensions();
+  const scanY = useRef(new Animated.Value(0)).current;
 
-  // Dynamic layout boundaries based on screen size for responsive scaling
-  const upperRegionHeight = Math.min(Math.max(height * 0.50, 360), 480);
+  useEffect(() => {
+    const travel = Math.max(180, Math.min(310, height * 0.30));
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scanY, {
+          toValue: travel,
+          duration: 2200,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.delay(650),
+        Animated.timing(scanY, {
+          toValue: 0,
+          duration: 2200,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.delay(900),
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [height, scanY]);
 
-  const pillStyle = {
+  const pillBase = {
     position: 'absolute' as const,
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     gap: 6,
-    borderRadius: 18,
+    borderRadius: 999,
     borderWidth: 1,
-    borderColor: GREEN + '45',
-    backgroundColor: isDark ? 'rgba(18, 23, 20, 0.82)' : 'rgba(255,255,255,0.90)',
     paddingHorizontal: 11,
     paddingVertical: 7,
+    backgroundColor: isDark ? 'rgba(12,17,14,0.90)' : 'rgba(255,255,255,0.95)',
+    borderColor: GREEN + '55',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: isDark ? 0.16 : 0.06,
-    shadowRadius: 9,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: isDark ? 0.18 : 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   };
 
+  const mockupWidth = Math.min(width - 44, 382);
+  const mockupHeight = Math.min(Math.max(height * 0.57, 420), 500);
+
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* UPPER REGION */}
-      <View style={{ height: upperRegionHeight, width: '100%', overflow: 'hidden', position: 'relative' }}>
-        {/* Product image (filling the upper region) */}
+    <View style={{ flex: 1, backgroundColor: colors.background, paddingHorizontal: 18, paddingTop: 10 }}>
+      {/* Quiet atmospheric glows — intentionally not a full-screen image. */}
+      <View pointerEvents="none" style={{ position: 'absolute', top: -70, left: -70, width: 220, height: 220, borderRadius: 110, backgroundColor: isDark ? 'rgba(0,194,136,0.08)' : 'rgba(0,194,136,0.10)' }} />
+      <View pointerEvents="none" style={{ position: 'absolute', top: 70, right: -80, width: 230, height: 230, borderRadius: 115, backgroundColor: isDark ? 'rgba(246,183,66,0.07)' : 'rgba(246,183,66,0.10)' }} />
+
+      {/* Product mockup card — the visual hero. */}
+      <View
+        style={{
+          width: mockupWidth,
+          height: mockupHeight,
+          alignSelf: 'center',
+          borderRadius: 34,
+          overflow: 'hidden',
+          backgroundColor: isDark ? '#121817' : '#EAF2EA',
+          borderWidth: 1,
+          borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(15,52,31,0.12)',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 18 },
+          shadowOpacity: isDark ? 0.30 : 0.12,
+          shadowRadius: 28,
+          elevation: 8,
+        }}
+      >
+        {/* Soft image wash around the product — makes it feel like a photographed premium mockup. */}
+        <View pointerEvents="none" style={{ position: 'absolute', inset: 0, backgroundColor: isDark ? '#18221B' : '#DCEBD4' }} />
         <Image
           source={require('../../../assets/images/onboarding_welcome_product.png')}
-          style={{
-            width: '100%',
-            height: '100%',
-          }}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: isDark ? 0.84 : 0.98 }}
           resizeMode="cover"
         />
 
-        {/* Soft atmospheric wash inside the upper region */}
+        {/* Phone-like glass frame to echo the reference without copying its branding/UI. */}
         <View
           pointerEvents="none"
           style={{
             position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 60,
-            backgroundColor: isDark ? 'rgba(8,10,12,0.6)' : 'rgba(248,250,249,0.5)',
+            top: 12,
+            left: 12,
+            right: 12,
+            bottom: 12,
+            borderRadius: 26,
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.72)',
           }}
         />
 
-        {/* Four compact BiteFix capability pills floating over the upper region */}
-        <View style={[pillStyle, { left: 14, top: 24 }]}>
-          <Package size={14} color={GREEN} strokeWidth={2.2} />
-          <Text style={{ color: colors.text, fontSize: 10.5, fontWeight: '800' }} numberOfLines={1}>
-            Processing
-          </Text>
-        </View>
+        {/* Tiny top sensor/detail pill. */}
+        <View pointerEvents="none" style={{ position: 'absolute', top: 20, alignSelf: 'center', width: 58, height: 8, borderRadius: 99, backgroundColor: 'rgba(255,255,255,0.58)' }} />
 
-        <View style={[pillStyle, { right: 14, top: 18 }]}>
-          <Activity size={14} color={GREEN} strokeWidth={2.2} />
-          <Text style={{ color: colors.text, fontSize: 10.5, fontWeight: '800' }} numberOfLines={1}>
-            Nutrition
-          </Text>
-        </View>
-
-        <View style={[pillStyle, { left: 18, bottom: 58, maxWidth: width * 0.42 }]}>
-          <ShieldCheck size={14} color={GREEN} strokeWidth={2.2} />
-          <Text style={{ color: colors.text, fontSize: 10.5, fontWeight: '800', flexShrink: 1 }} numberOfLines={1}>
-            Ingredient Review
-          </Text>
-        </View>
-
-        <View style={[pillStyle, { right: 18, bottom: 58, borderColor: '#D97706' + '45' }]}>
-          <Droplets size={14} color={isDark ? '#FBBF24' : '#D97706'} strokeWidth={2.2} />
-          <Text style={{ color: colors.text, fontSize: 10.5, fontWeight: '800' }} numberOfLines={1}>
-            Sugar Insights
-          </Text>
-        </View>
-
-        {/* BiteFix Icon - centered on the bottom divider boundary */}
-        <View
+        {/* Live barcode scan beam. */}
+        <Animated.View
+          pointerEvents="none"
           style={{
             position: 'absolute',
-            bottom: -36, // Let it hang exactly halfway over the boundary
-            left: 0,
-            right: 0,
-            alignItems: 'center',
-            zIndex: 10,
+            left: 30,
+            right: 30,
+            top: 82,
+            height: 2,
+            transform: [{ translateY: scanY }],
+            backgroundColor: GREEN,
+            shadowColor: GREEN,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.95,
+            shadowRadius: 10,
+            elevation: 4,
           }}
-        >
+        />
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            left: 30,
+            right: 30,
+            top: 74,
+            height: 18,
+            opacity: 0.22,
+            transform: [{ translateY: scanY }],
+            backgroundColor: GREEN,
+          }}
+        />
+
+        {/* Scanner focus corners. */}
+        <View pointerEvents="none" style={{ position: 'absolute', left: 42, top: 96, width: 38, height: 38, borderTopWidth: 2, borderLeftWidth: 2, borderColor: '#FFFFFF', borderTopLeftRadius: 8 }} />
+        <View pointerEvents="none" style={{ position: 'absolute', right: 42, top: 96, width: 38, height: 38, borderTopWidth: 2, borderRightWidth: 2, borderColor: '#FFFFFF', borderTopRightRadius: 8 }} />
+        <View pointerEvents="none" style={{ position: 'absolute', left: 42, bottom: 96, width: 38, height: 38, borderBottomWidth: 2, borderLeftWidth: 2, borderColor: '#FFFFFF', borderBottomLeftRadius: 8 }} />
+        <View pointerEvents="none" style={{ position: 'absolute', right: 42, bottom: 96, width: 38, height: 38, borderBottomWidth: 2, borderRightWidth: 2, borderColor: '#FFFFFF', borderBottomRightRadius: 8 }} />
+
+        {/* A quiet scan status — deliberately not AI language. */}
+        <View style={{ position: 'absolute', top: 58, alignSelf: 'center', borderRadius: 999, backgroundColor: isDark ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.86)', borderWidth: 1, borderColor: GREEN + '55', paddingHorizontal: 10, paddingVertical: 5 }}>
+          <Text style={{ color: isDark ? '#FFFFFF' : '#11301F', fontSize: 9, fontWeight: '900', letterSpacing: 0.9, textTransform: 'uppercase' }}>
+            Scanning Product
+          </Text>
+        </View>
+
+        {/* Capability pills. Each stays single-line. */}
+        <View style={[pillBase, { left: 10, top: mockupHeight * 0.22 }]}>
+          <Package size={14} color={GREEN} strokeWidth={2.2} />
+          <Text style={{ color: isDark ? '#FFFFFF' : '#102017', fontSize: 10.5, fontWeight: '800' }} numberOfLines={1}>Processing</Text>
+        </View>
+
+        <View style={[pillBase, { right: 10, top: mockupHeight * 0.17 }]}>
+          <Activity size={14} color={GREEN} strokeWidth={2.2} />
+          <Text style={{ color: isDark ? '#FFFFFF' : '#102017', fontSize: 10.5, fontWeight: '800' }} numberOfLines={1}>Nutrition</Text>
+        </View>
+
+        <View style={[pillBase, { left: 10, bottom: mockupHeight * 0.18, maxWidth: mockupWidth * 0.47 }]}>
+          <ShieldCheck size={14} color={GREEN} strokeWidth={2.2} />
+          <Text style={{ color: isDark ? '#FFFFFF' : '#102017', fontSize: 10.5, fontWeight: '800', flexShrink: 1 }} numberOfLines={1}>Ingredient Review</Text>
+        </View>
+
+        <View style={[pillBase, { right: 10, bottom: mockupHeight * 0.18, borderColor: '#D97706' + '55', maxWidth: mockupWidth * 0.42 }]}>
+          <Droplets size={14} color={isDark ? '#FBBF24' : '#D97706'} strokeWidth={2.2} />
+          <Text style={{ color: isDark ? '#FFFFFF' : '#102017', fontSize: 10.5, fontWeight: '800', flexShrink: 1 }} numberOfLines={1}>Sugar Insights</Text>
+        </View>
+
+        {/* BiteFix hero mark sits inside the mockup instead of being cut off. */}
+        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 22, alignItems: 'center' }}>
           <View
             style={{
-              width: 88,
-              height: 88,
-              borderRadius: 26,
-              backgroundColor: isDark ? 'rgba(18,23,20,0.92)' : 'rgba(255,255,255,0.96)',
+              width: 96,
+              height: 96,
+              borderRadius: 28,
+              backgroundColor: isDark ? 'rgba(17,23,19,0.86)' : 'rgba(255,255,255,0.90)',
               borderWidth: 1.5,
-              borderColor: GREEN + '55',
+              borderColor: GREEN + '75',
               alignItems: 'center',
               justifyContent: 'center',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 6 },
-              shadowOpacity: isDark ? 0.20 : 0.08,
-              shadowRadius: 16,
-              elevation: 4,
+              shadowColor: GREEN,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.20,
+              shadowRadius: 15,
+              elevation: 6,
             }}
           >
-            <Image
-              source={require('../../../assets/icon.png')}
-              style={{ width: 68, height: 68, borderRadius: 18 }}
-              resizeMode="contain"
-            />
+            <Image source={require('../../../assets/icon.png')} style={{ width: 72, height: 72, borderRadius: 20 }} resizeMode="contain" />
           </View>
         </View>
       </View>
 
-      {/* ──────── divider ──────── */}
-      <View style={{ height: 1.5, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }} />
-
-      {/* LOWER REGION (strictly below the divider, no absolute overlap) */}
-      <View
-        style={{
-          flex: 1,
-          paddingHorizontal: 24,
-          paddingTop: 54, // Generous padding to clear the hanging icon
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Text
-          style={{
-            color: GREEN,
-            fontSize: 11,
-            fontWeight: '800',
-            letterSpacing: 2.8,
-            textTransform: 'uppercase',
-            marginBottom: 8,
-          }}
-        >
+      {/* Editorial brand/message block. */}
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 10, paddingTop: 10, paddingBottom: 4 }}>
+        <Text style={{ color: GREEN, fontSize: 10.5, fontWeight: '900', letterSpacing: 3.4, textTransform: 'uppercase', marginBottom: 10 }}>
           BITEFIX
         </Text>
-
         <Text
           style={{
             color: colors.text,
-            fontSize: 28,
+            fontSize: Math.min(31, Math.max(28, width * 0.074)),
             fontWeight: '900',
             textAlign: 'center',
-            lineHeight: 34,
-            letterSpacing: -0.6,
-            marginBottom: 12,
-            maxWidth: 340,
+            lineHeight: Math.min(36, Math.max(32, width * 0.087)),
+            letterSpacing: -0.95,
+            maxWidth: 370,
           }}
           numberOfLines={3}
           adjustsFontSizeToFit
         >
-          Stop Reading.{'\n'}Start Scanning.{'\n'}Get Instant Insights.
+          Stop Reading.{"\n"}Start Scanning.{"\n"}Get Instant Insights.
         </Text>
-
-        <Text
-          style={{
-            color: colors.textSecondary,
-            fontSize: 13,
-            fontWeight: '500',
-            textAlign: 'center',
-            lineHeight: 19,
-            maxWidth: 340,
-          }}
-        >
+        <Text style={{ color: colors.textSecondary, fontSize: 13.5, fontWeight: '600', textAlign: 'center', lineHeight: 20, maxWidth: 370, marginTop: 12 }}>
           Scan any barcode and BiteFix turns available food data into a clear, readable snapshot — in seconds.
         </Text>
       </View>
