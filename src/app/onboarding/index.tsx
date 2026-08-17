@@ -13,6 +13,7 @@ import {
   Image,
   AccessibilityInfo,
   StatusBar,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -65,36 +66,181 @@ function useReduceMotion() {
 }
 
 // ── Screen 0: Welcome ─────────────────────────────────────
+// Welcome is intentionally the visual hero of the onboarding.
+// Screens 1–8 remain information-first and surface-based.
 function WelcomeScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
-  return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28, overflow: 'hidden' }}>
-      {/* Background layer */}
-      <Image
-        source={require('../../../assets/images/welcome_bg.png')}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          width: '100%',
-          height: '100%',
-          opacity: isDark ? 0.16 : 0.38,
-        }}
-        resizeMode="cover"
-      />
+  const { width, height } = useWindowDimensions();
 
-      <View style={{ width: 92, height: 92, borderRadius: 26, backgroundColor: GREEN_DIM, alignItems: 'center', justifyContent: 'center', marginBottom: 24, borderWidth: 1, borderColor: GREEN + '40' }}>
-        <Image source={require('../../../assets/icon.png')} style={{ width: 70, height: 70, borderRadius: 18 }} resizeMode="contain" />
+  // Dynamic layout boundaries based on screen size for responsive scaling
+  const upperRegionHeight = Math.min(Math.max(height * 0.50, 360), 480);
+
+  const pillStyle = {
+    position: 'absolute' as const,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 6,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: GREEN + '45',
+    backgroundColor: isDark ? 'rgba(18, 23, 20, 0.82)' : 'rgba(255,255,255,0.90)',
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: isDark ? 0.16 : 0.06,
+    shadowRadius: 9,
+    elevation: 2,
+  };
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* UPPER REGION */}
+      <View style={{ height: upperRegionHeight, width: '100%', overflow: 'hidden', position: 'relative' }}>
+        {/* Product image (filling the upper region) */}
+        <Image
+          source={require('../../../assets/images/onboarding_welcome_product.png')}
+          style={{
+            width: '100%',
+            height: '100%',
+          }}
+          resizeMode="cover"
+        />
+
+        {/* Soft atmospheric wash inside the upper region */}
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 60,
+            backgroundColor: isDark ? 'rgba(8,10,12,0.6)' : 'rgba(248,250,249,0.5)',
+          }}
+        />
+
+        {/* Four compact BiteFix capability pills floating over the upper region */}
+        <View style={[pillStyle, { left: 14, top: 24 }]}>
+          <Package size={14} color={GREEN} strokeWidth={2.2} />
+          <Text style={{ color: colors.text, fontSize: 10.5, fontWeight: '800' }} numberOfLines={1}>
+            Processing
+          </Text>
+        </View>
+
+        <View style={[pillStyle, { right: 14, top: 18 }]}>
+          <Activity size={14} color={GREEN} strokeWidth={2.2} />
+          <Text style={{ color: colors.text, fontSize: 10.5, fontWeight: '800' }} numberOfLines={1}>
+            Nutrition
+          </Text>
+        </View>
+
+        <View style={[pillStyle, { left: 18, bottom: 58, maxWidth: width * 0.42 }]}>
+          <ShieldCheck size={14} color={GREEN} strokeWidth={2.2} />
+          <Text style={{ color: colors.text, fontSize: 10.5, fontWeight: '800', flexShrink: 1 }} numberOfLines={1}>
+            Ingredient Review
+          </Text>
+        </View>
+
+        <View style={[pillStyle, { right: 18, bottom: 58, borderColor: '#D97706' + '45' }]}>
+          <Droplets size={14} color={isDark ? '#FBBF24' : '#D97706'} strokeWidth={2.2} />
+          <Text style={{ color: colors.text, fontSize: 10.5, fontWeight: '800' }} numberOfLines={1}>
+            Sugar Insights
+          </Text>
+        </View>
+
+        {/* BiteFix Icon - centered on the bottom divider boundary */}
+        <View
+          style={{
+            position: 'absolute',
+            bottom: -36, // Let it hang exactly halfway over the boundary
+            left: 0,
+            right: 0,
+            alignItems: 'center',
+            zIndex: 10,
+          }}
+        >
+          <View
+            style={{
+              width: 88,
+              height: 88,
+              borderRadius: 26,
+              backgroundColor: isDark ? 'rgba(18,23,20,0.92)' : 'rgba(255,255,255,0.96)',
+              borderWidth: 1.5,
+              borderColor: GREEN + '55',
+              alignItems: 'center',
+              justifyContent: 'center',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: isDark ? 0.20 : 0.08,
+              shadowRadius: 16,
+              elevation: 4,
+            }}
+          >
+            <Image
+              source={require('../../../assets/icon.png')}
+              style={{ width: 68, height: 68, borderRadius: 18 }}
+              resizeMode="contain"
+            />
+          </View>
+        </View>
       </View>
 
-      <Text style={{ color: GREEN, fontSize: 11, fontWeight: '800', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12 }}>BiteFix</Text>
-      <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', textAlign: 'center', lineHeight: 34, letterSpacing: -0.5, marginBottom: 16 }} numberOfLines={3} adjustsFontSizeToFit>
-        Stop Reading.{'\n'}Start Scanning.{'\n'}Get Instant Insights.
-      </Text>
-      <Text style={{ color: colors.textSecondary, fontSize: 13.5, fontWeight: '500', textAlign: 'center', lineHeight: 20 }}>
-        Scan any barcode and BiteFix turns available food data into a clear, readable snapshot — in seconds.
-      </Text>
+      {/* ──────── divider ──────── */}
+      <View style={{ height: 1.5, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }} />
+
+      {/* LOWER REGION (strictly below the divider, no absolute overlap) */}
+      <View
+        style={{
+          flex: 1,
+          paddingHorizontal: 24,
+          paddingTop: 54, // Generous padding to clear the hanging icon
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Text
+          style={{
+            color: GREEN,
+            fontSize: 11,
+            fontWeight: '800',
+            letterSpacing: 2.8,
+            textTransform: 'uppercase',
+            marginBottom: 8,
+          }}
+        >
+          BITEFIX
+        </Text>
+
+        <Text
+          style={{
+            color: colors.text,
+            fontSize: 28,
+            fontWeight: '900',
+            textAlign: 'center',
+            lineHeight: 34,
+            letterSpacing: -0.6,
+            marginBottom: 12,
+            maxWidth: 340,
+          }}
+          numberOfLines={3}
+          adjustsFontSizeToFit
+        >
+          Stop Reading.{'\n'}Start Scanning.{'\n'}Get Instant Insights.
+        </Text>
+
+        <Text
+          style={{
+            color: colors.textSecondary,
+            fontSize: 13,
+            fontWeight: '500',
+            textAlign: 'center',
+            lineHeight: 19,
+            maxWidth: 340,
+          }}
+        >
+          Scan any barcode and BiteFix turns available food data into a clear, readable snapshot — in seconds.
+        </Text>
+      </View>
     </View>
   );
 }
@@ -577,9 +723,9 @@ export default function OnboardingScreen() {
 
   const ctaLabel =
     currentScreen === TOTAL_SCREENS - 1 ? 'Activate BiteFix' :
-    currentScreen === 0 ? 'Get Started' :
-    currentScreen === 1 ? 'Show Me More' :
-    currentScreen === 8 ? 'Almost There' : 'Next';
+      currentScreen === 0 ? 'Get Started' :
+        currentScreen === 1 ? 'Show Me More' :
+          currentScreen === 8 ? 'Almost There' : 'Next';
 
   const screenContent = [
     <WelcomeScreen key={0} colors={colors} isDark={isDark} />,
@@ -598,28 +744,30 @@ export default function OnboardingScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
-      {/* Top navigation row */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 }}>
-        {currentScreen > 0 ? (
-          <TouchableOpacity onPress={handleBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4 }}>
-            <ChevronLeft size={18} color={colors.textSecondary} strokeWidth={2} />
-            <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600' }}>Back</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={{ width: 52 }} />
-        )}
+      {/* Top navigation row — intentionally hidden on the Welcome hero. */}
+      {currentScreen > 0 && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 }}>
+          {currentScreen > 0 ? (
+            <TouchableOpacity onPress={handleBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4 }}>
+              <ChevronLeft size={18} color={colors.textSecondary} strokeWidth={2} />
+              <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600' }}>Back</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={{ width: 52 }} />
+          )}
 
-        {/* Progress dots */}
-        <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-          {Array.from({ length: TOTAL_SCREENS }).map((_, i) => (
-            <View key={i} style={{ width: i === currentScreen ? 18 : 6, height: 6, borderRadius: 3, backgroundColor: i === currentScreen ? GREEN : colors.textMuted + '50' }} />
-          ))}
+          {/* Progress dots */}
+          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+            {Array.from({ length: TOTAL_SCREENS }).map((_, i) => (
+              <View key={i} style={{ width: i === currentScreen ? 18 : 6, height: 6, borderRadius: 3, backgroundColor: i === currentScreen ? GREEN : colors.textMuted + '50' }} />
+            ))}
+          </View>
+
+          <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', width: 52, textAlign: 'right' }}>
+            {currentScreen + 1}/{TOTAL_SCREENS}
+          </Text>
         </View>
-
-        <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', width: 52, textAlign: 'right' }}>
-          {currentScreen + 1}/{TOTAL_SCREENS}
-        </Text>
-      </View>
+      )}
 
       {/* Screen content */}
       <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
