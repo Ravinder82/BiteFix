@@ -45,7 +45,9 @@ import {
   ShieldAlert,
   Zap,
   Activity,
-  Globe
+  Globe,
+  Sparkles,
+  Flame,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
@@ -55,53 +57,47 @@ const GOLD = '#D4AF37';
 // ── Feature list ─────────────────────────────────────────
 const FEATURES = [
   {
-    icon: Activity,
-    color: '#FF9500',
-    bg: 'rgba(255,149,0,0.09)',
-    title: 'Processing Level',
-    subtitle: 'NOVA 1–4 classification based on available product data.',
+    icon: Zap,
+    color: '#34C759',
+    bg: 'rgba(52,199,89,0.12)',
+    title: 'Unlimited Scans',
+    subtitle: 'Scan any product with no daily limits or scan restrictions.',
+    badge: 'TOP FEATURE',
   },
   {
-    icon: Crown,
-    color: '#34C759',
-    bg: 'rgba(52,199,89,0.09)',
-    title: 'Nutri-Score',
-    subtitle: 'A–E nutrition profile grade from available nutrient data.',
+    icon: Sparkles,
+    color: '#00C288',
+    bg: 'rgba(0,194,136,0.12)',
+    title: 'Nutrition Intelligence',
+    subtitle: 'Dynamic protein, fibre, sodium, and micronutrient profile insights.',
+  },
+  {
+    icon: Activity,
+    color: '#FF9500',
+    bg: 'rgba(255,149,0,0.10)',
+    title: 'BiteFix Intelligence Score™',
+    subtitle: 'Deterministic 6-factor score and NOVA processing detection.',
   },
   {
     icon: ShieldAlert,
     color: '#FF6B6B',
-    bg: 'rgba(255,107,107,0.09)',
-    title: 'Ingredient Review',
-    subtitle: 'Identifies emulsifiers, sweeteners, and selected additives in the ingredient list.',
+    bg: 'rgba(255,107,107,0.10)',
+    title: 'Ingredient & Additive Review',
+    subtitle: 'Identifies emulsifiers, sweeteners, and flagged additives.',
   },
   {
-    icon: Search,
-    color: '#AF52DE',
-    bg: 'rgba(175,82,222,0.09)',
-    title: 'Additives Identified',
-    subtitle: 'Lists colours, preservatives, and acidity regulators found in available data.',
-  },
-  {
-    icon: Zap,
-    color: '#FFCC00',
-    bg: 'rgba(255,204,0,0.09)',
-    title: 'Sugar Insights',
-    subtitle: 'Estimated sugar equivalent and hidden sweetener identification.',
-  },
-  {
-    icon: ShieldCheck,
-    color: '#34C759',
-    bg: 'rgba(52,199,89,0.09)',
-    title: 'Unlimited Scanning',
-    subtitle: 'Scan as many products as you like with no daily limit.',
+    icon: Flame,
+    color: '#F97316',
+    bg: 'rgba(249,115,22,0.10)',
+    title: 'Sugar & Energy Impact',
+    subtitle: 'Estimated sugar equivalent teaspoons and jogging burn time.',
   },
   {
     icon: Globe,
     color: '#4D8DE8',
-    bg: 'rgba(77,141,232,0.09)',
-    title: 'Environmental Impact',
-    subtitle: 'Available CO₂ estimate and eco-sourcing signals per product.',
+    bg: 'rgba(77,141,232,0.10)',
+    title: 'Eco-Score & Carbon Footprint',
+    subtitle: 'Available CO₂ estimates and sustainable sourcing signals.',
   },
 ] as const;
 
@@ -303,7 +299,7 @@ export default function PaywallScreen() {
             Scan Once. Know More.
           </Text>
           <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '500', textAlign: 'center', marginTop: 6, maxWidth: 300, lineHeight: 19 }}>
-            Processing level, nutrition grade, ingredient review, and more — from one barcode scan.
+            Full access to all features, nutrition intelligence, and unlimited scans.
           </Text>
         </View>
 
@@ -312,18 +308,19 @@ export default function PaywallScreen() {
           borderRadius: 20,
           borderWidth: 1,
           borderColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
-          paddingVertical: 8,
+          paddingVertical: 6,
           marginBottom: 24,
           overflow: 'hidden',
         }}>
           {FEATURES.map((f, idx) => {
             const Icon = f.icon;
             const isLast = idx === FEATURES.length - 1;
+            const badge = (f as any).badge;
             return (
               <AnimatedListItem key={f.title} index={idx}>
                 <View style={{
                   flexDirection: 'row', alignItems: 'center', gap: 12,
-                  paddingHorizontal: 16, paddingVertical: 11,
+                  paddingHorizontal: 16, paddingVertical: 10,
                   borderBottomWidth: isLast ? 0 : 1,
                   borderBottomColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
                 }}>
@@ -331,7 +328,21 @@ export default function PaywallScreen() {
                     <Icon size={17} color={f.color} strokeWidth={2.1} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800', letterSpacing: -0.1 }}>{f.title}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800', letterSpacing: -0.1 }}>{f.title}</Text>
+                      {badge && (
+                        <View style={{
+                          backgroundColor: isDark ? 'rgba(52,199,89,0.20)' : 'rgba(52,199,89,0.15)',
+                          paddingHorizontal: 6,
+                          paddingVertical: 1.5,
+                          borderRadius: 4,
+                        }}>
+                          <Text style={{ color: '#34C759', fontSize: 8.5, fontWeight: '900', letterSpacing: 0.4 }}>
+                            {badge}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                     <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 2, lineHeight: 15 }}>{f.subtitle}</Text>
                   </View>
                 </View>

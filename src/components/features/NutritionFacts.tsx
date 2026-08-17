@@ -75,12 +75,12 @@ export function NutritionFacts({
       }}
     >
       {/* Title & Serving Standard Tag */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
         <View style={{ flexShrink: 1 }}>
-          <Text style={{ color: colors.text, fontSize: 20, fontWeight: '900', letterSpacing: -0.5 }}>
-            Sugar & Energy
+          <Text style={{ color: colors.text, fontSize: 20, fontWeight: '900', letterSpacing: -0.5 }} numberOfLines={2}>
+            Sugar & Energy Analysis
           </Text>
-          <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 2 }} numberOfLines={1} ellipsizeMode="tail">
+          <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 2 }} numberOfLines={2}>
             Serving: {servingSize || '100 g / 100 ml'}
           </Text>
         </View>
@@ -89,11 +89,12 @@ export function NutritionFacts({
       <View style={{ height: 1, backgroundColor: borderDivider, marginBottom: 16 }} />
 
       {/* ── Bento Telemetry Grid (Sugar Load & Activity Burn) ── */}
-      <View style={{ flexDirection: 'row', gap: 10, marginBottom: 16 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
         {/* Cell 1: Sugar Content & WHO Limit */}
         <View
           style={{
-            flex: 1.1,
+            flex: 1,
+            minWidth: 140,
             backgroundColor: bentoBg,
             borderRadius: 16,
             padding: 12,
@@ -143,6 +144,7 @@ export function NutritionFacts({
         <View
           style={{
             flex: 1,
+            minWidth: 140,
             backgroundColor: bentoBg,
             borderRadius: 16,
             padding: 14,
@@ -292,7 +294,7 @@ export function NutritionFacts({
                       shadowRadius: 4,
                     }}
                   />
-                  <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700' }}>
+                  <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700', flexShrink: 1 }} numberOfLines={2}>
                     {sugar}
                   </Text>
                 </View>

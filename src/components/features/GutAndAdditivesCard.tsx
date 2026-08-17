@@ -54,8 +54,8 @@ function GutIngredientReviewCard({
       }}
     >
       {/* Header */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12, gap: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 }}>
           <View style={{
             width: 36, height: 36, borderRadius: 10,
             backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
@@ -65,11 +65,11 @@ function GutIngredientReviewCard({
               ? <ShieldCheck size={18} color={accent} strokeWidth={2.2} />
               : <ShieldAlert size={18} color={accent} strokeWidth={2.2} />}
           </View>
-          <View>
-            <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', letterSpacing: -0.2 }}>
+          <View style={{ flexShrink: 1 }}>
+            <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', letterSpacing: -0.2 }} numberOfLines={2}>
               Ingredient Review
             </Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '700', marginTop: 1 }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '700', marginTop: 1 }} numberOfLines={2}>
               {gutInsights.length === 0
                 ? 'Based on available data'
                 : `${gutInsights.length} categor${gutInsights.length !== 1 ? 'ies' : 'y'} identified`}
@@ -174,8 +174,31 @@ function AdditivesIdentifiedCard({
   colors: any;
   isDark: boolean;
 }) {
-  const elevated = additives.filter(a => a.riskLevel === 'elevated');
-  const moderate = additives.filter(a => a.riskLevel === 'moderate');
+  // De-duplicate additives
+  const uniqueAdditives = React.useMemo(() => {
+    const map = new Map<string, AdditiveDetail & { _eCode: string; _cleanName: string }>();
+    additives.forEach(item => {
+      const eCode = parseENumber(item.tag, item.displayName);
+      // Remove any trailing/inline E-number from the display name
+      let cleanName = (item.displayName || '')
+        .replace(new RegExp(`\\s*\\(?${eCode}\\)?`, 'i'), '')
+        .replace(/\s*\(e\d{3,4}[a-z]?\)/i, '')
+        .replace(/\s*-\s*$/, '') // remove trailing dash
+        .trim();
+      
+      if (!cleanName && eCode) cleanName = `Additive`;
+      if (!cleanName) cleanName = 'Unknown Additive';
+
+      const key = eCode ? eCode.toLowerCase() : cleanName.toLowerCase();
+      if (!map.has(key)) {
+        map.set(key, { ...item, _eCode: eCode, _cleanName: cleanName });
+      }
+    });
+    return Array.from(map.values());
+  }, [additives]);
+
+  const elevated = uniqueAdditives.filter(a => a.riskLevel === 'elevated');
+  const moderate = uniqueAdditives.filter(a => a.riskLevel === 'moderate');
   const flaggedCount = elevated.length + moderate.length;
   const isClean = flaggedCount === 0;
 
@@ -218,8 +241,8 @@ function AdditivesIdentifiedCard({
             <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', letterSpacing: -0.2 }}>
               Additives Identified
             </Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '700', marginTop: 1 }}>
-              {additives.length === 0 ? 'None in available data' : `${additives.length} total · ${flaggedCount} for review`}
+            <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '700', marginTop: 1 }} numberOfLines={2}>
+              {uniqueAdditives.length === 0 ? 'None in available data' : `${uniqueAdditives.length} total · ${flaggedCount} for review`}
             </Text>
           </View>
         </View>
@@ -239,7 +262,7 @@ function AdditivesIdentifiedCard({
 
       {/* Body */}
       <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
-        {additives.length === 0 ? (
+        {uniqueAdditives.length === 0 ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <CheckCircle2 size={13} color={isDark ? '#34D399' : '#16A34A'} />
             <Text style={{ color: colors.text, fontSize: 11, fontWeight: '700', flex: 1 }}>
@@ -251,8 +274,8 @@ function AdditivesIdentifiedCard({
             <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '700' }}>
               Based on available ingredient information.
             </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 5 }}>
-              {additives.map((item, idx) => {
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+              {uniqueAdditives.map((item, idx) => {
                 const isEl = item.riskLevel === 'elevated';
                 const isMod = item.riskLevel === 'moderate';
                 // neutral color unless explicitly flagged
@@ -266,8 +289,9 @@ function AdditivesIdentifiedCard({
                   : isMod
                   ? (isDark ? 'rgba(251,191,36,0.07)' : 'rgba(245,158,11,0.04)')
                   : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)');
-                const eCode = parseENumber(item.tag, item.displayName);
-                const cleanName = (item.displayName || '').replace(/\s*\(e\d{3,4}[a-z]?\)/i, '');
+                
+                const eCode = item._eCode;
+                const cleanName = item._cleanName;
 
                 return (
                   <View
@@ -277,16 +301,21 @@ function AdditivesIdentifiedCard({
                       backgroundColor: chipBg,
                       borderColor: isDark ? `${chipColor}20` : `${chipColor}18`,
                       borderWidth: 1,
-                      borderRadius: 7,
-                      paddingHorizontal: 7, paddingVertical: 4,
+                      borderRadius: 8,
+                      paddingHorizontal: 8, paddingVertical: 5,
                       gap: 4,
+                      flexShrink: 1, // Let chip shrink if screen is extremely narrow
                     }}
                   >
-                    <Text style={{ color: chipColor, fontSize: 9, fontWeight: '900', letterSpacing: 0.2 }}>
-                      {eCode}
-                    </Text>
-                    <View style={{ width: 1, height: 9, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }} />
-                    <Text style={{ color: colors.text, fontSize: 10, fontWeight: '700' }}>
+                    {eCode ? (
+                      <>
+                        <Text style={{ color: chipColor, fontSize: 9.5, fontWeight: '900', letterSpacing: 0.2 }}>
+                          {eCode}
+                        </Text>
+                        <View style={{ width: 1, height: 9, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }} />
+                      </>
+                    ) : null}
+                    <Text style={{ color: colors.text, fontSize: 10.5, fontWeight: '700', flexShrink: 1 }} numberOfLines={2}>
                       {cleanName}
                     </Text>
                   </View>

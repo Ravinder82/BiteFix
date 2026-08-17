@@ -1,4 +1,13 @@
-import { NOVAClass, AdditiveDetail, AdditiveRiskLevel, ProductDataSource, ProductDataStatus } from '../types/app.types';
+import {
+  NOVAClass,
+  AdditiveDetail,
+  AdditiveRiskLevel,
+  ProductDataSource,
+  ProductDataStatus,
+  NutritionIntelligenceData,
+  NutritionInsightItem,
+  NutritionInsightLevel,
+} from '../types/app.types';
 import { detectStealthSugars } from './stealthSugarDetector';
 
 export interface ScanResultData {
@@ -34,6 +43,13 @@ export interface ScanResultData {
   shieldAlerts?: { id: string; type: 'allergen' | 'oil'; name: string }[];
   nutriScore?: 'a' | 'b' | 'c' | 'd' | 'e';
   biteFixScore?: number;
+  
+  // ── Nutrition Intelligence Extension ──────────────────
+  nutritionIntelligence?: NutritionIntelligenceData;
+  satFat100g?: number;
+  sodiumMg100g?: number;
+  fibre100g?: number;
+  cholesterolMg100g?: number;
   
   // ── Sustainability & Dietary Extensions ──────────────
   ecoscoreGrade?: 'a' | 'b' | 'c' | 'd' | 'e' | 'unknown';
@@ -409,98 +425,434 @@ export function estimateEcoScoreFromCategory(categoryStr?: string, isVegan?: boo
 }
 
 // ─────────────────────────────────────────────────────────
-// BiteFix Health Score (0-100)
+// Reusable Nutrition Signal Normalization & Intelligence Engine
+// Single Source of Truth for BiteFix Intelligence Score™ & Nutrition Intelligence
+// ─────────────────────────────────────────────────────────
+
+export interface NormalizedNutritionSignals {
+  signals: number[];
+  nutritionScore: number;
+  kcalScore?: number;
+  satFatScore?: number;
+  sodiumScore?: number;
+  proteinScore?: number;
+  fibreScore?: number;
+}
+
+export function normalizeNutritionSignals(opts: {
+  kcal100g?: number;
+  satFat100g?: number;
+  protein100g?: number;
+  sodiumMg100g?: number;
+  fibre100g?: number;
+  isBeverage?: boolean;
+}): NormalizedNutritionSignals {
+  const clamp = (v: number, min: number = 0, max: number = 100) => {
+    const lo = Math.min(min, max);
+    const hi = Math.max(min, max);
+    return Math.max(lo, Math.min(hi, v));
+  };
+  const lerp = (v: number, inLo: number, inHi: number, outLo: number, outHi: number) => {
+    const clampedInput = clamp(v, inLo, inHi);
+    const t = (clampedInput - inLo) / (inHi - inLo);
+    return clamp(outLo + t * (outHi - outLo), 0, 100);
+  };
+
+  const signals: number[] = [];
+
+  let kcalScore: number | undefined;
+  if (opts.kcal100g !== undefined) {
+    kcalScore = opts.isBeverage
+      ? lerp(opts.kcal100g, 0, 100, 100, 0)
+      : lerp(opts.kcal100g, 0, 600, 100, 0);
+    signals.push(clamp(kcalScore, 0, 100));
+  }
+
+  let satFatScore: number | undefined;
+  if (opts.satFat100g !== undefined) {
+    satFatScore = lerp(opts.satFat100g, 0, 20, 100, 0);
+    signals.push(satFatScore);
+  }
+
+  let sodiumScore: number | undefined;
+  if (opts.sodiumMg100g !== undefined) {
+    sodiumScore = lerp(opts.sodiumMg100g, 0, 900, 100, 0);
+    signals.push(sodiumScore);
+  }
+
+  let proteinScore: number | undefined;
+  if (opts.protein100g !== undefined) {
+    proteinScore = lerp(opts.protein100g, 0, 25, 0, 100);
+    signals.push(proteinScore);
+  }
+
+  let fibreScore: number | undefined;
+  if (opts.fibre100g !== undefined) {
+    fibreScore = lerp(opts.fibre100g, 0, 10, 0, 100);
+    signals.push(fibreScore);
+  }
+
+  const nutritionScore = signals.length > 0
+    ? signals.reduce((sum, v) => sum + v, 0) / signals.length
+    : 50;
+
+  return {
+    signals,
+    nutritionScore,
+    kcalScore,
+    satFatScore,
+    sodiumScore,
+    proteinScore,
+    fibreScore,
+  };
+}
+
+/**
+ * Derives dynamic Nutrition Intelligence insights using the exact same
+ * underlying product signals and thresholds as BiteFix Intelligence Score™.
+ */
+export function deriveNutritionIntelligence(opts: {
+  protein100g?: number;
+  fibre100g?: number;
+  satFat100g?: number;
+  sodiumMg100g?: number;
+  cholesterolMg100g?: number;
+  micronutrientCount?: number;
+}): NutritionIntelligenceData {
+  const insights: NutritionInsightItem[] = [];
+
+  let proteinItem: NutritionInsightItem | undefined;
+  if (opts.protein100g !== undefined) {
+    const p = opts.protein100g;
+    const level: NutritionInsightLevel = p >= 15 ? 'Strong' : p >= 6 ? 'Good Source' : p >= 2 ? 'Moderate' : 'Lower';
+    const tone = p >= 6 ? 'positive' : 'neutral';
+    proteinItem = { id: 'protein', label: 'Protein', value: `${p}g`, level, tone };
+    insights.push(proteinItem);
+  }
+
+  let fibreItem: NutritionInsightItem | undefined;
+  if (opts.fibre100g !== undefined) {
+    const f = opts.fibre100g;
+    const level: NutritionInsightLevel = f >= 6 ? 'Strong' : f >= 3 ? 'Good Source' : f >= 1 ? 'Moderate' : 'Lower';
+    const tone = f >= 3 ? 'positive' : 'neutral';
+    fibreItem = { id: 'fibre', label: 'Fibre', value: `${f}g`, level, tone };
+    insights.push(fibreItem);
+  }
+
+  let satFatItem: NutritionInsightItem | undefined;
+  if (opts.satFat100g !== undefined) {
+    const sf = opts.satFat100g;
+    const level: NutritionInsightLevel = sf <= 1.5 ? 'Lower' : sf <= 5 ? 'Moderate' : 'Higher';
+    const tone = sf <= 1.5 ? 'positive' : sf <= 5 ? 'neutral' : 'caution';
+    satFatItem = { id: 'saturated_fat', label: 'Saturated Fat', value: `${sf}g`, level, tone };
+    insights.push(satFatItem);
+  }
+
+  let sodiumItem: NutritionInsightItem | undefined;
+  if (opts.sodiumMg100g !== undefined) {
+    const sod = opts.sodiumMg100g;
+    const level: NutritionInsightLevel = sod <= 120 ? 'Lower' : sod <= 600 ? 'Moderate' : 'Higher';
+    const tone = sod <= 120 ? 'positive' : sod <= 600 ? 'neutral' : 'caution';
+    sodiumItem = { id: 'sodium', label: 'Sodium', value: `${Math.round(sod)}mg`, level, tone };
+    insights.push(sodiumItem);
+  }
+
+  let cholesterolItem: NutritionInsightItem | undefined;
+  if (opts.cholesterolMg100g !== undefined) {
+    const chol = opts.cholesterolMg100g;
+    const level: NutritionInsightLevel = chol <= 20 ? 'Lower' : chol <= 60 ? 'Moderate' : 'Higher';
+    const tone = chol <= 20 ? 'positive' : chol <= 60 ? 'neutral' : 'caution';
+    cholesterolItem = { id: 'cholesterol', label: 'Cholesterol', value: `${Math.round(chol)}mg`, level, tone };
+    insights.push(cholesterolItem);
+  }
+
+  let microItem: NutritionInsightItem | undefined;
+  if (opts.micronutrientCount !== undefined) {
+    const count = opts.micronutrientCount;
+    const level: NutritionInsightLevel = count >= 3 ? 'Available' : count >= 1 ? 'Partial' : 'Not Available';
+    const tone = count >= 3 ? 'positive' : 'neutral';
+    microItem = { id: 'micronutrients', label: 'Vitamin & Mineral Profile', level, tone };
+    insights.push(microItem);
+  }
+
+  return {
+    protein: proteinItem,
+    fibre: fibreItem,
+    saturatedFat: satFatItem,
+    sodium: sodiumItem,
+    cholesterol: cholesterolItem,
+    micronutrients: microItem,
+    insights,
+  };
+}
+
+// ─────────────────────────────────────────────────────────
+// BiteFix Intelligence Score™ (0-100)
 // ─────────────────────────────────────────────────────────
 
 /**
- * Computes a BiteFix Health Score (0-100) from product attributes, strictly calibrated with NOVA Classification bounds:
- * - NOVA 1 (Unprocessed / Minimally Processed): Score 81 – 100
- * - NOVA 2 (Processed Culinary Ingredient):     Score 61 – 80
- * - NOVA 3 (Processed Food):                    Score 36 – 60
- * - NOVA 4 (Ultra-Processed):                   Score 0 – 35
+ * BiteFix Intelligence Score™
+ *
+ * A proprietary, explainable, deterministic composite score (0–100) computed
+ * from six independent weighted components. The score is informational only —
+ * it is not a health, safety, medical, or purity score.
+ *
+ * Components (sum = 100%):
+ *   Nutrition Profile    30%  — calorie density, sat fat, sodium, protein, fibre signals
+ *   Sugar Profile        20%  — continuous penalty on sugar/100g; beverage-aware
+ *   Processing Profile   15%  — NOVA as a major signal but NOT a hard bound
+ *   Ingredient/Additive  15%  — weighted by additive risk tier, not flat count
+ *   Food Composition     10%  — ingredient complexity, whole-food vs refined signals
+ *   Data Confidence      10%  — how many of the above inputs are actually available
+ *
+ * NOVA is a signal, not a ceiling/floor: the final score is free to vary within
+ * any range regardless of NOVA class. A NOVA 4 product with good nutrition can
+ * score higher than a data-poor NOVA 1 product.
+ *
+ * Missing data lowers the Data Confidence component rather than fabricating values.
+ * Each missing major input is treated conservatively (neutral fallback for that
+ * component) and reduces confidence.
  */
 export function computeBiteFixScore(opts: {
   name?: string;
   brand?: string;
   novaClass?: NOVAClass;
-  additiveCount: number;
+  additiveCount?: number;
+  additives?: AdditiveDetail[];
   nutriScore?: 'a' | 'b' | 'c' | 'd' | 'e';
   sugarPer100g?: number;
   ingredientsText?: string;
+  // Extended nutrition signals (per 100g / 100ml)
+  kcal100g?: number;
+  satFat100g?: number;
+  protein100g?: number;
+  sodiumMg100g?: number;
+  fibre100g?: number;
+  isBeverage?: boolean;
 }): number {
-  let inferredNova = opts.novaClass;
+  // ── Helpers ──────────────────────────────────────────────
+  const clamp = (v: number, min: number = 0, max: number = 100) => {
+    const lo = Math.min(min, max);
+    const hi = Math.max(min, max);
+    return Math.max(lo, Math.min(hi, v));
+  };
+  const lerp = (v: number, inLo: number, inHi: number, outLo: number, outHi: number) => {
+    const clampedInput = clamp(v, inLo, inHi);
+    const t = (clampedInput - inLo) / (inHi - inLo);
+    return clamp(outLo + t * (outHi - outLo), 0, 100);
+  };
 
-  const text = `${opts.name || ''} ${opts.brand || ''} ${opts.ingredientsText || ''}`.toLowerCase();
-  const isSodaOrUltraProcessedDrink = 
-    text.includes('coca') || 
-    text.includes('cola') || 
-    text.includes('soda') || 
-    text.includes('carbonated') || 
-    text.includes('soft drink') || 
-    text.includes('energy drink') || 
-    text.includes('high fructose corn syrup') || 
-    text.includes('corn syrup') || 
-    text.includes('caramel color') || 
-    text.includes('phosphoric acid') || 
-    text.includes('aspartame') || 
-    text.includes('sucralose') || 
-    text.includes('acesulfame') || 
-    (opts.sugarPer100g !== undefined && opts.sugarPer100g > 5 && (text.includes('drink') || text.includes('beverage') || text.includes('syrup')));
+  // Availability flags (used by confidence component)
+  const hasNova      = opts.novaClass !== undefined;
+  // hasSugar: any number including 0 is a valid known value (0g sugar = perfect sugar score).
+  // Only undefined means 'unknown'.
+  const hasSugar     = opts.sugarPer100g !== undefined;
+  const hasKcal      = opts.kcal100g !== undefined;
+  const hasSatFat    = opts.satFat100g !== undefined;
+  const hasProtein   = opts.protein100g !== undefined;
+  const hasSodium    = opts.sodiumMg100g !== undefined;
+  const hasFibre     = opts.fibre100g !== undefined;
+  const hasIngreds   = typeof opts.ingredientsText === 'string' && opts.ingredientsText.trim().length > 0;
+  const hasAdditives = opts.additives !== undefined;
+  const hasNutriScore = opts.nutriScore !== undefined;
 
-  if (isSodaOrUltraProcessedDrink) {
-    inferredNova = 4;
+  // ────────────────────────────────────────────────────────
+  // 1. NUTRITION PROFILE (0–100), weight 30%
+  //    Uses normalized nutrition signals — single source of truth.
+  // ────────────────────────────────────────────────────────
+  const normNutrition = normalizeNutritionSignals({
+    kcal100g: opts.kcal100g,
+    satFat100g: opts.satFat100g,
+    protein100g: opts.protein100g,
+    sodiumMg100g: opts.sodiumMg100g,
+    fibre100g: opts.fibre100g,
+    isBeverage: opts.isBeverage,
+  });
+
+  let nutritionScore = normNutrition.nutritionScore;
+  if (normNutrition.signals.length === 0 && hasNutriScore) {
+    // Nutri-Score as supporting signal only when raw data is unavailable
+    const nsMap: Record<string, number> = { a: 88, b: 72, c: 52, d: 32, e: 15 };
+    nutritionScore = nsMap[opts.nutriScore!] ?? 50;
   }
 
-  if (!inferredNova) {
-    if (opts.additiveCount >= 4) {
-      inferredNova = 4;
-    } else if (opts.additiveCount >= 2) {
-      inferredNova = 3;
+  // ────────────────────────────────────────────────────────
+  // 2. SUGAR PROFILE (0–100), weight 20%
+  //    Continuous penalty — NOT a binary threshold.
+  //    Beverage-aware: 10g/100ml already flags significantly.
+  // ────────────────────────────────────────────────────────
+  let sugarScore = 50; // neutral fallback when no data
+  if (hasSugar) {
+    const s = opts.sugarPer100g!;
+    if (opts.isBeverage) {
+      // For beverages: 0g/100ml → 100, 15g/100ml → 0
+      sugarScore = clamp(lerp(s, 0, 15, 100, 0), 0, 100);
     } else {
-      // 0 or 1 additives: check if it's a pure processed culinary ingredient
-      const ing = opts.ingredientsText ? opts.ingredientsText.toLowerCase().trim() : '';
-      const isCulinary = ing === 'sugar' || ing === 'salt' || ing === 'honey' || ing === 'maple syrup' || ing === 'butter' || ing === 'vegetable oil' || ing === 'olive oil' || ing === 'coconut oil';
-      
-      const hasHighSugar = opts.sugarPer100g !== undefined && opts.sugarPer100g > 5;
-      if (isCulinary) {
-        inferredNova = 2;
-      } else if (hasHighSugar) {
-        inferredNova = 3;
-      } else {
-        inferredNova = 1; // Default to whole food / unprocessed for clean profile
+      // For solids: 0g → 100, 60g → 0 (e.g. pure sugar = 100g/100g)
+      sugarScore = clamp(lerp(s, 0, 60, 100, 0), 0, 100);
+    }
+
+    // Stealth-sugar bonus penalty: if ingredients text contains known
+    // added-sugar aliases at high prominence, apply a small signal reduction
+    if (hasIngreds) {
+      const ingLower = opts.ingredientsText!.toLowerCase();
+      const addedSugarAliases = [
+        'high fructose corn syrup', 'corn syrup', 'glucose-fructose syrup',
+        'glucose syrup', 'fructose syrup', 'dextrose', 'maltose',
+        'invert sugar', 'sugar syrup', 'cane sugar',
+      ];
+      const aliasCount = addedSugarAliases.filter(a => ingLower.includes(a)).length;
+      if (aliasCount > 0) {
+        // Each alias reduces subscore by up to 8 points (max 3 aliases penalised)
+        sugarScore = Math.max(0, sugarScore - Math.min(3, aliasCount) * 8);
       }
     }
   }
 
-  // Base NOVA factor values centered in each NOVA group bracket
-  const novaScores: Record<number, number> = { 1: 90, 2: 70, 3: 48, 4: 18 };
-  const novaFactor = inferredNova ? (novaScores[inferredNova] ?? 50) : 50;
-
-  // Additive cleanliness: 0 additives → 100, decays with more additives
-  const additiveFactor = Math.max(0, 100 - (opts.additiveCount * 15));
-
-  // Nutrient profile: based on Nutri-Score letter grade
-  const nutriMap: Record<string, number> = { a: 100, b: 80, c: 55, d: 30, e: 10 };
-  const nutrientFactor = opts.nutriScore ? (nutriMap[opts.nutriScore] ?? 50) : 50;
-
-  const raw = (0.5 * novaFactor) + (0.3 * additiveFactor) + (0.2 * nutrientFactor);
-  let score = Math.round(raw);
-
-  // Strict NOVA group bounding to guarantee 100% calibration between NOVA class and BiteFix Score
-  if (inferredNova === 1) {
-    score = Math.max(81, Math.min(100, score));
-  } else if (inferredNova === 2) {
-    score = Math.max(61, Math.min(80, score));
-  } else if (inferredNova === 3) {
-    score = Math.max(36, Math.min(60, score));
-  } else if (inferredNova === 4) {
-    score = Math.max(0, Math.min(35, score));
-  } else {
-    score = Math.max(0, Math.min(100, score));
+  // ────────────────────────────────────────────────────────
+  // 3. PROCESSING PROFILE (0–100), weight 15%
+  //    NOVA is the main signal, but is NOT a hard bound.
+  //    Missing NOVA → defensible neutral fallback.
+  // ────────────────────────────────────────────────────────
+  let processingScore = 45; // conservative neutral when NOVA unknown
+  if (hasNova) {
+    const novaBaseScores: Record<number, number> = { 1: 92, 2: 72, 3: 46, 4: 22 };
+    processingScore = novaBaseScores[opts.novaClass!] ?? 45;
+  } else if (hasIngreds) {
+    // Heuristic processing inference from ingredients when NOVA is missing
+    const ingLower = opts.ingredientsText!.toLowerCase();
+    const ultraSignals = [
+      'high fructose corn syrup', 'corn syrup', 'modified starch', 'emulsifier',
+      'artificial flavor', 'artificial colour', 'caramel color', 'phosphoric acid',
+    ];
+    const ultraCount = ultraSignals.filter(s => ingLower.includes(s)).length;
+    if (ultraCount >= 3) {
+      processingScore = 25;
+    } else if (ultraCount >= 1) {
+      processingScore = 42;
+    } else {
+      processingScore = 60; // simple ingredient list → likely less processed
+    }
   }
 
-  return score;
+  // ────────────────────────────────────────────────────────
+  // 4. INGREDIENT / ADDITIVE PROFILE (0–100), weight 15%
+  //    Weighted by risk tier, not flat count.
+  //    elevated > moderate > unclassified.
+  // ────────────────────────────────────────────────────────
+  let ingredientScore = 75; // optimistic neutral when no additive data
+
+  if (hasAdditives) {
+    const allAdditives = opts.additives!;
+    const elevated = allAdditives.filter(a => a.riskLevel === 'elevated').length;
+    const moderate = allAdditives.filter(a => a.riskLevel === 'moderate').length;
+    const low      = allAdditives.filter(a => a.riskLevel === 'low').length;
+    const unclassified = (opts.additiveCount ?? allAdditives.length) - elevated - moderate - low;
+
+    // Penalty per tier — calibrated to give meaningful differentiation.
+    //
+    // Elevated additives (e.g. aspartame, sodium benzoate, tartrazine):
+    //   - 1 elevated  → −22 → score 78  (notable but not catastrophic alone)
+    //   - 2 elevated  → −44 → score 56  (significant concern)
+    //   - 3+ elevated → capped at −66 → score 34  (floor — multiple red-flag additives)
+    //
+    // Moderate additives (e.g. carrageenan, carboxymethylcellulose, TiO2):
+    //   - 1 moderate  → −8  → score 92
+    //   - 3 moderate  → −24 → score 76 (capped)
+    //
+    // Low/unclassified additives (e.g. citric acid, ascorbic acid, lecithin):
+    //   - small progressive reduction, max −10
+    const elevatedPenalty  = Math.min(66, elevated * 22);
+    const moderatePenalty  = Math.min(24, moderate * 8);
+    const lowPenalty       = Math.min(10, (low + Math.max(0, unclassified)) * 2);
+
+    ingredientScore = clamp(100 - elevatedPenalty - moderatePenalty - lowPenalty, 0, 100);
+  } else if ((opts.additiveCount ?? 0) > 0) {
+    // Fallback: flat count available but no detail → moderate assumption
+    const count = opts.additiveCount!;
+    ingredientScore = clamp(100 - count * 8, 20, 85);
+  }
+
+  // ────────────────────────────────────────────────────────
+  // 5. FOOD COMPOSITION (0–100), weight 10%
+  //    Ingredient-list signals: complexity, whole-food presence,
+  //    refined-ingredient patterns.
+  // ────────────────────────────────────────────────────────
+  let compositionScore = 50; // neutral when no ingredients
+
+  if (hasIngreds) {
+    const ingText = opts.ingredientsText!;
+    const ingLower = ingText.toLowerCase();
+
+    // Ingredient count proxy from comma count
+    const ingCount = (ingText.match(/,/g) || []).length + 1;
+
+    // Start at 75, reduce for complexity
+    let comp = 75;
+
+    // Complexity penalty: very long lists indicate more processing
+    if (ingCount > 20) comp -= 25;
+    else if (ingCount > 10) comp -= 15;
+    else if (ingCount > 5) comp -= 8;
+
+    // Refined/ultra patterns (penalty)
+    const refinedPatterns = [
+      'modified', 'hydrogenated', 'partially hydrogenated', 'fractionated',
+      'corn syrup', 'high fructose', 'glucose syrup', 'artificial',
+      'acesulfame', 'aspartame', 'sucralose', 'saccharin',
+    ];
+    const refinedHits = refinedPatterns.filter(p => ingLower.includes(p)).length;
+    comp -= Math.min(30, refinedHits * 10);
+
+    // Whole-food signals (bonus — limited to +15)
+    const wholeFoodPatterns = [
+      'whole wheat', 'whole grain', 'rolled oats', 'brown rice', 'quinoa',
+      'lentils', 'chickpeas', 'almonds', 'walnuts', 'seeds', 'flaxseed',
+      'sunflower seed', 'pumpkin seed',
+    ];
+    const wholeFoodHits = wholeFoodPatterns.filter(p => ingLower.includes(p)).length;
+    comp += Math.min(15, wholeFoodHits * 5);
+
+    // Protein/fibre-dense first ingredient bonus
+    const firstIngredient = ingLower.split(',')[0].trim();
+    const proteinFirst = ['chicken', 'beef', 'fish', 'turkey', 'egg', 'lentil', 'chickpea', 'tofu', 'tempeh'];
+    if (proteinFirst.some(p => firstIngredient.includes(p))) comp += 8;
+
+    compositionScore = clamp(comp, 0, 100);
+  } else if (hasNova) {
+    // Impute a rough composition estimate from NOVA if no ingredients text
+    const novaCompMap: Record<number, number> = { 1: 75, 2: 60, 3: 42, 4: 28 };
+    compositionScore = novaCompMap[opts.novaClass!] ?? 50;
+  }
+
+  // ────────────────────────────────────────────────────────
+  // 6. DATA CONFIDENCE (0–100), weight 10%
+  //    Reflects how much evidence the above components have.
+  //    Does NOT directly penalise the product for missing data —
+  //    it reduces the contribution of the confidence component.
+  // ────────────────────────────────────────────────────────
+  const totalSignals = 10;
+  const availableSignals = [
+    hasNova, hasSugar, hasKcal, hasSatFat, hasProtein,
+    hasSodium, hasIngreds, hasAdditives, hasFibre, hasNutriScore,
+  ].filter(Boolean).length;
+
+  const confidenceScore = clamp((availableSignals / totalSignals) * 100, 10, 100);
+
+  // ────────────────────────────────────────────────────────
+  // FINAL WEIGHTED SCORE
+  // ────────────────────────────────────────────────────────
+  const raw =
+    nutritionScore  * 0.30 +
+    sugarScore      * 0.20 +
+    processingScore * 0.15 +
+    ingredientScore * 0.15 +
+    compositionScore * 0.10 +
+    confidenceScore * 0.10;
+
+  return clamp(Math.round(raw), 0, 100);
 }
+
 
 export class RequestTimeoutError extends Error {
   constructor(timeoutMs: number) {
@@ -893,9 +1245,12 @@ export function normalizeProductPayload(
   let n = p.nutriments ?? p.nutrition_grades ?? p.nutrition_data ?? {};
 
   // Authoritative total sugar per 100g (Carbs are NEVER promoted to sugar)
-  let sugarPer100g = extractNumberFromKeys(n, [
+  // rawSugarPer100g: undefined when the field is genuinely absent from the database.
+  // sugarPer100g: falls back to 0 for all display/calculation code that follows.
+  const rawSugarPer100g = extractNumberFromKeys(n, [
     'sugars_100g', 'sugars', 'sugars_value', 'sugars-total_100g', 'sugars-total'
-  ]) ?? 0;
+  ]);
+  let sugarPer100g = rawSugarPer100g ?? 0;
 
   if (sugarPer100g === 0) {
     const added = extractNumberFromKeys(n, [
@@ -1000,7 +1355,26 @@ export function normalizeProductPayload(
     });
   }
 
-  const biteFixScore = computeBiteFixScore({ name, brand, novaClass, additiveCount, nutriScore, sugarPer100g, ingredientsText });
+  // Fibre per 100g (not previously used in scoring, now available)
+  const fibre100g = extractNumberFromKeys(n, ['fiber_100g', 'fibers_100g', 'fiber', 'fibers_value', 'fiber-dietary_100g', 'fiber-dietary']) ?? undefined;
+
+  const biteFixScore = computeBiteFixScore({
+    novaClass,
+    additiveCount,
+    additives,
+    nutriScore,
+    // rawSugarPer100g: undefined = field absent (unknown data), number (incl. 0) = confirmed value.
+    // 0g sugar is a real, known result (e.g. plain water, unseasoned chicken) and should
+    // score 100 on the sugar component, not fall back to the neutral 50.
+    sugarPer100g: rawSugarPer100g !== undefined ? sugarPer100g : undefined,
+    ingredientsText,
+    kcal100g,
+    satFat100g,
+    protein100g,
+    sodiumMg100g,
+    fibre100g,
+    isBeverage: isLiquid,
+  });
 
   // Eco-Score & Carbon Footprint Resolution with Fallback Estimator
   const analysisTags = (p.ingredients_analysis_tags || []).map((t: string) => t.toLowerCase());
@@ -1032,6 +1406,42 @@ export function normalizeProductPayload(
     ecoscoreGrade = est.grade;
     if (!carbonFootprint100g) carbonFootprint100g = est.co2Grams100g;
   }
+
+  // Cholesterol per 100g in mg (convert if in grams)
+  const rawCholesterol = extractNumberFromKeys(n, [
+    'cholesterol_100g', 'cholesterol', 'cholesterol_value'
+  ]);
+  let cholesterolMg100g: number | undefined = undefined;
+  if (rawCholesterol !== undefined) {
+    cholesterolMg100g = rawCholesterol > 1.0 ? rawCholesterol : Math.round(rawCholesterol * 1000);
+  }
+
+  // Detect actual available vitamins & minerals
+  const micronutrientKeys = [
+    'vitamin-a_100g', 'vitamin-a', 'vitamin-c_100g', 'vitamin-c', 'vitamin-d_100g', 'vitamin-d',
+    'vitamin-e_100g', 'vitamin-e', 'vitamin-k_100g', 'vitamin-k', 'vitamin-b1_100g', 'vitamin-b1',
+    'vitamin-b2_100g', 'vitamin-b2', 'vitamin-b6_100g', 'vitamin-b6', 'vitamin-b9_100g', 'vitamin-b9',
+    'vitamin-b12_100g', 'vitamin-b12', 'calcium_100g', 'calcium', 'iron_100g', 'iron',
+    'magnesium_100g', 'magnesium', 'potassium_100g', 'potassium', 'zinc_100g', 'zinc',
+    'phosphorus_100g', 'phosphorus', 'iodine_100g', 'iodine', 'selenium_100g', 'selenium',
+    'folates_100g', 'folates', 'pantothenic-acid_100g', 'biotin_100g'
+  ];
+  const detectedMicroKeys = micronutrientKeys.filter(k => {
+    const val = extractNumberFromKeys(n, [k]);
+    return val !== undefined && val > 0;
+  });
+  const uniqueMicros = new Set(detectedMicroKeys.map(k => k.replace(/_100g$/, '')));
+  const micronutrientCount = uniqueMicros.size;
+
+  // Derive dynamic Nutrition Intelligence analysis
+  const nutritionIntelligence = deriveNutritionIntelligence({
+    protein100g,
+    fibre100g,
+    satFat100g,
+    sodiumMg100g,
+    cholesterolMg100g,
+    micronutrientCount,
+  });
 
   const labelTags = (p.labels_tags || []).map((t: string) => t.toLowerCase());
   const isOrganic = labelTags.includes('en:organic') || labelTags.includes('en:usda-organic') || labelTags.includes('en:eu-organic') || labelTags.includes('en:bio');
@@ -1066,6 +1476,11 @@ export function normalizeProductPayload(
     allergens,
     nutriScore,
     biteFixScore,
+    nutritionIntelligence,
+    satFat100g,
+    sodiumMg100g,
+    fibre100g,
+    cholesterolMg100g,
     ecoscoreGrade,
     carbonFootprint100g,
     isVegan,

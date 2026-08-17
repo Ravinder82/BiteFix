@@ -1200,7 +1200,7 @@ function HealthAnalysisCalculationCard({ cardW, C, onComplete }: { cardW: number
 // ─────────────────────────────────────────────────────────
 function InstantResultSummaryCard({ cardW, C }: { cardW: number; C: any }) {
   const features = [
-    { id: '1', title: 'BiteFix Food Score', desc: 'A quick snapshot based on available product data', icon: <Activity size={20} color={MINT_DARK} /> },
+    { id: '1', title: 'BiteFix Intelligence Score™', desc: 'Based on nutrition, sugar, processing, and ingredient signals', icon: <Activity size={20} color={MINT_DARK} /> },
     { id: '2', title: 'NOVA Scale', desc: 'Processing level detection (1 to 4)', icon: <Layers size={20} color="#F5A623" /> },
     { id: '3', title: 'Nutri-Score', desc: 'European nutrition grades (A to E)', icon: <Heart size={20} color="#00C288" /> },
     { id: '4', title: 'Additive Review', desc: 'Highlights identified colours and emulsifiers', icon: <AlertTriangle size={20} color="#EF4444" /> },

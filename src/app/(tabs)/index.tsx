@@ -10,12 +10,13 @@ import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
 import ProductHeroCardDashboard from '../../components/features/ProductHeroCardDashboard';
 import { MainDisclaimerModal } from '../../components/MainDisclaimerModal';
 import { GutAndAdditivesCard } from '../../components/features/GutAndAdditivesCard';
+import { NutritionIntelligenceCard } from '../../components/features/NutritionIntelligenceCard';
 import { EcoScoreCard } from '../../components/EcoScoreCard';
 import { ScanBarcode, Settings, Flame, Candy, ShieldAlert, Globe, Activity, Award, Heart } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { getBiteFixScoreColor } from '../../utils/format';
 import Svg, { Circle } from 'react-native-svg';
-import { detectShieldAlerts } from '../../utils/scannerAPI';
+import { detectShieldAlerts, deriveNutritionIntelligence } from '../../utils/scannerAPI';
 import { evaluateGutHealth } from '../../utils/gutShieldEvaluator';
 import AnimatedReanimated, {
   useSharedValue,
@@ -569,10 +570,19 @@ function ScanResultCards({
   totalSugarTeaspoons, totalBasketCalories, burnDownActivities, formatBurnTime, onOpenDisclaimer,
 }: any) {
   const card1 = useMountAnim(60);
-  const card2 = useMountAnim(140);
-  const card3 = useMountAnim(220);
+  const card2 = useMountAnim(120);
+  const card2b = useMountAnim(180);
+  const card3 = useMountAnim(240);
   const card4 = useMountAnim(300);
-  const card5 = useMountAnim(380);
+  const card5 = useMountAnim(360);
+
+  const nutritionIntelligence = activeScanResult?.nutritionIntelligence ?? deriveNutritionIntelligence({
+    protein100g: activeScanResult?.proteinGrams,
+    fibre100g: activeScanResult?.fibre100g,
+    satFat100g: activeScanResult?.satFat100g,
+    sodiumMg100g: activeScanResult?.sodiumMg100g,
+    cholesterolMg100g: activeScanResult?.cholesterolMg100g,
+  });
 
   return (
     <View style={{ gap: 16 }}>
@@ -592,6 +602,15 @@ function ScanResultCards({
           gutScore={gutHealthData.score}
           gutInsights={gutHealthData.insights}
           additives={activeScanResult.additives ?? []}
+          colors={colors}
+          isDark={isDark}
+        />
+      </AnimatedReanimated.View>
+
+      {/* 2b. Nutrition Intelligence */}
+      <AnimatedReanimated.View style={card2b}>
+        <NutritionIntelligenceCard
+          nutritionIntelligence={nutritionIntelligence}
           colors={colors}
           isDark={isDark}
         />

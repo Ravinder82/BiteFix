@@ -36,9 +36,12 @@ function HeaderInfoPill({
         borderRadius: 99,
         paddingHorizontal: 10,
         paddingVertical: 5,
+        flexShrink: 1,
       }}
     >
       <Text
+        numberOfLines={1}
+        ellipsizeMode="tail"
         style={{
           color: tone === 'success' ? (isDark ? '#86EFAC' : '#15803D') : colors.textSecondary,
           fontSize: 10.5,
@@ -98,7 +101,7 @@ export function ProductDataSourcePill({
   });
 
   const label = normalizedSources.length === 2
-    ? 'Open Food Facts + USDA FoodData Central'
+    ? 'Open Food Facts + USDA'
     : normalizedSources[0] === 'usda_fooddata_central'
       ? 'USDA FoodData Central'
       : 'Open Food Facts';

@@ -119,7 +119,7 @@ export function NutriScoreTrafficLight({
       }}
     >
       {/* Header */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, gap: 8 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12, gap: 8 }}>
         <Text
           style={{
             color: colors.textSecondary || '#A1A1AA',
@@ -127,6 +127,7 @@ export function NutriScoreTrafficLight({
             fontWeight: '800',
             textTransform: 'uppercase',
             letterSpacing: 0.8,
+            alignSelf: 'center',
           }}
           numberOfLines={1}
         >
@@ -141,9 +142,9 @@ export function NutriScoreTrafficLight({
             paddingVertical: 2,
             borderRadius: 6,
           }}>
-            <Text style={{ color: activeConfig.color, fontSize: 10.5, fontWeight: '900' }} numberOfLines={1}>
-              Grade {activeConfig.letter} • {activeConfig.label}
-            </Text>
+              <Text style={{ color: activeConfig.color, fontSize: 10.5, fontWeight: '900' }} numberOfLines={2}>
+                Grade {activeConfig.letter} • {activeConfig.label}
+              </Text>
           </View>
         ) : (
           <Text style={{ color: colors.textMuted || '#71717A', fontSize: 10.5, fontWeight: '700' }} numberOfLines={1}>

@@ -125,6 +125,7 @@ export default function ProductHeroCardDashboard({
   const additiveCount = scanResult.additiveCount ?? 0;
   const nutriScore = scanResult.nutriScore;
   
+  // LED label — purely score-driven, independent of NOVA class
   let ledColor: string;
   let ledLabel: string;
   let ratingDesc: string;
@@ -132,28 +133,32 @@ export default function ProductHeroCardDashboard({
   if (isUnknown && scanResult.biteFixScore === undefined) {
     ledColor = '#8E8E93';
     ledLabel = 'Unknown';
-    ratingDesc = 'No processing data available';
-  } else if (novaClass === 4 || biteFixScore <= 35) {
-    ledColor = '#EF4444';
-    ledLabel = 'Ultra-Processed';
-    ratingDesc = 'Ultra-processed industrial formulation';
-  } else if (novaClass === 3 || biteFixScore <= 60) {
-    ledColor = '#F5A623';
-    ledLabel = 'Processed';
-    ratingDesc = 'Processed with added ingredients';
-  } else if (novaClass === 2 || biteFixScore <= 80) {
-    ledColor = '#3BB5A0';
-    ledLabel = 'Culinary Ingredient';
-    ratingDesc = 'Processed culinary ingredient (oils, sugar, salt)';
-  } else {
+    ratingDesc = 'No product data available';
+  } else if (biteFixScore >= 85) {
     ledColor = '#22C55E';
-    ledLabel = 'Minimally Processed';
-    ratingDesc = 'Unprocessed or minimally processed whole food';
+    ledLabel = 'Strong Profile';
+    ratingDesc = 'Strong nutrition, sugar, and ingredient signals';
+  } else if (biteFixScore >= 70) {
+    ledColor = '#3BB5A0';
+    ledLabel = 'Good Profile';
+    ratingDesc = 'Generally favorable product signals';
+  } else if (biteFixScore >= 55) {
+    ledColor = '#F5A623';
+    ledLabel = 'Mixed Profile';
+    ratingDesc = 'Mixed signals across product categories';
+  } else if (biteFixScore >= 40) {
+    ledColor = '#E07B39';
+    ledLabel = 'Review Profile';
+    ratingDesc = 'Some signals warrant closer review';
+  } else {
+    ledColor = '#EF4444';
+    ledLabel = 'Lower Profile';
+    ratingDesc = 'Lower signals across most product categories';
   }
 
   const ratingColor = (isUnknown && scanResult.biteFixScore === undefined)
     ? colors.textMuted
-    : getBiteFixScoreColor(biteFixScore, novaClass);
+    : getBiteFixScoreColor(biteFixScore);
 
   const borderDivider = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
   const bentoBg = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)';
@@ -175,8 +180,24 @@ export default function ProductHeroCardDashboard({
         overflow: 'hidden',
       }}
     >
+      {/* ── Status & Source Pills Row ── */}
+      {(scanResult.productDataStatus || (scanResult.productDataSources && scanResult.productDataSources.length > 0)) && (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16, width: '100%' }}>
+          <ProductDataStatusPill
+            status={scanResult.productDataStatus}
+            colors={colors}
+            isDark={isDark}
+          />
+          <ProductDataSourcePill
+            sources={scanResult.productDataSources}
+            colors={colors}
+            isDark={isDark}
+          />
+        </View>
+      )}
+
       {/* ── Header: Identity Panel ── */}
-      <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', gap: 16, alignItems: 'flex-start', width: '100%' }}>
         <View
           style={{
             width: 68,
@@ -216,7 +237,7 @@ export default function ProductHeroCardDashboard({
             </View>
           ) : (
             <Mascot
-              state={biteFixScore >= 76 ? 'happy' : biteFixScore >= 41 ? 'idle' : 'shocked'}
+              state={biteFixScore >= 70 ? 'happy' : biteFixScore >= 40 ? 'idle' : 'shocked'}
               size={40}
             />
           )}
@@ -231,7 +252,7 @@ export default function ProductHeroCardDashboard({
                 paddingHorizontal: 8,
                 paddingVertical: 3,
                 borderRadius: 99,
-                maxWidth: '65%',
+                flexShrink: 1,
               }}
             >
               <Text
@@ -284,25 +305,11 @@ export default function ProductHeroCardDashboard({
             )}
           </View>
           <Text
-            style={{ color: colors.text, fontSize: 18, fontWeight: '900', lineHeight: 22, letterSpacing: -0.3 }}
-            numberOfLines={2}
+            style={{ color: colors.text, fontSize: 18, fontWeight: '900', lineHeight: 22, letterSpacing: -0.3, marginTop: 4 }}
+            numberOfLines={3}
           >
             {scanResult.name}
           </Text>
-          {(scanResult.productDataStatus || (scanResult.productDataSources && scanResult.productDataSources.length > 0)) && (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
-              <ProductDataStatusPill
-                status={scanResult.productDataStatus}
-                colors={colors}
-                isDark={isDark}
-              />
-              <ProductDataSourcePill
-                sources={scanResult.productDataSources}
-                colors={colors}
-                isDark={isDark}
-              />
-            </View>
-          )}
         </View>
       </View>
 
@@ -310,17 +317,17 @@ export default function ProductHeroCardDashboard({
 
       {/* Mascot Ring above Nutri-Score in place of score bar */}
       {(() => {
-        const lighterScoreColor = biteFixScore >= 76
+        const lighterScoreColor = biteFixScore >= 85
           ? '#4ADE80'
-          : biteFixScore >= 51
+          : biteFixScore >= 70
             ? '#2DD4BF'
-            : biteFixScore >= 26
+            : biteFixScore >= 55
               ? '#FBBF24'
               : '#F87171';
 
-        const mascotState = biteFixScore >= 76
+        const mascotState = biteFixScore >= 70
           ? 'happy'
-          : biteFixScore >= 41
+          : biteFixScore >= 40
             ? 'idle'
             : 'shocked';
 
@@ -382,7 +389,7 @@ export default function ProductHeroCardDashboard({
               }}>
                 <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: ratingColor }} />
                 <Text style={{ color: colors.text, fontSize: 10, fontWeight: '900', letterSpacing: 0.4 }}>
-                  BITEFIX FOOD SCORE: {biteFixScore}
+                  BITEFIX INTELLIGENCE SCORE™: {biteFixScore}
                 </Text>
               </View>
             </View>
@@ -394,17 +401,19 @@ export default function ProductHeroCardDashboard({
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 12,
                 backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(248, 250, 248, 0.95)',
                 borderColor: isDark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(0, 0, 0, 0.05)',
                 borderWidth: 1,
                 borderRadius: 14,
                 paddingHorizontal: 14,
-                paddingVertical: 8,
+                paddingVertical: 10,
                 marginTop: 18,
                 marginBottom: 10,
                 width: '100%',
               }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
                   <View style={{
                     backgroundColor: getNovaColor(novaClass) + '20',
                     borderColor: getNovaColor(novaClass) + '40',
@@ -417,7 +426,7 @@ export default function ProductHeroCardDashboard({
                       NOVA {novaClass}
                     </Text>
                   </View>
-                  <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800' }}>
+                  <Text style={{ color: colors.text, fontSize: 12, fontWeight: '800', flexShrink: 1 }} numberOfLines={2}>
                     {getNovaShortLabel(novaClass)}
                   </Text>
                 </View>

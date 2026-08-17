@@ -40,6 +40,38 @@ export type ProductDataStatus = 'complete' | 'partial';
 export type ProductDataSource = 'open_food_facts' | 'usda_fooddata_central';
 
 // ─────────────────────────────────────────────────────────
+// Nutrition Intelligence Data Types
+// ─────────────────────────────────────────────────────────
+export type NutritionInsightLevel =
+  | 'Strong'
+  | 'Good Source'
+  | 'Moderate'
+  | 'Higher'
+  | 'Lower'
+  | 'Available'
+  | 'Partial'
+  | 'Not Available'
+  | 'Limited';
+
+export interface NutritionInsightItem {
+  id: 'protein' | 'fibre' | 'saturated_fat' | 'sodium' | 'cholesterol' | 'micronutrients';
+  label: string;
+  value?: string;
+  level: NutritionInsightLevel;
+  tone?: 'positive' | 'neutral' | 'caution';
+}
+
+export interface NutritionIntelligenceData {
+  protein?: NutritionInsightItem;
+  fibre?: NutritionInsightItem;
+  saturatedFat?: NutritionInsightItem;
+  sodium?: NutritionInsightItem;
+  cholesterol?: NutritionInsightItem;
+  micronutrients?: NutritionInsightItem;
+  insights: NutritionInsightItem[];
+}
+
+// ─────────────────────────────────────────────────────────
 // Scan History Item (BiteFix-aware)
 // ─────────────────────────────────────────────────────────
 export interface ScanHistoryItem {
@@ -86,6 +118,12 @@ export interface ScanHistoryItem {
   nutriScore?: 'a' | 'b' | 'c' | 'd' | 'e';
   /** BiteFix Health Score (0-100). Computed post-scan. */
   biteFixScore?: number;
+  /** Dynamic Nutrition Intelligence analysis */
+  nutritionIntelligence?: NutritionIntelligenceData;
+  satFat100g?: number;
+  sodiumMg100g?: number;
+  fibre100g?: number;
+  cholesterolMg100g?: number;
 
   // ── Sustainability & Dietary Preference Extensions ──
   isVegan?: boolean;

@@ -155,25 +155,34 @@ export function getAdditiveRiskColor(riskLevel: AdditiveRiskLevel): string {
   }
 }
 
-/** Returns a BiteFix score level label synchronized with NOVA classification */
+/**
+ * Returns the BiteFix Intelligence Score™ band label.
+ * Bands are derived from the score alone — independent of NOVA class.
+ * novaClass parameter is preserved for API compatibility but no longer controls output.
+ */
 export function getBiteFixScoreLabel(score?: number, novaClass?: NOVAClass): string {
-  if (novaClass) return getNovaLabel(novaClass);
   if (score === undefined || score === null) return 'Not Rated';
-  if (score >= 81) return 'Unprocessed / Minimally Processed';
-  if (score >= 61) return 'Processed Culinary Ingredient';
-  if (score >= 36) return 'Processed Food';
-  return 'Ultra-Processed';
+  if (score >= 85) return 'Strong Profile';
+  if (score >= 70) return 'Good Profile';
+  if (score >= 55) return 'Mixed Profile';
+  if (score >= 40) return 'Review Profile';
+  return 'Lower Profile';
 }
 
-/** Returns a color for the BiteFix score synchronized with NOVA class colors */
+/**
+ * Returns a color for the BiteFix Intelligence Score™.
+ * Color is derived from the score alone — independent of NOVA class.
+ * novaClass parameter is preserved for API compatibility but no longer controls output.
+ */
 export function getBiteFixScoreColor(score?: number, novaClass?: NOVAClass): string {
-  if (novaClass) return getNovaColor(novaClass);
   if (score === undefined || score === null) return '#8E8E93';
-  if (score >= 81) return '#22C55E';
-  if (score >= 61) return '#3BB5A0';
-  if (score >= 36) return '#F5A623';
-  return '#EF4444';
+  if (score >= 85) return '#22C55E'; // strong green
+  if (score >= 70) return '#3BB5A0'; // green/teal
+  if (score >= 55) return '#F5A623'; // neutral amber
+  if (score >= 40) return '#E07B39'; // muted orange
+  return '#EF4444';                  // restrained red
 }
+
 
 /** Returns processing group key for pantry categorization */
 export type ProcessingGroup = 'whole' | 'minimal' | 'processed' | 'ultra';
