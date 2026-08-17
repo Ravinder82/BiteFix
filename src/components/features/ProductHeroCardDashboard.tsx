@@ -371,7 +371,7 @@ export default function ProductHeroCardDashboard({
 
               <View style={{
                 position: 'absolute',
-                bottom: -8,
+                bottom: -18,
                 backgroundColor: isDark ? 'rgba(31, 41, 55, 0.92)' : 'rgba(255, 255, 255, 0.95)',
                 borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
                 borderWidth: 1.5,
@@ -386,9 +386,14 @@ export default function ProductHeroCardDashboard({
                 shadowOpacity: 0.15,
                 shadowRadius: 6,
                 elevation: 4,
+                alignSelf: 'center',
+                zIndex: 10,
               }}>
-                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: ratingColor }} />
-                <Text style={{ color: colors.text, fontSize: 10, fontWeight: '900', letterSpacing: 0.4 }}>
+                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: ratingColor, flexShrink: 0 }} />
+                <Text 
+                  style={{ color: colors.text, fontSize: 10, fontWeight: '900', letterSpacing: 0.4, flexShrink: 0 }}
+                  numberOfLines={1}
+                >
                   BITEFIX INTELLIGENCE SCORE™: {biteFixScore}
                 </Text>
               </View>

@@ -46,7 +46,7 @@ import {
   Zap,
   Activity,
   Globe,
-  Sparkles,
+  Brain,
   Flame,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -65,7 +65,7 @@ const FEATURES = [
     badge: 'TOP FEATURE',
   },
   {
-    icon: Sparkles,
+    icon: Brain,
     color: '#00C288',
     bg: 'rgba(0,194,136,0.12)',
     title: 'Nutrition Intelligence',

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { Sparkles, Activity, ShieldAlert, CheckCircle2, AlertCircle } from 'lucide-react-native';
+import { BarChart2, Activity, ShieldAlert, CheckCircle2, AlertCircle } from 'lucide-react-native';
 import { NutritionIntelligenceData, NutritionInsightItem } from '../../types/app.types';
 
 interface NutritionIntelligenceCardProps {
@@ -58,7 +58,7 @@ export function NutritionIntelligenceCard({
               justifyContent: 'center',
             }}
           >
-            <Sparkles size={18} color={accent} strokeWidth={2.2} />
+            <BarChart2 size={18} color={accent} strokeWidth={2.2} />
           </View>
           <View style={{ flexShrink: 1 }}>
             <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', letterSpacing: -0.2 }} numberOfLines={1}>

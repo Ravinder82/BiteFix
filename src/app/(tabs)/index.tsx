@@ -671,22 +671,8 @@ function ScanResultCards({
                     </Text>
                   </View>
                 </View>
-
-                <View style={{
-                  backgroundColor: isDark ? 'rgba(251,191,36,0.12)' : 'rgba(217,119,6,0.10)',
-                  borderColor: isDark ? 'rgba(251,191,36,0.28)' : 'rgba(217,119,6,0.22)',
-                  borderWidth: 1.5,
-                  paddingHorizontal: 11,
-                  paddingVertical: 5,
-                  borderRadius: 10,
-                }}>
-                  <AnimatedTextInput
-                    animatedProps={animatedSmallSugarProps}
-                    editable={false}
-                    style={{ color: isDark ? '#FBBF24' : '#D97706', fontSize: 13, fontWeight: '900', letterSpacing: 0.3, padding: 0, margin: 0 }}
-                  />
-                </View>
               </View>
+
 
               {/* Main Teaspoons & Grams Row */}
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10, marginBottom: 14 }}>

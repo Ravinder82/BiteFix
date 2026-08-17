@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { ShieldCheck, ShieldAlert, CheckCircle2, Search, Sparkles } from 'lucide-react-native';
+import { ShieldCheck, ShieldAlert, CheckCircle2, Search, Leaf } from 'lucide-react-native';
 import { AdditiveDetail } from '../../types/app.types';
 import { evaluateGutHealth, parseENumber } from '../../utils/gutShieldEvaluator';
 
@@ -111,7 +111,7 @@ function GutIngredientReviewCard({
           borderRadius: 10,
           backgroundColor: isDark ? 'rgba(52,211,153,0.06)' : 'rgba(22,163,74,0.05)',
         }}>
-          <Sparkles size={13} color={accent} />
+          <Leaf size={13} color={accent} />
           <Text style={{ color: colors.text, fontSize: 11, fontWeight: '700', flex: 1 }}>
             No ingredients flagged based on available product data.
           </Text>
