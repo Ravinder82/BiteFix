@@ -35,7 +35,7 @@ import {
   Zap,
 } from 'lucide-react-native';
 
-const GREEN = '#00C288';
+const GREEN = '#01922aff';
 const GREEN_DIM = '#00C28820';
 const TOTAL_SCREENS = 10;
 
@@ -274,12 +274,12 @@ function WelcomeScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
           numberOfLines={3}
           adjustsFontSizeToFit
         >
-          <Text style={{ color: GREEN }}>Stop</Text> Reading.{"\n"}
-          <Text style={{ color: GREEN }}>Start</Text> Scanning.{"\n"}
+          Stop <Text style={{ color: GREEN }}>Reading</Text>.{"\n"}
+          Start <Text style={{ color: GREEN }}>Scanning</Text>.{"\n"}
           Get <Text style={{ color: GREEN }}>Instant Insights</Text>.
         </Text>
         <Text style={{ color: colors.textSecondary, fontSize: 13.5, fontWeight: '600', textAlign: 'center', lineHeight: 20, maxWidth: 370, marginTop: 12 }}>
-          Scan any <Text style={{ fontWeight: '800', color: isDark ? '#FFFFFF' : '#102017' }}>barcode</Text> and BiteFix turns available <Text style={{ fontWeight: '800', color: GREEN }}>food data</Text> into a clear, <Text style={{ fontWeight: '800', color: GREEN }}>readable snapshot</Text> — in seconds.
+          Scan any barcode and BiteFix turns available food data into clear, Insights — in seconds.
         </Text>
       </View>
     </View>
