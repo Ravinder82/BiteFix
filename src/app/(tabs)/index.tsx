@@ -616,19 +616,8 @@ function ScanResultCards({
         />
       </AnimatedReanimated.View>
 
-      {/* 3. Carbon Footprint */}
+      {/* 3. Sugar Impact Card */}
       <AnimatedReanimated.View style={card3}>
-        <EcoScoreCard
-          grade={activeScanResult.ecoscoreGrade}
-          carbonFootprint={activeScanResult.carbonFootprint100g}
-          isOrganic={activeScanResult.isOrganic}
-          isVegan={activeScanResult.isVegan}
-          isVegetarian={activeScanResult.isVegetarian}
-        />
-      </AnimatedReanimated.View>
-
-      {/* 4. Sugar Impact Card */}
-      <AnimatedReanimated.View style={card4}>
             <View
               style={{
                 backgroundColor: isDark ? 'rgba(5, 10, 6, 0.96)' : '#FFFFFF',
@@ -749,6 +738,18 @@ function ScanResultCards({
               )}
             </View>
             </AnimatedReanimated.View>
+
+      {/* 4. Carbon Footprint */}
+      <AnimatedReanimated.View style={card4}>
+        <EcoScoreCard
+          grade={activeScanResult.ecoscoreGrade}
+          carbonFootprint={activeScanResult.carbonFootprint100g}
+          isOrganic={activeScanResult.isOrganic}
+          isVegan={activeScanResult.isVegan}
+          isVegetarian={activeScanResult.isVegetarian}
+        />
+      </AnimatedReanimated.View>
+
 
       {/* 5. Burn Down Activity Card */}
       <AnimatedReanimated.View style={card5}>
