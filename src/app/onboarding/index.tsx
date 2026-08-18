@@ -35,18 +35,17 @@ import {
   ContextScreen as FlagshipContextScreen,
   IdentityScreen as FlagshipIdentityScreen,
   PainScreen as FlagshipPainScreen,
-  PersonalizationScreen as FlagshipPersonalizationScreen,
   PrioritiesScreen as FlagshipPrioritiesScreen,
-  ProductProofScreen as FlagshipProductProofScreen,
   RevelationScreen as FlagshipRevelationScreen,
+  MomentOfTruthScreen,
 } from '../../components/onboarding/OnboardingScreens';
 import { IngredientReadingFrequency, OnboardingPriority, ShoppingFrequency } from '../../types/onboarding.types';
 
 const GREEN = '#01922aff';
 const GREEN_DIM = '#00C28820';
-const TOTAL_SCREENS = 10;
+const TOTAL_SCREENS = 9;
 
-const FEATURE_PILLS = ['Processing', 'Nutrition', 'Allergens', 'Ingredients', 'Additives', 'Sugar', 'Eco Impact'];
+const FEATURE_PILLS = ['Processing Level', 'Nutrition Intelligence', 'Ingredient Review', 'Allergen Watch', 'Additives', 'Sugar Insights', 'Eco Impact'];
 
 
 function useReduceMotion() {
@@ -338,17 +337,18 @@ function WelcomeScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
   );
 }
 
-// ── Screen 9: Final Activation ────────────────────────────
+// ── Screen 8: Final Activation ────────────────────────────
 function FinalScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
   const reduceMotion = useReduceMotion();
   const orbitAnim = useRef(new Animated.Value(0)).current;
+  const { width } = useWindowDimensions();
 
   useEffect(() => {
     if (reduceMotion) return;
     const animation = Animated.loop(
       Animated.timing(orbitAnim, {
         toValue: 1,
-        duration: 22000,
+        duration: 26000,
         easing: Easing.linear,
         useNativeDriver: true,
       })
@@ -367,17 +367,22 @@ function FinalScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
     outputRange: ['0deg', '-360deg'],
   });
 
-  const RADIUS = 118;
+  const RADIUS = Math.min(128, Math.max(106, (width - 56) / 2.25));
+  const mascotSize = Math.min(116, Math.max(92, width * 0.28));
+
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
-      <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', lineHeight: 32, letterSpacing: -0.4, textAlign: 'center', marginBottom: 6 }}>
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 40 }}>
+      <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', lineHeight: 32, letterSpacing: -0.4, textAlign: 'center', marginBottom: 8 }}>
         Your BiteFix Scanner Is Ready
       </Text>
-      <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20, fontWeight: '500', textAlign: 'center', marginBottom: 36 }}>
+      <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 21, fontWeight: '500', textAlign: 'center', marginBottom: 40 }}>
         Scan a product and let BiteFix turn available food data into a clear snapshot.
       </Text>
       <View style={{ width: RADIUS * 2, height: RADIUS * 2, alignItems: 'center', justifyContent: 'center' }}>
-        <OrbMascot state="happy" size={90} />
+        {/* Subtle Orbit Guide */}
+        <View style={{ position: 'absolute', width: RADIUS * 2, height: RADIUS * 2, borderRadius: RADIUS, borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }} />
+
+        <OrbMascot state="happy" size={mascotSize} reduceMotion={reduceMotion} />
 
         {/* Orbit track */}
         <Animated.View
@@ -391,37 +396,60 @@ function FinalScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
         >
           {FEATURE_PILLS.map((pill, i) => {
             const angle = (i / FEATURE_PILLS.length) * 2 * Math.PI;
-            const r = RADIUS - 16;
+            const r = RADIUS;
             const x = Math.cos(angle) * r;
             const y = Math.sin(angle) * r;
+            const depthValue = (phase: number) => 0.82 + ((Math.sin(angle + phase) + 1) / 2) * 0.18;
+            const scale = reduceMotion ? 1 : orbitAnim.interpolate({
+              inputRange: [0, 0.25, 0.5, 0.75, 1],
+              outputRange: [depthValue(0), depthValue(Math.PI / 2), depthValue(Math.PI), depthValue(Math.PI * 1.5), depthValue(Math.PI * 2)],
+            });
+            const opacity = reduceMotion ? 1 : orbitAnim.interpolate({
+              inputRange: [0, 0.25, 0.5, 0.75, 1],
+              outputRange: [
+                depthValue(0) > 0.92 ? 1 : 0.58,
+                depthValue(Math.PI / 2) > 0.92 ? 1 : 0.58,
+                depthValue(Math.PI) > 0.92 ? 1 : 0.58,
+                depthValue(Math.PI * 1.5) > 0.92 ? 1 : 0.58,
+                depthValue(Math.PI * 2) > 0.92 ? 1 : 0.58,
+              ]
+            });
+
             return (
               <Animated.View
                 key={pill}
                 style={{
                   position: 'absolute',
-                  left: RADIUS + x - 34,
-                  top: RADIUS + y - 12,
-                  width: 68,
+                  left: RADIUS + x - 71,
+                  top: RADIUS + y,
+                  width: 142,
                   alignItems: 'center',
-                  transform: reduceMotion ? [] : [{ rotate: counterRotate }],
+                  transform: [
+                    { translateY: -14 }, // Center vertically
+                    ...(reduceMotion ? [] : [{ rotate: counterRotate }]),
+                    { scale }
+                  ],
+                  opacity
                 }}
               >
                 <View
                   style={{
                     backgroundColor: isDark ? 'rgba(20, 24, 22, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                    borderRadius: 12,
-                    paddingHorizontal: 7,
-                    paddingVertical: 4,
+                    borderRadius: 14,
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                    minHeight: 30,
+                    maxWidth: 142,
                     borderWidth: 1,
-                    borderColor: GREEN + '50',
+                    borderColor: GREEN + '40',
                     shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: isDark ? 0.25 : 0.08,
-                    shadowRadius: 4,
-                    elevation: 2,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: isDark ? 0.3 : 0.1,
+                    shadowRadius: 6,
+                    elevation: 3,
                   }}
                 >
-                  <Text style={{ color: colors.text, fontSize: 9.5, fontWeight: '800' }}>{pill}</Text>
+                  <Text numberOfLines={1} style={{ color: colors.text, fontSize: 10.5, lineHeight: 14, fontWeight: '800', textAlign: 'center' }}>{pill}</Text>
                 </View>
               </Animated.View>
             );
@@ -525,20 +553,19 @@ export default function OnboardingScreen() {
   const ctaLabel =
     currentScreen === TOTAL_SCREENS - 1 ? 'Activate BiteFix' :
       currentScreen === 0 ? 'Get Started' :
-        currentScreen === 6 ? 'Show Me the Result' :
-          currentScreen === 8 ? 'See My Setup' : 'Continue';
+        currentScreen === 6 ? 'Show Me' :
+          currentScreen === 7 ? 'See My BiteFix' : 'Continue';
 
   const screenContent = [
     <WelcomeScreen key={0} colors={colors} isDark={isDark} />,
     <FlagshipIdentityScreen key={1} name={name} onChange={setName} onSkip={() => goTo(2)} colors={colors} isDark={isDark} />,
     <FlagshipContextScreen key={2} selected={shoppingFrequency} onSelect={setShoppingFrequency} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
-    <FlagshipPrioritiesScreen key={3} selected={priorities} onToggle={togglePriority} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
-    <FlagshipAllergyScreen key={4} selected={allergens} onToggle={toggleAllergen} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
-    <FlagshipPainScreen key={5} selected={ingredientReadingFrequency} onSelect={setIngredientReadingFrequency} colors={colors} isDark={isDark} />,
-    <FlagshipRevelationScreen key={6} colors={colors} isDark={isDark} />,
-    <FlagshipProductProofScreen key={7} selected={priorities} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
-    <FlagshipPersonalizationScreen key={8} selected={priorities} name={name} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
-    <FinalScreen key={9} colors={colors} isDark={isDark} />,
+    <FlagshipAllergyScreen key={3} selected={allergens} onToggle={toggleAllergen} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
+    <FlagshipPainScreen key={4} selected={ingredientReadingFrequency} onSelect={setIngredientReadingFrequency} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
+    <FlagshipPrioritiesScreen key={5} selected={priorities} onToggle={togglePriority} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
+    <FlagshipRevelationScreen key={6} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
+    <MomentOfTruthScreen key={7} selected={priorities} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
+    <FinalScreen key={8} colors={colors} isDark={isDark} />,
   ];
 
   return (
