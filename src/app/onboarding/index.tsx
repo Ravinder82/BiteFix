@@ -11,6 +11,7 @@ import {
   Animated,
   Easing,
   Image,
+  TextInput,
   AccessibilityInfo,
   StatusBar,
   useWindowDimensions,
@@ -35,6 +36,17 @@ import {
   Package,
   Zap,
 } from 'lucide-react-native';
+import {
+  AllergyScreen as FlagshipAllergyScreen,
+  ContextScreen as FlagshipContextScreen,
+  IdentityScreen as FlagshipIdentityScreen,
+  PainScreen as FlagshipPainScreen,
+  PersonalizationScreen as FlagshipPersonalizationScreen,
+  PrioritiesScreen as FlagshipPrioritiesScreen,
+  ProductProofScreen as FlagshipProductProofScreen,
+  RevelationScreen as FlagshipRevelationScreen,
+} from '../../components/onboarding/OnboardingScreens';
+import { IngredientReadingFrequency, OnboardingPriority, ShoppingFrequency } from '../../types/onboarding.types';
 
 const GREEN = '#01922aff';
 const GREEN_DIM = '#00C28820';
@@ -49,14 +61,15 @@ const ALLERGEN_OPTIONS = [
   { id: 'eggs', label: 'Eggs' },
 ];
 
-const PRIORITY_OPTIONS = [
-  { id: 'ultra_processed', label: 'Less Ultra-Processed', icon: Package },
-  { id: 'nutri_score', label: 'Higher Nutrition', icon: Activity },
-  { id: 'clean_swaps', label: 'Allergen Awareness', icon: ShieldCheck },
-  { id: 'healthy_habits', label: 'Lower Sugar', icon: Droplets },
-];
-
 const FEATURE_PILLS = ['Processing', 'Nutrition', 'Allergens', 'Ingredients', 'Additives', 'Sugar', 'Eco Impact'];
+
+const PRIORITY_OPTIONS: Array<{ id: OnboardingPriority; label: string; icon: React.ComponentType<any> }> = [
+  { id: 'ultra_processed', label: 'Less ultra-processed', icon: Package },
+  { id: 'nutrition', label: 'Nutrition profile', icon: Activity },
+  { id: 'ingredients', label: 'Ingredients and allergens', icon: ShieldCheck },
+  { id: 'sugar', label: 'Sugar insights', icon: Droplets },
+  { id: 'environment', label: 'Environmental impact', icon: Package },
+];
 
 function useReduceMotion() {
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -745,6 +758,7 @@ export default function OnboardingScreen() {
   const {
     setOnboardingComplete,
     setProfile,
+    setOnboardingPreferences,
     setAllergenFilters,
     setDietPreference,
     setTrackEcoScore,
@@ -752,8 +766,11 @@ export default function OnboardingScreen() {
   } = useAppStore();
 
   const [currentScreen, setCurrentScreen] = useState(0);
+  const [name, setName] = useState('');
   const [allergens, setAllergens] = useState<string[]>([]);
-  const [priorities, setPriorities] = useState<string[]>([]);
+  const [priorities, setPriorities] = useState<OnboardingPriority[]>([]);
+  const [shoppingFrequency, setShoppingFrequency] = useState<ShoppingFrequency>();
+  const [ingredientReadingFrequency, setIngredientReadingFrequency] = useState<IngredientReadingFrequency>();
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const reduceMotion = useReduceMotion();
 
@@ -766,7 +783,7 @@ export default function OnboardingScreen() {
     });
   }, []);
 
-  const togglePriority = useCallback((id: string) => {
+  const togglePriority = useCallback((id: OnboardingPriority) => {
     Haptics.selectionAsync();
     setPriorities((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
   }, []);
@@ -789,23 +806,23 @@ export default function OnboardingScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const realAllergens = allergens.filter((a) => a !== 'none');
     setAllergenFilters(realAllergens);
+    setOnboardingPreferences({ userPriorities: priorities, shoppingFrequency, ingredientReadingFrequency });
 
     const goalMap: Record<string, 'ultra_processed' | 'nutri_score' | 'clean_swaps' | 'healthy_habits' | 'none'> = {
       ultra_processed: 'ultra_processed',
-      nutri_score: 'nutri_score',
-      clean_swaps: 'clean_swaps',
-      healthy_habits: 'healthy_habits',
+      nutrition: 'nutri_score',
+      ingredients: 'clean_swaps',
+      sugar: 'healthy_habits',
     };
     const primaryGoal = priorities.length > 0 ? goalMap[priorities[0]] ?? 'none' : 'none';
-    setProfile({ userGoal: primaryGoal });
-
-    setTrackEcoScore(true);
+    setProfile({ userName: name.trim() || undefined, userGoal: primaryGoal });
+    setTrackEcoScore(priorities.includes('environment'));
     setTrackOrganic(false);
     setDietPreference('standard');
 
     setOnboardingComplete(true);
     router.replace('/paywall');
-  }, [allergens, priorities, setAllergenFilters, setProfile, setDietPreference, setTrackEcoScore, setTrackOrganic, setOnboardingComplete]);
+  }, [allergens, ingredientReadingFrequency, name, priorities, setAllergenFilters, setOnboardingComplete, setOnboardingPreferences, setProfile, setDietPreference, setTrackEcoScore, setTrackOrganic, shoppingFrequency]);
 
   const handleNext = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -826,19 +843,19 @@ export default function OnboardingScreen() {
   const ctaLabel =
     currentScreen === TOTAL_SCREENS - 1 ? 'Activate BiteFix' :
       currentScreen === 0 ? 'Get Started' :
-        currentScreen === 1 ? 'Show Me More' :
-          currentScreen === 8 ? 'Almost There' : 'Next';
+        currentScreen === 6 ? 'Show Me the Result' :
+          currentScreen === 8 ? 'See My Setup' : 'Continue';
 
   const screenContent = [
     <WelcomeScreen key={0} colors={colors} isDark={isDark} />,
-    <TheProblemScreen key={1} colors={colors} isDark={isDark} />,
-    <TwoScoresScreen key={2} colors={colors} isDark={isDark} />,
-    <AllergyScreen key={3} selected={allergens} onToggle={toggleAllergen} colors={colors} isDark={isDark} />,
-    <GutShieldScreen key={4} colors={colors} isDark={isDark} />,
-    <SugarScreen key={5} colors={colors} isDark={isDark} />,
-    <EcoScreen key={6} colors={colors} isDark={isDark} />,
-    <PrioritiesScreen key={7} selected={priorities} onToggle={togglePriority} colors={colors} isDark={isDark} />,
-    <ResultPreviewScreen key={8} colors={colors} isDark={isDark} />,
+    <FlagshipIdentityScreen key={1} name={name} onChange={setName} onSkip={() => goTo(2)} colors={colors} isDark={isDark} />,
+    <FlagshipContextScreen key={2} selected={shoppingFrequency} onSelect={setShoppingFrequency} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
+    <FlagshipPrioritiesScreen key={3} selected={priorities} onToggle={togglePriority} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
+    <FlagshipAllergyScreen key={4} selected={allergens} onToggle={toggleAllergen} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
+    <FlagshipPainScreen key={5} selected={ingredientReadingFrequency} onSelect={setIngredientReadingFrequency} colors={colors} isDark={isDark} />,
+    <FlagshipRevelationScreen key={6} colors={colors} isDark={isDark} />,
+    <FlagshipProductProofScreen key={7} selected={priorities} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
+    <FlagshipPersonalizationScreen key={8} selected={priorities} name={name} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
     <FinalScreen key={9} colors={colors} isDark={isDark} />,
   ];
 

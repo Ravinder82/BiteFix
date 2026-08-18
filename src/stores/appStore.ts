@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScanHistoryItem, CollectionItem, BiteFixCategory, NOVAClass, AdditiveDetail } from '../types/app.types';
 import { mapToBiteFixCategory } from '../utils/categoryMapper';
+import { IngredientReadingFrequency, OnboardingPriority, ShoppingFrequency } from '../types/onboarding.types';
 
 interface AppState {
   onboardingComplete: boolean;
@@ -11,6 +12,9 @@ interface AppState {
   collection: CollectionItem[];
   userName?: string;
   userGoal?: 'ultra_processed' | 'nutri_score' | 'clean_swaps' | 'healthy_habits' | 'none';
+  userPriorities: OnboardingPriority[];
+  shoppingFrequency?: ShoppingFrequency;
+  ingredientReadingFrequency?: IngredientReadingFrequency;
   allergenFilters: string[];
   strictNovaAlert: boolean;
   stealthAdditivesAlert: boolean;
@@ -40,6 +44,11 @@ interface AppState {
   setProfile: (profile: {
     userName?: string;
     userGoal?: 'ultra_processed' | 'nutri_score' | 'clean_swaps' | 'healthy_habits' | 'none';
+  }) => void;
+  setOnboardingPreferences: (preferences: {
+    userPriorities: OnboardingPriority[];
+    shoppingFrequency?: ShoppingFrequency;
+    ingredientReadingFrequency?: IngredientReadingFrequency;
   }) => void;
   setDietPreference: (diet: 'vegan' | 'vegetarian' | 'standard') => void;
   setTrackEcoScore: (track: boolean) => void;
@@ -97,6 +106,11 @@ function normalizePersistedState(persistedState: unknown, version: number): Part
     state.totalProductsScanned = state.totalProductsScanned ?? 0;
     state.totalProductsNotFound = state.totalProductsNotFound ?? 0;
   }
+  if (version < 8) {
+    state.userPriorities = state.userPriorities ?? [];
+    state.shoppingFrequency = state.shoppingFrequency ?? undefined;
+    state.ingredientReadingFrequency = state.ingredientReadingFrequency ?? undefined;
+  }
 
   return {
     ...state,
@@ -107,6 +121,17 @@ function normalizePersistedState(persistedState: unknown, version: number): Part
     collection: normalizeObjectArray<CollectionItem>(state.collection),
     userName: typeof state.userName === 'string' ? state.userName : undefined,
     userGoal: USER_GOALS.includes(state.userGoal) ? state.userGoal : 'none',
+    userPriorities: Array.isArray(state.userPriorities)
+      ? state.userPriorities.filter((item: unknown): item is OnboardingPriority =>
+        ['ultra_processed', 'nutrition', 'sugar', 'ingredients', 'environment'].includes(item as string)
+      )
+      : [],
+    shoppingFrequency: ['rarely', 'sometimes', 'often', 'most_trips'].includes(state.shoppingFrequency)
+      ? state.shoppingFrequency
+      : undefined,
+    ingredientReadingFrequency: ['always', 'sometimes', 'when_needed', 'rarely'].includes(state.ingredientReadingFrequency)
+      ? state.ingredientReadingFrequency
+      : undefined,
     allergenFilters: Array.isArray(state.allergenFilters) ? state.allergenFilters.filter((item: unknown) => typeof item === 'string') : [],
     strictNovaAlert: typeof state.strictNovaAlert === 'boolean' ? state.strictNovaAlert : true,
     stealthAdditivesAlert: typeof state.stealthAdditivesAlert === 'boolean' ? state.stealthAdditivesAlert : true,
@@ -130,6 +155,9 @@ export const useAppStore = create<AppState>()(
       collection: [],
       userName: undefined,
       userGoal: 'none',
+      userPriorities: [],
+      shoppingFrequency: undefined,
+      ingredientReadingFrequency: undefined,
       allergenFilters: [],
       strictNovaAlert: true,
       stealthAdditivesAlert: true,
@@ -189,6 +217,11 @@ export const useAppStore = create<AppState>()(
         userName: profile.userName !== undefined ? profile.userName : state.userName,
         userGoal: profile.userGoal !== undefined ? profile.userGoal : state.userGoal,
       })),
+      setOnboardingPreferences: (preferences) => set({
+        userPriorities: preferences.userPriorities,
+        shoppingFrequency: preferences.shoppingFrequency,
+        ingredientReadingFrequency: preferences.ingredientReadingFrequency,
+      }),
       setDietPreference: (diet) => set({ dietPreference: diet }),
       setTrackEcoScore: (track) => set({ trackEcoScore: track }),
       setTrackOrganic: (track) => set({ trackOrganic: track }),
@@ -231,6 +264,9 @@ export const useAppStore = create<AppState>()(
         collection: [],
         userName: undefined,
         userGoal: 'none',
+        userPriorities: [],
+        shoppingFrequency: undefined,
+        ingredientReadingFrequency: undefined,
         allergenFilters: [],
         strictNovaAlert: true,
         stealthAdditivesAlert: true,
@@ -244,7 +280,7 @@ export const useAppStore = create<AppState>()(
     {
       name: '@bitefix-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 7,
+      version: 8,
       partialize: (state) => {
         // Exclude ephemeral in-memory activeScanResult from persistent storage
         const { activeScanResult, ...rest } = state;
@@ -253,7 +289,7 @@ export const useAppStore = create<AppState>()(
       migrate: normalizePersistedState,
       merge: (persistedState, currentState) => ({
         ...currentState,
-        ...normalizePersistedState(persistedState, 7),
+        ...normalizePersistedState(persistedState, 8),
       }),
       onRehydrateStorage: () => (_state, error) => {
         if (error) {
