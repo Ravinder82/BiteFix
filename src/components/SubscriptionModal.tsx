@@ -18,6 +18,7 @@ import { X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { getIapService, getLoadedIapService } from '../services/iapLoader';
 import { PRODUCT_IDS, type IAPProduct, type PlanTier } from '../services/iapProducts';
+import { ActivationSuccessCard } from './features/ActivationSuccessCard';
 
 export interface SubscriptionModalProps {
   visible: boolean;
@@ -37,6 +38,7 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
   const [products, setProducts] = useState<IAPProduct[]>([]);
   const [isFetchingProducts, setIsFetchingProducts] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isActivated, setIsActivated] = useState(false);
 
   const mountedRef = useRef(true);
 
@@ -108,16 +110,7 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
 
       if (result.success) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert(
-          '✨ Premium Unlocked!',
-          'Welcome to BiteFix Premium. You now have full access to Ingredient Review, Sugar Insights, and all premium features.',
-          [{
-            text: 'Start Scanning', onPress: () => {
-              onClose();
-              router.replace('/(tabs)');
-            }
-          }],
-        );
+        setIsActivated(true);
       } else if (!result.userCancelled) {
         Alert.alert('Purchase Unsuccessful', result.error ?? 'Something went wrong. Please try again.', [{ text: 'OK' }]);
       }
@@ -146,16 +139,7 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
 
       if (result.isEntitled) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert(
-          'Purchase Restored ✅',
-          'Your BiteFix Premium subscription has been restored.',
-          [{
-            text: 'Continue', onPress: () => {
-              onClose();
-              router.replace('/(tabs)');
-            }
-          }],
-        );
+        setIsActivated(true);
       } else if (result.success) {
         Alert.alert('No Subscription Found', 'No active subscription was found for your Apple ID. If you believe this is an error, contact support.');
       } else {
@@ -197,6 +181,14 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
       animationType="slide"
       onRequestClose={onClose}
     >
+      {isActivated && (
+        <ActivationSuccessCard 
+          onAnimationComplete={() => {
+            onClose();
+            router.replace('/(tabs)');
+          }} 
+        />
+      )}
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
           <TouchableWithoutFeedback>

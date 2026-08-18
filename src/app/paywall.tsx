@@ -35,6 +35,7 @@ import { OrbMascot } from '../components/features/OrbMascot';
 import { MagicalBackground } from '../components/features/MagicalBackground';
 import { SubscriptionModal } from '../components/SubscriptionModal';
 import { PaywallDisclaimerModal } from '../components/PaywallDisclaimerModal';
+import { ActivationSuccessCard } from '../components/features/ActivationSuccessCard';
 import { getIapService } from '../services/iapLoader';
 import {
   ShieldCheck,
@@ -128,6 +129,7 @@ export default function PaywallScreen() {
   const [isRestoring, setIsRestoring] = useState(false);
   const [disclaimerVisible, setDisclaimerVisible] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isActivated, setIsActivated] = useState(false);
 
   const remainingFreeScans = Math.max(0, 5 - (freeScansUsed || 0));
   const hasFreeScansAvailable = !isPremium && remainingFreeScans > 0;
@@ -203,16 +205,7 @@ export default function PaywallScreen() {
       const result = await service.restorePurchases();
       if (result.isEntitled) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert(
-          'Purchase Restored ✅',
-          'Your BiteFix Premium subscription has been restored.',
-          [{
-            text: 'Continue',
-            onPress: () => {
-              router.replace('/(tabs)');
-            }
-          }]
-        );
+        setIsActivated(true);
       } else if (result.success) {
         Alert.alert(
           'No Subscription Found',
@@ -243,6 +236,16 @@ export default function PaywallScreen() {
   }
 
   // ── Render Paywall ───────────────────────────────────────
+
+  if (isActivated) {
+    return (
+      <ActivationSuccessCard 
+        onAnimationComplete={() => {
+          router.replace('/(tabs)');
+        }}
+      />
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>

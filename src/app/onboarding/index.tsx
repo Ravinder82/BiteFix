@@ -564,7 +564,7 @@ export default function OnboardingScreen() {
     <FlagshipPainScreen key={4} selected={ingredientReadingFrequency} onSelect={setIngredientReadingFrequency} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
     <FlagshipPrioritiesScreen key={5} selected={priorities} onToggle={togglePriority} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
     <FlagshipRevelationScreen key={6} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
-    <MomentOfTruthScreen key={7} selected={priorities} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
+    <MomentOfTruthScreen key={7} selected={priorities} name={name} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
     <FinalScreen key={8} colors={colors} isDark={isDark} />,
   ];
 
