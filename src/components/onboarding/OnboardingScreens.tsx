@@ -360,22 +360,6 @@ function DoodleLoopSticker({
         style,
       ]}
     >
-      <Svg
-        width={loopWidth}
-        height={loopHeight}
-        viewBox="0 0 120 100"
-        style={{ position: 'absolute', transform: [{ rotate: loopRotation }] }}
-      >
-        <Path
-          d="M17 24 C7 40 13 79 34 91 C57 104 104 99 112 70 C120 43 101 14 73 13 C48 11 25 14 17 24"
-          fill="none"
-          stroke="#17231B"
-          strokeOpacity={0.78}
-          strokeWidth={4.2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </Svg>
 
       <EmojiSticker
         emoji={emoji}
