@@ -58,33 +58,42 @@ function useReduceMotion() {
 
 // ── Screen 0: Welcome ─────────────────────────────────────
 // Flagship hero: transparent floating product scene + live scan beam + floating capability pills.
-function WelcomeScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
+function WelcomeScreen({ colors, isDark, isActive }: { colors: any; isDark: boolean; isActive: boolean }) {
   const { width, height } = useWindowDimensions();
+  const reduceMotion = useReduceMotion();
   const scanY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    if (reduceMotion || !isActive) {
+      scanY.stopAnimation();
+      scanY.setValue(0);
+      return;
+    }
+
     const travel = Math.max(180, Math.min(310, height * 0.30));
     const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(scanY, {
           toValue: travel,
           duration: 2200,
-          easing: Easing.inOut(Easing.quad),
+          easing: Easing.inOut(Easing.cubic),
           useNativeDriver: true,
+          isInteraction: false,
         }),
         Animated.delay(650),
         Animated.timing(scanY, {
           toValue: 0,
           duration: 2200,
-          easing: Easing.inOut(Easing.quad),
+          easing: Easing.inOut(Easing.cubic),
           useNativeDriver: true,
+          isInteraction: false,
         }),
         Animated.delay(900),
       ])
     );
     animation.start();
     return () => animation.stop();
-  }, [height, scanY]);
+  }, [height, isActive, reduceMotion, scanY]);
 
   const pillBase = {
     position: 'absolute' as const,
@@ -147,24 +156,7 @@ function WelcomeScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
           }}
         />
 
-        {/* Live barcode scanning beam */}
-        <Animated.View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            left: heroWidth * 0.10,
-            right: heroWidth * 0.10,
-            top: heroHeight * 0.18,
-            height: 2,
-            transform: [{ translateY: scanY }],
-            backgroundColor: GREEN,
-            shadowColor: GREEN,
-            shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: 0.9,
-            shadowRadius: 9,
-            elevation: 4,
-          }}
-        />
+        {/* Single native-driven scanner beam layer. Avoid animated shadows/elevation: those force expensive compositing on iOS. */}
         <Animated.View
           pointerEvents="none"
           style={{
@@ -173,11 +165,29 @@ function WelcomeScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
             right: heroWidth * 0.10,
             top: heroHeight * 0.18 - 8,
             height: 18,
-            opacity: 0.18,
             transform: [{ translateY: scanY }],
-            backgroundColor: GREEN,
           }}
-        />
+        >
+          {/* Soft glow stays GPU-cheap because it is part of the same moving layer. */}
+          <LinearGradient
+            colors={['rgba(1,146,42,0)', 'rgba(1,146,42,0.20)', 'rgba(1,146,42,0)']}
+            locations={[0, 0.5, 1]}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 18, borderRadius: 9 }}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              top: 8,
+              height: 2,
+              borderRadius: 1,
+              backgroundColor: GREEN,
+            }}
+          />
+        </Animated.View>
 
         {/* Lightweight scanner framing — intentionally borderless overall. */}
         <View pointerEvents="none" style={{ position: 'absolute', left: heroWidth * 0.14, top: heroHeight * 0.23, width: 34, height: 34, borderTopWidth: 2, borderLeftWidth: 2, borderColor: '#FFFFFF', borderTopLeftRadius: 7 }} />
@@ -715,7 +725,7 @@ export default function OnboardingScreen() {
   const renderScreenContent = (screen: number) => {
     switch (screen) {
       case 0:
-        return <WelcomeScreen colors={colors} isDark={isDark} />;
+        return <WelcomeScreen colors={colors} isDark={isDark} isActive={screen === currentScreen && !isPaging} />;
       case 1:
         return <FlagshipIdentityScreen name={name} onChange={setName} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />;
       case 2:
@@ -871,4 +881,3 @@ export default function OnboardingScreen() {
     </SafeAreaView>
   );
 }
-
