@@ -340,21 +340,79 @@ function WelcomeScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
 function FinalScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
   const reduceMotion = useReduceMotion();
   const orbitAnim = useRef(new Animated.Value(0)).current;
+  const mascotEntrance = useRef(new Animated.Value(0)).current;
+  const atmosphereEntrance = useRef(new Animated.Value(0)).current;
+  const pillEntrances = useRef(FEATURE_PILLS.map(() => new Animated.Value(0))).current;
   const { width } = useWindowDimensions();
 
+  // The mascot gets time to settle before the surrounding feature pills arrive.
   useEffect(() => {
-    if (reduceMotion) return;
-    const animation = Animated.loop(
-      Animated.timing(orbitAnim, {
+    if (reduceMotion) {
+      mascotEntrance.setValue(1);
+      atmosphereEntrance.setValue(1);
+      pillEntrances.forEach((value) => value.setValue(1));
+      return;
+    }
+
+    mascotEntrance.setValue(0);
+    atmosphereEntrance.setValue(0);
+    pillEntrances.forEach((value) => value.setValue(0));
+
+    let orbitLoop: Animated.CompositeAnimation | null = null;
+    const entrance = Animated.parallel([
+      Animated.timing(mascotEntrance, {
         toValue: 1,
-        duration: 26000,
-        easing: Easing.linear,
+        duration: 520,
+        easing: Easing.bezier(0.16, 1.0, 0.3, 1.0),
         useNativeDriver: true,
-      })
-    );
-    animation.start();
-    return () => animation.stop();
-  }, [reduceMotion, orbitAnim]);
+      }),
+      Animated.sequence([
+        Animated.delay(220),
+        Animated.timing(atmosphereEntrance, {
+          toValue: 1,
+          duration: 520,
+          easing: Easing.bezier(0.16, 1.0, 0.3, 1.0),
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.sequence([
+        // Let the mascot establish focus before the background elements begin.
+        Animated.delay(300),
+        Animated.stagger(
+          90,
+          pillEntrances.map((value) =>
+            Animated.timing(value, {
+              toValue: 1,
+              duration: 420,
+              easing: Easing.bezier(0.16, 1.0, 0.3, 1.0),
+              useNativeDriver: true,
+            })
+          )
+        ),
+      ]),
+    ]);
+
+    entrance.start();
+
+    // Keep the pills still while they arrive; begin the orbit only after the staged entrance.
+    const orbitTimer = setTimeout(() => {
+      orbitLoop = Animated.loop(
+        Animated.timing(orbitAnim, {
+          toValue: 1,
+          duration: 26000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
+      );
+      orbitLoop.start();
+    }, 1280);
+
+    return () => {
+      entrance.stop();
+      clearTimeout(orbitTimer);
+      orbitLoop?.stop();
+    };
+  }, [reduceMotion, orbitAnim, mascotEntrance, atmosphereEntrance, pillEntrances]);
 
   const rotate = orbitAnim.interpolate({
     inputRange: [0, 1],
@@ -379,9 +437,29 @@ function FinalScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
       </Text>
       <View style={{ width: RADIUS * 2, height: RADIUS * 2, alignItems: 'center', justifyContent: 'center' }}>
         {/* Subtle Orbit Guide */}
-        <View style={{ position: 'absolute', width: RADIUS * 2, height: RADIUS * 2, borderRadius: RADIUS, borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }} />
+        <Animated.View
+          style={{
+            position: 'absolute',
+            width: RADIUS * 2,
+            height: RADIUS * 2,
+            borderRadius: RADIUS,
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+            opacity: atmosphereEntrance,
+          }}
+        />
 
-        <OrbMascot state="happy" size={mascotSize} reduceMotion={reduceMotion} />
+        <Animated.View
+          style={{
+            opacity: mascotEntrance,
+            transform: [
+              { translateY: mascotEntrance.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) },
+              { scale: mascotEntrance.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1] }) },
+            ],
+          }}
+        >
+          <OrbMascot state="happy" size={mascotSize} reduceMotion={reduceMotion} />
+        </Animated.View>
 
         {/* Orbit track */}
         <Animated.View
@@ -423,33 +501,43 @@ function FinalScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
                   top: RADIUS + y,
                   width: 142,
                   alignItems: 'center',
+                  opacity: reduceMotion ? 1 : pillEntrances[i],
                   transform: [
-                    { translateY: -14 }, // Center vertically
-                    ...(reduceMotion ? [] : [{ rotate: counterRotate }]),
-                    { scale }
+                    { translateY: pillEntrances[i].interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) },
+                    { scale: pillEntrances[i].interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) },
                   ],
-                  opacity
                 }}
               >
-                <View
+                <Animated.View
                   style={{
-                    backgroundColor: isDark ? 'rgba(20, 24, 22, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                    borderRadius: 14,
-                    paddingHorizontal: 10,
-                    paddingVertical: 6,
-                    minHeight: 30,
-                    maxWidth: 142,
-                    borderWidth: 1,
-                    borderColor: GREEN + '40',
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: isDark ? 0.3 : 0.1,
-                    shadowRadius: 6,
-                    elevation: 3,
+                    alignItems: 'center',
+                    opacity: reduceMotion ? 1 : opacity,
+                    transform: [
+                      ...(reduceMotion ? [] : [{ rotate: counterRotate }]),
+                      { scale },
+                    ],
                   }}
                 >
-                  <Text numberOfLines={1} style={{ color: colors.text, fontSize: 10.5, lineHeight: 14, fontWeight: '800', textAlign: 'center' }}>{pill}</Text>
-                </View>
+                  <View
+                    style={{
+                      backgroundColor: isDark ? 'rgba(20, 24, 22, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                      borderRadius: 14,
+                      paddingHorizontal: 10,
+                      paddingVertical: 6,
+                      minHeight: 30,
+                      maxWidth: 142,
+                      borderWidth: 1,
+                      borderColor: GREEN + '40',
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: isDark ? 0.3 : 0.1,
+                      shadowRadius: 6,
+                      elevation: 3,
+                    }}
+                  >
+                    <Text numberOfLines={1} style={{ color: colors.text, fontSize: 10.5, lineHeight: 14, fontWeight: '800', textAlign: 'center' }}>{pill}</Text>
+                  </View>
+                </Animated.View>
               </Animated.View>
             );
           })}
@@ -464,6 +552,7 @@ function FinalScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
 // ══════════════════════════════════════════════════════════
 export default function OnboardingScreen() {
   const { colors, isDark } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
   const {
     setOnboardingComplete,
     setProfile,
@@ -475,19 +564,18 @@ export default function OnboardingScreen() {
   } = useAppStore();
 
   const [currentScreen, setCurrentScreen] = useState(0);
-  
+  const [transitionScreen, setTransitionScreen] = useState<number | null>(null);
+
   const [name, setName] = useState('');
   const [allergens, setAllergens] = useState<string[]>([]);
   const [priorities, setPriorities] = useState<OnboardingPriority[]>([]);
   const [shoppingFrequency, setShoppingFrequency] = useState<ShoppingFrequency>();
   const [ingredientReadingFrequency, setIngredientReadingFrequency] = useState<IngredientReadingFrequency>();
-  
+
   const reduceMotion = useReduceMotion();
   const ctaShimmer = useRef(new Animated.Value(-1)).current;
-
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const translateYAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const transitionLockRef = useRef(false);
 
   useEffect(() => {
     if (reduceMotion) {
@@ -495,6 +583,7 @@ export default function OnboardingScreen() {
       ctaShimmer.setValue(1);
       return;
     }
+
     const loop = Animated.loop(
       Animated.sequence([
         Animated.delay(900),
@@ -527,64 +616,54 @@ export default function OnboardingScreen() {
         return;
       }
 
-      const isForward = screen > currentScreen;
+      if (
+        transitionLockRef.current ||
+        transitionScreen !== null ||
+        screen === currentScreen ||
+        screen < 0 ||
+        screen >= TOTAL_SCREENS
+      ) {
+        return;
+      }
 
-      // Stop any in-flight transitions
-      fadeAnim.stopAnimation();
-      translateYAnim.stopAnimation();
-      scaleAnim.stopAnimation();
-
-      // Graceful, luxurious fade & drift out
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 200,
-          easing: Easing.bezier(0.4, 0.0, 0.2, 1),
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateYAnim, {
-          toValue: isForward ? -6 : 6,
-          duration: 200,
-          easing: Easing.bezier(0.4, 0.0, 0.2, 1),
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 0.99,
-          duration: 200,
-          easing: Easing.bezier(0.4, 0.0, 0.2, 1),
-          useNativeDriver: true,
-        }),
-      ]).start(({ finished }) => {
-        if (!finished) return;
-        setCurrentScreen(screen);
-        translateYAnim.setValue(isForward ? 8 : -8);
-        scaleAnim.setValue(0.99);
-
-        // Slow, velvety Apple-style deceleration float-in
-        Animated.parallel([
-          Animated.timing(fadeAnim, {
-            toValue: 1,
-            duration: 340,
-            easing: Easing.bezier(0.16, 1.0, 0.3, 1.0),
-            useNativeDriver: true,
-          }),
-          Animated.timing(translateYAnim, {
-            toValue: 0,
-            duration: 340,
-            easing: Easing.bezier(0.16, 1.0, 0.3, 1.0),
-            useNativeDriver: true,
-          }),
-          Animated.timing(scaleAnim, {
-            toValue: 1,
-            duration: 340,
-            easing: Easing.bezier(0.16, 1.0, 0.3, 1.0),
-            useNativeDriver: true,
-          }),
-        ]).start();
-      });
+      transitionLockRef.current = true;
+      slideAnim.stopAnimation();
+      slideAnim.setValue(0);
+      setTransitionScreen(screen);
     },
-    [currentScreen, reduceMotion, fadeAnim, translateYAnim, scaleAnim]
+    [currentScreen, reduceMotion, slideAnim, transitionScreen]
   );
+
+  useEffect(() => {
+    if (transitionScreen === null) return;
+
+    const targetScreen = transitionScreen;
+    let committed = false;
+
+    const animation = Animated.timing(slideAnim, {
+      toValue: 1,
+      duration: 520,
+      easing: Easing.bezier(0.16, 1.0, 0.3, 1.0),
+      useNativeDriver: true,
+    });
+
+    animation.start(({ finished }) => {
+      if (!finished) return;
+      committed = true;
+      setCurrentScreen(targetScreen);
+      setTransitionScreen(null);
+      slideAnim.setValue(0);
+      transitionLockRef.current = false;
+    });
+
+    return () => {
+      animation.stop();
+      if (!committed) {
+        slideAnim.setValue(0);
+        transitionLockRef.current = false;
+      }
+    };
+  }, [transitionScreen, slideAnim]);
 
   const handleComplete = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -609,6 +688,7 @@ export default function OnboardingScreen() {
   }, [allergens, ingredientReadingFrequency, name, priorities, setAllergenFilters, setOnboardingComplete, setOnboardingPreferences, setProfile, setDietPreference, setTrackEcoScore, setTrackOrganic, shoppingFrequency]);
 
   const handleNext = useCallback(() => {
+    if (transitionLockRef.current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (currentScreen < TOTAL_SCREENS - 1) {
       goTo(currentScreen + 1);
@@ -618,160 +698,207 @@ export default function OnboardingScreen() {
   }, [currentScreen, goTo, handleComplete]);
 
   const handleBack = useCallback(() => {
+    if (transitionLockRef.current) return;
     if (currentScreen > 0) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       goTo(currentScreen - 1);
     }
   }, [currentScreen, goTo]);
 
-  const ctaLabel =
-    currentScreen === TOTAL_SCREENS - 1 ? 'Activate BiteFix' :
-      currentScreen === 0 ? 'Get Started' :
-        currentScreen === 6 ? 'Show Me' :
-          currentScreen === 7 ? 'See My BiteFix' : 'Continue';
+  const getCtaLabel = (screen: number) =>
+    screen === TOTAL_SCREENS - 1 ? 'Activate BiteFix' :
+      screen === 0 ? 'Get Started' :
+        screen === 6 ? 'Show Me' :
+          screen === 7 ? 'See My BiteFix' : 'Continue';
 
-  const screenContent = [
-    <WelcomeScreen key={0} colors={colors} isDark={isDark} />,
-    <FlagshipIdentityScreen key={1} name={name} onChange={setName} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
-    <FlagshipContextScreen key={2} selected={shoppingFrequency} onSelect={setShoppingFrequency} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
-    <FlagshipAllergyScreen key={3} selected={allergens} onToggle={toggleAllergen} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
-    <FlagshipPainScreen key={4} selected={ingredientReadingFrequency} onSelect={setIngredientReadingFrequency} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
-    <FlagshipPrioritiesScreen key={5} selected={priorities} onToggle={togglePriority} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
-    <FlagshipRevelationScreen key={6} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
-    <MomentOfTruthScreen key={7} selected={priorities} name={name} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
-    <FinalScreen key={8} colors={colors} isDark={isDark} />,
-  ];
+  const renderScreenContent = (screen: number) => {
+    switch (screen) {
+      case 0:
+        return <WelcomeScreen colors={colors} isDark={isDark} />;
+      case 1:
+        return <FlagshipIdentityScreen name={name} onChange={setName} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />;
+      case 2:
+        return <FlagshipContextScreen selected={shoppingFrequency} onSelect={setShoppingFrequency} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />;
+      case 3:
+        return <FlagshipAllergyScreen selected={allergens} onToggle={toggleAllergen} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />;
+      case 4:
+        return <FlagshipPainScreen selected={ingredientReadingFrequency} onSelect={setIngredientReadingFrequency} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />;
+      case 5:
+        return <FlagshipPrioritiesScreen selected={priorities} onToggle={togglePriority} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />;
+      case 6:
+        return <FlagshipRevelationScreen colors={colors} isDark={isDark} reduceMotion={reduceMotion} />;
+      case 7:
+        return <MomentOfTruthScreen selected={priorities} name={name} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />;
+      case 8:
+        return <FinalScreen colors={colors} isDark={isDark} />;
+      default:
+        return null;
+    }
+  };
+
+  const renderSlide = (screen: number) => {
+    const ctaDisabled = screen === 1 && name.trim().length < 1;
+    const disabledBg = isDark ? 'rgba(0, 107, 31, 0.22)' : '#E8F6ED';
+    const disabledBorder = isDark ? 'rgba(0, 200, 80, 0.30)' : 'rgba(0, 107, 31, 0.22)';
+    const disabledText = isDark ? 'rgba(100, 240, 140, 0.70)' : 'rgba(0, 107, 31, 0.68)';
+
+    return (
+      <View style={{ flex: 1, width: screenWidth }}>
+        {/* Every slide owns its header, content, and CTA so they move together. */}
+        {screen > 0 && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 }}>
+            <TouchableOpacity onPress={handleBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4 }}>
+              <ChevronLeft size={18} color={colors.textSecondary} strokeWidth={2} />
+              <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600' }}>Back</Text>
+            </TouchableOpacity>
+
+            <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+              {Array.from({ length: TOTAL_SCREENS }).map((_, i) => (
+                <View key={i} style={{ width: i === screen ? 18 : 6, height: 6, borderRadius: 3, backgroundColor: i === screen ? GREEN : colors.textMuted + '50' }} />
+              ))}
+            </View>
+
+            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', width: 52, textAlign: 'right' }}>
+              {screen + 1}/{TOTAL_SCREENS}
+            </Text>
+          </View>
+        )}
+
+        <View style={{ flex: 1 }}>
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ flexGrow: 1 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            scrollEnabled={screen !== 1}
+          >
+            {renderScreenContent(screen)}
+          </ScrollView>
+        </View>
+
+        <View style={{ paddingHorizontal: 24, paddingBottom: 24, paddingTop: 12 }}>
+          <TouchableOpacity
+            onPress={screen === TOTAL_SCREENS - 1 ? handleComplete : handleNext}
+            disabled={ctaDisabled}
+            activeOpacity={0.88}
+            style={{
+              backgroundColor: ctaDisabled ? disabledBg : '#006B1F',
+              borderRadius: 20,
+              minHeight: 62,
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'row',
+              gap: 8,
+              overflow: 'hidden',
+              borderWidth: 1,
+              borderColor: ctaDisabled ? disabledBorder : 'rgba(255,255,255,0.22)',
+              shadowColor: ctaDisabled ? GREEN : '#004A16',
+              shadowOffset: { width: 0, height: ctaDisabled ? 2 : 8 },
+              shadowOpacity: ctaDisabled ? 0.05 : 0.28,
+              shadowRadius: ctaDisabled ? 6 : 16,
+              elevation: ctaDisabled ? 1 : 6,
+            }}
+          >
+            {!ctaDisabled && (
+              <>
+                <Animated.View
+                  pointerEvents="none"
+                  style={{
+                    position: 'absolute',
+                    top: -20,
+                    bottom: -20,
+                    width: 72,
+                    backgroundColor: 'rgba(255,255,255,0.18)',
+                    transform: [
+                      { translateX: ctaShimmer.interpolate({ inputRange: [-1, 1], outputRange: [-360, 360] }) },
+                      { rotate: '18deg' },
+                    ],
+                  }}
+                />
+                <Animated.View
+                  pointerEvents="none"
+                  style={{
+                    position: 'absolute',
+                    top: 1,
+                    left: 18,
+                    right: 18,
+                    height: 1,
+                    backgroundColor: 'rgba(255,255,255,0.32)',
+                    opacity: ctaShimmer.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.2, 0.6, 0.2] }),
+                  }}
+                />
+              </>
+            )}
+            <Text style={{ color: ctaDisabled ? disabledText : '#FFFFFF', fontSize: 16.5, fontWeight: '900', letterSpacing: 0.2 }}>
+              {getCtaLabel(screen)}
+            </Text>
+            <ChevronRight size={19} color={ctaDisabled ? disabledText : '#FFFFFF'} strokeWidth={2.6} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
+
+  const isForward = transitionScreen !== null ? transitionScreen > currentScreen : true;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
-      {/* Top navigation row — intentionally hidden on the Welcome hero. */}
-      {currentScreen > 0 && (
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 }}>
-          {currentScreen > 0 ? (
-            <TouchableOpacity onPress={handleBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4 }}>
-              <ChevronLeft size={18} color={colors.textSecondary} strokeWidth={2} />
-              <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600' }}>Back</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={{ width: 52 }} />
-          )}
-
-          {/* Progress dots */}
-          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-            {Array.from({ length: TOTAL_SCREENS }).map((_, i) => (
-              <View key={i} style={{ width: i === currentScreen ? 18 : 6, height: 6, borderRadius: 3, backgroundColor: i === currentScreen ? GREEN : colors.textMuted + '50' }} />
-            ))}
+      <View style={{ flex: 1, overflow: 'hidden' }} pointerEvents={transitionScreen === null ? 'auto' : 'none'}>
+        {transitionScreen === null ? (
+          <View style={{ flex: 1, width: screenWidth }}>
+            {renderSlide(currentScreen)}
           </View>
-
-          <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', width: 52, textAlign: 'right' }}>
-            {currentScreen + 1}/{TOTAL_SCREENS}
-          </Text>
-        </View>
-      )}
-
-      {/* Screen content */}
-      <Animated.View
-        style={{
-          flex: 1,
-          opacity: fadeAnim,
-          transform: [{ translateY: translateYAnim }, { scale: scaleAnim }],
-        }}
-      >
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{ flexGrow: 1 }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          scrollEnabled={currentScreen !== 1}
-        >
-          {screenContent[currentScreen]}
-        </ScrollView>
-      </Animated.View>
-
-      {/* Bottom CTA button */}
-      <View style={{ paddingHorizontal: 24, paddingBottom: 24, paddingTop: 12 }}>
-        {(() => {
-          const ctaDisabled = currentScreen === 1 && name.trim().length < 1;
-          const disabledBg = isDark ? 'rgba(0, 107, 31, 0.22)' : '#E8F6ED';
-          const disabledBorder = isDark ? 'rgba(0, 200, 80, 0.30)' : 'rgba(0, 107, 31, 0.22)';
-          const disabledText = isDark ? 'rgba(100, 240, 140, 0.70)' : 'rgba(0, 107, 31, 0.68)';
-
-          return (
-            <TouchableOpacity
-              onPress={handleNext}
-              disabled={ctaDisabled}
-              activeOpacity={0.88}
+        ) : (
+          <Animated.View
+            style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              left: 0,
+              width: screenWidth,
+              transform: [
+                {
+                  translateX: slideAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, isForward ? -screenWidth : screenWidth],
+                  }),
+                },
+              ],
+            }}
+          >
+            {/* Current screen at 0 */}
+            <View
+              key={`curr-${currentScreen}`}
               style={{
-                backgroundColor: ctaDisabled ? disabledBg : '#006B1F',
-                borderRadius: 20,
-                minHeight: 62,
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'row',
-                gap: 8,
-                overflow: 'hidden',
-                borderWidth: 1,
-                borderColor: ctaDisabled ? disabledBorder : 'rgba(255,255,255,0.22)',
-                shadowColor: ctaDisabled ? GREEN : '#004A16',
-                shadowOffset: { width: 0, height: ctaDisabled ? 2 : 8 },
-                shadowOpacity: ctaDisabled ? 0.05 : 0.28,
-                shadowRadius: ctaDisabled ? 6 : 16,
-                elevation: ctaDisabled ? 1 : 6,
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                left: 0,
+                width: screenWidth,
               }}
             >
-              {!ctaDisabled && (
-                <>
-                  {/* Dynamic Shimmer Beam */}
-                  <Animated.View
-                    pointerEvents="none"
-                    style={{
-                      position: 'absolute',
-                      top: -20,
-                      bottom: -20,
-                      width: 72,
-                      backgroundColor: 'rgba(255,255,255,0.18)',
-                      transform: [
-                        { translateX: ctaShimmer.interpolate({ inputRange: [-1, 1], outputRange: [-360, 360] }) },
-                        { rotate: '18deg' },
-                      ],
-                    }}
-                  />
-                  {/* Apple Top Glass Specular Line */}
-                  <Animated.View
-                    pointerEvents="none"
-                    style={{
-                      position: 'absolute',
-                      top: 1,
-                      left: 18,
-                      right: 18,
-                      height: 1,
-                      backgroundColor: 'rgba(255,255,255,0.32)',
-                      opacity: ctaShimmer.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.2, 0.6, 0.2] }),
-                    }}
-                  />
-                </>
-              )}
-              <Text
-                style={{
-                  color: ctaDisabled ? disabledText : '#FFFFFF',
-                  fontSize: 16.5,
-                  fontWeight: '900',
-                  letterSpacing: 0.2,
-                }}
-              >
-                {ctaLabel}
-              </Text>
-              <ChevronRight
-                size={19}
-                color={ctaDisabled ? disabledText : '#FFFFFF'}
-                strokeWidth={2.6}
-              />
-            </TouchableOpacity>
-          );
-        })()}
+              {renderSlide(currentScreen)}
+            </View>
+
+            {/* Target screen at +screenWidth (forward) or -screenWidth (backward) */}
+            <View
+              key={`target-${transitionScreen}`}
+              style={{
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                left: isForward ? screenWidth : -screenWidth,
+                width: screenWidth,
+              }}
+            >
+              {renderSlide(transitionScreen)}
+            </View>
+          </Animated.View>
+        )}
       </View>
     </SafeAreaView>
   );
 }
+
