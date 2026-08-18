@@ -487,6 +487,7 @@ export default function OnboardingScreen() {
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const translateYAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (reduceMotion) {
@@ -531,43 +532,58 @@ export default function OnboardingScreen() {
       // Stop any in-flight transitions
       fadeAnim.stopAnimation();
       translateYAnim.stopAnimation();
+      scaleAnim.stopAnimation();
 
-      // Quick smooth fade out
+      // Graceful, luxurious fade & drift out
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 0,
-          duration: 110,
-          easing: Easing.out(Easing.quad),
+          duration: 200,
+          easing: Easing.bezier(0.4, 0.0, 0.2, 1),
           useNativeDriver: true,
         }),
         Animated.timing(translateYAnim, {
-          toValue: isForward ? -5 : 5,
-          duration: 110,
-          easing: Easing.out(Easing.quad),
+          toValue: isForward ? -6 : 6,
+          duration: 200,
+          easing: Easing.bezier(0.4, 0.0, 0.2, 1),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 0.99,
+          duration: 200,
+          easing: Easing.bezier(0.4, 0.0, 0.2, 1),
           useNativeDriver: true,
         }),
       ]).start(({ finished }) => {
         if (!finished) return;
         setCurrentScreen(screen);
-        translateYAnim.setValue(isForward ? 7 : -7);
-        // Smooth gentle float-in
+        translateYAnim.setValue(isForward ? 8 : -8);
+        scaleAnim.setValue(0.99);
+
+        // Slow, velvety Apple-style deceleration float-in
         Animated.parallel([
           Animated.timing(fadeAnim, {
             toValue: 1,
-            duration: 200,
-            easing: Easing.out(Easing.quad),
+            duration: 340,
+            easing: Easing.bezier(0.16, 1.0, 0.3, 1.0),
             useNativeDriver: true,
           }),
           Animated.timing(translateYAnim, {
             toValue: 0,
-            duration: 200,
-            easing: Easing.out(Easing.quad),
+            duration: 340,
+            easing: Easing.bezier(0.16, 1.0, 0.3, 1.0),
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleAnim, {
+            toValue: 1,
+            duration: 340,
+            easing: Easing.bezier(0.16, 1.0, 0.3, 1.0),
             useNativeDriver: true,
           }),
         ]).start();
       });
     },
-    [currentScreen, reduceMotion, fadeAnim, translateYAnim]
+    [currentScreen, reduceMotion, fadeAnim, translateYAnim, scaleAnim]
   );
 
   const handleComplete = useCallback(() => {
@@ -660,7 +676,7 @@ export default function OnboardingScreen() {
         style={{
           flex: 1,
           opacity: fadeAnim,
-          transform: [{ translateY: translateYAnim }],
+          transform: [{ translateY: translateYAnim }, { scale: scaleAnim }],
         }}
       >
         <ScrollView
