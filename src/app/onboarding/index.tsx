@@ -337,7 +337,6 @@ function WelcomeScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
   );
 }
 
-// ── Screen 8: Final Activation ────────────────────────────
 function FinalScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
   const reduceMotion = useReduceMotion();
   const orbitAnim = useRef(new Animated.Value(0)).current;
@@ -483,6 +482,24 @@ export default function OnboardingScreen() {
   const [ingredientReadingFrequency, setIngredientReadingFrequency] = useState<IngredientReadingFrequency>();
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const reduceMotion = useReduceMotion();
+  const ctaShimmer = useRef(new Animated.Value(-1)).current;
+
+  useEffect(() => {
+    if (reduceMotion) {
+      ctaShimmer.stopAnimation();
+      ctaShimmer.setValue(1);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.delay(900),
+        Animated.timing(ctaShimmer, { toValue: 1, duration: 1100, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(ctaShimmer, { toValue: -1, duration: 1, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [ctaShimmer, reduceMotion]);
 
   const toggleAllergen = useCallback((id: string) => {
     Haptics.selectionAsync();
@@ -558,7 +575,7 @@ export default function OnboardingScreen() {
 
   const screenContent = [
     <WelcomeScreen key={0} colors={colors} isDark={isDark} />,
-    <FlagshipIdentityScreen key={1} name={name} onChange={setName} onSkip={() => goTo(2)} colors={colors} isDark={isDark} />,
+    <FlagshipIdentityScreen key={1} name={name} onChange={setName} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
     <FlagshipContextScreen key={2} selected={shoppingFrequency} onSelect={setShoppingFrequency} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
     <FlagshipAllergyScreen key={3} selected={allergens} onToggle={toggleAllergen} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
     <FlagshipPainScreen key={4} selected={ingredientReadingFrequency} onSelect={setIngredientReadingFrequency} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
@@ -599,21 +616,92 @@ export default function OnboardingScreen() {
 
       {/* Screen content */}
       <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" scrollEnabled={currentScreen !== 1}>
           {screenContent[currentScreen]}
         </ScrollView>
       </Animated.View>
 
       {/* Bottom CTA button */}
       <View style={{ paddingHorizontal: 24, paddingBottom: 24, paddingTop: 12 }}>
-        <TouchableOpacity
-          onPress={handleNext}
-          activeOpacity={0.82}
-          style={{ backgroundColor: GREEN, borderRadius: 16, paddingVertical: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
-        >
-          <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '800', letterSpacing: 0.2 }}>{ctaLabel}</Text>
-          <ChevronRight size={18} color="#FFFFFF" strokeWidth={2.5} />
-        </TouchableOpacity>
+        {(() => {
+          const ctaDisabled = currentScreen === 1 && name.trim().length < 1;
+          const disabledBg = isDark ? 'rgba(0, 107, 31, 0.22)' : '#E8F6ED';
+          const disabledBorder = isDark ? 'rgba(0, 200, 80, 0.30)' : 'rgba(0, 107, 31, 0.22)';
+          const disabledText = isDark ? 'rgba(100, 240, 140, 0.70)' : 'rgba(0, 107, 31, 0.68)';
+
+          return (
+            <TouchableOpacity
+              onPress={handleNext}
+              disabled={ctaDisabled}
+              activeOpacity={0.88}
+              style={{
+                backgroundColor: ctaDisabled ? disabledBg : '#006B1F',
+                borderRadius: 20,
+                minHeight: 62,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+                gap: 8,
+                overflow: 'hidden',
+                borderWidth: 1,
+                borderColor: ctaDisabled ? disabledBorder : 'rgba(255,255,255,0.22)',
+                shadowColor: ctaDisabled ? GREEN : '#004A16',
+                shadowOffset: { width: 0, height: ctaDisabled ? 2 : 8 },
+                shadowOpacity: ctaDisabled ? 0.05 : 0.28,
+                shadowRadius: ctaDisabled ? 6 : 16,
+                elevation: ctaDisabled ? 1 : 6,
+              }}
+            >
+              {!ctaDisabled && (
+                <>
+                  {/* Dynamic Shimmer Beam */}
+                  <Animated.View
+                    pointerEvents="none"
+                    style={{
+                      position: 'absolute',
+                      top: -20,
+                      bottom: -20,
+                      width: 72,
+                      backgroundColor: 'rgba(255,255,255,0.18)',
+                      transform: [
+                        { translateX: ctaShimmer.interpolate({ inputRange: [-1, 1], outputRange: [-360, 360] }) },
+                        { rotate: '18deg' },
+                      ],
+                    }}
+                  />
+                  {/* Apple Top Glass Specular Line */}
+                  <Animated.View
+                    pointerEvents="none"
+                    style={{
+                      position: 'absolute',
+                      top: 1,
+                      left: 18,
+                      right: 18,
+                      height: 1,
+                      backgroundColor: 'rgba(255,255,255,0.32)',
+                      opacity: ctaShimmer.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.2, 0.6, 0.2] }),
+                    }}
+                  />
+                </>
+              )}
+              <Text
+                style={{
+                  color: ctaDisabled ? disabledText : '#FFFFFF',
+                  fontSize: 16.5,
+                  fontWeight: '900',
+                  letterSpacing: 0.2,
+                }}
+              >
+                {ctaLabel}
+              </Text>
+              <ChevronRight
+                size={19}
+                color={ctaDisabled ? disabledText : '#FFFFFF'}
+                strokeWidth={2.6}
+              />
+            </TouchableOpacity>
+          );
+        })()}
       </View>
     </SafeAreaView>
   );

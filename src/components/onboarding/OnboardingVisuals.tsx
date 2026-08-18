@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, Text, View } from 'react-native';
-import { Activity, Droplets, Leaf, Package, ShieldCheck, Zap } from 'lucide-react-native';
+import { Activity, Droplets, Leaf, Package, ShieldCheck, UserRound, Sparkles, Zap } from 'lucide-react-native';
 import { OrbMascot } from '../features/OrbMascot';
 import { ProductDataStatusPill } from '../features/ProductDataPills';
 import { NutriScoreTrafficLight } from '../features/NutriScoreTrafficLight';
@@ -69,10 +69,10 @@ export function ShoppingRhythmVisual({ colors, isDark, reduceMotion = false, fre
     frequency === 'most_trips'
       ? [32, 48, 64, 82, 94, 76, 52]
       : frequency === 'often'
-      ? [26, 40, 58, 72, 54, 38, 24]
-      : frequency === 'sometimes'
-      ? [20, 32, 46, 36, 24, 30, 18]
-      : [16, 22, 18, 26, 18, 22, 16];
+        ? [26, 40, 58, 72, 54, 38, 24]
+        : frequency === 'sometimes'
+          ? [20, 32, 46, 36, 24, 30, 18]
+          : [16, 22, 18, 26, 18, 22, 16];
 
   useEffect(() => {
     if (reduceMotion) {
@@ -477,7 +477,7 @@ export function ProfileAssemblyVisual({
   phase,
 }: VisualProps & { selected: OnboardingPriority[]; phase: 'building' | 'assembly' | 'ready' }) {
   const visiblePriorities = selected.length > 0 ? selected.slice(0, 5) : ((['nutrition', 'ingredients', 'sugar'] as OnboardingPriority[]));
-  
+
   const assembleAnim = useSharedValue(phase === 'ready' ? 1 : 0);
   const masterAngle = useSharedValue(0);
 
@@ -539,11 +539,11 @@ export function ProfileAssemblyVisual({
 
         const pillStyle = useAnimatedStyle(() => {
           const currentAngle = masterAngle.value + angleOffset;
-          
+
           // Radius: Starts wide elliptical, shrinks to tight circle
           const radiusX = interpolate(assembleAnim.value, [0, 1], [110, 42]);
           const radiusY = interpolate(assembleAnim.value, [0, 1], [50, 42]);
-          
+
           let x = Math.cos(currentAngle) * radiusX;
           let y = Math.sin(currentAngle) * radiusY;
 
@@ -554,9 +554,9 @@ export function ProfileAssemblyVisual({
 
           // As it assembles, drop the parallax fade and push Y down slightly (+8) to align with mascot
           const yAdjusted = interpolate(assembleAnim.value, [0, 1], [y, y + 8]);
-          
+
           const opacity = interpolate(assembleAnim.value, [0, 1], [
-            interpolate(y, [-50, 50], [0.5, 1], Extrapolate.CLAMP), 
+            interpolate(y, [-50, 50], [0.5, 1], Extrapolate.CLAMP),
             1
           ]);
 
@@ -689,12 +689,12 @@ export function MomentResultCard({ colors, isDark, reduceMotion = false, selecte
               priority === 'sugar'
                 ? '≈ 1.8 tsp (Low)'
                 : priority === 'environment'
-                ? 'Grade A'
-                : priority === 'nutrition'
-                ? 'Balanced Profile'
-                : priority === 'ultra_processed'
-                ? 'NOVA 2 (Processed)'
-                : 'No Harmful Additives';
+                  ? 'Grade A'
+                  : priority === 'nutrition'
+                    ? 'Balanced Profile'
+                    : priority === 'ultra_processed'
+                      ? 'NOVA 2 (Processed)'
+                      : 'No Harmful Additives';
 
             const isEmphasized = selected.includes(priority);
 

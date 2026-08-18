@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Activity, Check, Droplets, Leaf, Package, ShieldCheck } from 'lucide-react-native';
+import { Activity, Check, Droplets, Leaf, Package, ShieldCheck, UserRound } from 'lucide-react-native';
 import { OrbMascot } from '../features/OrbMascot';
 import {
   AllergenShieldVisual,
@@ -173,63 +173,351 @@ function SelectionRow({
   );
 }
 
+
+// Compact assistant message used as a calm, high-end header surface.
+function AssistantCard({ isDark }: { isDark: boolean }) {
+  return (
+    <View
+      style={{
+        borderRadius: 18,
+        borderWidth: 1,
+        borderColor: isDark ? 'rgba(90,220,130,0.28)' : 'rgba(1,146,42,0.18)',
+        backgroundColor: isDark ? 'rgba(7,34,18,0.96)' : 'rgba(246,252,247,0.98)',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        shadowColor: GREEN,
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: isDark ? 0.16 : 0.08,
+        shadowRadius: 14,
+        elevation: 2,
+      }}
+    >
+      <Text
+        style={{
+          color: isDark ? '#F3FFF6' : '#12311E',
+          fontSize: 14,
+          lineHeight: 19,
+          fontWeight: '800',
+          letterSpacing: -0.15,
+        }}
+      >
+        Hi! I am your BiteFix Assistant
+      </Text>
+    </View>
+  );
+}
+
+// Premium static pill used as a contextual badge around the mascot.
+// Width is content-driven so labels never truncate or wrap.
+function PillSticker({
+  label,
+  icon,
+  bg,
+  border,
+  textColor,
+  shadowC,
+  style,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  bg: string;
+  border: string;
+  textColor: string;
+  shadowC: string;
+  style?: any;
+}) {
+  return (
+    <View
+      style={[
+        {
+          position: 'absolute',
+          flexDirection: 'row',
+          alignItems: 'center',
+          alignSelf: 'flex-start',
+          gap: 8,
+          minHeight: 40,
+          paddingHorizontal: 14,
+          paddingVertical: 9,
+          borderRadius: 999,
+          backgroundColor: bg,
+          borderWidth: 1.25,
+          borderColor: border,
+          shadowColor: shadowC,
+          shadowOffset: { width: 0, height: 5 },
+          shadowOpacity: 0.2,
+          shadowRadius: 12,
+          elevation: 4,
+          zIndex: 8,
+        },
+        style,
+      ]}
+    >
+      {icon}
+      <Text
+        numberOfLines={1}
+        style={{
+          color: textColor,
+          fontSize: 11.5,
+          lineHeight: 16,
+          fontWeight: '900',
+          letterSpacing: 0.05,
+          flexShrink: 0,
+          includeFontPadding: false,
+        }}
+      >
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+// Small fruit sticker accents reused from the earlier BiteFix identity direction.
+// They are decorative only and do not animate.
+function EmojiSticker({
+  emoji,
+  bg,
+  border,
+  shadowC,
+  rotation,
+  style,
+  size = 31,
+}: {
+  emoji: string;
+  bg: string;
+  border: string;
+  shadowC: string;
+  rotation: string;
+  style?: any;
+  size?: number;
+}) {
+  return (
+    <View
+      pointerEvents="none"
+      style={[
+        {
+          position: 'absolute',
+          width: size,
+          height: size,
+          borderRadius: Math.round(size * 0.32),
+          backgroundColor: bg,
+          borderWidth: 1.5,
+          borderColor: border,
+          alignItems: 'center',
+          justifyContent: 'center',
+          shadowColor: shadowC,
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.16,
+          shadowRadius: 6,
+          elevation: 3,
+          transform: [{ rotate: rotation }],
+          zIndex: 4,
+        },
+        style,
+      ]}
+    >
+      <Text style={{ fontSize: Math.round(size * 0.52), lineHeight: Math.round(size * 0.58) }}>
+        {emoji}
+      </Text>
+    </View>
+  );
+}
+
 // ══════════════════════════════════════════════════════════════
 // SCREEN 1 — IDENTITY
 // ══════════════════════════════════════════════════════════════
-export function IdentityScreen({ name, onChange, onSkip, colors, isDark }: { name: string; onChange: (name: string) => void; onSkip: () => void; colors: any; isDark: boolean }) {
+export function IdentityScreen({
+  name,
+  onChange,
+  colors,
+  isDark,
+  reduceMotion = false,
+}: {
+  name: string;
+  onChange: (name: string) => void;
+  colors: any;
+  isDark: boolean;
+  reduceMotion?: boolean;
+}) {
   const [focused, setFocused] = useState(false);
   const focusAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.timing(focusAnim, { toValue: focused ? 1 : 0, duration: 190, easing: Easing.out(Easing.quad), useNativeDriver: false }).start();
+    Animated.timing(focusAnim, {
+      toValue: focused ? 1 : 0,
+      duration: 190,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: false,
+    }).start();
   }, [focused, focusAnim]);
 
   return (
-    <ScreenFrame>
-      <View style={{ alignItems: 'center', marginBottom: 20 }}>
-        <OrbMascot state="idle" size={96} accessibilityLabel="Friendly BiteFix scanner mascot" />
-      </View>
-      <ScreenHeading
-        title="Let's make BiteFix **yours**."
-        subtitle="What should we call you?"
-        colors={colors}
-      />
-      <Animated.View style={{
-        borderRadius: 18,
-        borderWidth: 1.5,
-        borderColor: focusAnim.interpolate({ inputRange: [0, 1], outputRange: [name ? GREEN : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)', GREEN] }),
-        shadowColor: GREEN,
-        shadowOpacity: focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.16] }),
-        shadowRadius: 14,
-        shadowOffset: { width: 0, height: 0 },
-      }}>
-        <TextInput
-          value={name}
-          onChangeText={onChange}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          placeholder="First name (optional)"
-          placeholderTextColor={colors.textMuted}
-          maxLength={40}
-          autoCapitalize="words"
-          returnKeyType="done"
-          accessible
-          accessibilityLabel="First name, optional"
-          style={{
-            color: colors.text,
-            backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#FFFFFF',
-            borderRadius: 17,
-            paddingHorizontal: 18,
-            paddingVertical: 15,
-            fontSize: 16.5,
-            fontWeight: '600',
-          }}
+    <View
+      style={{
+        flex: 1,
+        width: '100%',
+        maxWidth: 430,
+        alignSelf: 'center',
+        paddingHorizontal: 24,
+        paddingTop: 20,
+        paddingBottom: 10,
+      }}
+    >
+      <AssistantCard isDark={isDark} />
+
+      <View
+        style={{
+          flex: 1,
+          minHeight: 310,
+          marginTop: 10,
+          marginBottom: 12,
+          position: 'relative',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {/* Layer 1: Food Emoji Stickers (Inner Layer - orbiting closely at 18-32pt distance) */}
+        <EmojiSticker
+          emoji="🥑"
+          bg={isDark ? '#202C22' : '#F4FAF3'}
+          border={isDark ? '#344C38' : '#fac104ff'}
+          shadowC="#5E8F4B"
+          rotation="-12deg"
+          size={50}
+          style={{ left: '50%', top: '50%', transform: [{ translateX: -140 }, { translateY: -78 }, { rotate: '-12deg' }] }}
         />
+        <EmojiSticker
+          emoji="🍎"
+          bg={isDark ? '#2C2020' : '#FFF6F3'}
+          border={isDark ? '#563333' : '#fb3802ff'}
+          shadowC="#B64E3B"
+          rotation="11deg"
+          size={55}
+          style={{ left: '50%', top: '50%', transform: [{ translateX: 100 }, { translateY: -140 }, { rotate: '11deg' }] }}
+        />
+        <EmojiSticker
+          emoji="🥦"
+          bg={isDark ? '#202C22' : '#F4FAF3'}
+          border={isDark ? '#344C38' : '#1adb13ff'}
+          shadowC="#4F8A43"
+          rotation="-8deg"
+          size={60}
+          style={{ left: '50%', top: '50%', transform: [{ translateX: -130 }, { translateY: 60 }, { rotate: '-8deg' }] }}
+        />
+        <EmojiSticker
+          emoji="🍋"
+          bg={isDark ? '#2B2818' : '#FFF9E9'}
+          border={isDark ? '#564F27' : '#ffcc00ff'}
+          shadowC="#B38A24"
+          rotation="14deg"
+          size={60}
+          style={{ left: '50%', top: '50%', transform: [{ translateX: 90 }, { translateY: 60 }, { rotate: '14deg' }] }}
+        />
+
+        {/* Layer 2: Glass Pills (Outer Layer - positioned further away to frame composition) */}
+        <PillSticker
+          label="Personalized just for you"
+          icon={<UserRound size={15} color="#D7FFE2" strokeWidth={2.3} />}
+          bg="#14ae97ff"
+          border="#13f5b0"
+          textColor="#F3FFF6"
+          shadowC="#073A1B"
+          style={{ left: '50%', top: '50%', transform: [{ translateX: -160 }, { translateY: -150 }] }}
+        />
+        <PillSticker
+          label="Your privacy is protected"
+          icon={<ShieldCheck size={15} color="#D7F4FF" strokeWidth={2.3} />}
+          bg="#7ec201ff"
+          border="#a3cb48"
+          textColor="#F4FFFF"
+          shadowC="#103C3F"
+          style={{ left: '50%', top: '50%', transform: [{ translateX: -30 }, { translateY: 140 }] }}
+        />
+
+        {/* Layer 3: Centered Mascot Container */}
+        <View
+          style={{
+            width: 174,
+            height: 174,
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 6,
+          }}
+        >
+          <OrbMascot
+            state="idle"
+            size={200}
+            reduceMotion={reduceMotion}
+            showShadow
+            accessibilityLabel="Friendly BiteFix scanner mascot"
+          />
+        </View>
+      </View>
+
+      <Animated.View
+        style={{
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: focusAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [
+              name ? GREEN : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)',
+              GREEN,
+            ],
+          }),
+          backgroundColor: isDark ? 'rgba(255,255,255,0.035)' : 'rgba(255,255,255,0.98)',
+          shadowColor: GREEN,
+          shadowOpacity: focusAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [name ? 0.05 : 0, 0.14],
+          }),
+          shadowRadius: 14,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: focused ? 2 : 0,
+          overflow: 'hidden',
+          marginBottom: 18,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 62, paddingHorizontal: 16 }}>
+          <UserRound
+            size={20}
+            color={name || focused ? GREEN : colors.textMuted}
+            strokeWidth={2.1}
+          />
+          <TextInput
+            value={name}
+            onChangeText={onChange}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            placeholder="First name"
+            placeholderTextColor={colors.textMuted}
+            maxLength={40}
+            autoCapitalize="words"
+            returnKeyType="done"
+            accessible
+            accessibilityLabel="First name, required"
+            style={{
+              flex: 1,
+              color: colors.text,
+              fontSize: 16,
+              fontWeight: '600',
+              paddingHorizontal: 16,
+              paddingVertical: 16,
+            }}
+          />
+          {(name.length > 0 || focused) && (
+            <View style={{ width: 2, height: 20, borderRadius: 1, backgroundColor: GREEN, opacity: focused ? 1 : 0.45 }} />
+          )}
+        </View>
       </Animated.View>
-      <TouchableOpacity onPress={onSkip} accessibilityRole="button" accessibilityLabel="Skip entering a name" style={{ alignSelf: 'flex-start', paddingVertical: 12 }}>
-        <Text style={{ color: colors.textSecondary, ...TYPE.label }}>Skip for now</Text>
-      </TouchableOpacity>
-    </ScreenFrame>
+
+      <View style={{ marginBottom: -20 }}>
+        <ScreenHeading
+          title="Let's make BiteFix **yours**."
+          subtitle="Tell us your name so we can **personalize BiteFix for you.**"
+          colors={colors}
+        />
+      </View>
+    </View>
   );
 }
 
