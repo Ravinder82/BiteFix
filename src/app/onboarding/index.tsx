@@ -564,7 +564,7 @@ export default function OnboardingScreen() {
   } = useAppStore();
 
   const [currentScreen, setCurrentScreen] = useState(0);
-  const [transitionScreen, setTransitionScreen] = useState<number | null>(null);
+  const [isPaging, setIsPaging] = useState(false);
 
   const [name, setName] = useState('');
   const [allergens, setAllergens] = useState<string[]>([]);
@@ -574,8 +574,9 @@ export default function OnboardingScreen() {
 
   const reduceMotion = useReduceMotion();
   const ctaShimmer = useRef(new Animated.Value(-1)).current;
-  const slideAnim = useRef(new Animated.Value(0)).current;
-  const transitionLockRef = useRef(false);
+  const pagerRef = useRef<any>(null);
+  const pagingUnlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pagingLockRef = useRef(false);
 
   useEffect(() => {
     if (reduceMotion) {
@@ -595,6 +596,14 @@ export default function OnboardingScreen() {
     return () => loop.stop();
   }, [ctaShimmer, reduceMotion]);
 
+  useEffect(() => {
+    return () => {
+      if (pagingUnlockTimerRef.current) {
+        clearTimeout(pagingUnlockTimerRef.current);
+      }
+    };
+  }, []);
+
   const toggleAllergen = useCallback((id: string) => {
     Haptics.selectionAsync();
     setAllergens((prev) => {
@@ -609,44 +618,52 @@ export default function OnboardingScreen() {
     setPriorities((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
   }, []);
 
+  const finishPaging = useCallback((settledScreen?: number) => {
+    if (pagingUnlockTimerRef.current) {
+      clearTimeout(pagingUnlockTimerRef.current);
+      pagingUnlockTimerRef.current = null;
+    }
+    if (typeof settledScreen === 'number') {
+      setCurrentScreen(settledScreen);
+    }
+    pagingLockRef.current = false;
+    setIsPaging(false);
+  }, []);
+
   const goTo = useCallback(
     (screen: number) => {
-      if (reduceMotion) {
-        setCurrentScreen(screen);
-        return;
-      }
-
       if (
-        transitionLockRef.current ||
-        transitionScreen !== null ||
-        screen === currentScreen ||
         screen < 0 ||
-        screen >= TOTAL_SCREENS
+        screen >= TOTAL_SCREENS ||
+        screen === currentScreen ||
+        pagingLockRef.current
       ) {
         return;
       }
 
-      transitionLockRef.current = true;
-      slideAnim.stopAnimation();
-      slideAnim.setValue(0);
-      setTransitionScreen(screen);
+      const targetX = screen * Math.max(screenWidth, 1);
+      pagingLockRef.current = true;
+      setIsPaging(true);
+      setCurrentScreen(screen);
 
-      const isForward = screen > currentScreen;
-
-      Animated.timing(slideAnim, {
-        toValue: isForward ? -screenWidth : screenWidth,
-        duration: 480,
-        easing: Easing.bezier(0.16, 1.0, 0.3, 1.0),
-        useNativeDriver: true,
-      }).start(({ finished }) => {
-        if (!finished) return;
-        setCurrentScreen(screen);
-        setTransitionScreen(null);
-        slideAnim.setValue(0);
-        transitionLockRef.current = false;
+      pagerRef.current?.scrollTo({
+        x: targetX,
+        y: 0,
+        animated: !reduceMotion,
       });
+
+      if (reduceMotion) {
+        finishPaging(screen);
+        return;
+      }
+
+      // Native ScrollView owns the movement. This fallback only prevents a
+      // permanently locked button if a platform omits momentum callbacks.
+      pagingUnlockTimerRef.current = setTimeout(() => {
+        finishPaging(screen);
+      }, 760);
     },
-    [currentScreen, reduceMotion, screenWidth, slideAnim, transitionScreen]
+    [currentScreen, finishPaging, reduceMotion, screenWidth]
   );
 
   const handleComplete = useCallback(() => {
@@ -672,7 +689,7 @@ export default function OnboardingScreen() {
   }, [allergens, ingredientReadingFrequency, name, priorities, setAllergenFilters, setOnboardingComplete, setOnboardingPreferences, setProfile, setDietPreference, setTrackEcoScore, setTrackOrganic, shoppingFrequency]);
 
   const handleNext = useCallback(() => {
-    if (transitionLockRef.current) return;
+    if (pagingLockRef.current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (currentScreen < TOTAL_SCREENS - 1) {
       goTo(currentScreen + 1);
@@ -682,7 +699,7 @@ export default function OnboardingScreen() {
   }, [currentScreen, goTo, handleComplete]);
 
   const handleBack = useCallback(() => {
-    if (transitionLockRef.current) return;
+    if (pagingLockRef.current) return;
     if (currentScreen > 0) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       goTo(currentScreen - 1);
@@ -727,8 +744,7 @@ export default function OnboardingScreen() {
     const disabledText = isDark ? 'rgba(100, 240, 140, 0.70)' : 'rgba(0, 107, 31, 0.68)';
 
     return (
-      <View style={{ flex: 1, width: screenWidth }}>
-        {/* Every slide owns its header, content, and CTA so they move together. */}
+      <View style={{ width: screenWidth, height: '100%' }}>
         {screen > 0 && (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 }}>
             <TouchableOpacity onPress={handleBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4 }}>
@@ -823,47 +839,35 @@ export default function OnboardingScreen() {
     );
   };
 
+  const pageWidth = Math.max(screenWidth, 1);
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
-      <View style={{ flex: 1, overflow: 'hidden' }} pointerEvents={transitionScreen === null ? 'auto' : 'none'}>
-        <Animated.View
-          style={{
-            flex: 1,
-            width: screenWidth,
-            transform: [{ translateX: slideAnim }],
-          }}
-        >
-          {/* Active Screen (permanently at 0) */}
-          <View
-            style={{
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              left: 0,
-              width: screenWidth,
-            }}
-          >
-            {renderSlide(currentScreen)}
+      <ScrollView
+        ref={pagerRef}
+        horizontal
+        pagingEnabled
+        scrollEnabled={false}
+        showsHorizontalScrollIndicator={false}
+        bounces={false}
+        removeClippedSubviews={false}
+        decelerationRate="fast"
+        contentContainerStyle={{ width: pageWidth * TOTAL_SCREENS, flexGrow: 1 }}
+        style={{ flex: 1 }}
+        pointerEvents={isPaging ? 'none' : 'auto'}
+        onMomentumScrollEnd={(event) => {
+          const settledScreen = Math.round(event.nativeEvent.contentOffset.x / pageWidth);
+          finishPaging(Math.max(0, Math.min(TOTAL_SCREENS - 1, settledScreen)));
+        }}
+      >
+        {Array.from({ length: TOTAL_SCREENS }).map((_, screen) => (
+          <View key={screen} style={{ width: pageWidth, alignSelf: 'stretch' }}>
+            {renderSlide(screen)}
           </View>
-
-          {/* Incoming Target Screen (mounted only during slide) */}
-          {transitionScreen !== null && (
-            <View
-              style={{
-                position: 'absolute',
-                top: 0,
-                bottom: 0,
-                left: transitionScreen > currentScreen ? screenWidth : -screenWidth,
-                width: screenWidth,
-              }}
-            >
-              {renderSlide(transitionScreen)}
-            </View>
-          )}
-        </Animated.View>
-      </View>
+        ))}
+      </ScrollView>
     </SafeAreaView>
   );
 }
