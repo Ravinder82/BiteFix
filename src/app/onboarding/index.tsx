@@ -475,14 +475,27 @@ export default function OnboardingScreen() {
   } = useAppStore();
 
   const [currentScreen, setCurrentScreen] = useState(0);
+  const [prevScreen, setPrevScreen] = useState<number | null>(null);
+  
   const [name, setName] = useState('');
   const [allergens, setAllergens] = useState<string[]>([]);
   const [priorities, setPriorities] = useState<OnboardingPriority[]>([]);
   const [shoppingFrequency, setShoppingFrequency] = useState<ShoppingFrequency>();
   const [ingredientReadingFrequency, setIngredientReadingFrequency] = useState<IngredientReadingFrequency>();
-  const fadeAnim = useRef(new Animated.Value(1)).current;
+  
   const reduceMotion = useReduceMotion();
   const ctaShimmer = useRef(new Animated.Value(-1)).current;
+
+  const prevOpacity = useRef(new Animated.Value(1)).current;
+  const prevTranslateY = useRef(new Animated.Value(0)).current;
+  const activeOpacity = useRef(new Animated.Value(1)).current;
+  const activeTranslateY = useRef(new Animated.Value(0)).current;
+
+  const orbOpacity = useRef(new Animated.Value(1)).current;
+  const orbScale = useRef(new Animated.Value(1)).current;
+  const orbTranslateY = useRef(new Animated.Value(0)).current;
+  const restOpacity = useRef(new Animated.Value(1)).current;
+  const restTranslateY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (reduceMotion) {
@@ -518,15 +531,87 @@ export default function OnboardingScreen() {
   const goTo = useCallback(
     (screen: number) => {
       if (reduceMotion) {
+        // Always reset stagger values to visible before switching
+        orbOpacity.setValue(1);
+        orbScale.setValue(1);
+        orbTranslateY.setValue(0);
+        restOpacity.setValue(1);
+        restTranslateY.setValue(0);
         setCurrentScreen(screen);
         return;
       }
-      Animated.timing(fadeAnim, { toValue: 0, duration: 140, useNativeDriver: true }).start(() => {
-        setCurrentScreen(screen);
-        Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }).start();
-      });
+
+      const isForward = screen > currentScreen;
+      const isWelcomeToIdentity = currentScreen === 0 && screen === 1;
+
+      // ── Cross-dissolve values ──────────────────────────────
+      prevOpacity.setValue(1);
+      prevTranslateY.setValue(0);
+      activeOpacity.setValue(0);
+      activeTranslateY.setValue(isForward ? 0.75 : -0.75);
+
+      if (isWelcomeToIdentity) {
+        // Stagger: IdentityScreen elements start hidden; they self-animate via enterKey prop
+        orbOpacity.setValue(0);
+        orbScale.setValue(0.96);
+        orbTranslateY.setValue(4);
+        restOpacity.setValue(0);
+        restTranslateY.setValue(6);
+      } else {
+        // Always fully visible for non-staggered transitions
+        orbOpacity.setValue(1);
+        orbScale.setValue(1);
+        orbTranslateY.setValue(0);
+        restOpacity.setValue(1);
+        restTranslateY.setValue(0);
+      }
+
+      setPrevScreen(currentScreen);
+      setCurrentScreen(screen);
+
+      if (isWelcomeToIdentity) {
+        Animated.parallel([
+          // Screen 1 (Welcome) fades out
+          Animated.timing(prevOpacity, { toValue: 0, duration: 280, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+          Animated.timing(prevTranslateY, { toValue: -0.75, duration: 280, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+          // Active container snaps visible instantly — stagger handles inner elements
+          Animated.timing(activeOpacity, { toValue: 1, duration: 1, useNativeDriver: true }),
+          Animated.timing(activeTranslateY, { toValue: 0, duration: 1, useNativeDriver: true }),
+          // Phase 1 — Orb Mascot (0–300ms)
+          Animated.timing(orbOpacity, { toValue: 1, duration: 300, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+          Animated.timing(orbScale, { toValue: 1, duration: 300, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+          Animated.timing(orbTranslateY, { toValue: 0, duration: 300, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+          // Phase 2 — Rest of screen, delayed 350ms (breathing room)
+          Animated.timing(restOpacity, { toValue: 1, duration: 300, delay: 350, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+          Animated.timing(restTranslateY, { toValue: 0, duration: 300, delay: 350, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        ]).start(({ finished }) => {
+          setPrevScreen(null);
+          // Ensure fully visible regardless of whether animation completed
+          orbOpacity.setValue(1);
+          orbScale.setValue(1);
+          orbTranslateY.setValue(0);
+          restOpacity.setValue(1);
+          restTranslateY.setValue(0);
+        });
+      } else {
+        // Standard cross-dissolve for all other transitions
+        Animated.parallel([
+          Animated.timing(prevOpacity, { toValue: 0, duration: 280, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+          Animated.timing(prevTranslateY, { toValue: isForward ? -0.75 : 0.75, duration: 280, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+          Animated.timing(activeOpacity, { toValue: 1, duration: 320, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+          Animated.timing(activeTranslateY, { toValue: 0, duration: 320, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        ]).start(({ finished }) => {
+          setPrevScreen(null);
+          // Safety reset stagger values so IdentityScreen always shows correctly
+          orbOpacity.setValue(1);
+          orbScale.setValue(1);
+          orbTranslateY.setValue(0);
+          restOpacity.setValue(1);
+          restTranslateY.setValue(0);
+        });
+      }
     },
-    [fadeAnim, reduceMotion]
+    [currentScreen, reduceMotion, prevOpacity, prevTranslateY, activeOpacity, activeTranslateY, orbOpacity, orbScale, orbTranslateY, restOpacity, restTranslateY]
   );
 
   const handleComplete = useCallback(() => {
@@ -575,7 +660,7 @@ export default function OnboardingScreen() {
 
   const screenContent = [
     <WelcomeScreen key={0} colors={colors} isDark={isDark} />,
-    <FlagshipIdentityScreen key={1} name={name} onChange={setName} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
+    <FlagshipIdentityScreen key={1} name={name} onChange={setName} colors={colors} isDark={isDark} reduceMotion={reduceMotion} animState={{ orbOpacity, orbScale, orbTranslateY, restOpacity, restTranslateY }} />,
     <FlagshipContextScreen key={2} selected={shoppingFrequency} onSelect={setShoppingFrequency} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
     <FlagshipAllergyScreen key={3} selected={allergens} onToggle={toggleAllergen} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
     <FlagshipPainScreen key={4} selected={ingredientReadingFrequency} onSelect={setIngredientReadingFrequency} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />,
@@ -615,11 +700,52 @@ export default function OnboardingScreen() {
       )}
 
       {/* Screen content */}
-      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" scrollEnabled={currentScreen !== 1}>
-          {screenContent[currentScreen]}
-        </ScrollView>
-      </Animated.View>
+      {/* Screen content */}
+      <View style={{ flex: 1 }}>
+        {prevScreen !== null && (
+          <Animated.View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              opacity: prevOpacity,
+              transform: [{ translateY: prevTranslateY }],
+              zIndex: 1,
+            }}
+          >
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={{ flexGrow: 1 }}
+              showsVerticalScrollIndicator={false}
+              scrollEnabled={false}
+            >
+              {screenContent[prevScreen]}
+            </ScrollView>
+          </Animated.View>
+        )}
+
+        <Animated.View
+          style={{
+            flex: 1,
+            opacity: activeOpacity,
+            transform: [{ translateY: activeTranslateY }],
+            zIndex: 2,
+          }}
+        >
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ flexGrow: 1 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            scrollEnabled={currentScreen !== 1}
+          >
+            {screenContent[currentScreen]}
+          </ScrollView>
+        </Animated.View>
+      </View>
 
       {/* Bottom CTA button */}
       <View style={{ paddingHorizontal: 24, paddingBottom: 24, paddingTop: 12 }}>
