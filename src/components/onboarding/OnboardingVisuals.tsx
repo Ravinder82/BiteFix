@@ -5,7 +5,7 @@ import { OrbMascot } from '../features/OrbMascot';
 import { ProductDataStatusPill } from '../features/ProductDataPills';
 import { NutriScoreTrafficLight } from '../features/NutriScoreTrafficLight';
 import { OnboardingPriority } from '../../types/onboarding.types';
-import Svg, { Circle, Line, Path, Rect } from 'react-native-svg';
+import Svg, { Line, Path, Rect } from 'react-native-svg';
 import { EnergyMeter } from '../ui/energy-meter';
 import Reanimated, {
   useSharedValue,
@@ -162,85 +162,6 @@ export function PriorityConstellation({ colors, isDark, reduceMotion = false, se
           </Animated.View>
         );
       })}
-    </View>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════
-// SCREEN 3 — ALLERGEN SHIELD VISUAL
-// ══════════════════════════════════════════════════════════════
-export function AllergenShieldVisual({ colors, isDark, reduceMotion = false, selected }: VisualProps & { selected: string[] }) {
-  const labels = selected.filter((item) => item !== 'none').slice(0, 4);
-  const shieldPulse = useRef(new Animated.Value(0.92)).current;
-
-  useEffect(() => {
-    if (reduceMotion) {
-      shieldPulse.setValue(1);
-      return;
-    }
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(shieldPulse, { toValue: 1, duration: 1500, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(shieldPulse, { toValue: 0.92, duration: 1500, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [reduceMotion, shieldPulse]);
-
-  return (
-    <View accessible accessibilityLabel={labels.length ? `Watching for ${labels.join(', ')}` : 'No allergen filters selected'} style={{ height: 160, alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-      {/* Outer Pulse Shield Ring */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          width: 148,
-          height: 148,
-          borderRadius: 74,
-          borderWidth: 1.5,
-          borderColor: isDark ? 'rgba(1,146,42,0.32)' : 'rgba(1,146,42,0.22)',
-          backgroundColor: isDark ? 'rgba(1,146,42,0.05)' : 'rgba(1,146,42,0.04)',
-          transform: [{ rotate: '45deg' }, { scale: shieldPulse }],
-        }}
-      />
-
-      <Svg width="160" height="160" viewBox="0 0 160 160" style={{ position: 'absolute' }} pointerEvents="none">
-        <Circle cx="80" cy="80" r="64" fill="none" stroke={GREEN} strokeOpacity="0.25" strokeWidth="1.2" strokeDasharray="3 6" />
-        <Path d="M80 32 L116 45 V76 C116 100 100 117 80 127 C60 117 44 100 44 76 V45 Z" fill="none" stroke={GREEN} strokeOpacity="0.36" strokeWidth="1.5" />
-      </Svg>
-
-      <OrbMascot state={labels.length ? 'caution' : 'idle'} size={76} reduceMotion={reduceMotion} showShadow={false} />
-
-      {labels.length === 0 && (
-        <Text style={{ position: 'absolute', bottom: 6, color: colors.textMuted, fontSize: 10.5, fontWeight: '700' }}>
-          Ready to filter
-        </Text>
-      )}
-
-      {labels.map((label, index) => (
-        <View
-          key={label}
-          style={{
-            position: 'absolute',
-            top: index % 2 === 0 ? 8 : undefined,
-            bottom: index % 2 === 1 ? 8 : undefined,
-            left: index % 2 === 0 ? 14 : undefined,
-            right: index % 2 === 1 ? 14 : undefined,
-            paddingHorizontal: 10,
-            paddingVertical: 6,
-            borderRadius: 999,
-            backgroundColor: isDark ? 'rgba(12,20,14,0.92)' : 'rgba(255,255,255,0.94)',
-            borderWidth: 1.2,
-            borderColor: `${GREEN}60`,
-            shadowColor: GREEN,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.15,
-            shadowRadius: 6,
-          }}
-        >
-          <Text style={{ color: colors.text, fontSize: 10, fontWeight: '800' }}>{label}</Text>
-        </View>
-      ))}
     </View>
   );
 }

@@ -4,7 +4,6 @@ import { Activity, Check, Droplets, Leaf, Package, ShieldCheck, UserRound } from
 import Svg, { Path } from 'react-native-svg';
 import { OrbMascot } from '../features/OrbMascot';
 import {
-  AllergenShieldVisual,
   InsightTransformVisual,
   LabelCompressionVisual,
   MomentResultCard,
@@ -360,6 +359,22 @@ function DoodleLoopSticker({
         style,
       ]}
     >
+      <Svg
+        width={loopWidth}
+        height={loopHeight}
+        viewBox="0 0 120 100"
+        style={{ position: 'absolute', transform: [{ rotate: loopRotation }] }}
+      >
+        <Path
+          d="M17 24 C7 40 13 79 34 91 C57 104 104 99 112 70 C120 43 101 14 73 13 C48 11 25 14 17 24"
+          fill="none"
+          stroke="#17231B"
+          strokeOpacity={0.78}
+          strokeWidth={4.2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </Svg>
 
       <EmojiSticker
         emoji={emoji}
@@ -797,7 +812,7 @@ export function ContextScreen({ selected, onSelect, colors, isDark, reduceMotion
 
       <ScreenHeading
         title="How often do you buy **packaged food**?"
-        subtitle="This helps BiteFix **tune the experience** to your shopping."
+        subtitle="This helps BiteFix **tune the experience** to your routine."
         colors={colors}
       />
 
@@ -829,9 +844,19 @@ export function ContextScreen({ selected, onSelect, colors, isDark, reduceMotion
 // SCREEN 3 — ALLERGY
 // ══════════════════════════════════════════════════════════════
 export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion }: { selected: string[]; onToggle: (id: string) => void; colors: any; isDark: boolean; reduceMotion: boolean }) {
+  const mascotState = selected.some((id) => id !== 'none') ? 'caution' : selected.includes('none') ? 'happy' : 'thinking';
+
   return (
     <ScreenFrame>
-      <AllergenShieldVisual colors={colors} isDark={isDark} reduceMotion={reduceMotion} selected={selected} />
+      <View style={{ alignItems: 'center', marginBottom: 12 }}>
+        <OrbMascot
+          state={mascotState}
+          size={88}
+          reduceMotion={reduceMotion}
+          showShadow={false}
+          accessibilityLabel="BiteFix assistant helping set allergy preferences"
+        />
+      </View>
       <ScreenHeading
         title="Anything we should **watch for**?"
         subtitle="BiteFix can highlight matching information when it appears in **available product data**."
