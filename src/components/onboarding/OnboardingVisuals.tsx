@@ -4,7 +4,7 @@ import { Activity, Droplets, Leaf, Package, ShieldCheck, UserRound, Sparkles, Za
 import { OrbMascot } from '../features/OrbMascot';
 import { ProductDataStatusPill } from '../features/ProductDataPills';
 import { NutriScoreTrafficLight } from '../features/NutriScoreTrafficLight';
-import { OnboardingPriority, ShoppingFrequency } from '../../types/onboarding.types';
+import { OnboardingPriority } from '../../types/onboarding.types';
 import Svg, { Circle, Line, Path, Rect } from 'react-native-svg';
 import { EnergyMeter } from '../ui/energy-meter';
 import Reanimated, {
@@ -57,67 +57,6 @@ function Surface({ children, colors, isDark, style }: VisualProps & { children: 
     >
       {children}
     </View>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════
-// SCREEN 2 — SHOPPING RHYTHM VISUAL
-// ══════════════════════════════════════════════════════════════
-export function ShoppingRhythmVisual({ colors, isDark, reduceMotion = false, frequency }: VisualProps & { frequency?: ShoppingFrequency }) {
-  const pulse = useRef(new Animated.Value(0.85)).current;
-  const heights =
-    frequency === 'most_trips'
-      ? [32, 48, 64, 82, 94, 76, 52]
-      : frequency === 'often'
-        ? [26, 40, 58, 72, 54, 38, 24]
-        : frequency === 'sometimes'
-          ? [20, 32, 46, 36, 24, 30, 18]
-          : [16, 22, 18, 26, 18, 22, 16];
-
-  useEffect(() => {
-    if (reduceMotion) {
-      pulse.setValue(1);
-      return;
-    }
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { toValue: 1, duration: 1200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 0.85, duration: 1200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [pulse, reduceMotion]);
-
-  return (
-    <Surface colors={colors} isDark={isDark} style={{ marginBottom: 20, paddingBottom: 16 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: 9, height: 96 }}>
-        {heights.map((height, index) => {
-          const isPeak = index === 4 || index === 3;
-          return (
-            <Animated.View
-              key={index}
-              style={{
-                width: 19,
-                height,
-                borderRadius: 9,
-                backgroundColor: isPeak ? GREEN : isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
-                borderWidth: isPeak ? 1 : 0,
-                borderColor: `${GREEN}80`,
-                opacity: pulse,
-                shadowColor: isPeak ? GREEN : 'transparent',
-                shadowOpacity: isPeak ? 0.35 : 0,
-                shadowRadius: 8,
-                shadowOffset: { width: 0, height: 2 },
-              }}
-            />
-          );
-        })}
-      </View>
-      <Text style={{ color: colors.textMuted, textAlign: 'center', fontSize: 10.5, fontWeight: '800', letterSpacing: 1.3, marginTop: 14, textTransform: 'uppercase' }}>
-        Tuning Your Scanning Routine
-      </Text>
-    </Surface>
   );
 }
 

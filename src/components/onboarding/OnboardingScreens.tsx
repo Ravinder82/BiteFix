@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Activity, Check, Droplets, Leaf, Package, ShieldCheck, UserRound } from 'lucide-react-native';
+import Svg, { Path } from 'react-native-svg';
 import { OrbMascot } from '../features/OrbMascot';
 import {
   AllergenShieldVisual,
@@ -9,7 +10,6 @@ import {
   MomentResultCard,
   PriorityConstellation,
   ProfileAssemblyVisual,
-  ShoppingRhythmVisual,
 } from './OnboardingVisuals';
 import { IngredientReadingFrequency, OnboardingPriority, ShoppingFrequency } from '../../types/onboarding.types';
 
@@ -322,6 +322,248 @@ function EmojiSticker({
   );
 }
 
+
+function DoodleLoopSticker({
+  emoji,
+  bg,
+  border,
+  shadowC,
+  rotation,
+  loopRotation,
+  size = 42,
+  style,
+}: {
+  emoji: string;
+  bg: string;
+  border: string;
+  shadowC: string;
+  rotation: string;
+  loopRotation: string;
+  size?: number;
+  style?: any;
+}) {
+  const loopWidth = Math.round(size * 1.85);
+  const loopHeight = Math.round(size * 1.65);
+
+  return (
+    <View
+      pointerEvents="none"
+      style={[
+        {
+          position: 'absolute',
+          width: loopWidth,
+          height: loopHeight,
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 8,
+        },
+        style,
+      ]}
+    >
+      <Svg
+        width={loopWidth}
+        height={loopHeight}
+        viewBox="0 0 120 100"
+        style={{ position: 'absolute', transform: [{ rotate: loopRotation }] }}
+      >
+        <Path
+          d="M17 24 C7 40 13 79 34 91 C57 104 104 99 112 70 C120 43 101 14 73 13 C48 11 25 14 17 24"
+          fill="none"
+          stroke="#17231B"
+          strokeOpacity={0.78}
+          strokeWidth={4.2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </Svg>
+
+      <EmojiSticker
+        emoji={emoji}
+        bg={bg}
+        border={border}
+        shadowC={shadowC}
+        rotation={rotation}
+        size={size}
+        style={{ position: 'relative', transform: [{ rotate: rotation }] }}
+      />
+    </View>
+  );
+}
+
+function ContextOptionRow({
+  label,
+  emoji,
+  stickerBg,
+  stickerBorder,
+  stickerShadow,
+  stickerRotation,
+  loopRotation,
+  stickerSide,
+  selected,
+  onPress,
+  colors,
+  isDark,
+  reduceMotion,
+}: {
+  label: string;
+  emoji: string;
+  stickerBg: string;
+  stickerBorder: string;
+  stickerShadow: string;
+  stickerRotation: string;
+  loopRotation: string;
+  stickerSide: 'left' | 'right';
+  selected: boolean;
+  onPress: () => void;
+  colors: any;
+  isDark: boolean;
+  reduceMotion: boolean;
+}) {
+  const pressScale = useRef(new Animated.Value(1)).current;
+  const ledProgress = useRef(new Animated.Value(selected ? 1 : 0)).current;
+
+  useEffect(() => {
+    if (reduceMotion) {
+      ledProgress.setValue(selected ? 1 : 0);
+      return;
+    }
+
+    Animated.timing(ledProgress, {
+      toValue: selected ? 1 : 0,
+      duration: 180,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+      isInteraction: false,
+    }).start();
+  }, [ledProgress, reduceMotion, selected]);
+
+  const handlePressIn = () => {
+    if (reduceMotion) {
+      pressScale.setValue(0.985);
+      return;
+    }
+    Animated.timing(pressScale, {
+      toValue: 0.985,
+      duration: 90,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+      isInteraction: false,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    if (reduceMotion) {
+      pressScale.setValue(1);
+      return;
+    }
+    Animated.timing(pressScale, {
+      toValue: 1,
+      duration: 180,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+      isInteraction: false,
+    }).start();
+  };
+
+  const ledHaloOpacity = ledProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 0.65],
+  });
+  const ledHaloScale = ledProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.72, 1],
+  });
+  const ledCoreScale = ledProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.45, 1],
+  });
+
+  return (
+    <Animated.View style={{ marginTop: 18, transform: [{ scale: pressScale }] }}>
+      <DoodleLoopSticker
+        emoji={emoji}
+        bg={stickerBg}
+        border={stickerBorder}
+        shadowC={stickerShadow}
+        rotation={stickerRotation}
+        loopRotation={loopRotation}
+        size={40}
+        style={{ top: -38, ...(stickerSide === 'left' ? { left: 10 } : { right: 10 }) }}
+      />
+
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1}
+        accessibilityRole="radio"
+        accessibilityState={{ selected }}
+        accessibilityLabel={label}
+        style={{
+          minHeight: 72,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 14,
+          paddingHorizontal: 18,
+          paddingVertical: 14,
+          borderRadius: 18,
+          borderWidth: 1.25,
+          borderColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.085)',
+          backgroundColor: isDark ? 'rgba(255,255,255,0.035)' : 'rgba(255,255,255,0.60)',
+        }}
+      >
+        {/* Neutral card; selection is communicated only by the LED. */}
+        <View
+          style={{
+            width: 26,
+            height: 26,
+            borderRadius: 13,
+            borderWidth: 1.5,
+            borderColor: isDark ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.16)',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Animated.View
+            style={{
+              position: 'absolute',
+              width: 30,
+              height: 30,
+              borderRadius: 15,
+              borderWidth: 2,
+              borderColor: GREEN,
+              opacity: ledHaloOpacity,
+              transform: [{ scale: ledHaloScale }],
+            }}
+          />
+          <Animated.View
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 5,
+              backgroundColor: GREEN,
+              opacity: ledProgress,
+              transform: [{ scale: ledCoreScale }],
+            }}
+          />
+        </View>
+
+        <Text
+          style={{
+            color: colors.text,
+            fontSize: 15.5,
+            lineHeight: 21,
+            fontWeight: '700',
+            flex: 1,
+          }}
+        >
+          {label}
+        </Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
 // ══════════════════════════════════════════════════════════════
 // SCREEN 1 — IDENTITY
 // ══════════════════════════════════════════════════════════════
@@ -503,30 +745,96 @@ export function IdentityScreen({
 }
 
 // ══════════════════════════════════════════════════════════════
-// SCREEN 2 — CONTEXT
+// SCREEN 3 — CONTEXT
 // ══════════════════════════════════════════════════════════════
 export function ContextScreen({ selected, onSelect, colors, isDark, reduceMotion }: { selected?: ShoppingFrequency; onSelect: (value: ShoppingFrequency) => void; colors: any; isDark: boolean; reduceMotion: boolean }) {
-  const options: Array<{ id: ShoppingFrequency; label: string }> = [
-    { id: 'rarely', label: 'Rarely' },
-    { id: 'sometimes', label: 'Sometimes' },
-    { id: 'often', label: 'Often' },
-    { id: 'most_trips', label: 'Most shopping trips' },
-  ];
+  const options: Array<{
+    id: ShoppingFrequency;
+    label: string;
+    emoji: string;
+    stickerBg: string;
+    stickerBorder: string;
+    stickerShadow: string;
+    stickerRotation: string;
+    loopRotation: string;
+    stickerSide: 'left' | 'right';
+  }> = [
+      {
+        id: 'rarely',
+        label: "I don't buy packaged food",
+        emoji: '🥦',
+        stickerBg: isDark ? '#202C22' : '#F4FAF3',
+        stickerBorder: isDark ? '#344C38' : '#1ADB13',
+        stickerShadow: '#4F8A43',
+        stickerRotation: '-8deg',
+        loopRotation: '-8deg',
+        stickerSide: 'right',
+      },
+      {
+        id: 'often',
+        label: 'I buy packaged food weekly',
+        emoji: '🛒',
+        stickerBg: isDark ? '#2B2818' : '#FFF9E9',
+        stickerBorder: isDark ? '#564F27' : '#FFCC00',
+        stickerShadow: '#B38A24',
+        stickerRotation: '8deg',
+        loopRotation: '8deg',
+        stickerSide: 'left',
+      },
+      {
+        id: 'sometimes',
+        label: 'I buy packaged food monthly',
+        emoji: '📅',
+        stickerBg: isDark ? '#20252C' : '#F3F7FF',
+        stickerBorder: isDark ? '#384A61' : '#4E8BFF',
+        stickerShadow: '#5575A8',
+        stickerRotation: '-6deg',
+        loopRotation: '-6deg',
+        stickerSide: 'right',
+      },
+      {
+        id: 'most_trips',
+        label: 'I buy snacks daily',
+        emoji: '🍿',
+        stickerBg: isDark ? '#2C2020' : '#FFF6F3',
+        stickerBorder: isDark ? '#563333' : '#FB3802',
+        stickerShadow: '#B64E3B',
+        stickerRotation: '10deg',
+        loopRotation: '10deg',
+        stickerSide: 'left',
+      },
+    ];
 
   return (
     <ScreenFrame>
       <View style={{ alignItems: 'center', marginBottom: 8 }}>
         <OrbMascot state="thinking" size={82} reduceMotion={reduceMotion} accessibilityLabel="Curious BiteFix scanner mascot" />
       </View>
+
       <ScreenHeading
         title="How often do you buy **packaged food**?"
-        subtitle="This helps BiteFix **tune the experience** to your routine."
+        subtitle="This helps BiteFix **tune the experience** to your shopping."
         colors={colors}
       />
-      <ShoppingRhythmVisual colors={colors} isDark={isDark} reduceMotion={reduceMotion} frequency={selected} />
-      <View style={{ gap: 9 }}>
+
+      <View style={{ gap: 2, marginTop: 2 }}>
         {options.map((option) => (
-          <SelectionRow key={option.id} label={option.label} selected={selected === option.id} onPress={() => onSelect(option.id)} colors={colors} isDark={isDark} />
+          <ContextOptionRow
+            key={option.id}
+            label={option.label}
+            emoji={option.emoji}
+            stickerBg={option.stickerBg}
+            stickerBorder={option.stickerBorder}
+            stickerShadow={option.stickerShadow}
+            stickerRotation={option.stickerRotation}
+            loopRotation={option.loopRotation}
+            stickerSide={option.stickerSide}
+            selected={selected === option.id}
+            onPress={() => onSelect(option.id)}
+            colors={colors}
+            isDark={isDark}
+            reduceMotion={reduceMotion}
+          />
         ))}
       </View>
     </ScreenFrame>
