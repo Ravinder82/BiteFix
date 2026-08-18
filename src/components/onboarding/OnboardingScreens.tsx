@@ -331,37 +331,14 @@ export function IdentityScreen({
   colors,
   isDark,
   reduceMotion = false,
-  animState,
 }: {
   name: string;
   onChange: (name: string) => void;
   colors: any;
   isDark: boolean;
   reduceMotion?: boolean;
-  animState?: {
-    orbOpacity: Animated.Value | number;
-    orbScale: Animated.Value | number;
-    orbTranslateY: Animated.Value | number;
-    restOpacity: Animated.Value | number;
-    restTranslateY: Animated.Value | number;
-  };
 }) {
   const [focused, setFocused] = useState(false);
-  const focusAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.timing(focusAnim, {
-      toValue: focused ? 1 : 0,
-      duration: 190,
-      easing: Easing.out(Easing.quad),
-      useNativeDriver: false,
-    }).start();
-  }, [focused, focusAnim]);
-
-  const restStyle = {
-    opacity: animState?.restOpacity ?? 1,
-    transform: [{ translateY: animState?.restTranslateY ?? 0 }],
-  };
 
   return (
     <View
@@ -375,9 +352,7 @@ export function IdentityScreen({
         paddingBottom: 10,
       }}
     >
-      <Animated.View style={restStyle}>
-        <AssistantCard isDark={isDark} />
-      </Animated.View>
+      <AssistantCard isDark={isDark} />
 
       <View
         style={{
@@ -390,79 +365,72 @@ export function IdentityScreen({
           justifyContent: 'center',
         }}
       >
-        <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, restStyle]} pointerEvents="box-none">
-          {/* Layer 1: Food Emoji Stickers (Inner Layer - orbiting closely at 18-32pt distance) */}
-          <EmojiSticker
-            emoji="🥑"
-            bg={isDark ? '#202C22' : '#F4FAF3'}
-            border={isDark ? '#344C38' : '#fac104ff'}
-            shadowC="#5E8F4B"
-            rotation="-12deg"
-            size={50}
-            style={{ left: '50%', top: '50%', transform: [{ translateX: -140 }, { translateY: -78 }, { rotate: '-12deg' }] }}
-          />
-          <EmojiSticker
-            emoji="🍎"
-            bg={isDark ? '#2C2020' : '#FFF6F3'}
-            border={isDark ? '#563333' : '#fb3802ff'}
-            shadowC="#B64E3B"
-            rotation="11deg"
-            size={55}
-            style={{ left: '50%', top: '50%', transform: [{ translateX: 100 }, { translateY: -140 }, { rotate: '11deg' }] }}
-          />
-          <EmojiSticker
-            emoji="🥦"
-            bg={isDark ? '#202C22' : '#F4FAF3'}
-            border={isDark ? '#344C38' : '#1adb13ff'}
-            shadowC="#4F8A43"
-            rotation="-8deg"
-            size={60}
-            style={{ left: '50%', top: '50%', transform: [{ translateX: -130 }, { translateY: 60 }, { rotate: '-8deg' }] }}
-          />
-          <EmojiSticker
-            emoji="🍋"
-            bg={isDark ? '#2B2818' : '#FFF9E9'}
-            border={isDark ? '#564F27' : '#ffcc00ff'}
-            shadowC="#B38A24"
-            rotation="14deg"
-            size={60}
-            style={{ left: '50%', top: '50%', transform: [{ translateX: 90 }, { translateY: 60 }, { rotate: '14deg' }] }}
-          />
+        {/* Layer 1: Food Emoji Stickers (Inner Layer - orbiting closely at 18-32pt distance) */}
+        <EmojiSticker
+          emoji="🥑"
+          bg={isDark ? '#202C22' : '#F4FAF3'}
+          border={isDark ? '#344C38' : '#fac104ff'}
+          shadowC="#5E8F4B"
+          rotation="-12deg"
+          size={50}
+          style={{ left: '50%', top: '50%', transform: [{ translateX: -140 }, { translateY: -78 }, { rotate: '-12deg' }] }}
+        />
+        <EmojiSticker
+          emoji="🍎"
+          bg={isDark ? '#2C2020' : '#FFF6F3'}
+          border={isDark ? '#563333' : '#fb3802ff'}
+          shadowC="#B64E3B"
+          rotation="11deg"
+          size={55}
+          style={{ left: '50%', top: '50%', transform: [{ translateX: 100 }, { translateY: -140 }, { rotate: '11deg' }] }}
+        />
+        <EmojiSticker
+          emoji="🥦"
+          bg={isDark ? '#202C22' : '#F4FAF3'}
+          border={isDark ? '#344C38' : '#1adb13ff'}
+          shadowC="#4F8A43"
+          rotation="-8deg"
+          size={60}
+          style={{ left: '50%', top: '50%', transform: [{ translateX: -130 }, { translateY: 60 }, { rotate: '-8deg' }] }}
+        />
+        <EmojiSticker
+          emoji="🍋"
+          bg={isDark ? '#2B2818' : '#FFF9E9'}
+          border={isDark ? '#564F27' : '#ffcc00ff'}
+          shadowC="#B38A24"
+          rotation="14deg"
+          size={60}
+          style={{ left: '50%', top: '50%', transform: [{ translateX: 90 }, { translateY: 60 }, { rotate: '14deg' }] }}
+        />
 
-          {/* Layer 2: Glass Pills (Outer Layer - positioned further away to frame composition) */}
-          <PillSticker
-            label="Personalized just for you"
-            icon={<UserRound size={15} color="#D7FFE2" strokeWidth={2.3} />}
-            bg="#14ae97ff"
-            border="#13f5b0"
-            textColor="#F3FFF6"
-            shadowC="#073A1B"
-            style={{ left: '50%', top: '50%', transform: [{ translateX: -160 }, { translateY: -150 }] }}
-          />
-          <PillSticker
-            label="Your privacy is protected"
-            icon={<ShieldCheck size={15} color="#D7F4FF" strokeWidth={2.3} />}
-            bg="#7ec201ff"
-            border="#a3cb48"
-            textColor="#F4FFFF"
-            shadowC="#103C3F"
-            style={{ left: '50%', top: '50%', transform: [{ translateX: -30 }, { translateY: 140 }] }}
-          />
-        </Animated.View>
+        {/* Layer 2: Glass Pills (Outer Layer - positioned further away to frame composition) */}
+        <PillSticker
+          label="Personalized just for you"
+          icon={<UserRound size={15} color="#D7FFE2" strokeWidth={2.3} />}
+          bg="#14ae97ff"
+          border="#13f5b0"
+          textColor="#F3FFF6"
+          shadowC="#073A1B"
+          style={{ left: '50%', top: '50%', transform: [{ translateX: -160 }, { translateY: -150 }] }}
+        />
+        <PillSticker
+          label="Your privacy is protected"
+          icon={<ShieldCheck size={15} color="#D7F4FF" strokeWidth={2.3} />}
+          bg="#7ec201ff"
+          border="#a3cb48"
+          textColor="#F4FFFF"
+          shadowC="#103C3F"
+          style={{ left: '50%', top: '50%', transform: [{ translateX: -30 }, { translateY: 140 }] }}
+        />
 
         {/* Layer 3: Centered Mascot Container */}
-        <Animated.View
+        <View
           style={{
             width: 174,
             height: 174,
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 6,
-            opacity: animState?.orbOpacity ?? 1,
-            transform: [
-              { translateY: animState?.orbTranslateY ?? 0 },
-              { scale: animState?.orbScale ?? 1 }
-            ]
           }}
         >
           <OrbMascot
@@ -472,75 +440,64 @@ export function IdentityScreen({
             showShadow
             accessibilityLabel="Friendly BiteFix scanner mascot"
           />
-        </Animated.View>
+        </View>
       </View>
 
-      <Animated.View style={restStyle}>
-        <Animated.View
-          style={{
-            borderRadius: 20,
-            borderWidth: 1,
-            borderColor: focusAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [
-                name ? GREEN : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)',
-                GREEN,
-              ],
-            }),
-            backgroundColor: isDark ? 'rgba(255,255,255,0.035)' : 'rgba(255,255,255,0.98)',
-            shadowColor: GREEN,
-            shadowOpacity: focusAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [name ? 0.05 : 0, 0.14],
-            }),
-            shadowRadius: 14,
-            shadowOffset: { width: 0, height: 4 },
-            elevation: focused ? 2 : 0,
-            overflow: 'hidden',
-            marginBottom: 18,
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 62, paddingHorizontal: 16 }}>
-            <UserRound
-              size={20}
-              color={name || focused ? GREEN : colors.textMuted}
-              strokeWidth={2.1}
-            />
-            <TextInput
-              value={name}
-              onChangeText={onChange}
-              onFocus={() => setFocused(true)}
-              onBlur={() => setFocused(false)}
-              placeholder="First name"
-              placeholderTextColor={colors.textMuted}
-              maxLength={40}
-              autoCapitalize="words"
-              returnKeyType="done"
-              accessible
-              accessibilityLabel="First name, required"
-              style={{
-                flex: 1,
-                color: colors.text,
-                fontSize: 16,
-                fontWeight: '600',
-                paddingHorizontal: 16,
-                paddingVertical: 16,
-              }}
-            />
-            {(name.length > 0 || focused) && (
-              <View style={{ width: 2, height: 20, borderRadius: 1, backgroundColor: GREEN, opacity: focused ? 1 : 0.45 }} />
-            )}
-          </View>
-        </Animated.View>
-      </Animated.View>
+      <View
+        style={{
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: focused ? GREEN : name ? GREEN : (isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'),
+          backgroundColor: isDark ? 'rgba(255,255,255,0.035)' : 'rgba(255,255,255,0.98)',
+          shadowColor: GREEN,
+          shadowOpacity: focused ? 0.14 : name ? 0.05 : 0,
+          shadowRadius: 14,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: focused ? 2 : 0,
+          overflow: 'hidden',
+          marginBottom: 18,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 62, paddingHorizontal: 16 }}>
+          <UserRound
+            size={20}
+            color={name || focused ? GREEN : colors.textMuted}
+            strokeWidth={2.1}
+          />
+          <TextInput
+            value={name}
+            onChangeText={onChange}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            placeholder="First name"
+            placeholderTextColor={colors.textMuted}
+            maxLength={40}
+            autoCapitalize="words"
+            returnKeyType="done"
+            accessible
+            accessibilityLabel="First name, required"
+            style={{
+              flex: 1,
+              color: colors.text,
+              fontSize: 16,
+              fontWeight: '600',
+              paddingHorizontal: 16,
+              paddingVertical: 16,
+            }}
+          />
+          {(name.length > 0 || focused) && (
+            <View style={{ width: 2, height: 20, borderRadius: 1, backgroundColor: GREEN, opacity: focused ? 1 : 0.45 }} />
+          )}
+        </View>
+      </View>
 
-      <Animated.View style={[{ marginBottom: -20 }, restStyle]}>
+      <View style={{ marginBottom: -20 }}>
         <ScreenHeading
           title="Let's make BiteFix **yours**."
           subtitle="Tell us your name so we can **personalize BiteFix for you.**"
           colors={colors}
         />
-      </Animated.View>
+      </View>
     </View>
   );
 }
