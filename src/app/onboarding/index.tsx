@@ -630,40 +630,24 @@ export default function OnboardingScreen() {
       slideAnim.stopAnimation();
       slideAnim.setValue(0);
       setTransitionScreen(screen);
-    },
-    [currentScreen, reduceMotion, slideAnim, transitionScreen]
-  );
 
-  useEffect(() => {
-    if (transitionScreen === null) return;
+      const isForward = screen > currentScreen;
 
-    const targetScreen = transitionScreen;
-    let committed = false;
-
-    const animation = Animated.timing(slideAnim, {
-      toValue: 1,
-      duration: 520,
-      easing: Easing.bezier(0.16, 1.0, 0.3, 1.0),
-      useNativeDriver: true,
-    });
-
-    animation.start(({ finished }) => {
-      if (!finished) return;
-      committed = true;
-      setCurrentScreen(targetScreen);
-      setTransitionScreen(null);
-      slideAnim.setValue(0);
-      transitionLockRef.current = false;
-    });
-
-    return () => {
-      animation.stop();
-      if (!committed) {
+      Animated.timing(slideAnim, {
+        toValue: isForward ? -screenWidth : screenWidth,
+        duration: 480,
+        easing: Easing.bezier(0.16, 1.0, 0.3, 1.0),
+        useNativeDriver: true,
+      }).start(({ finished }) => {
+        if (!finished) return;
+        setCurrentScreen(screen);
+        setTransitionScreen(null);
         slideAnim.setValue(0);
         transitionLockRef.current = false;
-      }
-    };
-  }, [transitionScreen, slideAnim]);
+      });
+    },
+    [currentScreen, reduceMotion, screenWidth, slideAnim, transitionScreen]
+  );
 
   const handleComplete = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -839,64 +823,46 @@ export default function OnboardingScreen() {
     );
   };
 
-  const isForward = transitionScreen !== null ? transitionScreen > currentScreen : true;
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
       <View style={{ flex: 1, overflow: 'hidden' }} pointerEvents={transitionScreen === null ? 'auto' : 'none'}>
-        {transitionScreen === null ? (
-          <View style={{ flex: 1, width: screenWidth }}>
-            {renderSlide(currentScreen)}
-          </View>
-        ) : (
-          <Animated.View
+        <Animated.View
+          style={{
+            flex: 1,
+            width: screenWidth,
+            transform: [{ translateX: slideAnim }],
+          }}
+        >
+          {/* Active Screen (permanently at 0) */}
+          <View
             style={{
               position: 'absolute',
               top: 0,
               bottom: 0,
               left: 0,
               width: screenWidth,
-              transform: [
-                {
-                  translateX: slideAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, isForward ? -screenWidth : screenWidth],
-                  }),
-                },
-              ],
             }}
           >
-            {/* Current screen at 0 */}
-            <View
-              key={`curr-${currentScreen}`}
-              style={{
-                position: 'absolute',
-                top: 0,
-                bottom: 0,
-                left: 0,
-                width: screenWidth,
-              }}
-            >
-              {renderSlide(currentScreen)}
-            </View>
+            {renderSlide(currentScreen)}
+          </View>
 
-            {/* Target screen at +screenWidth (forward) or -screenWidth (backward) */}
+          {/* Incoming Target Screen (mounted only during slide) */}
+          {transitionScreen !== null && (
             <View
-              key={`target-${transitionScreen}`}
               style={{
                 position: 'absolute',
                 top: 0,
                 bottom: 0,
-                left: isForward ? screenWidth : -screenWidth,
+                left: transitionScreen > currentScreen ? screenWidth : -screenWidth,
                 width: screenWidth,
               }}
             >
               {renderSlide(transitionScreen)}
             </View>
-          </Animated.View>
-        )}
+          )}
+        </Animated.View>
       </View>
     </SafeAreaView>
   );
