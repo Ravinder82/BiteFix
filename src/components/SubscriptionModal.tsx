@@ -17,7 +17,7 @@ import { router } from 'expo-router';
 import { X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { getIapService, getLoadedIapService } from '../services/iapLoader';
-import { PRODUCT_IDS, FALLBACK_PRICES, type IAPProduct, type PlanTier } from '../services/iapProducts';
+import { PRODUCT_IDS, type IAPProduct, type PlanTier } from '../services/iapProducts';
 
 export interface SubscriptionModalProps {
   visible: boolean;
@@ -36,6 +36,7 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
   const [selectedPlan, setSelectedPlan] = useState<PlanTier>('annual');
   const [products, setProducts] = useState<IAPProduct[]>([]);
   const [isFetchingProducts, setIsFetchingProducts] = useState(true);
+  const [fetchPricesFailed, setFetchPricesFailed] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const mountedRef = useRef(true);
@@ -44,10 +45,12 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
   const getProduct = (tier: PlanTier): IAPProduct | undefined =>
     products.find(p => p.productId === PRODUCT_IDS[tier === 'monthly' ? 'MONTHLY' : 'ANNUAL']);
 
-  // Always show a price — use live RevenueCat price if available, fall back to
-  // hardcoded App Store Connect prices when Apple sandbox is slow/unavailable.
-  const getDisplayPrice = (tier: PlanTier): string =>
-    getProduct(tier)?.displayPrice ?? FALLBACK_PRICES[tier].displayPrice;
+  // Show live price from RevenueCat. While loading show 'Loading...'.
+  // Never show hardcoded prices — prices differ by country (India vs international).
+  const getDisplayPrice = (tier: PlanTier): string => {
+    if (isFetchingProducts) return 'Loading...';
+    return getProduct(tier)?.displayPrice ?? '—';
+  };
 
   const getSubtitle = (tier: PlanTier): string =>
     tier === 'monthly'
@@ -57,20 +60,25 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
   // ── Lifecycle ────────────────────────────────────────────
   const initialise = useCallback(async () => {
     if (!mountedRef.current) return;
-    if (mountedRef.current) {
-      setIsFetchingProducts(true);
-    }
+    setIsFetchingProducts(true);
+    setFetchPricesFailed(false);
     try {
       const service = await getIapService();
-      if (!service) return;
+      if (!service) {
+        if (mountedRef.current) setFetchPricesFailed(true);
+        return;
+      }
 
       const fetched = await service.fetchSubscriptions();
 
       if (mountedRef.current) {
         setProducts(fetched);
+        // If RevenueCat timed out / returned nothing, mark as failed so user can retry
+        if (fetched.length === 0) setFetchPricesFailed(true);
       }
     } catch (error) {
       console.error('[SubscriptionModal] Failed to initialize IAP:', error);
+      if (mountedRef.current) setFetchPricesFailed(true);
     } finally {
       if (mountedRef.current) {
         setIsFetchingProducts(false);
@@ -223,47 +231,82 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
 
               {/* Plan Selection */}
               <View style={{ gap: 12, marginBottom: 24 }}>
-                {isFetchingProducts && (
-                  <View style={{ alignItems: 'center', paddingVertical: 12 }}>
+                {isFetchingProducts ? (
+                  <View style={{ alignItems: 'center', paddingVertical: 24 }}>
                     <ActivityIndicator size="small" color={colors.primary} />
+                    <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '600', marginTop: 10 }}>
+                      Loading prices from App Store...
+                    </Text>
                   </View>
+                ) : fetchPricesFailed ? (
+                  // ─ Price fetch failed: show retry banner ─
+                  <View style={{
+                    backgroundColor: colors.surfaceRaised,
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    padding: 18,
+                    alignItems: 'center',
+                    gap: 12,
+                  }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', textAlign: 'center' }}>
+                      Could not load prices from the App Store.{`\n`}Check your internet connection and try again.
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        initialise();
+                      }}
+                      style={{
+                        backgroundColor: colors.primary,
+                        borderRadius: 20,
+                        paddingVertical: 10,
+                        paddingHorizontal: 28,
+                      }}
+                    >
+                      <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '800' }}>Retry</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  // ─ Prices loaded: show plan cards ─
+                  <>
+                    <PlanCard
+                      tier="monthly"
+                      title="Monthly Pass"
+                      displayPrice={getDisplayPrice('monthly')}
+                      subtitle={getSubtitle('monthly')}
+                      badge={null}
+                      isSelected={selectedPlan === 'monthly'}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setSelectedPlan('monthly');
+                      }}
+                      colors={colors}
+                    />
+                    <PlanCard
+                      tier="annual"
+                      title="Yearly Pass"
+                      displayPrice={getDisplayPrice('annual')}
+                      subtitle={getSubtitle('annual')}
+                      badge={null}
+                      isSelected={selectedPlan === 'annual'}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setSelectedPlan('annual');
+                      }}
+                      colors={colors}
+                    />
+                  </>
                 )}
-
-                <PlanCard
-                  tier="monthly"
-                  title="Monthly Pass"
-                  displayPrice={getDisplayPrice('monthly')}
-                  subtitle={getSubtitle('monthly')}
-                  badge={null}
-                  isSelected={selectedPlan === 'monthly'}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setSelectedPlan('monthly');
-                  }}
-                  colors={colors}
-                />
-                <PlanCard
-                  tier="annual"
-                  title="Yearly Pass"
-                  displayPrice={getDisplayPrice('annual')}
-                  subtitle={getSubtitle('annual')}
-                  badge={null}
-                  isSelected={selectedPlan === 'annual'}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setSelectedPlan('annual');
-                  }}
-                  colors={colors}
-                />
               </View>
 
               {/* Subscribe CTA */}
               <TouchableOpacity
                 onPress={handleSubscribe}
-                disabled={isProcessing}
+                disabled={isProcessing || isFetchingProducts || fetchPricesFailed}
                 activeOpacity={0.88}
                 style={{
-                  backgroundColor: isProcessing ? colors.text + 'AA' : colors.text,
+                  backgroundColor: (isProcessing || isFetchingProducts || fetchPricesFailed) ? colors.text + '55' : colors.text,
                   borderRadius: 24,
                   paddingVertical: 18,
                   alignItems: 'center',
