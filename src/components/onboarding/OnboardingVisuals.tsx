@@ -1,22 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, Text, View } from 'react-native';
-import { Activity, Droplets, Leaf, Package, ShieldCheck, UserRound, Sparkles, Zap } from 'lucide-react-native';
+import { Activity, Droplets, Leaf, Package, ShieldCheck, Zap } from 'lucide-react-native';
 import { OrbMascot } from '../features/OrbMascot';
 import { ProductDataStatusPill } from '../features/ProductDataPills';
 import { NutriScoreTrafficLight } from '../features/NutriScoreTrafficLight';
 import { OnboardingPriority } from '../../types/onboarding.types';
-import Svg, { Line, Path, Rect } from 'react-native-svg';
+import Svg, { Line, Path } from 'react-native-svg';
 import { EnergyMeter } from '../ui/energy-meter';
-import Reanimated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  Easing as REasing,
-  interpolate,
-  Extrapolate,
-  cancelAnimation
-} from 'react-native-reanimated';
 
 type VisualProps = {
   colors: any;
@@ -64,28 +54,12 @@ function Surface({ children, colors, isDark, style }: VisualProps & { children: 
 // SCREEN 5 — FOCUS CONSTELLATION
 // ══════════════════════════════════════════════════════════════
 export function PriorityConstellation({ colors, isDark, reduceMotion = false, selected }: VisualProps & { selected: OnboardingPriority[] }) {
-  const pulse = useRef(new Animated.Value(0.9)).current;
   const activePriorities = selected.length > 0 ? selected : (['nutrition', 'ingredients'] as OnboardingPriority[]);
-
-  useEffect(() => {
-    if (reduceMotion) {
-      pulse.setValue(1);
-      return;
-    }
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { toValue: 1, duration: 1400, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 0.9, duration: 1400, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [pulse, reduceMotion]);
 
   return (
     <View accessible accessibilityLabel="Selected priorities illuminate around the BiteFix scanner" style={{ height: 175, alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
       {/* Outer Orbit Guide Ring */}
-      <Animated.View
+      <View
         style={{
           position: 'absolute',
           width: 165,
@@ -93,7 +67,6 @@ export function PriorityConstellation({ colors, isDark, reduceMotion = false, se
           borderRadius: 82.5,
           borderWidth: 1.5,
           borderColor: isDark ? 'rgba(1,146,42,0.22)' : 'rgba(1,146,42,0.18)',
-          opacity: pulse,
         }}
       />
 
@@ -132,13 +105,13 @@ export function PriorityConstellation({ colors, isDark, reduceMotion = false, se
         const Icon = meta.icon;
 
         return (
-          <Animated.View
+          <View
             key={priority}
             style={{
               position: 'absolute',
               left: `${left}%`,
               top: `${top}%`,
-              transform: [{ translateX: -36 }, { translateY: -16 }, { scale: pulse }],
+              transform: [{ translateX: -36 }, { translateY: -16 }],
               flexDirection: 'row',
               alignItems: 'center',
               gap: 6,
@@ -159,7 +132,7 @@ export function PriorityConstellation({ colors, isDark, reduceMotion = false, se
             <Text numberOfLines={1} style={{ color: colors.text, fontSize: 10, fontWeight: '800' }}>
               {meta.label}
             </Text>
-          </Animated.View>
+          </View>
         );
       })}
     </View>
@@ -169,12 +142,13 @@ export function PriorityConstellation({ colors, isDark, reduceMotion = false, se
 // ══════════════════════════════════════════════════════════════
 // SCREEN 4 — LABEL COMPRESSION VISUAL
 // ══════════════════════════════════════════════════════════════
-export function LabelCompressionVisual({ colors, isDark, reduceMotion = false }: VisualProps) {
+export function LabelCompressionVisual({ colors, isDark, reduceMotion = false, isActive = true }: VisualProps & { isActive?: boolean }) {
   const beam = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (reduceMotion) {
-      beam.setValue(1);
+    if (reduceMotion || !isActive) {
+      beam.stopAnimation();
+      beam.setValue(0);
       return;
     }
     const loop = Animated.loop(
@@ -186,7 +160,7 @@ export function LabelCompressionVisual({ colors, isDark, reduceMotion = false }:
     );
     loop.start();
     return () => loop.stop();
-  }, [beam, reduceMotion]);
+  }, [beam, isActive, reduceMotion]);
 
   return (
     <Surface colors={colors} isDark={isDark} style={{ marginBottom: 20, overflow: 'hidden' }}>
@@ -265,8 +239,7 @@ export function LabelCompressionVisual({ colors, isDark, reduceMotion = false }:
 // ══════════════════════════════════════════════════════════════
 // SCREEN 6 — INSIGHT TRANSFORM VISUAL
 // ══════════════════════════════════════════════════════════════
-export function InsightTransformVisual({ colors, isDark, reduceMotion = false }: VisualProps) {
-  const reveal = useRef(new Animated.Value(reduceMotion ? 1 : 0)).current;
+export function InsightTransformVisual({ colors, isDark }: VisualProps) {
   const stages = [
     { label: 'LABEL', value: 'Raw Data', color: colors.textSecondary },
     { label: 'SCAN', value: 'Instant Read', color: AMBER },
@@ -274,25 +247,13 @@ export function InsightTransformVisual({ colors, isDark, reduceMotion = false }:
     { label: 'INSIGHT', value: 'Clear Result', color: TEAL },
   ];
 
-  useEffect(() => {
-    if (reduceMotion) {
-      reveal.setValue(1);
-      return;
-    }
-    Animated.timing(reveal, { toValue: 1, duration: 1500, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
-  }, [reduceMotion, reveal]);
-
   return (
     <Surface colors={colors} isDark={isDark} style={{ marginBottom: 20, paddingVertical: 18 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         {stages.map((stage, index) => {
-          const start = index / stages.length;
-          const end = Math.min(1, start + 0.35);
-          const opacity = reveal.interpolate({ inputRange: [start, end], outputRange: [0.35, 1], extrapolate: 'clamp' });
-          const translateY = reveal.interpolate({ inputRange: [start, end], outputRange: [8, 0], extrapolate: 'clamp' });
           return (
             <React.Fragment key={stage.label}>
-              <Animated.View style={{ alignItems: 'center', gap: 6, opacity, transform: [{ translateY }] }}>
+              <View style={{ alignItems: 'center', gap: 6 }}>
                 <View
                   style={{
                     width: 44,
@@ -312,7 +273,7 @@ export function InsightTransformVisual({ colors, isDark, reduceMotion = false }:
                   )}
                 </View>
                 <Text style={{ color: stage.color, fontSize: 8.5, fontWeight: '900', letterSpacing: 0.7 }}>{stage.label}</Text>
-              </Animated.View>
+              </View>
               {index < stages.length - 1 && (
                 <Svg width="20" height="14" viewBox="0 0 20 14">
                   <Path d="M1 7 H16 M11 2 L17 7 L11 12" fill="none" stroke={colors.textMuted} strokeOpacity="0.5" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -327,266 +288,110 @@ export function InsightTransformVisual({ colors, isDark, reduceMotion = false }:
 }
 
 // ══════════════════════════════════════════════════════════════
-// SCREEN 7 — PROFILE ASSEMBLY VISUAL
-// ══════════════════════════════════════════════════════════════
-export function ProfileAssemblyVisual({
-  colors,
-  isDark,
-  reduceMotion = false,
-  selected,
-  phase,
-}: VisualProps & { selected: OnboardingPriority[]; phase: 'building' | 'assembly' | 'ready' }) {
-  const visiblePriorities = selected.length > 0 ? selected.slice(0, 5) : ((['nutrition', 'ingredients', 'sugar'] as OnboardingPriority[]));
-
-  const assembleAnim = useSharedValue(phase === 'ready' ? 1 : 0);
-  const masterAngle = useSharedValue(0);
-
-  useEffect(() => {
-    if (reduceMotion) {
-      assembleAnim.value = phase === 'ready' ? 1 : 0;
-      return;
-    }
-
-    if (phase === 'building') {
-      assembleAnim.value = withTiming(0, { duration: 400 });
-      masterAngle.value = withRepeat(
-        withTiming(masterAngle.value + Math.PI * 2, { duration: 7000, easing: REasing.linear }),
-        -1,
-        false
-      );
-    } else if (phase === 'assembly' || phase === 'ready') {
-      assembleAnim.value = withTiming(1, { duration: phase === 'ready' ? 0 : 1200, easing: REasing.inOut(REasing.quad) });
-      cancelAnimation(masterAngle); // Stop orbiting, let them settle into their current relative spacing
-    }
-  }, [phase, reduceMotion, assembleAnim, masterAngle]);
-
-  const sceneStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: interpolate(assembleAnim.value, [0, 1], [0, -32]) },
-      { scale: interpolate(assembleAnim.value, [0, 1], [1, 0.88]) }
-    ],
-  }));
-
-  const mascotState = phase === 'building' ? 'thinking' : phase === 'assembly' ? 'scanning' : 'happy';
-
-  return (
-    <View style={{ height: 180, alignItems: 'center', justifyContent: 'center', marginBottom: 16, zIndex: 10 }}>
-      {/* 1. Luma-style orbital tracks */}
-      {phase === 'building' && !reduceMotion && (
-        <Reanimated.View
-          style={{
-            position: 'absolute',
-            width: 220,
-            height: 100, // Elliptical 3D track
-            borderRadius: 110,
-            borderWidth: 1.5,
-            borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-            transform: [{ rotateX: '60deg' }] // Tilt the track into 3D space
-          }}
-        />
-      )}
-
-      {/* 2. Central Mascot / Star */}
-      <Reanimated.View style={[sceneStyle, { zIndex: 5 }]}>
-        <OrbMascot state={mascotState} size={phase === 'ready' ? 80 : 104} reduceMotion={reduceMotion} showShadow={false} />
-      </Reanimated.View>
-
-      {/* 3. Orbiting 3D Parallax Badges */}
-      {visiblePriorities.map((priority, index) => {
-        const meta = PRIORITY_META[priority];
-        const angleOffset = (index / Math.max(visiblePriorities.length, 1)) * Math.PI * 2 - Math.PI / 2;
-        const Icon = meta.icon;
-
-        const pillStyle = useAnimatedStyle(() => {
-          const currentAngle = masterAngle.value + angleOffset;
-
-          // Radius: Starts wide elliptical, shrinks to tight circle
-          const radiusX = interpolate(assembleAnim.value, [0, 1], [110, 42]);
-          const radiusY = interpolate(assembleAnim.value, [0, 1], [50, 42]);
-
-          let x = Math.cos(currentAngle) * radiusX;
-          let y = Math.sin(currentAngle) * radiusY;
-
-          // Parallax Depth Calculation:
-          // Negative Y = back of orbit (smaller). Positive Y = front of orbit (larger).
-          const depthScale = interpolate(y, [-50, 50], [0.75, 1.15], Extrapolate.CLAMP);
-          const finalScale = interpolate(assembleAnim.value, [0, 1], [depthScale, 0.65]);
-
-          // As it assembles, drop the parallax fade and push Y down slightly (+8) to align with mascot
-          const yAdjusted = interpolate(assembleAnim.value, [0, 1], [y, y + 8]);
-
-          const opacity = interpolate(assembleAnim.value, [0, 1], [
-            interpolate(y, [-50, 50], [0.5, 1], Extrapolate.CLAMP),
-            1
-          ]);
-
-          // Z-index based on position (behind vs in front of Mascot)
-          const zIndex = y < 0 ? 1 : 10;
-
-          return {
-            transform: [
-              { translateX: x },
-              { translateY: yAdjusted },
-              { scale: finalScale }
-            ],
-            opacity,
-            zIndex,
-          };
-        });
-
-        return (
-          <Reanimated.View
-            key={priority}
-            style={[
-              {
-                position: 'absolute',
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-                paddingHorizontal: 11,
-                paddingVertical: 8,
-                borderRadius: 999,
-                backgroundColor: isDark ? 'rgba(10,18,12,0.95)' : 'rgba(255,255,255,0.96)',
-                borderWidth: 1.5,
-                borderColor: `${meta.color}65`,
-                shadowColor: meta.color,
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: phase === 'building' ? 0.22 : 0,
-                shadowRadius: 8,
-                elevation: phase === 'building' ? 4 : 0,
-              },
-              pillStyle
-            ]}
-          >
-            <Icon size={14} color={meta.color} strokeWidth={2.3} />
-            <Text numberOfLines={1} style={{ color: colors.text, fontSize: 11, fontWeight: '800' }}>
-              {meta.label}
-            </Text>
-          </Reanimated.View>
-        );
-      })}
-    </View>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════
 // SCREEN 7 — MOMENT OF TRUTH RESULT CARD
 // ══════════════════════════════════════════════════════════════
-export function MomentResultCard({ colors, isDark, reduceMotion = false, selected }: VisualProps & { selected: OnboardingPriority[] }) {
+export function MomentResultCard({ colors, isDark, selected }: VisualProps & { selected: OnboardingPriority[] }) {
   const visiblePriorities = selected.length > 0 ? selected : ((['nutrition', 'ingredients', 'sugar'] as OnboardingPriority[]));
-  const fadeAnim = useRef(new Animated.Value(reduceMotion ? 1 : 0)).current;
-  const slideAnim = useRef(new Animated.Value(reduceMotion ? 0 : 16)).current;
-
-  useEffect(() => {
-    if (!reduceMotion) {
-      Animated.parallel([
-        Animated.timing(fadeAnim, { toValue: 1, duration: 600, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-        Animated.timing(slideAnim, { toValue: 0, duration: 600, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      ]).start();
-    }
-  }, [fadeAnim, slideAnim, reduceMotion]);
 
   return (
-    <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-      <Surface
-        colors={colors}
-        isDark={isDark}
-        style={{
-          marginBottom: 16,
-          padding: 16,
-          backgroundColor: isDark ? 'rgba(18,22,20,0.98)' : '#FFFFFF',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: isDark ? 0.22 : 0.08,
-          shadowRadius: 18,
-          elevation: 4,
-          borderWidth: 1,
-          borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-        }}
-      >
-        {/* Product Identity Header */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 8 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.textSecondary, fontSize: 9.5, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase' }}>
-              Product Scan
-            </Text>
-            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', marginTop: 2 }}>
-              Organic Dark Chocolate 72%
-            </Text>
-          </View>
-          <View style={{ flexDirection: 'row', gap: 5, flexShrink: 1 }}>
-            <ProductDataStatusPill status="complete" colors={colors} isDark={isDark} />
-          </View>
+    <Surface
+      colors={colors}
+      isDark={isDark}
+      style={{
+        marginBottom: 16,
+        padding: 16,
+        backgroundColor: isDark ? 'rgba(18,22,20,0.98)' : '#FFFFFF',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: isDark ? 0.22 : 0.08,
+        shadowRadius: 18,
+        elevation: 4,
+        borderWidth: 1,
+        borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+      }}
+    >
+      {/* Product Identity Header */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 8 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.textSecondary, fontSize: 9.5, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase' }}>
+            Product Scan
+          </Text>
+          <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', marginTop: 2 }}>
+            Organic Dark Chocolate 72%
+          </Text>
         </View>
-
-        <View style={{ height: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', marginBottom: 14 }} />
-
-        {/* BiteFix Score + NutriScore hero row */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-          <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontSize: 25 }}>🍫</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '800', letterSpacing: 1.2 }}>
-              BITEFIX INTELLIGENCE SCORE™
-            </Text>
-            <Text style={{ color: colors.text, fontSize: 32, lineHeight: 36, fontWeight: '900' }}>
-              78
-            </Text>
-          </View>
-          <NutriScoreTrafficLight grade="b" compact isDark={isDark} colors={colors} />
+        <View style={{ flexDirection: 'row', gap: 5, flexShrink: 1 }}>
+          <ProductDataStatusPill status="complete" colors={colors} isDark={isDark} />
         </View>
+      </View>
 
-        <View style={{ marginBottom: 16 }}>
-          <EnergyMeter value={78} colors={colors} label="Overall Score Meter" />
+      <View style={{ height: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', marginBottom: 14 }} />
+
+      {/* BiteFix Score + NutriScore hero row */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+        <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontSize: 25 }}>🍫</Text>
         </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '800', letterSpacing: 1.2 }}>
+            BITEFIX INTELLIGENCE SCORE™
+          </Text>
+          <Text style={{ color: colors.text, fontSize: 32, lineHeight: 36, fontWeight: '900' }}>
+            78
+          </Text>
+        </View>
+        <NutriScoreTrafficLight grade="b" compact isDark={isDark} colors={colors} />
+      </View>
 
-        {/* Breakdown signal rows */}
-        <View style={{ gap: 8 }}>
-          {visiblePriorities.slice(0, 4).map((priority) => {
-            const meta = PRIORITY_META[priority];
-            const value =
-              priority === 'sugar'
-                ? '≈ 1.8 tsp (Low)'
-                : priority === 'environment'
-                  ? 'Grade A'
-                  : priority === 'nutrition'
-                    ? 'Balanced Profile'
-                    : priority === 'ultra_processed'
-                      ? 'NOVA 2 (Processed)'
-                      : 'No Harmful Additives';
+      <View style={{ marginBottom: 16 }}>
+        <EnergyMeter value={78} colors={colors} label="Overall Score Meter" />
+      </View>
 
-            const isEmphasized = selected.includes(priority);
+      {/* Breakdown signal rows */}
+      <View style={{ gap: 8 }}>
+        {visiblePriorities.slice(0, 4).map((priority) => {
+          const meta = PRIORITY_META[priority];
+          const value =
+            priority === 'sugar'
+              ? '≈ 1.8 tsp (Low)'
+              : priority === 'environment'
+                ? 'Grade A'
+                : priority === 'nutrition'
+                  ? 'Balanced Profile'
+                  : priority === 'ultra_processed'
+                    ? 'NOVA 2 (Processed)'
+                    : 'No Harmful Additives';
 
-            return (
-              <View
-                key={priority}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingVertical: 10,
-                  paddingHorizontal: 12,
-                  borderRadius: 13,
-                  backgroundColor: isEmphasized ? `${meta.color}14` : isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-                  borderWidth: 1,
-                  borderColor: isEmphasized ? `${meta.color}38` : 'transparent',
-                }}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, flexShrink: 1 }}>
-                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: meta.color }} />
-                  <Text numberOfLines={1} style={{ color: isEmphasized ? colors.text : colors.textSecondary, fontSize: 12.5, fontWeight: isEmphasized ? '800' : '600', flexShrink: 1 }}>
-                    {meta.label}
-                  </Text>
-                </View>
-                <Text numberOfLines={1} style={{ color: isEmphasized ? meta.color : colors.text, fontSize: 12.5, fontWeight: '900', marginLeft: 8 }}>
-                  {value}
+          const isEmphasized = selected.includes(priority);
+
+          return (
+            <View
+              key={priority}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingVertical: 10,
+                paddingHorizontal: 12,
+                borderRadius: 13,
+                backgroundColor: isEmphasized ? `${meta.color}14` : isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                borderWidth: 1,
+                borderColor: isEmphasized ? `${meta.color}38` : 'transparent',
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, flexShrink: 1 }}>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: meta.color }} />
+                <Text numberOfLines={1} style={{ color: isEmphasized ? colors.text : colors.textSecondary, fontSize: 12.5, fontWeight: isEmphasized ? '800' : '600', flexShrink: 1 }}>
+                  {meta.label}
                 </Text>
               </View>
-            );
-          })}
-        </View>
-      </Surface>
-    </Animated.View>
+              <Text numberOfLines={1} style={{ color: isEmphasized ? meta.color : colors.text, fontSize: 12.5, fontWeight: '900', marginLeft: 8 }}>
+                {value}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+    </Surface>
   );
 }

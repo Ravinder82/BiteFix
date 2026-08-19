@@ -50,17 +50,27 @@ const FEATURE_PILLS = ['Processing Level', 'Nutrition Intelligence', 'Ingredient
 
 function useReduceMotion() {
   const [reduceMotion, setReduceMotion] = useState(false);
+
   useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+    let mounted = true;
+    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      if (mounted) setReduceMotion(enabled);
+    });
+
+    const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
+    return () => {
+      mounted = false;
+      subscription.remove();
+    };
   }, []);
+
   return reduceMotion;
 }
 
 // ── Screen 0: Welcome ─────────────────────────────────────
 // Flagship hero: transparent floating product scene + live scan beam + floating capability pills.
-function WelcomeScreen({ colors, isDark, isActive }: { colors: any; isDark: boolean; isActive: boolean }) {
+function WelcomeScreen({ colors, isDark, isActive, reduceMotion }: { colors: any; isDark: boolean; isActive: boolean; reduceMotion: boolean }) {
   const { width, height } = useWindowDimensions();
-  const reduceMotion = useReduceMotion();
   const scanY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -347,92 +357,8 @@ function WelcomeScreen({ colors, isDark, isActive }: { colors: any; isDark: bool
   );
 }
 
-function FinalScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
-  const reduceMotion = useReduceMotion();
-  const orbitAnim = useRef(new Animated.Value(0)).current;
-  const mascotEntrance = useRef(new Animated.Value(0)).current;
-  const atmosphereEntrance = useRef(new Animated.Value(0)).current;
-  const pillEntrances = useRef(FEATURE_PILLS.map(() => new Animated.Value(0))).current;
+function FinalScreen({ colors, isDark, reduceMotion }: { colors: any; isDark: boolean; reduceMotion: boolean }) {
   const { width } = useWindowDimensions();
-
-  // The mascot gets time to settle before the surrounding feature pills arrive.
-  useEffect(() => {
-    if (reduceMotion) {
-      mascotEntrance.setValue(1);
-      atmosphereEntrance.setValue(1);
-      pillEntrances.forEach((value) => value.setValue(1));
-      return;
-    }
-
-    mascotEntrance.setValue(0);
-    atmosphereEntrance.setValue(0);
-    pillEntrances.forEach((value) => value.setValue(0));
-
-    let orbitLoop: Animated.CompositeAnimation | null = null;
-    const entrance = Animated.parallel([
-      Animated.timing(mascotEntrance, {
-        toValue: 1,
-        duration: 520,
-        easing: Easing.bezier(0.16, 1.0, 0.3, 1.0),
-        useNativeDriver: true,
-      }),
-      Animated.sequence([
-        Animated.delay(220),
-        Animated.timing(atmosphereEntrance, {
-          toValue: 1,
-          duration: 520,
-          easing: Easing.bezier(0.16, 1.0, 0.3, 1.0),
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.sequence([
-        // Let the mascot establish focus before the background elements begin.
-        Animated.delay(300),
-        Animated.stagger(
-          90,
-          pillEntrances.map((value) =>
-            Animated.timing(value, {
-              toValue: 1,
-              duration: 420,
-              easing: Easing.bezier(0.16, 1.0, 0.3, 1.0),
-              useNativeDriver: true,
-            })
-          )
-        ),
-      ]),
-    ]);
-
-    entrance.start();
-
-    // Keep the pills still while they arrive; begin the orbit only after the staged entrance.
-    const orbitTimer = setTimeout(() => {
-      orbitLoop = Animated.loop(
-        Animated.timing(orbitAnim, {
-          toValue: 1,
-          duration: 26000,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        })
-      );
-      orbitLoop.start();
-    }, 1280);
-
-    return () => {
-      entrance.stop();
-      clearTimeout(orbitTimer);
-      orbitLoop?.stop();
-    };
-  }, [reduceMotion, orbitAnim, mascotEntrance, atmosphereEntrance, pillEntrances]);
-
-  const rotate = orbitAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
-  const counterRotate = orbitAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '-360deg'],
-  });
 
   const RADIUS = Math.min(128, Math.max(106, (width - 56) / 2.25));
   const mascotSize = Math.min(116, Math.max(92, width * 0.28));
@@ -447,7 +373,7 @@ function FinalScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
       </Text>
       <View style={{ width: RADIUS * 2, height: RADIUS * 2, alignItems: 'center', justifyContent: 'center' }}>
         {/* Subtle Orbit Guide */}
-        <Animated.View
+        <View
           style={{
             position: 'absolute',
             width: RADIUS * 2,
@@ -455,103 +381,55 @@ function FinalScreen({ colors, isDark }: { colors: any; isDark: boolean }) {
             borderRadius: RADIUS,
             borderWidth: 1,
             borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-            opacity: atmosphereEntrance,
           }}
         />
 
-        <Animated.View
-          style={{
-            opacity: mascotEntrance,
-            transform: [
-              { translateY: mascotEntrance.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) },
-              { scale: mascotEntrance.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1] }) },
-            ],
-          }}
-        >
+        <View>
           <OrbMascot state="happy" size={mascotSize} reduceMotion={reduceMotion} />
-        </Animated.View>
+        </View>
 
-        {/* Orbit track */}
-        <Animated.View
-          style={{
-            position: 'absolute',
-            width: RADIUS * 2,
-            height: RADIUS * 2,
-            transform: reduceMotion ? [] : [{ rotate }],
-          }}
-          pointerEvents="none"
-        >
+        {/* Static capability ring: no orbit loop or staggered entrances. */}
+        <View style={{ position: 'absolute', width: RADIUS * 2, height: RADIUS * 2 }} pointerEvents="none">
           {FEATURE_PILLS.map((pill, i) => {
             const angle = (i / FEATURE_PILLS.length) * 2 * Math.PI;
             const r = RADIUS;
             const x = Math.cos(angle) * r;
             const y = Math.sin(angle) * r;
-            const depthValue = (phase: number) => 0.82 + ((Math.sin(angle + phase) + 1) / 2) * 0.18;
-            const scale = reduceMotion ? 1 : orbitAnim.interpolate({
-              inputRange: [0, 0.25, 0.5, 0.75, 1],
-              outputRange: [depthValue(0), depthValue(Math.PI / 2), depthValue(Math.PI), depthValue(Math.PI * 1.5), depthValue(Math.PI * 2)],
-            });
-            const opacity = reduceMotion ? 1 : orbitAnim.interpolate({
-              inputRange: [0, 0.25, 0.5, 0.75, 1],
-              outputRange: [
-                depthValue(0) > 0.92 ? 1 : 0.58,
-                depthValue(Math.PI / 2) > 0.92 ? 1 : 0.58,
-                depthValue(Math.PI) > 0.92 ? 1 : 0.58,
-                depthValue(Math.PI * 1.5) > 0.92 ? 1 : 0.58,
-                depthValue(Math.PI * 2) > 0.92 ? 1 : 0.58,
-              ]
-            });
 
             return (
-              <Animated.View
+              <View
                 key={pill}
                 style={{
                   position: 'absolute',
                   left: RADIUS + x - 71,
-                  top: RADIUS + y,
+                  top: RADIUS + y - 15,
                   width: 142,
                   alignItems: 'center',
-                  opacity: reduceMotion ? 1 : pillEntrances[i],
-                  transform: [
-                    { translateY: pillEntrances[i].interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) },
-                    { scale: pillEntrances[i].interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) },
-                  ],
                 }}
               >
-                <Animated.View
+                <View
                   style={{
-                    alignItems: 'center',
-                    opacity: reduceMotion ? 1 : opacity,
-                    transform: [
-                      ...(reduceMotion ? [] : [{ rotate: counterRotate }]),
-                      { scale },
-                    ],
+                    backgroundColor: isDark ? 'rgba(20, 24, 22, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                    borderRadius: 14,
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                    minHeight: 30,
+                    maxWidth: 142,
+                    borderWidth: 1,
+                    borderColor: GREEN + '40',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: isDark ? 0.3 : 0.1,
+                    shadowRadius: 6,
+                    elevation: 3,
                   }}
                 >
-                  <View
-                    style={{
-                      backgroundColor: isDark ? 'rgba(20, 24, 22, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                      borderRadius: 14,
-                      paddingHorizontal: 10,
-                      paddingVertical: 6,
-                      minHeight: 30,
-                      maxWidth: 142,
-                      borderWidth: 1,
-                      borderColor: GREEN + '40',
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: isDark ? 0.3 : 0.1,
-                      shadowRadius: 6,
-                      elevation: 3,
-                    }}
-                  >
-                    <Text numberOfLines={1} style={{ color: colors.text, fontSize: 10.5, lineHeight: 14, fontWeight: '800', textAlign: 'center' }}>{pill}</Text>
-                  </View>
-                </Animated.View>
-              </Animated.View>
+                  <Text numberOfLines={1} style={{ color: colors.text, fontSize: 10.5, lineHeight: 14, fontWeight: '800', textAlign: 'center' }}>{pill}</Text>
+                </View>
+              </View>
             );
           })}
-        </Animated.View>
+        </View>
       </View>
     </View>
   );
@@ -583,28 +461,9 @@ export default function OnboardingScreen() {
   const [ingredientReadingFrequency, setIngredientReadingFrequency] = useState<IngredientReadingFrequency>();
 
   const reduceMotion = useReduceMotion();
-  const ctaShimmer = useRef(new Animated.Value(-1)).current;
   const pagerRef = useRef<any>(null);
   const pagingUnlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pagingLockRef = useRef(false);
-
-  useEffect(() => {
-    if (reduceMotion) {
-      ctaShimmer.stopAnimation();
-      ctaShimmer.setValue(1);
-      return;
-    }
-
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.delay(900),
-        Animated.timing(ctaShimmer, { toValue: 1, duration: 1100, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-        Animated.timing(ctaShimmer, { toValue: -1, duration: 1, useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [ctaShimmer, reduceMotion]);
 
   useEffect(() => {
     return () => {
@@ -723,25 +582,28 @@ export default function OnboardingScreen() {
           screen === 7 ? 'See My BiteFix' : 'Continue';
 
   const renderScreenContent = (screen: number) => {
+    const isActive = screen === currentScreen && !isPaging;
+    const screenReduceMotion = reduceMotion || screen !== currentScreen || isPaging;
+
     switch (screen) {
       case 0:
-        return <WelcomeScreen colors={colors} isDark={isDark} isActive={screen === currentScreen && !isPaging} />;
+        return <WelcomeScreen colors={colors} isDark={isDark} isActive={isActive} reduceMotion={screenReduceMotion} />;
       case 1:
-        return <FlagshipIdentityScreen name={name} onChange={setName} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />;
+        return <FlagshipIdentityScreen name={name} onChange={setName} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       case 2:
-        return <FlagshipContextScreen selected={shoppingFrequency} onSelect={setShoppingFrequency} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />;
+        return <FlagshipContextScreen selected={shoppingFrequency} onSelect={setShoppingFrequency} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       case 3:
-        return <FlagshipAllergyScreen selected={allergens} onToggle={toggleAllergen} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />;
+        return <FlagshipAllergyScreen selected={allergens} onToggle={toggleAllergen} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       case 4:
-        return <FlagshipPainScreen selected={ingredientReadingFrequency} onSelect={setIngredientReadingFrequency} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />;
+        return <FlagshipPainScreen selected={ingredientReadingFrequency} onSelect={setIngredientReadingFrequency} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} isActive={isActive} />;
       case 5:
-        return <FlagshipPrioritiesScreen selected={priorities} onToggle={togglePriority} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />;
+        return <FlagshipPrioritiesScreen selected={priorities} onToggle={togglePriority} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       case 6:
-        return <FlagshipRevelationScreen colors={colors} isDark={isDark} reduceMotion={reduceMotion} />;
+        return <FlagshipRevelationScreen colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       case 7:
-        return <MomentOfTruthScreen selected={priorities} name={name} colors={colors} isDark={isDark} reduceMotion={reduceMotion} />;
+        return <MomentOfTruthScreen selected={priorities} name={name} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       case 8:
-        return <FinalScreen colors={colors} isDark={isDark} />;
+        return <FinalScreen colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       default:
         return null;
     }
@@ -809,36 +671,6 @@ export default function OnboardingScreen() {
               elevation: ctaDisabled ? 1 : 6,
             }}
           >
-            {!ctaDisabled && (
-              <>
-                <Animated.View
-                  pointerEvents="none"
-                  style={{
-                    position: 'absolute',
-                    top: -20,
-                    bottom: -20,
-                    width: 72,
-                    backgroundColor: 'rgba(255,255,255,0.18)',
-                    transform: [
-                      { translateX: ctaShimmer.interpolate({ inputRange: [-1, 1], outputRange: [-360, 360] }) },
-                      { rotate: '18deg' },
-                    ],
-                  }}
-                />
-                <Animated.View
-                  pointerEvents="none"
-                  style={{
-                    position: 'absolute',
-                    top: 1,
-                    left: 18,
-                    right: 18,
-                    height: 1,
-                    backgroundColor: 'rgba(255,255,255,0.32)',
-                    opacity: ctaShimmer.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.2, 0.6, 0.2] }),
-                  }}
-                />
-              </>
-            )}
             <Text style={{ color: ctaDisabled ? disabledText : '#FFFFFF', fontSize: 16.5, fontWeight: '900', letterSpacing: 0.2 }}>
               {getCtaLabel(screen)}
             </Text>

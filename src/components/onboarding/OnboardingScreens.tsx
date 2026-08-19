@@ -1,14 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Activity, Check, Droplets, Leaf, Package, ShieldCheck, UserRound } from 'lucide-react-native';
-import Svg, { Path } from 'react-native-svg';
 import { OrbMascot } from '../features/OrbMascot';
 import {
   InsightTransformVisual,
   LabelCompressionVisual,
   MomentResultCard,
   PriorityConstellation,
-  ProfileAssemblyVisual,
 } from './OnboardingVisuals';
 import { IngredientReadingFrequency, OnboardingPriority, ShoppingFrequency } from '../../types/onboarding.types';
 
@@ -30,13 +28,78 @@ const TYPE = {
 // ══════════════════════════════════════════════════════════════
 // DATA
 // ══════════════════════════════════════════════════════════════
-const ALLERGEN_OPTIONS = [
-  { id: 'none', label: 'No known food allergies' },
-  { id: 'dairy', label: 'Dairy and milk' },
-  { id: 'gluten', label: 'Gluten and wheat' },
-  { id: 'nuts', label: 'Tree nuts and peanuts' },
-  { id: 'soy', label: 'Soy' },
-  { id: 'eggs', label: 'Eggs' },
+type AllergyOption = {
+  id: string;
+  label: string;
+  emoji: string;
+  stickerBg: string;
+  stickerBorder: string;
+  stickerShadow: string;
+  stickerRotation: string;
+  stickerSide: 'left' | 'right';
+};
+
+const ALLERGEN_OPTIONS: AllergyOption[] = [
+  {
+    id: 'none',
+    label: 'No known food allergies',
+    emoji: '✨',
+    stickerBg: '#F4FAF3',
+    stickerBorder: '#1ADB13',
+    stickerShadow: '#4F8A43',
+    stickerRotation: '-8deg',
+    stickerSide: 'right',
+  },
+  {
+    id: 'dairy',
+    label: 'Dairy and milk',
+    emoji: '🥛',
+    stickerBg: '#F3F8FF',
+    stickerBorder: '#4E8BFF',
+    stickerShadow: '#5575A8',
+    stickerRotation: '8deg',
+    stickerSide: 'left',
+  },
+  {
+    id: 'gluten',
+    label: 'Gluten and wheat',
+    emoji: '🌾',
+    stickerBg: '#FFF9E9',
+    stickerBorder: '#FFCC00',
+    stickerShadow: '#B38A24',
+    stickerRotation: '-6deg',
+    stickerSide: 'right',
+  },
+  {
+    id: 'nuts',
+    label: 'Tree nuts and peanuts',
+    emoji: '🥜',
+    stickerBg: '#FFF6F0',
+    stickerBorder: '#E58B42',
+    stickerShadow: '#A86632',
+    stickerRotation: '-8deg',
+    stickerSide: 'right',
+  },
+  {
+    id: 'soy',
+    label: 'Soy',
+    emoji: '🫘',
+    stickerBg: '#F5F1FF',
+    stickerBorder: '#9B7BFF',
+    stickerShadow: '#6D5BA8',
+    stickerRotation: '8deg',
+    stickerSide: 'left',
+  },
+  {
+    id: 'eggs',
+    label: 'Eggs',
+    emoji: '🥚',
+    stickerBg: '#FFF9E9',
+    stickerBorder: '#FFCC00',
+    stickerShadow: '#B38A24',
+    stickerRotation: '10deg',
+    stickerSide: 'left',
+  },
 ];
 
 const PRIORITY_OPTIONS: Array<{ id: OnboardingPriority; label: string; icon: React.ComponentType<any>; color: string }> = [
@@ -110,65 +173,58 @@ function SelectionRow({
   Icon?: React.ComponentType<any>;
   accent?: string;
 }) {
-  const scale = useRef(new Animated.Value(1)).current;
   const accentColor = accent || GREEN;
 
-  useEffect(() => {
-    Animated.spring(scale, { toValue: selected ? 1.015 : 1, damping: 14, stiffness: 220, mass: 0.6, useNativeDriver: true }).start();
-  }, [scale, selected]);
-
   return (
-    <Animated.View style={{ transform: [{ scale }] }}>
-      <TouchableOpacity
-        onPress={onPress}
-        activeOpacity={0.82}
-        accessibilityRole={multi ? 'checkbox' : 'radio'}
-        accessibilityState={{ selected }}
-        accessibilityLabel={label}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 13,
-          minHeight: 54,
-          paddingHorizontal: 16,
-          paddingVertical: 13,
-          borderRadius: 17,
-          borderWidth: 1.5,
-          borderColor: selected ? accentColor : isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-          backgroundColor: selected
-            ? `${accentColor}12`
-            : isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.012)',
-        }}
-      >
-        {/* Indicator */}
-        <View style={{
-          width: 23,
-          height: 23,
-          borderRadius: multi ? 8 : 12,
-          borderWidth: selected ? 0 : 1.5,
-          borderColor: selected ? 'transparent' : isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)',
-          backgroundColor: selected ? accentColor : 'transparent',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          {selected && <Check size={14} color="#FFFFFF" strokeWidth={3} />}
-        </View>
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.82}
+      accessibilityRole={multi ? 'checkbox' : 'radio'}
+      accessibilityState={{ selected }}
+      accessibilityLabel={label}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 13,
+        minHeight: 54,
+        paddingHorizontal: 16,
+        paddingVertical: 13,
+        borderRadius: 17,
+        borderWidth: 1.5,
+        borderColor: selected ? accentColor : isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+        backgroundColor: selected
+          ? `${accentColor}12`
+          : isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.012)',
+      }}
+    >
+      {/* Indicator */}
+      <View style={{
+        width: 23,
+        height: 23,
+        borderRadius: multi ? 8 : 12,
+        borderWidth: selected ? 0 : 1.5,
+        borderColor: selected ? 'transparent' : isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)',
+        backgroundColor: selected ? accentColor : 'transparent',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        {selected && <Check size={14} color="#FFFFFF" strokeWidth={3} />}
+      </View>
 
-        {/* Optional icon */}
-        {Icon && <Icon size={18} color={selected ? accentColor : colors.textSecondary} strokeWidth={2.1} />}
+      {/* Optional icon */}
+      {Icon && <Icon size={18} color={selected ? accentColor : colors.textSecondary} strokeWidth={2.1} />}
 
-        {/* Label */}
-        <Text style={{
-          color: selected ? colors.text : colors.textSecondary,
-          fontSize: 14.5,
-          lineHeight: 20,
-          fontWeight: selected ? '700' : '500',
-          flex: 1,
-        }}>
-          {label}
-        </Text>
-      </TouchableOpacity>
-    </Animated.View>
+      {/* Label */}
+      <Text style={{
+        color: selected ? colors.text : colors.textSecondary,
+        fontSize: 14.5,
+        lineHeight: 20,
+        fontWeight: selected ? '700' : '500',
+        flex: 1,
+      }}>
+        {label}
+      </Text>
+    </TouchableOpacity>
   );
 }
 
@@ -322,73 +378,6 @@ function EmojiSticker({
 }
 
 
-function DoodleLoopSticker({
-  emoji,
-  bg,
-  border,
-  shadowC,
-  rotation,
-  loopRotation,
-  size = 42,
-  style,
-}: {
-  emoji: string;
-  bg: string;
-  border: string;
-  shadowC: string;
-  rotation: string;
-  loopRotation: string;
-  size?: number;
-  style?: any;
-}) {
-  const loopWidth = Math.round(size * 1.85);
-  const loopHeight = Math.round(size * 1.65);
-
-  return (
-    <View
-      pointerEvents="none"
-      style={[
-        {
-          position: 'absolute',
-          width: loopWidth,
-          height: loopHeight,
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 8,
-        },
-        style,
-      ]}
-    >
-      <Svg
-        width={loopWidth}
-        height={loopHeight}
-        viewBox="0 0 120 100"
-        style={{ position: 'absolute', transform: [{ rotate: loopRotation }] }}
-      >
-        <Path
-          d="M17 24 C7 40 13 79 34 91 C57 104 104 99 112 70 C120 43 101 14 73 13 C48 11 25 14 17 24"
-          fill="none"
-          stroke="#17231B"
-          strokeOpacity={0.78}
-          strokeWidth={4.2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </Svg>
-
-      <EmojiSticker
-        emoji={emoji}
-        bg={bg}
-        border={border}
-        shadowC={shadowC}
-        rotation={rotation}
-        size={size}
-        style={{ position: 'relative', transform: [{ rotate: rotation }] }}
-      />
-    </View>
-  );
-}
-
 function ContextOptionRow({
   label,
   emoji,
@@ -396,7 +385,6 @@ function ContextOptionRow({
   stickerBorder,
   stickerShadow,
   stickerRotation,
-  loopRotation,
   stickerSide,
   selected,
   onPress,
@@ -410,7 +398,6 @@ function ContextOptionRow({
   stickerBorder: string;
   stickerShadow: string;
   stickerRotation: string;
-  loopRotation: string;
   stickerSide: 'left' | 'right';
   selected: boolean;
   onPress: () => void;
@@ -418,7 +405,6 @@ function ContextOptionRow({
   isDark: boolean;
   reduceMotion: boolean;
 }) {
-  const pressScale = useRef(new Animated.Value(1)).current;
   const ledProgress = useRef(new Animated.Value(selected ? 1 : 0)).current;
 
   useEffect(() => {
@@ -436,34 +422,6 @@ function ContextOptionRow({
     }).start();
   }, [ledProgress, reduceMotion, selected]);
 
-  const handlePressIn = () => {
-    if (reduceMotion) {
-      pressScale.setValue(0.985);
-      return;
-    }
-    Animated.timing(pressScale, {
-      toValue: 0.985,
-      duration: 90,
-      easing: Easing.out(Easing.quad),
-      useNativeDriver: true,
-      isInteraction: false,
-    }).start();
-  };
-
-  const handlePressOut = () => {
-    if (reduceMotion) {
-      pressScale.setValue(1);
-      return;
-    }
-    Animated.timing(pressScale, {
-      toValue: 1,
-      duration: 180,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-      isInteraction: false,
-    }).start();
-  };
-
   const ledHaloOpacity = ledProgress.interpolate({
     inputRange: [0, 1],
     outputRange: [0, 0.65],
@@ -478,23 +436,20 @@ function ContextOptionRow({
   });
 
   return (
-    <Animated.View style={{ marginTop: 18, transform: [{ scale: pressScale }] }}>
-      <DoodleLoopSticker
+    <View style={{ marginTop: 18 }}>
+      <EmojiSticker
         emoji={emoji}
         bg={stickerBg}
         border={stickerBorder}
         shadowC={stickerShadow}
         rotation={stickerRotation}
-        loopRotation={loopRotation}
         size={40}
         style={{ top: -38, ...(stickerSide === 'left' ? { left: 10 } : { right: 10 }) }}
       />
 
       <TouchableOpacity
         onPress={onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        activeOpacity={1}
+        activeOpacity={0.86}
         accessibilityRole="radio"
         accessibilityState={{ selected }}
         accessibilityLabel={label}
@@ -559,7 +514,122 @@ function ContextOptionRow({
           {label}
         </Text>
       </TouchableOpacity>
-    </Animated.View>
+    </View>
+  );
+}
+
+function AllergyOptionTile({
+  option,
+  selected,
+  onPress,
+  colors,
+  isDark,
+  reduceMotion,
+  style,
+}: {
+  option: AllergyOption;
+  selected: boolean;
+  onPress: () => void;
+  colors: any;
+  isDark: boolean;
+  reduceMotion: boolean;
+  style?: any;
+}) {
+  const ledProgress = useRef(new Animated.Value(selected ? 1 : 0)).current;
+
+  useEffect(() => {
+    if (reduceMotion) {
+      ledProgress.setValue(selected ? 1 : 0);
+      return;
+    }
+
+    Animated.timing(ledProgress, {
+      toValue: selected ? 1 : 0,
+      duration: 180,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+      isInteraction: false,
+    }).start();
+  }, [ledProgress, reduceMotion, selected]);
+
+  const stickerBg = isDark ? 'rgba(255,255,255,0.08)' : option.stickerBg;
+  const stickerBorder = isDark ? 'rgba(150,255,170,0.72)' : option.stickerBorder;
+  const stickerShadow = isDark ? GREEN : option.stickerShadow;
+  const ledHaloOpacity = ledProgress.interpolate({ inputRange: [0, 1], outputRange: [0, 0.65] });
+  const ledHaloScale = ledProgress.interpolate({ inputRange: [0, 1], outputRange: [0.72, 1] });
+  const ledCoreScale = ledProgress.interpolate({ inputRange: [0, 1], outputRange: [0.45, 1] });
+
+  return (
+    <View style={[{ marginTop: 18 }, style]}>
+      <EmojiSticker
+        emoji={option.emoji}
+        bg={stickerBg}
+        border={stickerBorder}
+        shadowC={stickerShadow}
+        rotation={option.stickerRotation}
+        size={36}
+        style={{ top: -34, ...(option.stickerSide === 'left' ? { left: 8 } : { right: 8 }) }}
+      />
+
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.86}
+        accessibilityRole="checkbox"
+        accessibilityState={{ selected }}
+        accessibilityLabel={option.label}
+        style={{
+          minHeight: option.id === 'none' ? 70 : 86,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+          paddingHorizontal: 14,
+          paddingVertical: 13,
+          borderRadius: 18,
+          borderWidth: 1.25,
+          borderColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.085)',
+          backgroundColor: isDark ? 'rgba(255,255,255,0.035)' : 'rgba(255,255,255,0.60)',
+        }}
+      >
+        <View
+          style={{
+            width: 24,
+            height: 24,
+            borderRadius: 8,
+            borderWidth: 1.5,
+            borderColor: isDark ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.16)',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Animated.View
+            style={{
+              position: 'absolute',
+              width: 29,
+              height: 29,
+              borderRadius: 15,
+              borderWidth: 2,
+              borderColor: GREEN,
+              opacity: ledHaloOpacity,
+              transform: [{ scale: ledHaloScale }],
+            }}
+          />
+          <Animated.View
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 5,
+              backgroundColor: GREEN,
+              opacity: ledProgress,
+              transform: [{ scale: ledCoreScale }],
+            }}
+          />
+        </View>
+
+        <Text style={{ color: colors.text, fontSize: 13.5, lineHeight: 18, fontWeight: '700', flex: 1 }}>
+          {option.label}
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -606,7 +676,7 @@ export function IdentityScreen({
           justifyContent: 'center',
         }}
       >
-        {/* Layer 1: Food Emoji Stickers (Inner Layer - orbiting closely at 18-32pt distance) */}
+        {/* Layer 1: Food emoji stickers positioned around the mascot. */}
         <EmojiSticker
           emoji="🥑"
           bg={isDark ? '#202C22' : '#F4FAF3'}
@@ -755,7 +825,6 @@ export function ContextScreen({ selected, onSelect, colors, isDark, reduceMotion
     stickerBorder: string;
     stickerShadow: string;
     stickerRotation: string;
-    loopRotation: string;
     stickerSide: 'left' | 'right';
   }> = [
       {
@@ -766,7 +835,6 @@ export function ContextScreen({ selected, onSelect, colors, isDark, reduceMotion
         stickerBorder: isDark ? '#344C38' : '#1ADB13',
         stickerShadow: '#4F8A43',
         stickerRotation: '-8deg',
-        loopRotation: '-8deg',
         stickerSide: 'right',
       },
       {
@@ -777,8 +845,7 @@ export function ContextScreen({ selected, onSelect, colors, isDark, reduceMotion
         stickerBorder: isDark ? '#564F27' : '#FFCC00',
         stickerShadow: '#B38A24',
         stickerRotation: '8deg',
-        loopRotation: '8deg',
-        stickerSide: 'left',
+        stickerSide: 'right',
       },
       {
         id: 'sometimes',
@@ -788,7 +855,6 @@ export function ContextScreen({ selected, onSelect, colors, isDark, reduceMotion
         stickerBorder: isDark ? '#384A61' : '#4E8BFF',
         stickerShadow: '#5575A8',
         stickerRotation: '-6deg',
-        loopRotation: '-6deg',
         stickerSide: 'right',
       },
       {
@@ -799,8 +865,7 @@ export function ContextScreen({ selected, onSelect, colors, isDark, reduceMotion
         stickerBorder: isDark ? '#563333' : '#FB3802',
         stickerShadow: '#B64E3B',
         stickerRotation: '10deg',
-        loopRotation: '10deg',
-        stickerSide: 'left',
+        stickerSide: 'right',
       },
     ];
 
@@ -812,7 +877,7 @@ export function ContextScreen({ selected, onSelect, colors, isDark, reduceMotion
 
       <ScreenHeading
         title="How often do you buy **packaged food**?"
-        subtitle="This helps BiteFix **tune the experience** to your routine."
+        subtitle="This helps BiteFix **tune the experience** to your buying habits."
         colors={colors}
       />
 
@@ -826,7 +891,6 @@ export function ContextScreen({ selected, onSelect, colors, isDark, reduceMotion
             stickerBorder={option.stickerBorder}
             stickerShadow={option.stickerShadow}
             stickerRotation={option.stickerRotation}
-            loopRotation={option.loopRotation}
             stickerSide={option.stickerSide}
             selected={selected === option.id}
             onPress={() => onSelect(option.id)}
@@ -846,6 +910,13 @@ export function ContextScreen({ selected, onSelect, colors, isDark, reduceMotion
 export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion }: { selected: string[]; onToggle: (id: string) => void; colors: any; isDark: boolean; reduceMotion: boolean }) {
   const mascotState = selected.some((id) => id !== 'none') ? 'caution' : selected.includes('none') ? 'happy' : 'thinking';
 
+  const none = ALLERGEN_OPTIONS[0];
+  const dairy = ALLERGEN_OPTIONS[1];
+  const gluten = ALLERGEN_OPTIONS[2];
+  const nuts = ALLERGEN_OPTIONS[3];
+  const soy = ALLERGEN_OPTIONS[4];
+  const eggs = ALLERGEN_OPTIONS[5];
+
   return (
     <ScreenFrame>
       <View style={{ alignItems: 'center', marginBottom: 12 }}>
@@ -858,14 +929,70 @@ export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion
         />
       </View>
       <ScreenHeading
-        title="Anything we should **watch for**?"
-        subtitle="BiteFix can highlight matching information when it appears in **available product data**."
+        title="Anything we should **watch for you** ?"
+        subtitle="Tell BiteFix what Ingredients to watch for in the **available product data**."
         colors={colors}
       />
-      <View style={{ gap: 9 }}>
-        {ALLERGEN_OPTIONS.map((option) => (
-          <SelectionRow key={option.id} label={option.label} selected={selected.includes(option.id)} onPress={() => onToggle(option.id)} colors={colors} isDark={isDark} multi />
-        ))}
+      <View style={{ gap: 10, marginTop: 2 }}>
+        <AllergyOptionTile
+          option={none}
+          selected={selected.includes(none.id)}
+          onPress={() => onToggle(none.id)}
+          colors={colors}
+          isDark={isDark}
+          reduceMotion={reduceMotion}
+        />
+
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <AllergyOptionTile
+            option={dairy}
+            selected={selected.includes(dairy.id)}
+            onPress={() => onToggle(dairy.id)}
+            colors={colors}
+            isDark={isDark}
+            reduceMotion={reduceMotion}
+            style={{ flex: 1 }}
+          />
+          <AllergyOptionTile
+            option={gluten}
+            selected={selected.includes(gluten.id)}
+            onPress={() => onToggle(gluten.id)}
+            colors={colors}
+            isDark={isDark}
+            reduceMotion={reduceMotion}
+            style={{ flex: 1 }}
+          />
+        </View>
+
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <AllergyOptionTile
+            option={nuts}
+            selected={selected.includes(nuts.id)}
+            onPress={() => onToggle(nuts.id)}
+            colors={colors}
+            isDark={isDark}
+            reduceMotion={reduceMotion}
+            style={{ flex: 1 }}
+          />
+          <AllergyOptionTile
+            option={soy}
+            selected={selected.includes(soy.id)}
+            onPress={() => onToggle(soy.id)}
+            colors={colors}
+            isDark={isDark}
+            reduceMotion={reduceMotion}
+            style={{ flex: 1 }}
+          />
+        </View>
+
+        <AllergyOptionTile
+          option={eggs}
+          selected={selected.includes(eggs.id)}
+          onPress={() => onToggle(eggs.id)}
+          colors={colors}
+          isDark={isDark}
+          reduceMotion={reduceMotion}
+        />
       </View>
     </ScreenFrame>
   );
@@ -874,7 +1001,7 @@ export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion
 // ══════════════════════════════════════════════════════════════
 // SCREEN 4 — PAIN
 // ══════════════════════════════════════════════════════════════
-export function PainScreen({ selected, onSelect, colors, isDark, reduceMotion }: { selected?: IngredientReadingFrequency; onSelect: (value: IngredientReadingFrequency) => void; colors: any; isDark: boolean; reduceMotion: boolean }) {
+export function PainScreen({ selected, onSelect, colors, isDark, reduceMotion, isActive = true }: { selected?: IngredientReadingFrequency; onSelect: (value: IngredientReadingFrequency) => void; colors: any; isDark: boolean; reduceMotion: boolean; isActive?: boolean }) {
   const options: Array<{ id: IngredientReadingFrequency; label: string }> = [
     { id: 'always', label: 'Always' },
     { id: 'sometimes', label: 'Sometimes' },
@@ -887,7 +1014,7 @@ export function PainScreen({ selected, onSelect, colors, isDark, reduceMotion }:
       <View style={{ alignItems: 'center', marginBottom: 4 }}>
         <OrbMascot state="caution" size={78} reduceMotion={reduceMotion} accessibilityLabel="Empathetic BiteFix scanner mascot" />
       </View>
-      <LabelCompressionVisual colors={colors} isDark={isDark} reduceMotion={reduceMotion} />
+      <LabelCompressionVisual colors={colors} isDark={isDark} reduceMotion={reduceMotion} isActive={isActive} />
       <ScreenHeading
         title="Do you read **every ingredient** before you buy?"
         subtitle="Most people do not have time to **decode every label** in the aisle."
@@ -948,7 +1075,7 @@ export function RevelationScreen({ colors, isDark, reduceMotion }: { colors: any
         colors={colors}
         display
       />
-      <InsightTransformVisual colors={colors} isDark={isDark} reduceMotion={reduceMotion} />
+      <InsightTransformVisual colors={colors} isDark={isDark} />
     </ScreenFrame>
   );
 }
@@ -969,23 +1096,6 @@ export function MomentOfTruthScreen({
   isDark: boolean;
   reduceMotion: boolean;
 }) {
-  const [phase, setPhase] = useState<'building' | 'assembly' | 'ready'>('building');
-
-  useEffect(() => {
-    let t1: ReturnType<typeof setTimeout> | undefined;
-    let t2: ReturnType<typeof setTimeout> | undefined;
-    if (reduceMotion) {
-      setPhase('ready');
-    } else {
-      t1 = setTimeout(() => setPhase('assembly'), 750);
-      t2 = setTimeout(() => setPhase('ready'), 2100);
-    }
-    return () => {
-      if (t1) clearTimeout(t1);
-      if (t2) clearTimeout(t2);
-    };
-  }, [reduceMotion]);
-
   const displayName = name?.trim() || '';
   const priorityLabels = useMemo(() => {
     const META: Record<OnboardingPriority, string> = {
@@ -1000,74 +1110,61 @@ export function MomentOfTruthScreen({
 
   return (
     <ScreenFrame>
-      {phase !== 'ready' ? (
-        <>
-          <ProfileAssemblyVisual colors={colors} isDark={isDark} reduceMotion={reduceMotion} selected={selected} phase={phase} />
-          <ScreenHeading
-            title="Building your **BiteFix profile**."
-            subtitle="Shaping the insights you **see first**."
-            colors={colors}
-            align="center"
-          />
-        </>
-      ) : (
-        <>
-          {/* Apple-style liquid glass profile summary card */}
-          <View
-            style={{
-              marginBottom: 16,
-              padding: 16,
-              borderRadius: 20,
-              backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.92)',
-              borderWidth: 1,
-              borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: isDark ? 0.16 : 0.05,
-              shadowRadius: 14,
-              elevation: 2,
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-              <OrbMascot state="happy" size={44} showShadow={false} reduceMotion={reduceMotion} />
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>
-                  {displayName ? `${displayName}'s Profile` : 'Your BiteFix Profile'}
-                </Text>
-                <Text style={{ color: GREEN, fontSize: 12, fontWeight: '700', marginTop: 1 }}>
-                  Personalized & Ready
-                </Text>
-              </View>
-            </View>
-            {/* Selected Priorities badges */}
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-              {priorityLabels.map((label) => (
-                <View
-                  key={label}
-                  style={{
-                    paddingHorizontal: 10,
-                    paddingVertical: 5,
-                    borderRadius: 999,
-                    backgroundColor: `${GREEN}12`,
-                    borderWidth: 1,
-                    borderColor: `${GREEN}35`,
-                  }}
-                >
-                  <Text style={{ color: GREEN, fontSize: 11, fontWeight: '800' }}>{label}</Text>
-                </View>
-              ))}
-            </View>
+      {/* Static profile summary: the screen is ready as soon as it opens. */}
+      {/* Apple-style liquid glass profile summary card */}
+      <View
+        style={{
+          marginBottom: 16,
+          padding: 16,
+          borderRadius: 20,
+          backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.92)',
+          borderWidth: 1,
+          borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: isDark ? 0.16 : 0.05,
+          shadowRadius: 14,
+          elevation: 2,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+          <OrbMascot state="happy" size={44} showShadow={false} reduceMotion={reduceMotion} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>
+              {displayName ? `${displayName}'s Profile` : 'Your BiteFix Profile'}
+            </Text>
+            <Text style={{ color: GREEN, fontSize: 12, fontWeight: '700', marginTop: 1 }}>
+              Personalized & Ready
+            </Text>
           </View>
+        </View>
+        {/* Selected Priorities badges */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+          {priorityLabels.map((label) => (
+            <View
+              key={label}
+              style={{
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 999,
+                backgroundColor: `${GREEN}12`,
+                borderWidth: 1,
+                borderColor: `${GREEN}35`,
+              }}
+            >
+              <Text style={{ color: GREEN, fontSize: 11, fontWeight: '800' }}>{label}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
 
-          <ScreenHeading
-            title="Your BiteFix view is **ready**."
-            subtitle="Here is how your scan results **come together**."
-            colors={colors}
-            align="center"
-          />
-          <MomentResultCard colors={colors} isDark={isDark} reduceMotion={reduceMotion} selected={selected} />
-        </>
-      )}
+      <ScreenHeading
+        title="Your BiteFix view is **ready**."
+        subtitle="Here is how your scan results **come together**."
+        colors={colors}
+        align="center"
+      />
+      <MomentResultCard colors={colors} isDark={isDark} selected={selected} />
     </ScreenFrame>
   );
 }
