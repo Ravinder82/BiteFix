@@ -117,6 +117,95 @@ const CAROUSEL_ITEMS = [
   },
 ];
 
+interface CarouselCardProps {
+  item: typeof CAROUSEL_ITEMS[0];
+  cardWidth: number;
+  cardHeight: number;
+  isDark: boolean;
+  colors: any;
+}
+
+const CarouselCard = React.memo(({ item, cardWidth, cardHeight, isDark, colors }: CarouselCardProps) => {
+  const IconComponent = item.icon;
+  return (
+    <View
+      style={{
+        width: cardWidth,
+        height: cardHeight,
+        marginHorizontal: 6,
+        borderRadius: 24,
+        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+        borderWidth: 1.5,
+        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.02)' : '#FFFFFF',
+        overflow: 'hidden',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: isDark ? 0.2 : 0.03,
+        shadowRadius: 10,
+        elevation: 3,
+      }}
+    >
+      <View style={{ height: 200, position: 'relative' }}>
+        <Image
+          source={item.image}
+          style={{ width: '100%', height: '100%' }}
+          contentFit="cover"
+          priority="high"
+          cachePolicy="memory-disk"
+          transition={0}
+        />
+        <LinearGradient
+          colors={['rgba(0,0,0,0)', isDark ? 'rgba(17, 20, 23, 0.95)' : 'rgba(255, 255, 255, 0.95)']}
+          style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 50 }}
+        />
+        {/* Floating Icon Badge */}
+        <View style={{
+          position: 'absolute',
+          top: 14,
+          left: 18,
+          backgroundColor: isDark ? 'rgba(17, 20, 23, 0.85)' : 'rgba(255, 255, 255, 0.9)',
+          borderRadius: 16,
+          padding: 10,
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+          borderWidth: 1.5,
+        }}>
+          <IconComponent size={20} color={item.color} />
+        </View>
+        {/* Module Label */}
+        <View style={{
+          position: 'absolute',
+          top: 14,
+          right: 18,
+          backgroundColor: isDark ? 'rgba(10, 10, 10, 0.85)' : 'rgba(255, 255, 255, 0.96)',
+          borderRadius: 10,
+          paddingHorizontal: 14,
+          paddingVertical: 7,
+          borderColor: item.color,
+          borderWidth: 2,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        }}>
+          <Text style={{ color: item.color, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 }}>
+            {item.title.toUpperCase()}
+          </Text>
+        </View>
+      </View>
+      <View style={{ paddingHorizontal: 20, paddingVertical: 18, flex: 1, justifyContent: 'space-between' }}>
+        <View>
+          <Text style={{ color: colors.text, fontSize: 20, fontWeight: '900', marginBottom: 6 }}>
+            {item.subtitle}
+          </Text>
+          <Text style={{ color: colors.textSecondary, fontSize: 14.5, fontWeight: '600', lineHeight: 22.5 }} numberOfLines={4}>
+            {item.description}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+});
+
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
   const {
@@ -248,86 +337,15 @@ export default function HomeScreen() {
     ];
   }, [hasActiveResult, activeScanResult, allergenFilters, dietPreference]);
 
-  const renderCarouselItem = useCallback(({ item }: { item: typeof CAROUSEL_ITEMS[0] }) => {
-    const IconComponent = item.icon;
-    return (
-      <View
-        style={{
-          width: cardWidth,
-          height: cardHeight,
-          marginHorizontal: 6,
-          borderRadius: 24,
-          borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
-          borderWidth: 1.5,
-          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.02)' : '#FFFFFF',
-          overflow: 'hidden',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: isDark ? 0.2 : 0.03,
-          shadowRadius: 10,
-          elevation: 3,
-        }}
-      >
-        <View style={{ height: 200, position: 'relative' }}>
-          <Image
-            source={item.image}
-            style={{ width: '100%', height: '100%' }}
-            contentFit="cover"
-            priority="high"
-            cachePolicy="memory-disk"
-            transition={0}
-          />
-          <LinearGradient
-            colors={['rgba(0,0,0,0)', isDark ? 'rgba(17, 20, 23, 0.95)' : 'rgba(255, 255, 255, 0.95)']}
-            style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 50 }}
-          />
-          {/* Floating Icon Badge */}
-          <View style={{
-            position: 'absolute',
-            top: 14,
-            left: 18,
-            backgroundColor: isDark ? 'rgba(17, 20, 23, 0.85)' : 'rgba(255, 255, 255, 0.9)',
-            borderRadius: 16,
-            padding: 10,
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
-            borderWidth: 1.5,
-          }}>
-            <IconComponent size={20} color={item.color} />
-          </View>
-          {/* Module Label */}
-          <View style={{
-            position: 'absolute',
-            top: 14,
-            right: 18,
-            backgroundColor: isDark ? 'rgba(10, 10, 10, 0.85)' : 'rgba(255, 255, 255, 0.96)',
-            borderRadius: 10,
-            paddingHorizontal: 14,
-            paddingVertical: 7,
-            borderColor: item.color,
-            borderWidth: 2,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-          }}>
-            <Text style={{ color: item.color, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 }}>
-              {item.title.toUpperCase()}
-            </Text>
-          </View>
-        </View>
-        <View style={{ paddingHorizontal: 20, paddingVertical: 18, flex: 1, justifyContent: 'space-between' }}>
-          <View>
-            <Text style={{ color: colors.text, fontSize: 20, fontWeight: '900', marginBottom: 6 }}>
-              {item.subtitle}
-            </Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 14.5, fontWeight: '600', lineHeight: 22.5 }} numberOfLines={4}>
-              {item.description}
-            </Text>
-          </View>
-        </View>
-      </View>
-    );
-  }, [cardWidth, cardHeight, isDark, colors]);
+  const renderCarouselItem = useCallback(({ item }: { item: typeof CAROUSEL_ITEMS[0] }) => (
+    <CarouselCard
+      item={item}
+      cardWidth={cardWidth}
+      cardHeight={cardHeight}
+      isDark={isDark}
+      colors={colors}
+    />
+  ), [cardWidth, cardHeight, isDark, colors]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
