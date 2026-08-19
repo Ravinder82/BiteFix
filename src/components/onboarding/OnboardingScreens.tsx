@@ -1054,6 +1054,17 @@ export function LabelReadingScreen({
   isDark: boolean;
   reduceMotion: boolean;
 }) {
+  const { width, height } = useWindowDimensions();
+
+  // Match the premium composition language used by IdentityScreen,
+  // while keeping the imagery specific to label-reading behavior.
+  const compositionScale = clamp(width / 390, 0.84, 1.04);
+  const verticalScale = clamp(height / 844, 0.88, 1.06);
+  const mascotSize = Math.round(150 * compositionScale);
+  const compositionMinHeight = Math.round(clamp(height * 0.40, 300, 350));
+
+  const stickerSize = Math.round(50 * compositionScale);
+
   const options: Array<{ id: LabelReadingFrequency; label: string }> = [
     { id: 'always', label: 'Always' },
     { id: 'sometimes', label: 'Sometimes' },
@@ -1062,19 +1073,197 @@ export function LabelReadingScreen({
   ];
 
   return (
+    <View
+      style={{
+        flex: 1,
+        width: '100%',
+        maxWidth: 430,
+        alignSelf: 'center',
+        paddingHorizontal: clamp(width * 0.0615, 18, 24),
+        paddingTop: clamp(height * 0.018, 12, 20),
+        paddingBottom: 8,
+      }}
+    >
+      {/* HERO COMPOSITION — intentionally spacious like Screen 2 */}
+      <View
+        style={{
+          flex: 1,
+          minHeight: compositionMinHeight,
+          marginTop: 8,
+          marginBottom: 8,
+          position: 'relative',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {/* Context sticker: ingredient label */}
+        <EmojiSticker
+          emoji="🏷️"
+          bg={isDark ? '#202C22' : '#F4FAF3'}
+          border={isDark ? '#344C38' : '#1ADB13'}
+          shadowC="#4F8A43"
+          rotation="-10deg"
+          size={stickerSize}
+          style={{
+            left: '50%',
+            top: '50%',
+            transform: [
+              { translateX: -140 * compositionScale },
+              { translateY: -92 * verticalScale },
+              { rotate: '-10deg' },
+            ],
+          }}
+        />
+
+        {/* Context sticker: grocery decision */}
+        <EmojiSticker
+          emoji="🛒"
+          bg={isDark ? '#2B2818' : '#FFF9E9'}
+          border={isDark ? '#564F27' : '#FFCC00'}
+          shadowC="#B38A24"
+          rotation="9deg"
+          size={Math.round(stickerSize * 1.04)}
+          style={{
+            left: '50%',
+            top: '50%',
+            transform: [
+              { translateX: 96 * compositionScale },
+              { translateY: -112 * verticalScale },
+              { rotate: '9deg' },
+            ],
+          }}
+        />
+
+        {/* Context sticker: packaged product */}
+        <EmojiSticker
+          emoji="📦"
+          bg={isDark ? '#20252C' : '#F3F7FF'}
+          border={isDark ? '#384A61' : '#4E8BFF'}
+          shadowC="#5575A8"
+          rotation="-7deg"
+          size={Math.round(stickerSize * 0.98)}
+          style={{
+            left: '50%',
+            top: '50%',
+            transform: [
+              { translateX: -126 * compositionScale },
+              { translateY: 74 * verticalScale },
+              { rotate: '-7deg' },
+            ],
+          }}
+        />
+
+        {/* Context sticker: checking information */}
+        <EmojiSticker
+          emoji="🔎"
+          bg={isDark ? '#2C2020' : '#FFF6F3'}
+          border={isDark ? '#563333' : '#FB3802'}
+          shadowC="#B64E3B"
+          rotation="10deg"
+          size={Math.round(stickerSize * 1.04)}
+          style={{
+            left: '50%',
+            top: '50%',
+            transform: [
+              { translateX: 92 * compositionScale },
+              { translateY: 76 * verticalScale },
+              { rotate: '10deg' },
+            ],
+          }}
+        />
+
+        {/* Central hero mascot */}
+        <View
+          style={{
+            width: Math.round(190 * compositionScale),
+            height: Math.round(190 * compositionScale),
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 6,
+          }}
+        >
+          <OrbMascot
+            state="thinking"
+            size={mascotSize}
+            reduceMotion={reduceMotion}
+            showShadow
+            accessibilityLabel="BiteFix assistant asking about label reading habits"
+          />
+        </View>
+      </View>
+
+      {/* CONTENT GROUP — intentionally lower on the screen */}
+      <View style={{ marginBottom: -2 }}>
+        <ScreenHeading
+          title="Do you read food **labels** before buying?"
+          subtitle="Tell us how often you actually stop to check."
+          colors={colors}
+        />
+
+        <View style={{ gap: 9 }}>
+          {options.map((option) => (
+            <SelectionRow
+              key={option.id}
+              label={option.label}
+              selected={selected === option.id}
+              onPress={() => onSelect(option.id)}
+              colors={colors}
+              isDark={isDark}
+            />
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// SCREEN 4 — PAIN POINT (shown before allergies by the host flow)
+// ══════════════════════════════════════════════════════════════
+export function PainScreen({
+  selected,
+  onSelect,
+  colors,
+  isDark,
+  reduceMotion,
+  isActive = true,
+}: {
+  selected?: IngredientReadingFrequency;
+  onSelect: (value: IngredientReadingFrequency) => void;
+  colors: any;
+  isDark: boolean;
+  reduceMotion: boolean;
+  isActive?: boolean;
+}) {
+  const options: Array<{ id: IngredientReadingFrequency; label: string }> = [
+    { id: 'always', label: "I don't have time to read it" },
+    { id: 'sometimes', label: 'The ingredients are confusing' },
+    { id: 'when_needed', label: "I don't know what really matters" },
+    { id: 'rarely', label: 'Too many choices to compare' },
+  ];
+
+  return (
     <ScreenFrame>
-      <View style={{ alignItems: 'center', marginBottom: 10 }}>
+      <View style={{ alignItems: 'center', marginBottom: 4 }}>
         <OrbMascot
-          state="thinking"
-          size={82}
+          state="caution"
+          size={110}
           reduceMotion={reduceMotion}
-          accessibilityLabel="BiteFix assistant asking about label reading habits"
+          showShadow={false}
+          accessibilityLabel="Empathetic BiteFix assistant highlighting label-reading friction"
         />
       </View>
 
+      <LabelCompressionVisual
+        colors={colors}
+        isDark={isDark}
+        reduceMotion={reduceMotion}
+        isActive={isActive}
+      />
+
       <ScreenHeading
-        title="Do you read food **labels** before buying?"
-        subtitle="Tell us how often you actually stop to check."
+        title="What makes it hard to choose from the **label** ?"
+        subtitle=""
         colors={colors}
       />
 
@@ -1088,37 +1277,6 @@ export function LabelReadingScreen({
             colors={colors}
             isDark={isDark}
           />
-        ))}
-      </View>
-    </ScreenFrame>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════
-// SCREEN 4 — PAIN POINT (shown before allergies by the host flow)
-// ══════════════════════════════════════════════════════════════
-export function PainScreen({ selected, onSelect, colors, isDark, reduceMotion, isActive = true }: { selected?: IngredientReadingFrequency; onSelect: (value: IngredientReadingFrequency) => void; colors: any; isDark: boolean; reduceMotion: boolean; isActive?: boolean }) {
-  const options: Array<{ id: IngredientReadingFrequency; label: string }> = [
-    { id: 'always', label: "I don't have time to read it" },
-    { id: 'sometimes', label: 'The ingredients are confusing' },
-    { id: 'when_needed', label: "I don't know what really matters" },
-    { id: 'rarely', label: 'Too many choices to compare' },
-  ];
-
-  return (
-    <ScreenFrame>
-      <View style={{ alignItems: 'center', marginBottom: 4 }}>
-        <OrbMascot state="caution" size={78} reduceMotion={reduceMotion} accessibilityLabel="Empathetic BiteFix scanner mascot" />
-      </View>
-      <LabelCompressionVisual colors={colors} isDark={isDark} reduceMotion={reduceMotion} isActive={isActive} />
-      <ScreenHeading
-        title="So much on the label. So little **clarity.**"
-        subtitle="What makes it hard to know what to choose from the label?"
-        colors={colors}
-      />
-      <View style={{ gap: 9 }}>
-        {options.map((option) => (
-          <SelectionRow key={option.id} label={option.label} selected={selected === option.id} onPress={() => onSelect(option.id)} colors={colors} isDark={isDark} />
         ))}
       </View>
     </ScreenFrame>
@@ -1270,10 +1428,10 @@ export function MomentOfTruthScreen({
     most_trips: 'Buys snacks daily',
   };
   const painLabels: Record<IngredientReadingFrequency, string> = {
-    always: "No time to read every ingredient",
-    sometimes: "Unclear which ingredients matter",
-    when_needed: 'Checks only when something catches the eye',
-    rarely: 'Usually skips the label',
+    always: "No time to read the label",
+    sometimes: "Ingredients feel confusing",
+    when_needed: "Unclear what really matters",
+    rarely: "Too many choices to compare",
   };
   const allergyLabels = allergens.includes('none')
     ? ['No known food allergies']
@@ -1363,5 +1521,205 @@ export function MomentOfTruthScreen({
       />
       <MomentResultCard colors={colors} isDark={isDark} selected={selected} />
     </ScreenFrame>
+  );
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// SCREEN 10 — FINAL ACTIVATION
+// ══════════════════════════════════════════════════════════════
+const FINAL_FEATURE_PILLS = [
+  'Processing',
+  'Nutrition',
+  'Allergens',
+  'Ingredients',
+  'Additives',
+  'Sugar',
+  'Eco Impact',
+] as const;
+
+export function FinalActivationScreen({
+  colors,
+  isDark,
+  reduceMotion,
+}: {
+  colors: any;
+  isDark: boolean;
+  reduceMotion: boolean;
+}) {
+  const { width, height } = useWindowDimensions();
+  const orbit = useRef(new Animated.Value(0)).current;
+
+  const compact = width < 360;
+  const radius = clamp(Math.min(width * 0.29, height * 0.15), compact ? 92 : 104, 118);
+  const orbSize = Math.round(clamp(width * 0.235, 78, 94));
+  const pillWidth = clamp(width * 0.17, 62, 72);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      orbit.stopAnimation();
+      orbit.setValue(0);
+      return;
+    }
+
+    const animation = Animated.loop(
+      Animated.timing(orbit, {
+        toValue: 1,
+        duration: 22000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+        isInteraction: false,
+      }),
+    );
+
+    animation.start();
+    return () => animation.stop();
+  }, [orbit, reduceMotion]);
+
+  const rotate = orbit.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const counterRotate = orbit.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '-360deg'],
+  });
+
+  return (
+    <View
+      style={{
+        flex: 1,
+        width: '100%',
+        maxWidth: 430,
+        alignSelf: 'center',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: clamp(width * 0.06, 20, 28),
+        paddingVertical: clamp(height * 0.03, 18, 28),
+      }}
+      accessible
+      accessibilityLabel="Your BiteFix scanner is ready"
+    >
+      <Text
+        style={{
+          color: colors.text,
+          fontSize: clamp(width * 0.062, 23, 26),
+          lineHeight: clamp(width * 0.078, 30, 34),
+          fontWeight: '900',
+          letterSpacing: -0.45,
+          textAlign: 'center',
+          marginBottom: 7,
+        }}
+      >
+        Your BiteFix Scanner Is Ready
+      </Text>
+
+      <Text
+        style={{
+          color: colors.textSecondary,
+          fontSize: clamp(width * 0.034, 12.5, 14),
+          lineHeight: clamp(width * 0.052, 19, 21),
+          fontWeight: '500',
+          textAlign: 'center',
+          maxWidth: 350,
+          marginBottom: clamp(height * 0.04, 28, 38),
+        }}
+      >
+        Scan a product and let BiteFix turn available food data into a clear snapshot.
+      </Text>
+
+      <View
+        style={{
+          width: radius * 2,
+          height: radius * 2,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: clamp(height * 0.03, 18, 28),
+        }}
+      >
+        <OrbMascot
+          state="happy"
+          size={orbSize}
+          reduceMotion={reduceMotion}
+          accessibilityLabel="Happy BiteFix scanner mascot"
+        />
+
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            width: radius * 2,
+            height: radius * 2,
+            transform: reduceMotion ? [] : [{ rotate }],
+          }}
+        >
+          {FINAL_FEATURE_PILLS.map((pill, index) => {
+            const angle = (index / FINAL_FEATURE_PILLS.length) * Math.PI * 2;
+            const r = radius - 16;
+            const x = Math.cos(angle) * r;
+            const y = Math.sin(angle) * r;
+
+            return (
+              <Animated.View
+                key={pill}
+                style={{
+                  position: 'absolute',
+                  left: radius + x - pillWidth / 2,
+                  top: radius + y - 12,
+                  width: pillWidth,
+                  alignItems: 'center',
+                  transform: reduceMotion ? [] : [{ rotate: counterRotate }],
+                }}
+              >
+                <View
+                  style={{
+                    minWidth: pillWidth,
+                    backgroundColor: isDark
+                      ? 'rgba(20, 24, 22, 0.95)'
+                      : 'rgba(255, 255, 255, 0.96)',
+                    borderRadius: 12,
+                    paddingHorizontal: 7,
+                    paddingVertical: 4,
+                    borderWidth: 1,
+                    borderColor: `${GREEN}50`,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: isDark ? 0.25 : 0.08,
+                    shadowRadius: 4,
+                    elevation: 2,
+                  }}
+                >
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      color: colors.text,
+                      fontSize: clamp(width * 0.024, 8.5, 9.5),
+                      fontWeight: '800',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {pill}
+                  </Text>
+                </View>
+              </Animated.View>
+            );
+          })}
+        </Animated.View>
+      </View>
+
+      <Text
+        style={{
+          color: GREEN,
+          fontSize: 10.5,
+          fontWeight: '900',
+          letterSpacing: 2.3,
+          textTransform: 'uppercase',
+          textAlign: 'center',
+        }}
+      >
+        Ready when you are
+      </Text>
+    </View>
   );
 }

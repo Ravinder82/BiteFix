@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// BiteFix — Final 8-Screen Onboarding
+// BiteFix — Final 10-Screen Onboarding
 // ═══════════════════════════════════════════════════════════
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
@@ -40,11 +40,12 @@ import {
   PrioritiesScreen as FlagshipPrioritiesScreen,
   RevelationScreen as FlagshipRevelationScreen,
   MomentOfTruthScreen,
+  FinalActivationScreen,
 } from '../../components/onboarding/OnboardingScreens';
 import { IngredientReadingFrequency, OnboardingPriority, ShoppingFrequency } from '../../types/onboarding.types';
 
 const GREEN = '#01922aff';
-const TOTAL_SCREENS = 9;
+const TOTAL_SCREENS = 10;
 
 
 function useReduceMotion() {
@@ -537,6 +538,8 @@ export default function OnboardingScreen() {
         return <FlagshipPrioritiesScreen selected={priorities} onToggle={togglePriority} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       case 8:
         return <MomentOfTruthScreen selected={priorities} name={name} shoppingFrequency={shoppingFrequency} ingredientReadingFrequency={ingredientReadingFrequency} allergens={allergens} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
+      case 9:
+        return <FinalActivationScreen colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       default:
         return null;
     }
