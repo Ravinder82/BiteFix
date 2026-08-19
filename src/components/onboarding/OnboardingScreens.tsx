@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Animated, Easing, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Activity, Check, Droplets, Leaf, Package, ShieldCheck, UserRound } from 'lucide-react-native';
 import { OrbMascot } from '../features/OrbMascot';
 import {
@@ -113,9 +113,28 @@ const PRIORITY_OPTIONS: Array<{ id: OnboardingPriority; label: string; icon: Rea
 // ══════════════════════════════════════════════════════════════
 // SHARED COMPONENTS
 // ══════════════════════════════════════════════════════════════
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
 function ScreenFrame({ children }: { children: React.ReactNode }) {
+  const { width, height } = useWindowDimensions();
+  const horizontalPadding = clamp(width * 0.0615, 18, 24);
+  const verticalPadding = clamp(height * 0.017, 10, 16);
+
   return (
-    <View style={{ flex: 1, width: '100%', maxWidth: 430, alignSelf: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 14 }}>
+    <View
+      style={{
+        flexGrow: 1,
+        width: '100%',
+        maxWidth: 430,
+        alignSelf: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: horizontalPadding,
+        paddingTop: verticalPadding,
+        paddingBottom: verticalPadding + 8,
+      }}
+    >
       {children}
     </View>
   );
@@ -131,19 +150,27 @@ function parseRichText(text: string) {
 }
 
 function ScreenHeading({ title, subtitle, colors, align = 'left', display = false }: { title: string; subtitle: string; colors: any; align?: 'left' | 'center'; display?: boolean }) {
+  const { width } = useWindowDimensions();
   const titleParts = parseRichText(title);
   const subtitleParts = parseRichText(subtitle);
+  const headlineSize = display
+    ? clamp(width * 0.0718, 25, 28)
+    : clamp(width * 0.0667, 23, 26);
+  const headlineLine = display
+    ? Math.round(headlineSize * 1.2)
+    : Math.round(headlineSize * 1.23);
+  const subtitleSize = clamp(width * 0.0359, 13, 14);
 
   return (
-    <View style={{ alignItems: align === 'center' ? 'center' : 'flex-start', marginBottom: 18 }}>
-      <Text style={[display ? TYPE.display : TYPE.headline, { color: colors.text, textAlign: align, maxWidth: 360 }]}>
+    <View style={{ alignItems: align === 'center' ? 'center' : 'flex-start', marginBottom: clamp(width * 0.046, 14, 18) }}>
+      <Text style={[display ? TYPE.display : TYPE.headline, { color: colors.text, textAlign: align, maxWidth: 360, fontSize: headlineSize, lineHeight: headlineLine }]}>
         {titleParts.map((part) => (
           <Text key={part.key} style={part.isBold ? { color: GREEN } : {}}>
             {part.text}
           </Text>
         ))}
       </Text>
-      <Text style={[TYPE.subtitle, { color: colors.textSecondary, textAlign: align, maxWidth: 350, marginTop: 7 }]}>
+      <Text style={[TYPE.subtitle, { color: colors.textSecondary, textAlign: align, maxWidth: 350, marginTop: 7, fontSize: subtitleSize, lineHeight: Math.round(subtitleSize * 1.5) }]}>
         {subtitleParts.map((part) => (
           <Text key={part.key} style={part.isBold ? { color: GREEN, fontWeight: '700' } : {}}>
             {part.text}
@@ -174,6 +201,10 @@ function SelectionRow({
   accent?: string;
 }) {
   const accentColor = accent || GREEN;
+  const { width } = useWindowDimensions();
+  const rowHorizontalPadding = clamp(width * 0.041, 14, 18);
+  const rowGap = clamp(width * 0.033, 11, 14);
+  const rowFontSize = clamp(width * 0.0372, 14, 15.5);
 
   return (
     <TouchableOpacity
@@ -217,7 +248,7 @@ function SelectionRow({
       {/* Label */}
       <Text style={{
         color: selected ? colors.text : colors.textSecondary,
-        fontSize: 14.5,
+        fontSize: rowFontSize,
         lineHeight: 20,
         fontWeight: selected ? '700' : '500',
         flex: 1,
@@ -634,7 +665,7 @@ function AllergyOptionTile({
 }
 
 // ══════════════════════════════════════════════════════════════
-// SCREEN 1 — IDENTITY
+// SCREEN 2 — IDENTITY
 // ══════════════════════════════════════════════════════════════
 export function IdentityScreen({
   name,
@@ -650,6 +681,11 @@ export function IdentityScreen({
   reduceMotion?: boolean;
 }) {
   const [focused, setFocused] = useState(false);
+  const { width, height } = useWindowDimensions();
+  const compositionScale = clamp(width / 390, 0.82, 1.04);
+  const verticalScale = clamp(height / 844, 0.88, 1.06);
+  const mascotSize = Math.round(200 * compositionScale);
+  const compositionMinHeight = Math.round(clamp(height * 0.38, 280, 350));
 
   return (
     <View
@@ -668,7 +704,7 @@ export function IdentityScreen({
       <View
         style={{
           flex: 1,
-          minHeight: 310,
+          minHeight: compositionMinHeight,
           marginTop: 10,
           marginBottom: 12,
           position: 'relative',
@@ -683,8 +719,8 @@ export function IdentityScreen({
           border={isDark ? '#344C38' : '#fac104ff'}
           shadowC="#5E8F4B"
           rotation="-12deg"
-          size={50}
-          style={{ left: '50%', top: '50%', transform: [{ translateX: -140 }, { translateY: -78 }, { rotate: '-12deg' }] }}
+          size={Math.round(50 * compositionScale)}
+          style={{ left: '50%', top: '50%', transform: [{ translateX: -140 * compositionScale }, { translateY: -78 * verticalScale }, { rotate: '-12deg' }] }}
         />
         <EmojiSticker
           emoji="🍎"
@@ -692,8 +728,8 @@ export function IdentityScreen({
           border={isDark ? '#563333' : '#fb3802ff'}
           shadowC="#B64E3B"
           rotation="11deg"
-          size={55}
-          style={{ left: '50%', top: '50%', transform: [{ translateX: 100 }, { translateY: -140 }, { rotate: '11deg' }] }}
+          size={Math.round(55 * compositionScale)}
+          style={{ left: '50%', top: '50%', transform: [{ translateX: 100 * compositionScale }, { translateY: -140 * verticalScale }, { rotate: '11deg' }] }}
         />
         <EmojiSticker
           emoji="🥦"
@@ -701,8 +737,8 @@ export function IdentityScreen({
           border={isDark ? '#344C38' : '#1adb13ff'}
           shadowC="#4F8A43"
           rotation="-8deg"
-          size={60}
-          style={{ left: '50%', top: '50%', transform: [{ translateX: -130 }, { translateY: 60 }, { rotate: '-8deg' }] }}
+          size={Math.round(60 * compositionScale)}
+          style={{ left: '50%', top: '50%', transform: [{ translateX: -130 * compositionScale }, { translateY: 60 * verticalScale }, { rotate: '-8deg' }] }}
         />
         <EmojiSticker
           emoji="🍋"
@@ -710,8 +746,8 @@ export function IdentityScreen({
           border={isDark ? '#564F27' : '#ffcc00ff'}
           shadowC="#B38A24"
           rotation="14deg"
-          size={60}
-          style={{ left: '50%', top: '50%', transform: [{ translateX: 90 }, { translateY: 60 }, { rotate: '14deg' }] }}
+          size={Math.round(60 * compositionScale)}
+          style={{ left: '50%', top: '50%', transform: [{ translateX: 90 * compositionScale }, { translateY: 60 * verticalScale }, { rotate: '14deg' }] }}
         />
 
         {/* Layer 2: Glass Pills (Outer Layer - positioned further away to frame composition) */}
@@ -722,7 +758,7 @@ export function IdentityScreen({
           border="#13f5b0"
           textColor="#F3FFF6"
           shadowC="#073A1B"
-          style={{ left: '50%', top: '50%', transform: [{ translateX: -160 }, { translateY: -150 }] }}
+          style={{ left: '50%', top: '50%', transform: [{ translateX: -160 * compositionScale }, { translateY: -150 * verticalScale }] }}
         />
         <PillSticker
           label="Your privacy is protected"
@@ -731,14 +767,14 @@ export function IdentityScreen({
           border="#a3cb48"
           textColor="#F4FFFF"
           shadowC="#103C3F"
-          style={{ left: '50%', top: '50%', transform: [{ translateX: -30 }, { translateY: 140 }] }}
+          style={{ left: '50%', top: '50%', transform: [{ translateX: -30 * compositionScale }, { translateY: 140 * verticalScale }] }}
         />
 
         {/* Layer 3: Centered Mascot Container */}
         <View
           style={{
-            width: 174,
-            height: 174,
+            width: Math.round(174 * compositionScale),
+            height: Math.round(174 * compositionScale),
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 6,
@@ -746,7 +782,7 @@ export function IdentityScreen({
         >
           <OrbMascot
             state="idle"
-            size={200}
+            size={mascotSize}
             reduceMotion={reduceMotion}
             showShadow
             accessibilityLabel="Friendly BiteFix scanner mascot"
@@ -905,7 +941,7 @@ export function ContextScreen({ selected, onSelect, colors, isDark, reduceMotion
 }
 
 // ══════════════════════════════════════════════════════════════
-// SCREEN 3 — ALLERGY
+// SCREEN 5 — ALLERGIES (moved after the pain point and instant insight)
 // ══════════════════════════════════════════════════════════════
 export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion }: { selected: string[]; onToggle: (id: string) => void; colors: any; isDark: boolean; reduceMotion: boolean }) {
   const mascotState = selected.some((id) => id !== 'none') ? 'caution' : selected.includes('none') ? 'happy' : 'thinking';
@@ -916,6 +952,8 @@ export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion
   const nuts = ALLERGEN_OPTIONS[3];
   const soy = ALLERGEN_OPTIONS[4];
   const eggs = ALLERGEN_OPTIONS[5];
+  const { width } = useWindowDimensions();
+  const useSingleColumn = width < 350;
 
   return (
     <ScreenFrame>
@@ -943,7 +981,7 @@ export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion
           reduceMotion={reduceMotion}
         />
 
-        <View style={{ flexDirection: 'row', gap: 10 }}>
+        <View style={{ flexDirection: useSingleColumn ? 'column' : 'row', gap: 10 }}>
           <AllergyOptionTile
             option={dairy}
             selected={selected.includes(dairy.id)}
@@ -951,7 +989,7 @@ export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion
             colors={colors}
             isDark={isDark}
             reduceMotion={reduceMotion}
-            style={{ flex: 1 }}
+            style={useSingleColumn ? undefined : { flex: 1 }}
           />
           <AllergyOptionTile
             option={gluten}
@@ -960,11 +998,11 @@ export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion
             colors={colors}
             isDark={isDark}
             reduceMotion={reduceMotion}
-            style={{ flex: 1 }}
+            style={useSingleColumn ? undefined : { flex: 1 }}
           />
         </View>
 
-        <View style={{ flexDirection: 'row', gap: 10 }}>
+        <View style={{ flexDirection: useSingleColumn ? 'column' : 'row', gap: 10 }}>
           <AllergyOptionTile
             option={nuts}
             selected={selected.includes(nuts.id)}
@@ -972,7 +1010,7 @@ export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion
             colors={colors}
             isDark={isDark}
             reduceMotion={reduceMotion}
-            style={{ flex: 1 }}
+            style={useSingleColumn ? undefined : { flex: 1 }}
           />
           <AllergyOptionTile
             option={soy}
@@ -981,7 +1019,7 @@ export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion
             colors={colors}
             isDark={isDark}
             reduceMotion={reduceMotion}
-            style={{ flex: 1 }}
+            style={useSingleColumn ? undefined : { flex: 1 }}
           />
         </View>
 
@@ -999,14 +1037,72 @@ export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion
 }
 
 // ══════════════════════════════════════════════════════════════
-// SCREEN 4 — PAIN
+// SCREEN 4 — LABEL READING BEHAVIOR
+// ══════════════════════════════════════════════════════════════
+export type LabelReadingFrequency = 'always' | 'sometimes' | 'rarely' | 'never';
+
+export function LabelReadingScreen({
+  selected,
+  onSelect,
+  colors,
+  isDark,
+  reduceMotion,
+}: {
+  selected?: LabelReadingFrequency;
+  onSelect: (value: LabelReadingFrequency) => void;
+  colors: any;
+  isDark: boolean;
+  reduceMotion: boolean;
+}) {
+  const options: Array<{ id: LabelReadingFrequency; label: string }> = [
+    { id: 'always', label: 'Always' },
+    { id: 'sometimes', label: 'Sometimes' },
+    { id: 'rarely', label: 'Rarely' },
+    { id: 'never', label: 'Never' },
+  ];
+
+  return (
+    <ScreenFrame>
+      <View style={{ alignItems: 'center', marginBottom: 10 }}>
+        <OrbMascot
+          state="thinking"
+          size={82}
+          reduceMotion={reduceMotion}
+          accessibilityLabel="BiteFix assistant asking about label reading habits"
+        />
+      </View>
+
+      <ScreenHeading
+        title="Do you read food **labels** before buying?"
+        subtitle="Tell us how often you actually stop to check."
+        colors={colors}
+      />
+
+      <View style={{ gap: 9 }}>
+        {options.map((option) => (
+          <SelectionRow
+            key={option.id}
+            label={option.label}
+            selected={selected === option.id}
+            onPress={() => onSelect(option.id)}
+            colors={colors}
+            isDark={isDark}
+          />
+        ))}
+      </View>
+    </ScreenFrame>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// SCREEN 4 — PAIN POINT (shown before allergies by the host flow)
 // ══════════════════════════════════════════════════════════════
 export function PainScreen({ selected, onSelect, colors, isDark, reduceMotion, isActive = true }: { selected?: IngredientReadingFrequency; onSelect: (value: IngredientReadingFrequency) => void; colors: any; isDark: boolean; reduceMotion: boolean; isActive?: boolean }) {
   const options: Array<{ id: IngredientReadingFrequency; label: string }> = [
-    { id: 'always', label: 'Always' },
-    { id: 'sometimes', label: 'Sometimes' },
-    { id: 'when_needed', label: 'Only when something catches my eye' },
-    { id: 'rarely', label: 'Rarely or never' },
+    { id: 'always', label: "I don't have time to read it" },
+    { id: 'sometimes', label: 'The ingredients are confusing' },
+    { id: 'when_needed', label: "I don't know what really matters" },
+    { id: 'rarely', label: 'Too many choices to compare' },
   ];
 
   return (
@@ -1016,8 +1112,8 @@ export function PainScreen({ selected, onSelect, colors, isDark, reduceMotion, i
       </View>
       <LabelCompressionVisual colors={colors} isDark={isDark} reduceMotion={reduceMotion} isActive={isActive} />
       <ScreenHeading
-        title="Do you read **every ingredient** before you buy?"
-        subtitle="Most people do not have time to **decode every label** in the aisle."
+        title="So much on the label. So little **clarity.**"
+        subtitle="What makes it hard to know what to choose from the label?"
         colors={colors}
       />
       <View style={{ gap: 9 }}>
@@ -1030,7 +1126,7 @@ export function PainScreen({ selected, onSelect, colors, isDark, reduceMotion, i
 }
 
 // ══════════════════════════════════════════════════════════════
-// SCREEN 5 — PRIORITIES
+// SCREEN 7 — PRIORITIES
 // ══════════════════════════════════════════════════════════════
 export function PrioritiesScreen({ selected, onToggle, colors, isDark, reduceMotion }: { selected: OnboardingPriority[]; onToggle: (id: OnboardingPriority) => void; colors: any; isDark: boolean; reduceMotion: boolean }) {
   return (
@@ -1061,7 +1157,7 @@ export function PrioritiesScreen({ selected, onToggle, colors, isDark, reduceMot
 }
 
 // ══════════════════════════════════════════════════════════════
-// SCREEN 6 — REVELATION
+// SCREEN 6 — INSTANT INSIGHT
 // ══════════════════════════════════════════════════════════════
 export function RevelationScreen({ colors, isDark, reduceMotion }: { colors: any; isDark: boolean; reduceMotion: boolean }) {
   return (
@@ -1070,8 +1166,8 @@ export function RevelationScreen({ colors, isDark, reduceMotion }: { colors: any
         <OrbMascot state="scanning" size={96} reduceMotion={reduceMotion} accessibilityLabel="BiteFix scanner revealing structured product information" />
       </View>
       <ScreenHeading
-        title="You do not need to **read everything**."
-        subtitle="BiteFix turns available product data into a **clearer snapshot**."
+        title="See the answer **in seconds**."
+        subtitle="BiteFix turns available product data into direct insights, so buying stays **fast and hassle-free**."
         colors={colors}
         display
       />
@@ -1080,8 +1176,72 @@ export function RevelationScreen({ colors, isDark, reduceMotion }: { colors: any
   );
 }
 
+function ProfileSetupSteps({ steps, colors, isDark, reduceMotion }: { steps: string[]; colors: any; isDark: boolean; reduceMotion: boolean }) {
+  const first = useRef(new Animated.Value(0)).current;
+  const second = useRef(new Animated.Value(0)).current;
+  const third = useRef(new Animated.Value(0)).current;
+  const progress = [first, second, third];
+
+  useEffect(() => {
+    if (reduceMotion) {
+      progress.forEach((value) => value.setValue(1));
+      return;
+    }
+
+    progress.forEach((value) => value.setValue(0));
+    const animation = Animated.stagger(
+      120,
+      progress.map((value) => Animated.timing(value, {
+        toValue: 1,
+        duration: 360,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+        isInteraction: false,
+      }))
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [first, second, third, reduceMotion]);
+
+  return (
+    <View style={{ marginBottom: 16 }} accessibilityLabel="Building your personalized BiteFix profile">
+      <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', letterSpacing: 1.1, textTransform: 'uppercase', marginBottom: 8 }}>
+        Building your BiteFix view
+      </Text>
+      <View style={{ gap: 7 }}>
+        {steps.slice(0, 3).map((step, index) => {
+          const itemProgress = progress[index];
+          return (
+            <Animated.View
+              key={step}
+              style={{
+                opacity: itemProgress,
+                transform: [{ scale: itemProgress.interpolate({ inputRange: [0, 1], outputRange: [0.98, 1] }) }],
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 9,
+                paddingHorizontal: 11,
+                paddingVertical: 9,
+                borderRadius: 13,
+                backgroundColor: isDark ? 'rgba(255,255,255,0.035)' : 'rgba(255,255,255,0.74)',
+                borderWidth: 1,
+                borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.055)',
+              }}
+            >
+              <View style={{ width: 21, height: 21, borderRadius: 10.5, backgroundColor: `${GREEN}18`, alignItems: 'center', justifyContent: 'center' }}>
+                <Check size={12} color={GREEN} strokeWidth={3} />
+              </View>
+              <Text numberOfLines={1} style={{ color: colors.text, fontSize: 12, fontWeight: '700', flex: 1 }}>{step}</Text>
+            </Animated.View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 // ══════════════════════════════════════════════════════════════
-// SCREEN 7 — MOMENT OF TRUTH
+// SCREEN 8 — PROFILE + RESULTS
 // ══════════════════════════════════════════════════════════════
 export function MomentOfTruthScreen({
   selected,
@@ -1089,14 +1249,35 @@ export function MomentOfTruthScreen({
   colors,
   isDark,
   reduceMotion,
+  shoppingFrequency,
+  ingredientReadingFrequency,
+  allergens,
 }: {
   selected: OnboardingPriority[];
   name?: string;
   colors: any;
   isDark: boolean;
   reduceMotion: boolean;
+  shoppingFrequency?: ShoppingFrequency;
+  ingredientReadingFrequency?: IngredientReadingFrequency;
+  allergens: string[];
 }) {
   const displayName = name?.trim() || '';
+  const shoppingLabels: Record<ShoppingFrequency, string> = {
+    rarely: "Doesn't buy packaged food",
+    often: 'Buys packaged food weekly',
+    sometimes: 'Buys packaged food monthly',
+    most_trips: 'Buys snacks daily',
+  };
+  const painLabels: Record<IngredientReadingFrequency, string> = {
+    always: "No time to read every ingredient",
+    sometimes: "Unclear which ingredients matter",
+    when_needed: 'Checks only when something catches the eye',
+    rarely: 'Usually skips the label',
+  };
+  const allergyLabels = allergens.includes('none')
+    ? ['No known food allergies']
+    : allergens.map((id) => ALLERGEN_OPTIONS.find((option) => option.id === id)?.label ?? id);
   const priorityLabels = useMemo(() => {
     const META: Record<OnboardingPriority, string> = {
       ultra_processed: 'Processing Level',
@@ -1107,10 +1288,26 @@ export function MomentOfTruthScreen({
     };
     return (selected.length > 0 ? selected : (['nutrition', 'ingredients', 'sugar'] as OnboardingPriority[])).map((p) => META[p]);
   }, [selected]);
+  const profileSignals = [
+    shoppingFrequency ? shoppingLabels[shoppingFrequency] : null,
+    ingredientReadingFrequency ? painLabels[ingredientReadingFrequency] : null,
+    ...allergyLabels,
+  ].filter((signal): signal is string => Boolean(signal));
+  const setupSteps = [
+    shoppingFrequency ? shoppingLabels[shoppingFrequency] : 'Shopping routine',
+    ingredientReadingFrequency ? painLabels[ingredientReadingFrequency] : 'Your biggest shopping barrier',
+    allergens.includes('none') ? 'No known food allergies' : allergens.length > 0 ? `Watching ${allergyLabels.length} allerg${allergyLabels.length === 1 ? 'y' : 'ies'}` : 'Allergy preferences',
+  ];
 
   return (
     <ScreenFrame>
-      {/* Static profile summary: the screen is ready as soon as it opens. */}
+      <ProfileSetupSteps
+        steps={setupSteps}
+        colors={colors}
+        isDark={isDark}
+        reduceMotion={reduceMotion}
+      />
+
       {/* Apple-style liquid glass profile summary card */}
       <View
         style={{
@@ -1138,9 +1335,9 @@ export function MomentOfTruthScreen({
             </Text>
           </View>
         </View>
-        {/* Selected Priorities badges */}
+        {/* Selected preferences and priorities */}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-          {priorityLabels.map((label) => (
+          {[...profileSignals, ...priorityLabels].map((label) => (
             <View
               key={label}
               style={{

@@ -1,26 +1,27 @@
 // ═══════════════════════════════════════════════════════════
-// BiteFix — Final 10-Screen Onboarding
+// BiteFix — Final 8-Screen Onboarding
 // ═══════════════════════════════════════════════════════════
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
+  Platform,
   TouchableOpacity,
   ScrollView,
   Animated,
+  KeyboardAvoidingView,
   Easing,
   Image,
   AccessibilityInfo,
   StatusBar,
   useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useTheme } from '../../hooks/useTheme';
 import { useAppStore } from '../../stores/appStore';
-import { OrbMascot } from '../../components/features/OrbMascot';
 import * as Haptics from 'expo-haptics';
 import {
   ChevronRight,
@@ -35,6 +36,7 @@ import {
   ContextScreen as FlagshipContextScreen,
   IdentityScreen as FlagshipIdentityScreen,
   PainScreen as FlagshipPainScreen,
+  LabelReadingScreen as FlagshipLabelReadingScreen,
   PrioritiesScreen as FlagshipPrioritiesScreen,
   RevelationScreen as FlagshipRevelationScreen,
   MomentOfTruthScreen,
@@ -42,10 +44,7 @@ import {
 import { IngredientReadingFrequency, OnboardingPriority, ShoppingFrequency } from '../../types/onboarding.types';
 
 const GREEN = '#01922aff';
-const GREEN_DIM = '#00C28820';
 const TOTAL_SCREENS = 9;
-
-const FEATURE_PILLS = ['Processing Level', 'Nutrition Intelligence', 'Ingredient Review', 'Allergen Watch', 'Additives', 'Sugar Insights', 'Eco Impact'];
 
 
 function useReduceMotion() {
@@ -123,8 +122,8 @@ function WelcomeScreen({ colors, isDark, isActive, reduceMotion }: { colors: any
     elevation: 3,
   };
 
-  const heroWidth = Math.min(width - 18, 430);
-  const heroHeight = Math.min(Math.max(height * 0.57, 470), 555);
+  const heroWidth = Math.min(Math.max(width - 18, 0), 430);
+  const heroHeight = Math.min(Math.max(height * 0.56, 390), 555);
   const bottomFadeHeight = Math.min(185, Math.max(140, heroHeight * 0.34));
 
   return (
@@ -357,90 +356,13 @@ function WelcomeScreen({ colors, isDark, isActive, reduceMotion }: { colors: any
   );
 }
 
-function FinalScreen({ colors, isDark, reduceMotion }: { colors: any; isDark: boolean; reduceMotion: boolean }) {
-  const { width } = useWindowDimensions();
-
-  const RADIUS = Math.min(128, Math.max(106, (width - 56) / 2.25));
-  const mascotSize = Math.min(116, Math.max(92, width * 0.28));
-
-  return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 40 }}>
-      <Text style={{ color: colors.text, fontSize: 26, fontWeight: '900', lineHeight: 32, letterSpacing: -0.4, textAlign: 'center', marginBottom: 8 }}>
-        Your BiteFix Scanner Is Ready
-      </Text>
-      <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 21, fontWeight: '500', textAlign: 'center', marginBottom: 40 }}>
-        Scan a product and let BiteFix turn available food data into a clear snapshot.
-      </Text>
-      <View style={{ width: RADIUS * 2, height: RADIUS * 2, alignItems: 'center', justifyContent: 'center' }}>
-        {/* Subtle Orbit Guide */}
-        <View
-          style={{
-            position: 'absolute',
-            width: RADIUS * 2,
-            height: RADIUS * 2,
-            borderRadius: RADIUS,
-            borderWidth: 1,
-            borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-          }}
-        />
-
-        <View>
-          <OrbMascot state="happy" size={mascotSize} reduceMotion={reduceMotion} />
-        </View>
-
-        {/* Static capability ring: no orbit loop or staggered entrances. */}
-        <View style={{ position: 'absolute', width: RADIUS * 2, height: RADIUS * 2 }} pointerEvents="none">
-          {FEATURE_PILLS.map((pill, i) => {
-            const angle = (i / FEATURE_PILLS.length) * 2 * Math.PI;
-            const r = RADIUS;
-            const x = Math.cos(angle) * r;
-            const y = Math.sin(angle) * r;
-
-            return (
-              <View
-                key={pill}
-                style={{
-                  position: 'absolute',
-                  left: RADIUS + x - 71,
-                  top: RADIUS + y - 15,
-                  width: 142,
-                  alignItems: 'center',
-                }}
-              >
-                <View
-                  style={{
-                    backgroundColor: isDark ? 'rgba(20, 24, 22, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                    borderRadius: 14,
-                    paddingHorizontal: 10,
-                    paddingVertical: 6,
-                    minHeight: 30,
-                    maxWidth: 142,
-                    borderWidth: 1,
-                    borderColor: GREEN + '40',
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: isDark ? 0.3 : 0.1,
-                    shadowRadius: 6,
-                    elevation: 3,
-                  }}
-                >
-                  <Text numberOfLines={1} style={{ color: colors.text, fontSize: 10.5, lineHeight: 14, fontWeight: '800', textAlign: 'center' }}>{pill}</Text>
-                </View>
-              </View>
-            );
-          })}
-        </View>
-      </View>
-    </View>
-  );
-}
-
 // ══════════════════════════════════════════════════════════
 // Main Component
 // ══════════════════════════════════════════════════════════
 export default function OnboardingScreen() {
   const { colors, isDark } = useTheme();
-  const { width: screenWidth } = useWindowDimensions();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const {
     setOnboardingComplete,
     setProfile,
@@ -458,12 +380,24 @@ export default function OnboardingScreen() {
   const [allergens, setAllergens] = useState<string[]>([]);
   const [priorities, setPriorities] = useState<OnboardingPriority[]>([]);
   const [shoppingFrequency, setShoppingFrequency] = useState<ShoppingFrequency>();
+  const [labelReadingFrequency, setLabelReadingFrequency] = useState<'always' | 'sometimes' | 'rarely' | 'never'>();
   const [ingredientReadingFrequency, setIngredientReadingFrequency] = useState<IngredientReadingFrequency>();
 
   const reduceMotion = useReduceMotion();
   const pagerRef = useRef<any>(null);
   const pagingUnlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pagingLockRef = useRef(false);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      pagerRef.current?.scrollTo({
+        x: currentScreen * Math.max(screenWidth, 1),
+        y: 0,
+        animated: false,
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [screenWidth]);
 
   useEffect(() => {
     return () => {
@@ -578,8 +512,7 @@ export default function OnboardingScreen() {
   const getCtaLabel = (screen: number) =>
     screen === TOTAL_SCREENS - 1 ? 'Activate BiteFix' :
       screen === 0 ? 'Get Started' :
-        screen === 6 ? 'Show Me' :
-          screen === 7 ? 'See My BiteFix' : 'Continue';
+        screen === 5 ? 'Show Me' : 'Continue';
 
   const renderScreenContent = (screen: number) => {
     const isActive = screen === currentScreen && !isPaging;
@@ -593,24 +526,30 @@ export default function OnboardingScreen() {
       case 2:
         return <FlagshipContextScreen selected={shoppingFrequency} onSelect={setShoppingFrequency} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       case 3:
-        return <FlagshipAllergyScreen selected={allergens} onToggle={toggleAllergen} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
+        return <FlagshipLabelReadingScreen selected={labelReadingFrequency} onSelect={setLabelReadingFrequency} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       case 4:
         return <FlagshipPainScreen selected={ingredientReadingFrequency} onSelect={setIngredientReadingFrequency} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} isActive={isActive} />;
       case 5:
-        return <FlagshipPrioritiesScreen selected={priorities} onToggle={togglePriority} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
-      case 6:
         return <FlagshipRevelationScreen colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
+      case 6:
+        return <FlagshipAllergyScreen selected={allergens} onToggle={toggleAllergen} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       case 7:
-        return <MomentOfTruthScreen selected={priorities} name={name} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
+        return <FlagshipPrioritiesScreen selected={priorities} onToggle={togglePriority} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       case 8:
-        return <FinalScreen colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
+        return <MomentOfTruthScreen selected={priorities} name={name} shoppingFrequency={shoppingFrequency} ingredientReadingFrequency={ingredientReadingFrequency} allergens={allergens} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       default:
         return null;
     }
   };
 
   const renderSlide = (screen: number) => {
-    const ctaDisabled = screen === 1 && name.trim().length < 1;
+    const ctaDisabled =
+      (screen === 1 && name.trim().length < 1) ||
+      (screen === 2 && !shoppingFrequency) ||
+      (screen === 3 && !labelReadingFrequency) ||
+      (screen === 4 && !ingredientReadingFrequency) ||
+      (screen === 6 && allergens.length === 0) ||
+      (screen === 7 && priorities.length === 0);
     const disabledBg = isDark ? 'rgba(0, 107, 31, 0.22)' : '#E8F6ED';
     const disabledBorder = isDark ? 'rgba(0, 200, 80, 0.30)' : 'rgba(0, 107, 31, 0.22)';
     const disabledText = isDark ? 'rgba(100, 240, 140, 0.70)' : 'rgba(0, 107, 31, 0.68)';
@@ -639,16 +578,24 @@ export default function OnboardingScreen() {
         <View style={{ flex: 1 }}>
           <ScrollView
             style={{ flex: 1 }}
-            contentContainerStyle={{ flexGrow: 1 }}
+            contentContainerStyle={{
+              flexGrow: 1,
+              minHeight: Math.max(0, screenHeight - insets.top - insets.bottom - (screen > 0 ? 42 : 0) - 100),
+              paddingBottom: 18,
+            }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            scrollEnabled={screen !== 1}
+            keyboardDismissMode="on-drag"
+            automaticallyAdjustKeyboardInsets
+            nestedScrollEnabled
+            bounces={false}
+            scrollEnabled
           >
             {renderScreenContent(screen)}
           </ScrollView>
         </View>
 
-        <View style={{ paddingHorizontal: 24, paddingBottom: 24, paddingTop: 12 }}>
+        <View style={{ paddingHorizontal: Math.max(18, Math.min(24, screenWidth * 0.0615)), paddingBottom: 18, paddingTop: 12 }}>
           <TouchableOpacity
             onPress={screen === TOTAL_SCREENS - 1 ? handleComplete : handleNext}
             disabled={ctaDisabled}
@@ -684,32 +631,37 @@ export default function OnboardingScreen() {
   const pageWidth = Math.max(screenWidth, 1);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
-      <ScrollView
-        ref={pagerRef}
-        horizontal
-        pagingEnabled
-        scrollEnabled={false}
-        showsHorizontalScrollIndicator={false}
-        bounces={false}
-        removeClippedSubviews={false}
-        decelerationRate="fast"
-        contentContainerStyle={{ width: pageWidth * TOTAL_SCREENS, flexGrow: 1 }}
-        style={{ flex: 1 }}
-        pointerEvents={isPaging ? 'none' : 'auto'}
-        onMomentumScrollEnd={(event) => {
-          const settledScreen = Math.round(event.nativeEvent.contentOffset.x / pageWidth);
-          finishPaging(Math.max(0, Math.min(TOTAL_SCREENS - 1, settledScreen)));
-        }}
-      >
-        {Array.from({ length: TOTAL_SCREENS }).map((_, screen) => (
-          <View key={screen} style={{ width: pageWidth, alignSelf: 'stretch' }}>
-            {renderSlide(screen)}
-          </View>
-        ))}
-      </ScrollView>
-    </SafeAreaView>
+        <ScrollView
+          ref={pagerRef}
+          horizontal
+          pagingEnabled
+          scrollEnabled={false}
+          showsHorizontalScrollIndicator={false}
+          bounces={false}
+          removeClippedSubviews={false}
+          decelerationRate="fast"
+          contentContainerStyle={{ width: pageWidth * TOTAL_SCREENS, minHeight: '100%' }}
+          style={{ flex: 1 }}
+          pointerEvents={isPaging ? 'none' : 'auto'}
+          onMomentumScrollEnd={(event) => {
+            const settledScreen = Math.round(event.nativeEvent.contentOffset.x / pageWidth);
+            finishPaging(Math.max(0, Math.min(TOTAL_SCREENS - 1, settledScreen)));
+          }}
+        >
+          {Array.from({ length: TOTAL_SCREENS }).map((_, screen) => (
+            <View key={screen} style={{ width: pageWidth, alignSelf: 'stretch' }}>
+              {renderSlide(screen)}
+            </View>
+          ))}
+        </ScrollView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }

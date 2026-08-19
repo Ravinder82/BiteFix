@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, Text, View } from 'react-native';
+import { Animated, Easing, Text, View, useWindowDimensions } from 'react-native';
 import { Activity, Droplets, Leaf, Package, ShieldCheck, Zap } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { OrbMascot } from '../features/OrbMascot';
 import { ProductDataStatusPill } from '../features/ProductDataPills';
 import { NutriScoreTrafficLight } from '../features/NutriScoreTrafficLight';
@@ -18,6 +19,10 @@ const GREEN = '#01922A';
 const AMBER = '#D97706';
 const TEAL = '#0F766E';
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
 export const PRIORITY_META: Record<OnboardingPriority, { label: string; color: string; icon: React.ComponentType<any> }> = {
   ultra_processed: { label: 'Processing Level', color: GREEN, icon: Package },
   nutrition: { label: 'Nutrition Intelligence', color: TEAL, icon: Activity },
@@ -27,6 +32,9 @@ export const PRIORITY_META: Record<OnboardingPriority, { label: string; color: s
 };
 
 function Surface({ children, colors, isDark, style }: VisualProps & { children: React.ReactNode; style?: any }) {
+  const { width } = useWindowDimensions();
+  const padding = clamp(width * 0.041, 12, 16);
+
   return (
     <View
       style={[
@@ -35,7 +43,7 @@ function Surface({ children, colors, isDark, style }: VisualProps & { children: 
           borderColor: isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.06)',
           borderWidth: 1,
           borderRadius: 22,
-          padding: 16,
+          padding,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 6 },
           shadowOpacity: isDark ? 0.18 : 0.05,
@@ -51,7 +59,7 @@ function Surface({ children, colors, isDark, style }: VisualProps & { children: 
 }
 
 // ══════════════════════════════════════════════════════════════
-// SCREEN 5 — FOCUS CONSTELLATION
+// SCREEN 7 — FOCUS CONSTELLATION
 // ══════════════════════════════════════════════════════════════
 export function PriorityConstellation({ colors, isDark, reduceMotion = false, selected }: VisualProps & { selected: OnboardingPriority[] }) {
   const activePriorities = selected.length > 0 ? selected : (['nutrition', 'ingredients'] as OnboardingPriority[]);
@@ -140,96 +148,109 @@ export function PriorityConstellation({ colors, isDark, reduceMotion = false, se
 }
 
 // ══════════════════════════════════════════════════════════════
-// SCREEN 4 — LABEL COMPRESSION VISUAL
+// SCREEN 5 — LABEL COMPRESSION VISUAL
 // ══════════════════════════════════════════════════════════════
 export function LabelCompressionVisual({ colors, isDark, reduceMotion = false, isActive = true }: VisualProps & { isActive?: boolean }) {
-  const beam = useRef(new Animated.Value(0)).current;
+  const { width } = useWindowDimensions();
+  const sweep = useRef(new Animated.Value(0)).current;
+  const borderWidth = Math.max(200, Math.min(360, width - 80));
+  const borderHeight = Math.max(116, Math.min(136, width * 0.31));
+  const labelCardHeight = borderHeight;
 
   useEffect(() => {
     if (reduceMotion || !isActive) {
-      beam.stopAnimation();
-      beam.setValue(0);
+      sweep.stopAnimation();
+      sweep.setValue(0);
       return;
     }
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(beam, { toValue: 1, duration: 1800, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-        Animated.delay(400),
-        Animated.timing(beam, { toValue: 0, duration: 1, useNativeDriver: true }),
+        Animated.timing(sweep, { toValue: 4, duration: 5200, easing: Easing.inOut(Easing.cubic), useNativeDriver: true, isInteraction: false }),
+        Animated.delay(1100),
+        Animated.timing(sweep, { toValue: 0, duration: 1, useNativeDriver: true, isInteraction: false }),
       ])
     );
     loop.start();
     return () => loop.stop();
-  }, [beam, isActive, reduceMotion]);
+  }, [isActive, reduceMotion, sweep]);
 
   return (
-    <Surface colors={colors} isDark={isDark} style={{ marginBottom: 20, overflow: 'hidden' }}>
+    <Surface
+      colors={colors}
+      isDark={isDark}
+      style={{
+        marginBottom: 20,
+        overflow: 'hidden',
+        backgroundColor: isDark ? '#08130D' : '#14251A',
+        borderColor: isDark ? 'rgba(150,255,176,0.22)' : 'rgba(90,224,130,0.32)',
+        borderWidth: 1.2,
+        shadowColor: GREEN,
+        shadowOpacity: isDark ? 0.25 : 0.18,
+        shadowRadius: 18,
+        elevation: 4,
+      }}
+    >
       <View
         style={{
-          height: 108,
+          height: labelCardHeight,
           overflow: 'hidden',
           justifyContent: 'center',
           borderRadius: 14,
-          backgroundColor: isDark ? 'rgba(0,0,0,0.25)' : 'rgba(0,0,0,0.02)',
-          borderWidth: 1,
-          borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+          backgroundColor: isDark ? 'rgba(255,255,255,0.035)' : 'rgba(255,255,255,0.045)',
+          borderWidth: 1.2,
+          borderColor: isDark ? 'rgba(150,255,176,0.18)' : 'rgba(150,255,176,0.24)',
           paddingHorizontal: 14,
+          paddingVertical: 10,
         }}
       >
+        {/* One restrained glint travels along the card edge; no scanner beam. */}
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: 48,
+            height: 2,
+            opacity: 0.9,
+            transform: [
+              { translateX: sweep.interpolate({ inputRange: [0, 1, 2, 3, 4], outputRange: [-48, borderWidth, borderWidth, -48, -48] }) },
+              { translateY: sweep.interpolate({ inputRange: [0, 1, 2, 3, 4], outputRange: [0, 0, borderHeight, borderHeight, 0] }) },
+              { rotate: sweep.interpolate({ inputRange: [0, 1, 2, 3, 4], outputRange: ['0deg', '0deg', '90deg', '180deg', '270deg'] }) },
+            ],
+          }}
+        >
+          <LinearGradient
+            colors={['rgba(130,255,164,0)', '#B7FFD0', 'rgba(130,255,164,0)']}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={{ flex: 1 }}
+          />
+        </Animated.View>
+
+        <Text
+          style={{
+            color: '#AFC4B4',
+            fontSize: Math.max(8.5, Math.min(9.5, width * 0.024)),
+            lineHeight: Math.max(12, Math.round(width * 0.034)),
+            fontWeight: '900',
+            letterSpacing: 1.55,
+            textTransform: 'uppercase',
+            marginBottom: 7,
+          }}
+        >
+          Ingredients Label
+        </Text>
+
         {[
           'glucose syrup, maltodextrin, acidity regulator (E330)',
           'emulsifier (soy lecithin E322), natural flavouring, stabiliser',
           'cocoa mass, palm oil, salt, enriched vitamins, minerals',
           'traces: tree nuts, milk solids, gluten, peanuts',
         ].map((line) => (
-          <Text key={line} numberOfLines={1} style={{ color: colors.textSecondary, fontSize: 10.5, lineHeight: 19, fontWeight: '700', letterSpacing: 0.15, opacity: 0.55 }}>
+          <Text key={line} numberOfLines={1} style={{ color: '#C7D9CB', fontSize: Math.max(9.5, Math.min(10.5, width * 0.027)), lineHeight: Math.max(18, Math.round(width * 0.048)), fontWeight: '700', letterSpacing: 0.15, opacity: 0.78 }}>
             {line}
           </Text>
-        ))}
-
-        {/* Laser Beam */}
-        <Animated.View
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            top: 0,
-            height: 2,
-            backgroundColor: GREEN,
-            shadowColor: GREEN,
-            shadowOpacity: 0.9,
-            shadowRadius: 8,
-            transform: [{ translateY: beam.interpolate({ inputRange: [0, 1], outputRange: [0, 100] }) }],
-          }}
-        />
-
-        {/* Scanner corner brackets */}
-        <View pointerEvents="none" style={{ position: 'absolute', left: 8, top: 8, width: 14, height: 14, borderTopWidth: 2, borderLeftWidth: 2, borderColor: `${GREEN}90`, borderTopLeftRadius: 4 }} />
-        <View pointerEvents="none" style={{ position: 'absolute', right: 8, top: 8, width: 14, height: 14, borderTopWidth: 2, borderRightWidth: 2, borderColor: `${GREEN}90`, borderTopRightRadius: 4 }} />
-        <View pointerEvents="none" style={{ position: 'absolute', left: 8, bottom: 8, width: 14, height: 14, borderBottomWidth: 2, borderLeftWidth: 2, borderColor: `${GREEN}90`, borderBottomLeftRadius: 4 }} />
-        <View pointerEvents="none" style={{ position: 'absolute', right: 8, bottom: 8, width: 14, height: 14, borderBottomWidth: 2, borderRightWidth: 2, borderColor: `${GREEN}90`, borderBottomRightRadius: 4 }} />
-      </View>
-
-      {/* Extracted signals row */}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 12 }}>
-        {[
-          { label: 'Processing Level', color: GREEN },
-          { label: 'Ingredient Review', color: GREEN },
-          { label: 'Sugar Insights', color: AMBER },
-        ].map((item) => (
-          <View
-            key={item.label}
-            style={{
-              paddingHorizontal: 10,
-              paddingVertical: 5,
-              borderRadius: 999,
-              backgroundColor: `${item.color}14`,
-              borderWidth: 1,
-              borderColor: `${item.color}35`,
-            }}
-          >
-            <Text style={{ color: item.color, fontSize: 10, fontWeight: '800' }}>{item.label}</Text>
-          </View>
         ))}
       </View>
     </Surface>
@@ -247,18 +268,23 @@ export function InsightTransformVisual({ colors, isDark }: VisualProps) {
     { label: 'INSIGHT', value: 'Clear Result', color: TEAL },
   ];
 
+  const { width } = useWindowDimensions();
+  const stageSize = Math.round(Math.max(36, Math.min(44, width * 0.113)));
+  const arrowWidth = Math.round(Math.max(12, Math.min(20, width * 0.05)));
+  const stageIcon = Math.round(stageSize * 0.455);
+
   return (
-    <Surface colors={colors} isDark={isDark} style={{ marginBottom: 20, paddingVertical: 18 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+    <Surface colors={colors} isDark={isDark} style={{ marginBottom: 20, paddingVertical: 18, paddingHorizontal: 14 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
         {stages.map((stage, index) => {
           return (
             <React.Fragment key={stage.label}>
               <View style={{ alignItems: 'center', gap: 6 }}>
                 <View
                   style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 14,
+                    width: stageSize,
+                    height: stageSize,
+                    borderRadius: Math.round(stageSize * 0.32),
                     backgroundColor: `${stage.color}14`,
                     borderWidth: 1.2,
                     borderColor: `${stage.color}45`,
@@ -267,15 +293,15 @@ export function InsightTransformVisual({ colors, isDark }: VisualProps) {
                   }}
                 >
                   {index === stages.length - 1 ? (
-                    <Zap size={20} color={stage.color} strokeWidth={2.5} />
+                    <Zap size={stageIcon} color={stage.color} strokeWidth={2.5} />
                   ) : (
-                    <Text style={{ color: stage.color, fontSize: 10, fontWeight: '900' }}>0{index + 1}</Text>
+                    <Text style={{ color: stage.color, fontSize: Math.max(9, stageSize * 0.227), fontWeight: '900' }}>0{index + 1}</Text>
                   )}
                 </View>
-                <Text style={{ color: stage.color, fontSize: 8.5, fontWeight: '900', letterSpacing: 0.7 }}>{stage.label}</Text>
+                <Text style={{ color: stage.color, fontSize: Math.max(7.5, Math.min(8.5, width * 0.0218)), fontWeight: '900', letterSpacing: 0.7 }}>{stage.label}</Text>
               </View>
               {index < stages.length - 1 && (
-                <Svg width="20" height="14" viewBox="0 0 20 14">
+                <Svg width={arrowWidth} height={Math.round(arrowWidth * 0.7)} viewBox="0 0 20 14">
                   <Path d="M1 7 H16 M11 2 L17 7 L11 12" fill="none" stroke={colors.textMuted} strokeOpacity="0.5" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
                 </Svg>
               )}
@@ -288,9 +314,11 @@ export function InsightTransformVisual({ colors, isDark }: VisualProps) {
 }
 
 // ══════════════════════════════════════════════════════════════
-// SCREEN 7 — MOMENT OF TRUTH RESULT CARD
+// SCREEN 8 — MOMENT OF TRUTH RESULT CARD
 // ══════════════════════════════════════════════════════════════
 export function MomentResultCard({ colors, isDark, selected }: VisualProps & { selected: OnboardingPriority[] }) {
+  const { width } = useWindowDimensions();
+  const compact = width < 360;
   const visiblePriorities = selected.length > 0 ? selected : ((['nutrition', 'ingredients', 'sugar'] as OnboardingPriority[]));
 
   return (
@@ -311,16 +339,16 @@ export function MomentResultCard({ colors, isDark, selected }: VisualProps & { s
       }}
     >
       {/* Product Identity Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, gap: 8 }}>
+      <View style={{ flexDirection: compact ? 'column' : 'row', alignItems: compact ? 'flex-start' : 'center', justifyContent: 'space-between', marginBottom: 12, gap: compact ? 8 : 8 }}>
         <View style={{ flex: 1 }}>
           <Text style={{ color: colors.textSecondary, fontSize: 9.5, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase' }}>
             Product Scan
           </Text>
-          <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', marginTop: 2 }}>
+          <Text style={{ color: colors.text, fontSize: compact ? 15 : 16, fontWeight: '900', marginTop: 2 }}>
             Organic Dark Chocolate 72%
           </Text>
         </View>
-        <View style={{ flexDirection: 'row', gap: 5, flexShrink: 1 }}>
+        <View style={{ flexDirection: 'row', gap: 5, flexShrink: 1, alignSelf: compact ? 'flex-start' : 'auto' }}>
           <ProductDataStatusPill status="complete" colors={colors} isDark={isDark} />
         </View>
       </View>
