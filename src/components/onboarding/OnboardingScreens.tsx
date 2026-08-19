@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
-import { Activity, Check, Droplets, Leaf, Package, ShieldCheck, UserRound } from 'lucide-react-native';
+import { Activity, ArrowRight, Check, Droplets, Leaf, Package, ScanLine, ShieldCheck, Sparkles, Tag, UserRound, Zap } from 'lucide-react-native';
+import Svg, { Circle, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { OrbMascot } from '../features/OrbMascot';
 import {
-  InsightTransformVisual,
   LabelCompressionVisual,
   MomentResultCard,
   PriorityConstellation,
@@ -1089,8 +1089,8 @@ export function LabelReadingScreen({
         style={{
           flex: 1,
           minHeight: compositionMinHeight,
-          marginTop: 8,
-          marginBottom: 8,
+          marginTop: -50,
+          marginBottom: -50,
           position: 'relative',
           alignItems: 'center',
           justifyContent: 'center',
@@ -1147,7 +1147,7 @@ export function LabelReadingScreen({
             top: '50%',
             transform: [
               { translateX: -126 * compositionScale },
-              { translateY: 74 * verticalScale },
+              { translateY: 20 * verticalScale },
               { rotate: '-7deg' },
             ],
           }}
@@ -1166,7 +1166,7 @@ export function LabelReadingScreen({
             top: '50%',
             transform: [
               { translateX: 92 * compositionScale },
-              { translateY: 76 * verticalScale },
+              { translateY: 20 * verticalScale },
               { rotate: '10deg' },
             ],
           }}
@@ -1200,7 +1200,7 @@ export function LabelReadingScreen({
           colors={colors}
         />
 
-        <View style={{ gap: 9 }}>
+        <View style={{ gap: 7 }}>
           {options.map((option) => (
             <SelectionRow
               key={option.id}
@@ -1315,26 +1315,581 @@ export function PrioritiesScreen({ selected, onToggle, colors, isDark, reduceMot
 }
 
 // ══════════════════════════════════════════════════════════════
-// SCREEN 6 — INSTANT INSIGHT
+// SCREEN 6 — INSTANT INSIGHT SCORE REVEAL HERO
 // ══════════════════════════════════════════════════════════════
-export function RevelationScreen({ colors, isDark, reduceMotion }: { colors: any; isDark: boolean; reduceMotion: boolean }) {
+const AnimatedSvgCircle = Animated.createAnimatedComponent(Circle);
+
+type InsightStage = 'label' | 'scan' | 'insights';
+
+function InsightTrailerSteps({
+  colors,
+  isDark,
+  reduceMotion,
+  isActive = true,
+}: {
+  colors: any;
+  isDark: boolean;
+  reduceMotion: boolean;
+  isActive?: boolean;
+}) {
+  const { width } = useWindowDimensions();
+  const [activeStage, setActiveStage] = useState<InsightStage>('label');
+  const progress = useRef(new Animated.Value(0)).current;
+  const hasRunRef = useRef(false);
+  const glowPulse = useRef(new Animated.Value(0)).current;
+
+  const stages: Array<{
+    id: InsightStage;
+    label: string;
+    bgColor: string;
+    borderColor: string;
+    shadowColor: string;
+    iconColor: string;
+    icon: React.ComponentType<any>;
+  }> = [
+      { id: 'label', label: 'LABEL', bgColor: '#5656edff', borderColor: '#545353ff', shadowColor: '#6a68faff', iconColor: '#FFFFFF', icon: Tag },
+      { id: 'scan', label: 'SCAN', bgColor: '#ff7446ff', borderColor: '#7f7e7eff', shadowColor: '#ff601eff', iconColor: '#FFFFFF', icon: ScanLine },
+      { id: 'insights', label: 'INSIGHTS', bgColor: '#ff4e4eff', borderColor: '#767575ff', shadowColor: '#e03131ff', iconColor: '#FFFFFF', icon: Zap },
+    ];
+
+  useEffect(() => {
+    if (reduceMotion) {
+      glowPulse.setValue(0);
+      return;
+    }
+    const pulseAnim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowPulse, {
+          toValue: 1,
+          duration: 1000,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(glowPulse, {
+          toValue: 0,
+          duration: 1000,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    if (isActive) {
+      pulseAnim.start();
+    } else {
+      pulseAnim.stop();
+      glowPulse.setValue(0);
+    }
+    return () => pulseAnim.stop();
+  }, [glowPulse, isActive, reduceMotion]);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      progress.stopAnimation();
+      progress.setValue(1);
+      setActiveStage('insights');
+      hasRunRef.current = true;
+      return;
+    }
+
+    if (!isActive) {
+      progress.stopAnimation();
+      progress.setValue(0);
+      setActiveStage('label');
+      hasRunRef.current = false;
+      return;
+    }
+
+    if (hasRunRef.current) return;
+    hasRunRef.current = true;
+    progress.setValue(0);
+    setActiveStage('label');
+
+    // 2.15s synchronized sequence:
+    // 0-450ms: LABEL active
+    // 450-1400ms: SCAN active (progress to 0.55 over 950ms)
+    // 1400-2150ms: INSIGHTS active (progress to 1.0 over 750ms)
+    const sequence = Animated.sequence([
+      Animated.delay(450),
+      Animated.timing(progress, {
+        toValue: 0.55,
+        duration: 950,
+        easing: Easing.inOut(Easing.cubic),
+        useNativeDriver: true,
+        isInteraction: false,
+      }),
+      Animated.timing(progress, {
+        toValue: 1,
+        duration: 750,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+        isInteraction: false,
+      }),
+    ]);
+
+    const listener = progress.addListener(({ value }) => {
+      if (value < 0.35) setActiveStage('label');
+      else if (value < 0.70) setActiveStage('scan');
+      else setActiveStage('insights');
+    });
+
+    sequence.start(() => setActiveStage('insights'));
+    return () => {
+      progress.removeListener(listener);
+      sequence.stop();
+      progress.stopAnimation();
+    };
+  }, [isActive, progress, reduceMotion]);
+
+  const railWidth = clamp(width * 0.94, 320, 400);
+
+  const glowScale = glowPulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1.0, 1.25],
+  });
+
+  const glowOpacity = glowPulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.65, 0.15],
+  });
+
   return (
-    <ScreenFrame>
-      <View style={{ alignItems: 'center', marginBottom: 10 }}>
-        <OrbMascot state="scanning" size={96} reduceMotion={reduceMotion} accessibilityLabel="BiteFix scanner revealing structured product information" />
+    <View style={{ width: railWidth, alignSelf: 'center', marginVertical: 6 }}>
+      <View
+        style={{
+          height: 110,
+          backgroundColor: 'transparent',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        {stages.map((stage, index) => {
+          const Icon = stage.icon;
+          const active = activeStage === stage.id || activeStage === 'insights';
+          const stageScale = active ? 1.05 : 0.92;
+          const stageOpacity = active ? 1 : 0.45;
+
+          // Sticker colors based on active/inactive state
+          const stickerBg = active ? stage.bgColor : (isDark ? '#1C1C1E' : '#9a9acaff');
+          const stickerBorder = active ? stage.borderColor : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)');
+          const stickerShadow = active ? stage.shadowColor : 'transparent';
+          const stickerIconColor = active ? stage.iconColor : (isDark ? '#8E8E93' : '#AEAEB2');
+
+          return (
+            <React.Fragment key={stage.id}>
+              <View style={{ flex: 1, alignItems: 'center', opacity: stageOpacity }}>
+                <View style={{ width: 72, height: 72, alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                  {active && (
+                    <Animated.View
+                      style={{
+                        position: 'absolute',
+                        width: 72,
+                        height: 72,
+                        borderRadius: 22,
+                        borderWidth: 3,
+                        borderColor: stage.borderColor,
+                        shadowColor: stage.borderColor,
+                        shadowOffset: { width: 0, height: 0 },
+                        shadowOpacity: 0.8,
+                        shadowRadius: 10,
+                        opacity: glowOpacity,
+                        transform: [{ scale: glowScale }],
+                      }}
+                    />
+                  )}
+                  <Animated.View
+                    style={{
+                      width: 72,
+                      height: 72,
+                      borderRadius: 22,
+                      backgroundColor: stickerBg,
+                      borderWidth: active ? 2.5 : 1.5,
+                      borderColor: stickerBorder,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      shadowColor: stickerShadow,
+                      shadowOffset: { width: 0, height: active ? 4 : 0 },
+                      shadowOpacity: active ? 0.25 : 0,
+                      shadowRadius: 8,
+                      elevation: active ? 3 : 0,
+                      transform: [{ scale: stageScale }],
+                    }}
+                  >
+                    <Icon size={34} color={stickerIconColor} strokeWidth={2.4} />
+                  </Animated.View>
+                </View>
+                <Text
+                  style={{
+                    marginTop: 6,
+                    color: active ? colors.text : colors.textMuted,
+                    fontSize: 9,
+                    fontWeight: '900',
+                    letterSpacing: 1.1,
+                  }}
+                >
+                  {stage.label}
+                </Text>
+              </View>
+              {index < stages.length - 1 && (
+                <ArrowRight
+                  size={20}
+                  color={
+                    activeStage === 'insights' || (index === 0 && activeStage === 'scan')
+                      ? stages[index + 1].borderColor
+                      : '#4E7166'
+                  }
+                  strokeWidth={2.5}
+                  style={{ marginHorizontal: 2 }}
+                />
+              )}
+            </React.Fragment>
+          );
+        })}
       </View>
-      <ScreenHeading
-        title="See the answer **in seconds**."
-        subtitle="BiteFix turns available product data into direct insights, so buying stays **fast and hassle-free**."
-        colors={colors}
-        display
-      />
-      <InsightTransformVisual colors={colors} isDark={isDark} />
-    </ScreenFrame>
+    </View>
   );
 }
 
-function ProfileSetupSteps({ steps, colors, isDark, reduceMotion }: { steps: string[]; colors: any; isDark: boolean; reduceMotion: boolean }) {
+function MascotScoreRingTeaser({
+  colors,
+  isDark,
+  reduceMotion,
+  isActive = true,
+}: {
+  colors: any;
+  isDark: boolean;
+  reduceMotion: boolean;
+  isActive?: boolean;
+}) {
+  const { width } = useWindowDimensions();
+  const targetScore = 78;
+  const scoreColor = '#2DD4BF';
+
+  const ringSize = Math.round(clamp(width * 0.80, 200, 340));
+  const mascotSize = Math.round(ringSize * 0.60);
+  const badgeWidth = Math.min(236, Math.round(width * 0.62));
+
+  const [displayedScore, setDisplayedScore] = useState(0);
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const ringScaleAnim = useRef(new Animated.Value(0.94)).current;
+  const scoreRevealAnim = useRef(new Animated.Value(0)).current;
+  const badgeLiftAnim = useRef(new Animated.Value(8)).current;
+  const hasRunRef = useRef(false);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      progressAnim.stopAnimation();
+      ringScaleAnim.stopAnimation();
+      scoreRevealAnim.stopAnimation();
+      badgeLiftAnim.stopAnimation();
+      progressAnim.setValue(targetScore);
+      ringScaleAnim.setValue(1);
+      scoreRevealAnim.setValue(1);
+      badgeLiftAnim.setValue(0);
+      setDisplayedScore(targetScore);
+      hasRunRef.current = true;
+      return;
+    }
+
+    if (!isActive) {
+      progressAnim.stopAnimation();
+      ringScaleAnim.stopAnimation();
+      scoreRevealAnim.stopAnimation();
+      badgeLiftAnim.stopAnimation();
+      progressAnim.setValue(0);
+      ringScaleAnim.setValue(0.94);
+      scoreRevealAnim.setValue(0);
+      badgeLiftAnim.setValue(8);
+      setDisplayedScore(0);
+      hasRunRef.current = false;
+      return;
+    }
+
+    if (hasRunRef.current) return;
+    hasRunRef.current = true;
+
+    progressAnim.setValue(0);
+    ringScaleAnim.setValue(0.94);
+    scoreRevealAnim.setValue(0);
+    badgeLiftAnim.setValue(8);
+    setDisplayedScore(0);
+
+    const listener = progressAnim.addListener(({ value }) => {
+      setDisplayedScore(Math.min(targetScore, Math.round(value)));
+    });
+
+    const animation = Animated.sequence([
+      // Phase 1 (0-450ms): Preparation & subtle scale-in
+      Animated.parallel([
+        Animated.timing(ringScaleAnim, {
+          toValue: 1,
+          duration: 450,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+          isInteraction: false,
+        }),
+        Animated.timing(scoreRevealAnim, {
+          toValue: 0.35,
+          duration: 450,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+          isInteraction: false,
+        }),
+      ]),
+      // Phase 2 (450-1800ms, 1350ms duration): Synchronous ring fill + natural score count
+      Animated.parallel([
+        Animated.timing(progressAnim, {
+          toValue: targetScore,
+          duration: 2500,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: false,
+          isInteraction: false,
+        }),
+        Animated.timing(scoreRevealAnim, {
+          toValue: 1,
+          duration: 2500,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+          isInteraction: false,
+        }),
+        Animated.timing(badgeLiftAnim, {
+          toValue: 0,
+          duration: 650,
+          delay: 400,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+          isInteraction: false,
+        }),
+      ]),
+      // Phase 3 (1800-2150ms, 350ms duration): Controlled settle
+      Animated.timing(ringScaleAnim, {
+        toValue: 1,
+        duration: 550,
+        easing: Easing.inOut(Easing.quad),
+        useNativeDriver: true,
+        isInteraction: false,
+      }),
+    ]);
+
+    animation.start(() => setDisplayedScore(targetScore));
+
+    return () => {
+      progressAnim.removeListener(listener);
+      animation.stop();
+      progressAnim.stopAnimation();
+      ringScaleAnim.stopAnimation();
+      scoreRevealAnim.stopAnimation();
+      badgeLiftAnim.stopAnimation();
+    };
+  }, [badgeLiftAnim, isActive, progressAnim, reduceMotion, ringScaleAnim, scoreRevealAnim]);
+
+  const scoreScale = scoreRevealAnim.interpolate({ inputRange: [0, 1], outputRange: [0.82, 1] });
+  const scoreOpacity = scoreRevealAnim.interpolate({ inputRange: [0, 0.2, 1], outputRange: [0, 0.7, 1] });
+
+  return (
+    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View
+        style={{
+          width: ringSize,
+          height: ringSize,
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+          transform: [{ scale: ringScaleAnim }],
+        }}
+      >
+        <Svg width={ringSize} height={ringSize} viewBox="0 0 120 120" style={{ position: 'absolute' }}>
+          <Defs>
+            <RadialGradient id="obScreen6RingGlowV2" cx="50%" cy="50%" rx="50%" ry="50%">
+              <Stop offset="0%" stopColor={scoreColor} stopOpacity="0.32" />
+              <Stop offset="72%" stopColor={scoreColor} stopOpacity="0.06" />
+              <Stop offset="100%" stopColor={scoreColor} stopOpacity="0" />
+            </RadialGradient>
+            <SvgLinearGradient id="obScreen6ScoreGradV2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor="#2DD4BF" />
+              <Stop offset="55%" stopColor="#10B981" />
+              <Stop offset="100%" stopColor="#84CC16" />
+            </SvgLinearGradient>
+          </Defs>
+          <Circle cx="60" cy="60" r="56" fill="url(#obScreen6RingGlowV2)" />
+          <Circle cx="60" cy="60" r="49" fill="none" stroke={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(10,50,35,0.08)'} strokeWidth="10.5" />
+          <Circle cx="60" cy="60" r="40" fill="none" stroke={scoreColor} strokeWidth="1.2" opacity="0.16" />
+          <AnimatedSvgCircle
+            cx="60"
+            cy="60"
+            r="49"
+            fill="none"
+            stroke="url(#obScreen6ScoreGradV2)"
+            strokeWidth="10.5"
+            strokeLinecap="round"
+            strokeDasharray="307.9"
+            strokeDashoffset={progressAnim.interpolate({
+              inputRange: [0, 100],
+              outputRange: [307.9, 0],
+              extrapolate: 'clamp',
+            })}
+            transform="rotate(-90 60 60)"
+          />
+        </Svg>
+
+        <View style={{ alignItems: 'center', justifyContent: 'center', zIndex: 3 }}>
+          <OrbMascot
+            state="happy"
+            size={mascotSize}
+            reduceMotion={reduceMotion}
+            showShadow={false}
+            accessibilityLabel="BiteFix mascot revealing product intelligence score"
+          />
+        </View>
+      </Animated.View>
+
+      {/* Unified Score Card directly underneath the ring */}
+      <Animated.View
+        style={{
+          minWidth: badgeWidth,
+          marginTop: -14,
+          paddingHorizontal: 16,
+          paddingVertical: 8,
+          borderRadius: 16,
+          backgroundColor: isDark ? '#148603ff' : '#000000ff',
+          borderWidth: 1,
+          borderColor: 'rgba(0, 0, 0, 0.32)',
+          shadowColor: '#000000ff',
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.16,
+          shadowRadius: 14,
+          elevation: 4,
+          alignItems: 'center',
+          transform: [{ translateY: badgeLiftAnim }],
+          zIndex: 5,
+        }}
+      >
+        <Text style={{ color: '#ffffffff', fontSize: 11.5, fontWeight: '900', letterSpacing: 1.3, textTransform: 'uppercase' }}>
+          BITEFIX INTELLIGENCE SCORE™
+        </Text>
+        <Animated.Text
+          style={{
+            color: '#ffffffff',
+            fontSize: 42,
+            lineHeight: 60,
+            fontWeight: '900',
+            letterSpacing: -1,
+            marginTop: 1,
+            transform: [{ scale: scoreScale }],
+            opacity: scoreOpacity,
+          }}
+        >
+          {displayedScore}
+        </Animated.Text>
+      </Animated.View>
+    </View>
+  );
+}
+
+export function RevelationScreen({
+  colors,
+  isDark,
+  reduceMotion,
+  isActive = true,
+}: {
+  colors: any;
+  isDark: boolean;
+  reduceMotion: boolean;
+  isActive?: boolean;
+}) {
+  const { width, height } = useWindowDimensions();
+  const horizontalPadding = clamp(width * 0.0615, 18, 24);
+  const isCompact = height < 700;
+
+  return (
+    <View
+      style={{
+        flex: 1,
+        width: '100%',
+        maxWidth: 430,
+        alignSelf: 'center',
+        paddingHorizontal: horizontalPadding,
+        paddingTop: isCompact ? 6 : 14,
+        paddingBottom: isCompact ? 6 : 12,
+        justifyContent: 'space-between',
+      }}
+    >
+      {/* Upper/Middle Hero Area — generous breathing room & prominent anchor */}
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: isCompact ? 210 : 250,
+        }}
+      >
+        <MascotScoreRingTeaser
+          colors={colors}
+          isDark={isDark}
+          reduceMotion={reduceMotion}
+          isActive={isActive}
+        />
+      </View>
+
+      {/* Lower Content Area — tightly composed editorial block */}
+      <View style={{ alignItems: 'center', width: '100%', marginTop: isCompact ? 6 : 10, marginBottom: isCompact ? 2 : 6 }}>
+        {/* Title — Explicit 2 Real Text Lines (no literal \n, no template parsing bugs) */}
+        <View style={{ alignItems: 'center', marginBottom: isCompact ? 6 : 8, maxWidth: 350 }}>
+          <Text
+            style={{
+              color: colors.text,
+              fontSize: clamp(width * 0.082, 29, 34),
+              lineHeight: clamp(width * 0.098, 35, 40),
+              fontWeight: '700',
+              letterSpacing: -0.9,
+              textAlign: 'center',
+            }}
+          >
+            See the answer
+          </Text>
+          <Text
+            style={{
+              color: GREEN,
+              fontSize: clamp(width * 0.082, 29, 34),
+              lineHeight: clamp(width * 0.098, 35, 40),
+              fontWeight: '700',
+              letterSpacing: -0.9,
+              textAlign: 'center',
+            }}
+          >
+            in seconds.
+          </Text>
+        </View>
+
+        {/* Subtitle directly beneath the headline */}
+        <Text
+          style={{
+            color: colors.textSecondary,
+            fontSize: clamp(width * 0.034, 13.5, 14.5),
+            lineHeight: clamp(width * 0.046, 18, 20),
+            fontWeight: '600',
+            textAlign: 'center',
+            width: '100%',
+            maxWidth: 420,
+            marginBottom: isCompact ? 10 : 14,
+          }}
+        >
+          Turn food labels into useful decisions in seconds.
+        </Text>
+
+        {/* Compact Insight Trailer: LABEL -> SCAN -> INSIGHTS */}
+        <InsightTrailerSteps
+          colors={colors}
+          isDark={isDark}
+          reduceMotion={reduceMotion}
+          isActive={isActive}
+        />
+      </View>
+    </View>
+  );
+}
+
+function ProfileSetupSteps({ steps, colors, isDark, reduceMotion, isActive = true }: { steps: string[]; colors: any; isDark: boolean; reduceMotion: boolean; isActive?: boolean }) {
   const first = useRef(new Animated.Value(0)).current;
   const second = useRef(new Animated.Value(0)).current;
   const third = useRef(new Animated.Value(0)).current;
@@ -1343,6 +1898,10 @@ function ProfileSetupSteps({ steps, colors, isDark, reduceMotion }: { steps: str
   useEffect(() => {
     if (reduceMotion) {
       progress.forEach((value) => value.setValue(1));
+      return;
+    }
+    if (!isActive) {
+      progress.forEach((value) => value.setValue(0));
       return;
     }
 
@@ -1359,7 +1918,7 @@ function ProfileSetupSteps({ steps, colors, isDark, reduceMotion }: { steps: str
     );
     animation.start();
     return () => animation.stop();
-  }, [first, second, third, reduceMotion]);
+  }, [first, second, third, isActive, reduceMotion]);
 
   return (
     <View style={{ marginBottom: 16 }} accessibilityLabel="Building your personalized BiteFix profile">
@@ -1407,6 +1966,7 @@ export function MomentOfTruthScreen({
   colors,
   isDark,
   reduceMotion,
+  isActive = true,
   shoppingFrequency,
   ingredientReadingFrequency,
   allergens,
@@ -1416,6 +1976,7 @@ export function MomentOfTruthScreen({
   colors: any;
   isDark: boolean;
   reduceMotion: boolean;
+  isActive?: boolean;
   shoppingFrequency?: ShoppingFrequency;
   ingredientReadingFrequency?: IngredientReadingFrequency;
   allergens: string[];
@@ -1464,6 +2025,7 @@ export function MomentOfTruthScreen({
         colors={colors}
         isDark={isDark}
         reduceMotion={reduceMotion}
+        isActive={isActive}
       />
 
       {/* Apple-style liquid glass profile summary card */}
@@ -1542,10 +2104,12 @@ export function FinalActivationScreen({
   colors,
   isDark,
   reduceMotion,
+  isActive = true,
 }: {
   colors: any;
   isDark: boolean;
   reduceMotion: boolean;
+  isActive?: boolean;
 }) {
   const { width, height } = useWindowDimensions();
   const orbit = useRef(new Animated.Value(0)).current;
@@ -1556,7 +2120,7 @@ export function FinalActivationScreen({
   const pillWidth = clamp(width * 0.17, 62, 72);
 
   useEffect(() => {
-    if (reduceMotion) {
+    if (reduceMotion || !isActive) {
       orbit.stopAnimation();
       orbit.setValue(0);
       return;
@@ -1573,8 +2137,11 @@ export function FinalActivationScreen({
     );
 
     animation.start();
-    return () => animation.stop();
-  }, [orbit, reduceMotion]);
+    return () => {
+      animation.stop();
+      orbit.stopAnimation();
+    };
+  }, [isActive, orbit, reduceMotion]);
 
   const rotate = orbit.interpolate({
     inputRange: [0, 1],

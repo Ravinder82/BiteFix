@@ -1,12 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, Text, View, useWindowDimensions } from 'react-native';
-import { Activity, Droplets, Leaf, Package, ShieldCheck, Zap } from 'lucide-react-native';
+import { Activity, Droplets, Leaf, Package, ShieldCheck } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { OrbMascot } from '../features/OrbMascot';
 import { ProductDataStatusPill } from '../features/ProductDataPills';
 import { NutriScoreTrafficLight } from '../features/NutriScoreTrafficLight';
 import { OnboardingPriority } from '../../types/onboarding.types';
-import Svg, { Line, Path } from 'react-native-svg';
+import Svg, { Line } from 'react-native-svg';
 import { EnergyMeter } from '../ui/energy-meter';
 
 type VisualProps = {
@@ -252,62 +252,6 @@ export function LabelCompressionVisual({ colors, isDark, reduceMotion = false, i
             {line}
           </Text>
         ))}
-      </View>
-    </Surface>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════
-// SCREEN 6 — INSIGHT TRANSFORM VISUAL
-// ══════════════════════════════════════════════════════════════
-export function InsightTransformVisual({ colors, isDark }: VisualProps) {
-  const stages = [
-    { label: 'LABEL', value: 'Raw Data', color: colors.textSecondary },
-    { label: 'SCAN', value: 'Instant Read', color: AMBER },
-    { label: 'STRUCTURE', value: 'Sort & Clean', color: GREEN },
-    { label: 'INSIGHT', value: 'Clear Result', color: TEAL },
-  ];
-
-  const { width } = useWindowDimensions();
-  const stageSize = Math.round(Math.max(36, Math.min(44, width * 0.113)));
-  const arrowWidth = Math.round(Math.max(12, Math.min(20, width * 0.05)));
-  const stageIcon = Math.round(stageSize * 0.455);
-
-  return (
-    <Surface colors={colors} isDark={isDark} style={{ marginBottom: 20, paddingVertical: 18, paddingHorizontal: 14 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-        {stages.map((stage, index) => {
-          return (
-            <React.Fragment key={stage.label}>
-              <View style={{ alignItems: 'center', gap: 6 }}>
-                <View
-                  style={{
-                    width: stageSize,
-                    height: stageSize,
-                    borderRadius: Math.round(stageSize * 0.32),
-                    backgroundColor: `${stage.color}14`,
-                    borderWidth: 1.2,
-                    borderColor: `${stage.color}45`,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {index === stages.length - 1 ? (
-                    <Zap size={stageIcon} color={stage.color} strokeWidth={2.5} />
-                  ) : (
-                    <Text style={{ color: stage.color, fontSize: Math.max(9, stageSize * 0.227), fontWeight: '900' }}>0{index + 1}</Text>
-                  )}
-                </View>
-                <Text style={{ color: stage.color, fontSize: Math.max(7.5, Math.min(8.5, width * 0.0218)), fontWeight: '900', letterSpacing: 0.7 }}>{stage.label}</Text>
-              </View>
-              {index < stages.length - 1 && (
-                <Svg width={arrowWidth} height={Math.round(arrowWidth * 0.7)} viewBox="0 0 20 14">
-                  <Path d="M1 7 H16 M11 2 L17 7 L11 12" fill="none" stroke={colors.textMuted} strokeOpacity="0.5" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                </Svg>
-              )}
-            </React.Fragment>
-          );
-        })}
       </View>
     </Surface>
   );

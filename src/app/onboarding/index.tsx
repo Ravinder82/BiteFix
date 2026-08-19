@@ -510,10 +510,13 @@ export default function OnboardingScreen() {
     }
   }, [currentScreen, goTo]);
 
-  const getCtaLabel = (screen: number) =>
-    screen === TOTAL_SCREENS - 1 ? 'Activate BiteFix' :
-      screen === 0 ? 'Get Started' :
-        screen === 5 ? 'Show Me' : 'Continue';
+  const ONBOARDING_CTA_LABELS: Record<number, string> = {
+    0: 'Get Started',
+    5: "Let's Continue",
+    9: 'Activate BiteFix',
+  };
+
+  const getCtaLabel = (screen: number) => ONBOARDING_CTA_LABELS[screen] ?? 'Continue';
 
   const renderScreenContent = (screen: number) => {
     const isActive = screen === currentScreen && !isPaging;
@@ -531,21 +534,45 @@ export default function OnboardingScreen() {
       case 4:
         return <FlagshipPainScreen selected={ingredientReadingFrequency} onSelect={setIngredientReadingFrequency} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} isActive={isActive} />;
       case 5:
-        return <FlagshipRevelationScreen colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
+        return <FlagshipRevelationScreen colors={colors} isDark={isDark} reduceMotion={reduceMotion} isActive={isActive} />;
       case 6:
         return <FlagshipAllergyScreen selected={allergens} onToggle={toggleAllergen} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       case 7:
         return <FlagshipPrioritiesScreen selected={priorities} onToggle={togglePriority} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       case 8:
-        return <MomentOfTruthScreen selected={priorities} name={name} shoppingFrequency={shoppingFrequency} ingredientReadingFrequency={ingredientReadingFrequency} allergens={allergens} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
+        return (
+          <MomentOfTruthScreen
+            selected={priorities}
+            name={name}
+            shoppingFrequency={shoppingFrequency}
+            ingredientReadingFrequency={ingredientReadingFrequency}
+            allergens={allergens}
+            colors={colors}
+            isDark={isDark}
+            reduceMotion={screenReduceMotion}
+            isActive={isActive}
+          />
+        );
       case 9:
-        return <FinalActivationScreen colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
+        return (
+          <FinalActivationScreen
+            colors={colors}
+            isDark={isDark}
+            reduceMotion={screenReduceMotion}
+            isActive={isActive}
+          />
+        );
       default:
         return null;
     }
   };
 
   const renderSlide = (screen: number) => {
+    const isVisible = Math.abs(screen - currentScreen) <= 1;
+    if (!isVisible) {
+      return <View style={{ width: screenWidth, height: '100%' }} />;
+    }
+
     const ctaDisabled =
       (screen === 1 && name.trim().length < 1) ||
       (screen === 2 && !shoppingFrequency) ||
