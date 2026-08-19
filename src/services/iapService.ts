@@ -94,26 +94,33 @@ class BitefixIAPService {
 
     try {
       console.log('[RevenueCat] Fetching offerings...');
-      const offerings = await Purchases.getOfferings();
-      if (offerings.current !== null && offerings.current.availablePackages.length !== 0) {
-        const products: IAPProduct[] = offerings.current.availablePackages.map(pkg => {
-          return {
-            productId: pkg.product.identifier,
-            title: pkg.product.title,
-            description: pkg.product.description,
-            displayPrice: pkg.product.priceString,
-            price: pkg.product.price,
-            currency: pkg.product.currencyCode,
-            rcPackage: pkg,
-          };
-        });
+
+      // Wrap in a 10-second timeout — Apple sandbox frequently times out (especially
+      // in India / on beta iOS). On timeout we return [] and the UI shows fallback prices.
+      const offeringsPromise = Purchases.getOfferings();
+      const timeoutPromise = new Promise<null>((_, reject) =>
+        setTimeout(() => reject(new Error('RevenueCat offerings fetch timed out after 10s')), 10_000)
+      );
+
+      const offerings = await Promise.race([offeringsPromise, timeoutPromise]);
+
+      if (offerings && offerings.current !== null && offerings.current.availablePackages.length !== 0) {
+        const products: IAPProduct[] = offerings.current.availablePackages.map(pkg => ({
+          productId: pkg.product.identifier,
+          title: pkg.product.title,
+          description: pkg.product.description,
+          displayPrice: pkg.product.priceString,
+          price: pkg.product.price,
+          currency: pkg.product.currencyCode,
+          rcPackage: pkg,
+        }));
 
         console.log('[RevenueCat] ✅ Offerings fetched successfully.');
         return products;
       }
       return [];
     } catch (err: any) {
-      console.error('[RevenueCat] ❌ Error fetching offerings:', err.message ?? err);
+      console.warn('[RevenueCat] ⚠️ Could not fetch live offerings (Apple sandbox may be slow):', err.message ?? err);
       return [];
     }
   }

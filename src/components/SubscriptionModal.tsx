@@ -17,7 +17,7 @@ import { router } from 'expo-router';
 import { X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { getIapService, getLoadedIapService } from '../services/iapLoader';
-import { PRODUCT_IDS, type IAPProduct, type PlanTier } from '../services/iapProducts';
+import { PRODUCT_IDS, FALLBACK_PRICES, type IAPProduct, type PlanTier } from '../services/iapProducts';
 
 export interface SubscriptionModalProps {
   visible: boolean;
@@ -44,8 +44,10 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
   const getProduct = (tier: PlanTier): IAPProduct | undefined =>
     products.find(p => p.productId === PRODUCT_IDS[tier === 'monthly' ? 'MONTHLY' : 'ANNUAL']);
 
+  // Always show a price — use live RevenueCat price if available, fall back to
+  // hardcoded App Store Connect prices when Apple sandbox is slow/unavailable.
   const getDisplayPrice = (tier: PlanTier): string =>
-    getProduct(tier)?.displayPrice ?? '—';
+    getProduct(tier)?.displayPrice ?? FALLBACK_PRICES[tier].displayPrice;
 
   const getSubtitle = (tier: PlanTier): string =>
     tier === 'monthly'

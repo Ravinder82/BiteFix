@@ -7,6 +7,13 @@ export const PRODUCT_IDS = {
 
 export const ALL_PRODUCT_SKUS: string[] = [PRODUCT_IDS.MONTHLY, PRODUCT_IDS.ANNUAL];
 
+// Fallback prices shown when RevenueCat/Apple sandbox network times out.
+// These match the prices set in App Store Connect. Update here if you change pricing.
+export const FALLBACK_PRICES: Record<'monthly' | 'annual', { displayPrice: string; price: number; currency: string }> = {
+  monthly: { displayPrice: '₹499/mo', price: 499, currency: 'INR' },
+  annual:  { displayPrice: '₹2,999/yr', price: 2999, currency: 'INR' },
+};
+
 export type PlanTier = 'monthly' | 'annual';
 
 export interface IAPProduct {
