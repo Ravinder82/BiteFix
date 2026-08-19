@@ -1333,9 +1333,6 @@ function InsightTrailerSteps({
   isActive?: boolean;
 }) {
   const { width } = useWindowDimensions();
-  const [activeStage, setActiveStage] = useState<InsightStage>('label');
-  const progress = useRef(new Animated.Value(0)).current;
-  const hasRunRef = useRef(false);
   const glowPulse = useRef(new Animated.Value(0)).current;
 
   const stages: Array<{
@@ -1382,64 +1379,6 @@ function InsightTrailerSteps({
     return () => pulseAnim.stop();
   }, [glowPulse, isActive, reduceMotion]);
 
-  useEffect(() => {
-    if (reduceMotion) {
-      progress.stopAnimation();
-      progress.setValue(1);
-      setActiveStage('insights');
-      hasRunRef.current = true;
-      return;
-    }
-
-    if (!isActive) {
-      progress.stopAnimation();
-      progress.setValue(0);
-      setActiveStage('label');
-      hasRunRef.current = false;
-      return;
-    }
-
-    if (hasRunRef.current) return;
-    hasRunRef.current = true;
-    progress.setValue(0);
-    setActiveStage('label');
-
-    // 2.15s synchronized sequence:
-    // 0-450ms: LABEL active
-    // 450-1400ms: SCAN active (progress to 0.55 over 950ms)
-    // 1400-2150ms: INSIGHTS active (progress to 1.0 over 750ms)
-    const sequence = Animated.sequence([
-      Animated.delay(450),
-      Animated.timing(progress, {
-        toValue: 0.55,
-        duration: 950,
-        easing: Easing.inOut(Easing.cubic),
-        useNativeDriver: true,
-        isInteraction: false,
-      }),
-      Animated.timing(progress, {
-        toValue: 1,
-        duration: 750,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-        isInteraction: false,
-      }),
-    ]);
-
-    const listener = progress.addListener(({ value }) => {
-      if (value < 0.35) setActiveStage('label');
-      else if (value < 0.70) setActiveStage('scan');
-      else setActiveStage('insights');
-    });
-
-    sequence.start(() => setActiveStage('insights'));
-    return () => {
-      progress.removeListener(listener);
-      sequence.stop();
-      progress.stopAnimation();
-    };
-  }, [isActive, progress, reduceMotion]);
-
   const railWidth = clamp(width * 0.94, 320, 400);
 
   const glowScale = glowPulse.interpolate({
@@ -1465,63 +1404,52 @@ function InsightTrailerSteps({
       >
         {stages.map((stage, index) => {
           const Icon = stage.icon;
-          const active = activeStage === stage.id || activeStage === 'insights';
-          const stageScale = active ? 1.05 : 0.92;
-          const stageOpacity = active ? 1 : 0.45;
-
-          // Sticker colors based on active/inactive state
-          const stickerBg = active ? stage.bgColor : (isDark ? '#1C1C1E' : '#9a9acaff');
-          const stickerBorder = active ? stage.borderColor : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)');
-          const stickerShadow = active ? stage.shadowColor : 'transparent';
-          const stickerIconColor = active ? stage.iconColor : (isDark ? '#8E8E93' : '#AEAEB2');
 
           return (
             <React.Fragment key={stage.id}>
-              <View style={{ flex: 1, alignItems: 'center', opacity: stageOpacity }}>
+              <View style={{ flex: 1, alignItems: 'center', opacity: 1 }}>
                 <View style={{ width: 72, height: 72, alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                  {active && (
-                    <Animated.View
-                      style={{
-                        position: 'absolute',
-                        width: 72,
-                        height: 72,
-                        borderRadius: 22,
-                        borderWidth: 3,
-                        borderColor: stage.borderColor,
-                        shadowColor: stage.borderColor,
-                        shadowOffset: { width: 0, height: 0 },
-                        shadowOpacity: 0.8,
-                        shadowRadius: 10,
-                        opacity: glowOpacity,
-                        transform: [{ scale: glowScale }],
-                      }}
-                    />
-                  )}
+                  <Animated.View
+                    style={{
+                      position: 'absolute',
+                      width: 72,
+                      height: 72,
+                      borderRadius: 22,
+                      borderWidth: 3,
+                      borderColor: stage.borderColor,
+                      shadowColor: stage.borderColor,
+                      shadowOffset: { width: 0, height: 0 },
+                      shadowOpacity: 0.8,
+                      shadowRadius: 10,
+                      opacity: glowOpacity,
+                      transform: [{ scale: glowScale }],
+                    }}
+                  />
                   <Animated.View
                     style={{
                       width: 72,
                       height: 72,
                       borderRadius: 22,
-                      backgroundColor: stickerBg,
-                      borderWidth: active ? 2.5 : 1.5,
-                      borderColor: stickerBorder,
+                      backgroundColor: stage.bgColor,
+                      borderWidth: 2.5,
+                      borderColor: stage.borderColor,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      shadowColor: stickerShadow,
-                      shadowOffset: { width: 0, height: active ? 4 : 0 },
-                      shadowOpacity: active ? 0.25 : 0,
+                      shadowColor: stage.shadowColor,
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.25,
                       shadowRadius: 8,
-                      elevation: active ? 3 : 0,
-                      transform: [{ scale: stageScale }],
+                      elevation: 3,
+                      transform: [{ scale: 1.05 }],
                     }}
                   >
-                    <Icon size={34} color={stickerIconColor} strokeWidth={2.4} />
+                    <Icon size={34} color={stage.iconColor} strokeWidth={2.4} />
                   </Animated.View>
                 </View>
                 <Text
                   style={{
                     marginTop: 6,
-                    color: active ? colors.text : colors.textMuted,
+                    color: colors.text,
                     fontSize: 9,
                     fontWeight: '900',
                     letterSpacing: 1.1,
@@ -1533,11 +1461,7 @@ function InsightTrailerSteps({
               {index < stages.length - 1 && (
                 <ArrowRight
                   size={20}
-                  color={
-                    activeStage === 'insights' || (index === 0 && activeStage === 'scan')
-                      ? stages[index + 1].borderColor
-                      : '#4E7166'
-                  }
+                  color={stages[index + 1].borderColor}
                   strokeWidth={2.5}
                   style={{ marginHorizontal: 2 }}
                 />
