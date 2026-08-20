@@ -242,10 +242,10 @@ function SelectionRow({
         paddingHorizontal: 16,
         paddingVertical: 13,
         borderRadius: 17,
-        borderWidth: 1.25,
-        borderColor: selected ? activeColor : isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+        borderWidth: selected ? 2.0 : 1.25,
+        borderColor: selected ? (isDark ? '#06180E' : '#07190F') : isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
         backgroundColor: selected
-          ? isDark ? 'rgba(20, 174, 151, 0.06)' : 'rgba(20, 174, 151, 0.04)'
+          ? isDark ? 'rgba(255, 255, 255, 0.045)' : 'rgba(255, 255, 255, 0.98)'
           : isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.012)',
       }}
     >
@@ -556,9 +556,11 @@ function ContextOptionRow({
           paddingHorizontal: 18,
           paddingVertical: 14,
           borderRadius: 18,
-          borderWidth: 1.25,
-          borderColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.085)',
-          backgroundColor: isDark ? 'rgba(255,255,255,0.035)' : 'rgba(255,255,255,0.60)',
+          borderWidth: selected ? 2.0 : 1.25,
+          borderColor: selected ? (isDark ? '#06180E' : '#07190F') : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.085)',
+          backgroundColor: selected
+            ? isDark ? 'rgba(255, 255, 255, 0.055)' : 'rgba(255, 255, 255, 0.95)'
+            : isDark ? 'rgba(255,255,255,0.035)' : 'rgba(255,255,255,0.60)',
         }}
       >
         {/* Neutral card; selection is communicated only by the LED. */}
@@ -568,9 +570,10 @@ function ContextOptionRow({
             height: 26,
             borderRadius: 13,
             borderWidth: 1.5,
-            borderColor: isDark ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.16)',
+            borderColor: selected ? '#14ae97' : isDark ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.16)',
             alignItems: 'center',
             justifyContent: 'center',
+            backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.5)',
           }}
         >
           <Animated.View
@@ -579,8 +582,8 @@ function ContextOptionRow({
               width: 30,
               height: 30,
               borderRadius: 15,
-              borderWidth: 2,
-              borderColor: GREEN,
+              borderWidth: 2.5,
+              borderColor: '#13f5b0',
               opacity: ledHaloOpacity,
               transform: [{ scale: ledHaloScale }],
             }}
@@ -590,9 +593,13 @@ function ContextOptionRow({
               width: 10,
               height: 10,
               borderRadius: 5,
-              backgroundColor: GREEN,
+              backgroundColor: '#14ae97',
               opacity: ledProgress,
               transform: [{ scale: ledCoreScale }],
+              shadowColor: '#13f5b0',
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.8,
+              shadowRadius: 4,
             }}
           />
         </View>
@@ -663,24 +670,32 @@ function ShieldStatusBar({
   const activeAllergens = selected.filter((id) => id !== 'none');
   const ledActive = isNone || activeAllergens.length > 0;
 
-  let statusTitle = 'Allergen shield standby';
-  let statusSubtitle = 'Choose ingredients to scan. BiteFix analyzes barcodes and flags matches.';
+  let statusTitle = 'Allergen Shield Locked';
+  let statusSubtitle = 'Choose ingredients below to activate your allergen safeguard.';
   let ledColor = '#e58b42'; // Standby/amber
   let ledGlow = '#ffaa66';
 
   if (isNone) {
-    statusTitle = 'All clear';
-    statusSubtitle = 'Zero food allergies selected. Safe scanning enabled.';
+    statusTitle = 'Allergen Shield Unlocked';
+    statusSubtitle = 'No ingredients selected. Safe scanning enabled.';
     ledColor = '#7ec201'; // Lime
     ledGlow = '#a3cb48';
   } else if (activeAllergens.length > 0) {
-    statusTitle = 'Allergen shield active';
-    statusSubtitle = `BiteFix warning system armed for selected substances.`;
+    statusTitle = 'Allergen Shield Unlocked';
+    statusSubtitle = 'BiteFix checks for selected ingredients for You.';
     ledColor = '#14ae97'; // Teal
     ledGlow = '#13f5b0';
   }
 
   const activeOptions = ALLERGEN_OPTIONS.filter(opt => activeAllergens.includes(opt.id));
+  
+  // 8K Progress Meter Bar calculation
+  const totalOptions = 5;
+  const progressPercent = isNone ? 100 : (activeAllergens.length / totalOptions) * 100;
+
+  // Dark greenish black CTA button color scheme
+  const cardBg = isDark ? '#06180E' : '#07190F';
+  const cardBorder = isDark ? 'rgba(20, 174, 151, 0.25)' : 'rgba(7, 25, 15, 0.15)';
 
   return (
     <View
@@ -688,29 +703,53 @@ function ShieldStatusBar({
         width: '100%',
         borderRadius: 22,
         borderWidth: 1.25,
-        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
-        backgroundColor: isDark ? 'rgba(10, 15, 12, 0.7)' : 'rgba(255, 255, 255, 0.8)',
+        borderColor: cardBorder,
+        backgroundColor: cardBg,
         padding: 16,
+        paddingTop: 18, // Extra padding top for the progress bar
         marginBottom: 20,
         shadowColor: ledActive ? ledColor : 'transparent',
         shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: isDark ? 0.16 : 0.06,
+        shadowOpacity: isDark ? 0.25 : 0.12,
         shadowRadius: 20,
-        elevation: ledActive ? 3 : 0,
+        elevation: ledActive ? 4 : 0,
+        overflow: 'hidden', // Required to clip the top progress bar
       }}
     >
+      {/* 8K LED Progress Meter Bar */}
+      <View style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 4,
+        backgroundColor: 'rgba(255, 255, 255, 0.06)',
+      }}>
+        {ledActive && (
+          <View style={{
+            width: `${progressPercent}%`,
+            height: '100%',
+            backgroundColor: isNone ? '#7ec201' : '#14ae97',
+            shadowColor: isNone ? '#a3cb48' : '#13f5b0',
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 1,
+            shadowRadius: 4,
+          }} />
+        )}
+      </View>
+
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <LedLight active={ledActive} color={ledColor} glow={ledGlow} />
-        <Text style={{ fontSize: 9.5, fontWeight: '700', color: colors.textMuted, letterSpacing: 0.5 }}>
+        <Text style={{ fontSize: 9.5, fontWeight: '700', color: 'rgba(255, 255, 255, 0.4)', letterSpacing: 0.5 }}>
           BITEFIX ENGINE V1.2
         </Text>
       </View>
 
-      <View>
+      <View style={{ flexDirection: 'column', alignItems: 'stretch' }}>
         <Text
           style={{
-            color: isDark ? '#FFFFFF' : '#12311E',
-            fontSize: 15.5,
+            color: '#FFFFFF', // High-contrast white text on dark greenish black
+            fontSize: 16,
             fontWeight: '800',
             letterSpacing: -0.3,
           }}
@@ -719,11 +758,11 @@ function ShieldStatusBar({
         </Text>
         <Text
           style={{
-            color: colors.textSecondary,
+            color: 'rgba(255, 255, 255, 0.7)', // High-contrast secondary text
             fontSize: 12.5,
             fontWeight: '500',
-            marginTop: 2,
-            lineHeight: 16.5,
+            marginTop: 3,
+            lineHeight: 18, // Fixed line height for clean wrapping
           }}
         >
           {statusSubtitle}
@@ -746,8 +785,8 @@ function ShieldStatusBar({
                   paddingVertical: 8,
                   borderRadius: 12,
                   borderWidth: 1,
-                  borderColor: isDark ? opt.stickerBorder + '30' : opt.stickerBorder + '80',
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : opt.stickerBg,
+                  borderColor: isDark ? opt.stickerBorder + '30' : opt.stickerBorder + '60',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
                   marginBottom: 8,
                 }}
               >
@@ -757,7 +796,7 @@ function ShieldStatusBar({
                   style={{
                     fontSize: 12.5,
                     fontWeight: '700',
-                    color: isDark ? '#FFFFFF' : '#12311E',
+                    color: '#FFFFFF', // White text on dark cards
                     flex: 1,
                   }}
                 >
@@ -798,34 +837,66 @@ function PriorityStatusBar({
     ledGlow = '#13f5b0';
   }
 
+  // 8K Progress Meter Bar calculation
+  const totalOptions = 4;
+  const progressPercent = (activeOptions.length / totalOptions) * 100;
+
+  // Dark greenish black CTA button color scheme
+  const cardBg = isDark ? '#06180E' : '#07190F';
+  const cardBorder = isDark ? 'rgba(20, 174, 151, 0.25)' : 'rgba(7, 25, 15, 0.15)';
+
   return (
     <View
       style={{
         width: '100%',
         borderRadius: 22,
         borderWidth: 1.25,
-        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
-        backgroundColor: isDark ? 'rgba(10, 15, 12, 0.7)' : 'rgba(255, 255, 255, 0.8)',
+        borderColor: cardBorder,
+        backgroundColor: cardBg,
         padding: 16,
+        paddingTop: 18, // Extra padding top for progress bar
         marginBottom: 20,
         shadowColor: ledActive ? ledColor : 'transparent',
         shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: isDark ? 0.16 : 0.06,
+        shadowOpacity: isDark ? 0.25 : 0.12,
         shadowRadius: 20,
         elevation: ledActive ? 3 : 0,
+        overflow: 'hidden', // Required to clip the top progress bar
       }}
     >
+      {/* 8K LED Progress Meter Bar */}
+      <View style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 4,
+        backgroundColor: 'rgba(255, 255, 255, 0.06)',
+      }}>
+        {ledActive && (
+          <View style={{
+            width: `${progressPercent}%`,
+            height: '100%',
+            backgroundColor: '#14ae97',
+            shadowColor: '#13f5b0',
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 1,
+            shadowRadius: 4,
+          }} />
+        )}
+      </View>
+
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <LedLight active={ledActive} color={ledColor} glow={ledGlow} />
-        <Text style={{ fontSize: 9.5, fontWeight: '700', color: colors.textMuted, letterSpacing: 0.5 }}>
+        <Text style={{ fontSize: 9.5, fontWeight: '700', color: 'rgba(255, 255, 255, 0.4)', letterSpacing: 0.5 }}>
           BITEFIX ENGINE V1.2
         </Text>
       </View>
 
-      <View>
+      <View style={{ flexDirection: 'column', alignItems: 'stretch' }}>
         <Text
           style={{
-            color: isDark ? '#FFFFFF' : '#12311E',
+            color: '#FFFFFF', // High-contrast white text on dark cards
             fontSize: 15.5,
             fontWeight: '800',
             letterSpacing: -0.3,
@@ -835,11 +906,11 @@ function PriorityStatusBar({
         </Text>
         <Text
           style={{
-            color: colors.textSecondary,
+            color: 'rgba(255, 255, 255, 0.7)', // High-contrast secondary text
             fontSize: 12.5,
             fontWeight: '500',
-            marginTop: 2,
-            lineHeight: 16.5,
+            marginTop: 3,
+            lineHeight: 18, // Fixed line height for clean wrapping
           }}
         >
           {statusSubtitle}
@@ -870,7 +941,7 @@ function PriorityStatusBar({
                   borderRadius: 14,
                   borderWidth: 1.25,
                   borderColor: isDark ? border + '30' : border,
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : bg,
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
                   marginBottom: 8,
                 }}
               >
@@ -878,11 +949,11 @@ function PriorityStatusBar({
                   width: 26,
                   height: 26,
                   borderRadius: 8,
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.8)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
                   alignItems: 'center',
                   justifyContent: 'center',
                   borderWidth: 1,
-                  borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                  borderColor: 'rgba(255, 255, 255, 0.15)',
                 }}>
                   <Icon size={14} color={border} strokeWidth={2.5} />
                 </View>
@@ -892,7 +963,7 @@ function PriorityStatusBar({
                     style={{
                       fontSize: 12.5,
                       fontWeight: '800',
-                      color: isDark ? '#FFFFFF' : '#12311E',
+                      color: '#FFFFFF', // White text on dark cards
                       letterSpacing: -0.2,
                     }}
                   >
@@ -903,7 +974,7 @@ function PriorityStatusBar({
                     style={{
                       fontSize: 9.5,
                       fontWeight: '600',
-                      color: colors.textMuted,
+                      color: 'rgba(255, 255, 255, 0.5)',
                       marginTop: 1,
                     }}
                   >
@@ -976,10 +1047,10 @@ function ShieldRow({
         paddingHorizontal: 14,
         paddingVertical: 10,
         borderRadius: 16,
-        borderWidth: 1.25,
-        borderColor: selected ? activeColor : isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+        borderWidth: selected ? 2.0 : 1.25,
+        borderColor: selected ? (isDark ? '#06180E' : '#07190F') : isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
         backgroundColor: selected
-          ? isDark ? 'rgba(20, 174, 151, 0.06)' : 'rgba(20, 174, 151, 0.04)'
+          ? isDark ? 'rgba(255, 255, 255, 0.045)' : 'rgba(255, 255, 255, 0.98)'
           : isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.012)',
       }}
     >
@@ -1341,10 +1412,10 @@ export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion
       <ShieldStatusBar selected={selected} colors={colors} isDark={isDark} />
       <ScreenHeading
         title="Anything we should **watch for you**?"
-        subtitle="Pick anything we should flag when it shows up in a scan."
+        subtitle=""
         colors={colors}
       />
-      <View style={{ gap: 7, marginTop: 2 }}>
+      <View style={{ gap: 10, marginTop: -20 }}>
         {ALLERGEN_OPTIONS.map((option) => (
           <ShieldRow
             key={option.id}
@@ -1641,11 +1712,13 @@ function MascotScoreRingTeaser({
   isDark,
   reduceMotion,
   isActive = true,
+  onAnimationComplete,
 }: {
   colors: any;
   isDark: boolean;
   reduceMotion: boolean;
   isActive?: boolean;
+  onAnimationComplete?: () => void;
 }) {
   const { width } = useWindowDimensions();
   const targetScore = 78;
@@ -1709,6 +1782,9 @@ function MascotScoreRingTeaser({
       setDisplayedScore(targetScore);
       setLanded(true);
       hasRunRef.current = true;
+      if (onAnimationComplete) {
+        onAnimationComplete();
+      }
       return;
     }
 
@@ -1801,6 +1877,9 @@ function MascotScoreRingTeaser({
       if (!finished) return;
       setDisplayedScore(targetScore);
       fireSurge();
+      if (onAnimationComplete) {
+        onAnimationComplete();
+      }
     });
 
     return () => {
@@ -1815,7 +1894,7 @@ function MascotScoreRingTeaser({
       scoreRevealAnim.stopAnimation();
       badgeLiftAnim.stopAnimation();
     };
-  }, [badgeLiftAnim, fireSurge, isActive, progressAnim, reduceMotion, ringScaleAnim, scoreRevealAnim]);
+  }, [badgeLiftAnim, fireSurge, isActive, progressAnim, reduceMotion, ringScaleAnim, scoreRevealAnim, onAnimationComplete]);
 
   const scoreScale = scoreRevealAnim.interpolate({ inputRange: [0, 1], outputRange: [0.82, 1] });
   const scoreOpacity = scoreRevealAnim.interpolate({ inputRange: [0, 0.2, 1], outputRange: [0, 0.7, 1] });
@@ -2021,11 +2100,13 @@ export function RevelationScreen({
   isDark,
   reduceMotion,
   isActive = true,
+  onAnimationComplete,
 }: {
   colors: any;
   isDark: boolean;
   reduceMotion: boolean;
   isActive?: boolean;
+  onAnimationComplete?: () => void;
 }) {
   const { width, height } = useWindowDimensions();
   const horizontalPadding = clamp(width * 0.0615, 18, 24);
@@ -2058,6 +2139,7 @@ export function RevelationScreen({
           isDark={isDark}
           reduceMotion={reduceMotion}
           isActive={isActive}
+          onAnimationComplete={onAnimationComplete}
         />
       </View>
 
@@ -2109,77 +2191,6 @@ export function RevelationScreen({
   );
 }
 
-function ProfileSetupSteps({ steps, colors, isDark, reduceMotion, isActive = true }: { steps: string[]; colors: any; isDark: boolean; reduceMotion: boolean; isActive?: boolean }) {
-  const first = useRef(new Animated.Value(0)).current;
-  const second = useRef(new Animated.Value(0)).current;
-  const third = useRef(new Animated.Value(0)).current;
-  const progress = [first, second, third];
-
-  useEffect(() => {
-    if (reduceMotion) {
-      progress.forEach((value) => value.setValue(1));
-      return;
-    }
-    if (!isActive) {
-      progress.forEach((value) => value.setValue(0));
-      return;
-    }
-
-    progress.forEach((value) => value.setValue(0));
-    const animation = Animated.stagger(
-      120,
-      progress.map((value) => Animated.timing(value, {
-        toValue: 1,
-        duration: 360,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-        isInteraction: false,
-      }))
-    );
-    animation.start();
-    return () => animation.stop();
-  }, [first, second, third, isActive, reduceMotion]);
-
-  return (
-    <View style={{ marginBottom: 16 }} accessibilityLabel="Building your personalized BiteFix profile">
-      <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', letterSpacing: 1.1, textTransform: 'uppercase', marginBottom: 8 }}>
-        Building your BiteFix view
-      </Text>
-      <View style={{ gap: 7 }}>
-        {steps.slice(0, 3).map((step, index) => {
-          const itemProgress = progress[index];
-          return (
-            <Animated.View
-              key={step}
-              style={{
-                opacity: itemProgress,
-                transform: [{ scale: itemProgress.interpolate({ inputRange: [0, 1], outputRange: [0.98, 1] }) }],
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 9,
-                paddingHorizontal: 11,
-                paddingVertical: 9,
-                borderRadius: 13,
-                backgroundColor: isDark ? 'rgba(255,255,255,0.035)' : 'rgba(255,255,255,0.74)',
-                borderWidth: 1,
-                borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.055)',
-              }}
-            >
-              <View style={{ width: 21, height: 21, borderRadius: 10.5, backgroundColor: `${GREEN}18`, alignItems: 'center', justifyContent: 'center' }}>
-                <Check size={12} color={GREEN} strokeWidth={3} />
-              </View>
-              <Text numberOfLines={1} style={{ color: colors.text, fontSize: 12, fontWeight: '700', flex: 1 }}>{step}</Text>
-            </Animated.View>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════
-// SCREEN 8 — PROFILE + RESULTS
-// ══════════════════════════════════════════════════════════════
 export function MomentOfTruthScreen({
   selected,
   name,
@@ -2190,6 +2201,7 @@ export function MomentOfTruthScreen({
   shoppingFrequency,
   ingredientReadingFrequency,
   allergens,
+  onAnimationComplete,
 }: {
   selected: OnboardingPriority[];
   name?: string;
@@ -2200,108 +2212,269 @@ export function MomentOfTruthScreen({
   shoppingFrequency?: ShoppingFrequency;
   ingredientReadingFrequency?: IngredientReadingFrequency;
   allergens: string[];
+  onAnimationComplete?: () => void;
 }) {
-  const displayName = name?.trim() || '';
-  const shoppingLabels: Record<ShoppingFrequency, string> = {
-    rarely: "Doesn't buy packaged food",
-    often: 'Buys packaged food weekly',
-    sometimes: 'Buys packaged food monthly',
-    most_trips: 'Buys snacks daily',
-  };
-  const painLabels: Record<IngredientReadingFrequency, string> = {
-    always: "No time to read the label",
-    sometimes: "Ingredients feel confusing",
-    when_needed: "Unclear what really matters",
-    rarely: "Too many choices to compare",
-  };
-  const allergyLabels = allergens.includes('none')
-    ? ['No known food allergies']
-    : allergens.map((id) => ALLERGEN_OPTIONS.find((option) => option.id === id)?.label ?? id);
-  const priorityLabels = useMemo(() => {
-    const META: Record<OnboardingPriority, string> = {
-      ultra_processed: 'Processing Level',
-      nutrition: 'Nutrition Intelligence',
-      sugar: 'Sugar Insights',
-      ingredients: 'Ingredient Review',
-      environment: 'Eco Impact',
-    };
-    return (selected.length > 0 ? selected : (['nutrition', 'ingredients', 'sugar'] as OnboardingPriority[])).map((p) => META[p]);
-  }, [selected]);
-  const profileSignals = [
-    shoppingFrequency ? shoppingLabels[shoppingFrequency] : null,
-    ingredientReadingFrequency ? painLabels[ingredientReadingFrequency] : null,
-    ...allergyLabels,
-  ].filter((signal): signal is string => Boolean(signal));
-  const setupSteps = [
-    shoppingFrequency ? shoppingLabels[shoppingFrequency] : 'Shopping routine',
-    ingredientReadingFrequency ? painLabels[ingredientReadingFrequency] : 'Your biggest shopping barrier',
-    allergens.includes('none') ? 'No known food allergies' : allergens.length > 0 ? `Watching ${allergyLabels.length} allerg${allergyLabels.length === 1 ? 'y' : 'ies'}` : 'Allergy preferences',
+  const profileName = name?.trim() ? name : 'guest';
+  const frequencyText = shoppingFrequency === 'rarely' ? 'occasional' : shoppingFrequency === 'sometimes' ? 'monthly' : shoppingFrequency === 'often' ? 'weekly' : 'daily';
+  
+  const allergenCount = allergens.filter(id => id !== 'none').length;
+  const allergenText = allergens.includes('none') ? 'No allergies' : `Watching ${allergenCount} substance${allergenCount === 1 ? '' : 's'}`;
+  
+  const priorityCount = selected.length;
+  const priorityText = `${priorityCount} scanner module${priorityCount === 1 ? '' : 's'}`;
+
+  const checklistItems = [
+    `Configuring profile for ${profileName}...`,
+    `Analyzing ${frequencyText} packaged food frequency...`,
+    `Arming allergen safeguard: ${allergenText}...`,
+    `Injecting engine priorities: ${priorityText}...`,
   ];
+
+  const [stepStates, setStepStates] = useState<('pending' | 'loading' | 'complete')[]>(['pending', 'pending', 'pending', 'pending']);
+  
+  const step1Val = useRef(new Animated.Value(0)).current;
+  const step2Val = useRef(new Animated.Value(0)).current;
+  const step3Val = useRef(new Animated.Value(0)).current;
+  const step4Val = useRef(new Animated.Value(0)).current;
+  const stepsAnim = [step1Val, step2Val, step3Val, step4Val];
+
+  const spinValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!isActive || reduceMotion) {
+      spinValue.setValue(0);
+      return;
+    }
+    const spinAnim = Animated.loop(
+      Animated.timing(spinValue, {
+        toValue: 1,
+        duration: 2200,
+        easing: Easing.linear,
+        useNativeDriver: true,
+        isInteraction: false,
+      })
+    );
+    spinAnim.start();
+    return () => spinAnim.stop();
+  }, [isActive, reduceMotion]);
+
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  useEffect(() => {
+    if (reduceMotion) {
+      setStepStates(['complete', 'complete', 'complete', 'complete']);
+      if (onAnimationComplete) {
+        onAnimationComplete();
+      }
+      stepsAnim.forEach(val => val.setValue(1));
+      return;
+    }
+
+    if (!isActive) {
+      setStepStates(['pending', 'pending', 'pending', 'pending']);
+      stepsAnim.forEach(val => val.setValue(0));
+      return;
+    }
+
+    // Reset
+    setStepStates(['loading', 'pending', 'pending', 'pending']);
+    stepsAnim.forEach(val => val.setValue(0));
+
+    // Staggered step fade-in triggers
+    Animated.timing(step1Val, {
+      toValue: 1,
+      duration: 350,
+      useNativeDriver: true,
+      isInteraction: false,
+    }).start();
+
+    const t1 = setTimeout(() => {
+      setStepStates(['complete', 'loading', 'pending', 'pending']);
+      Animated.timing(step2Val, {
+        toValue: 1,
+        duration: 350,
+        useNativeDriver: true,
+        isInteraction: false,
+      }).start();
+    }, 900);
+
+    const t2 = setTimeout(() => {
+      setStepStates(['complete', 'complete', 'loading', 'pending']);
+      Animated.timing(step3Val, {
+        toValue: 1,
+        duration: 350,
+        useNativeDriver: true,
+        isInteraction: false,
+      }).start();
+    }, 1800);
+
+    const t3 = setTimeout(() => {
+      setStepStates(['complete', 'complete', 'complete', 'loading']);
+      Animated.timing(step4Val, {
+        toValue: 1,
+        duration: 350,
+        useNativeDriver: true,
+        isInteraction: false,
+      }).start();
+    }, 2700);
+
+    const t4 = setTimeout(() => {
+      setStepStates(['complete', 'complete', 'complete', 'complete']);
+      if (onAnimationComplete) {
+        onAnimationComplete();
+      }
+    }, 3650);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
+    };
+  }, [isActive, reduceMotion]);
 
   return (
     <ScreenFrame>
-      <ProfileSetupSteps
-        steps={setupSteps}
-        colors={colors}
-        isDark={isDark}
-        reduceMotion={reduceMotion}
-        isActive={isActive}
-      />
-
-      {/* Apple-style liquid glass profile summary card */}
       <View
         style={{
-          marginBottom: 16,
-          padding: 16,
-          borderRadius: 20,
-          backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.92)',
-          borderWidth: 1,
-          borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: isDark ? 0.16 : 0.05,
-          shadowRadius: 14,
-          elevation: 2,
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingVertical: 10,
         }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-          <OrbMascot state="happy" size={44} showShadow={false} reduceMotion={reduceMotion} />
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>
-              {displayName ? `${displayName}'s Profile` : 'Your BiteFix Profile'}
-            </Text>
-            <Text style={{ color: GREEN, fontSize: 12, fontWeight: '700', marginTop: 1 }}>
-              Personalized & Ready
-            </Text>
-          </View>
+        {/* Title */}
+        <ScreenHeading
+          title="Synthesizing your **BiteFix scanner**..."
+          subtitle="Compiling custom parameters based on your profile inputs."
+          colors={colors}
+          align="center"
+        />
+
+        {/* Beautiful high-tech circular LED rotating loader */}
+        <View style={{ width: 140, height: 140, justifyContent: 'center', alignItems: 'center', marginVertical: 32 }}>
+          <Animated.View style={{
+            position: 'absolute',
+            width: 130,
+            height: 130,
+            transform: reduceMotion ? [] : [{ rotate: spin }],
+          }}>
+            <Svg width={130} height={130} viewBox="0 0 100 100">
+              <Circle
+                cx="50"
+                cy="50"
+                r="44"
+                stroke={isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)'}
+                strokeWidth="3.5"
+                fill="none"
+              />
+              <Circle
+                cx="50"
+                cy="50"
+                r="44"
+                stroke="#14ae97"
+                strokeWidth="3.5"
+                fill="none"
+                strokeDasharray="276.4"
+                strokeDashoffset="80"
+                strokeLinecap="round"
+              />
+            </Svg>
+          </Animated.View>
+          <OrbMascot
+            state={stepStates[3] === 'complete' ? 'happy' : 'thinking'}
+            size={76}
+            reduceMotion={reduceMotion}
+            accessibilityLabel="Synthesizing BiteFix scanner mascot"
+          />
         </View>
-        {/* Selected preferences and priorities */}
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-          {[...profileSignals, ...priorityLabels].map((label) => (
-            <View
-              key={label}
-              style={{
-                paddingHorizontal: 10,
-                paddingVertical: 5,
-                borderRadius: 999,
-                backgroundColor: `${GREEN}12`,
-                borderWidth: 1,
-                borderColor: `${GREEN}35`,
-              }}
-            >
-              <Text style={{ color: GREEN, fontSize: 11, fontWeight: '800' }}>{label}</Text>
-            </View>
-          ))}
+
+        {/* Staggered checklist */}
+        <View style={{ width: '100%', gap: 10 }}>
+          {checklistItems.map((item, index) => {
+            const state = stepStates[index];
+            const opacityVal = stepsAnim[index];
+            const isComplete = state === 'complete';
+            const isLoading = state === 'loading';
+
+            return (
+              <Animated.View
+                key={index}
+                style={{
+                  opacity: opacityVal,
+                  transform: [{
+                    translateY: opacityVal.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [12, 0],
+                    }),
+                  }],
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12,
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  borderRadius: 16,
+                  borderWidth: 1.25,
+                  borderColor: isLoading
+                    ? isDark ? 'rgba(20, 174, 151, 0.3)' : 'rgba(7, 25, 15, 0.15)'
+                    : isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                  backgroundColor: isLoading
+                    ? isDark ? '#06180E' : 'rgba(20, 174, 151, 0.04)'
+                    : isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.01)',
+                }}
+              >
+                {/* Status LED / Checkmark */}
+                <View style={{ width: 22, height: 22, justifyContent: 'center', alignItems: 'center' }}>
+                  {isComplete ? (
+                    <View style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: 10,
+                      backgroundColor: '#14ae97',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      shadowColor: '#13f5b0',
+                      shadowOffset: { width: 0, height: 0 },
+                      shadowOpacity: 0.8,
+                      shadowRadius: 3,
+                      elevation: 2,
+                    }}>
+                      <Check size={11} color="#FFFFFF" strokeWidth={3.5} />
+                    </View>
+                  ) : isLoading ? (
+                    <LedLight active={true} color="#e58b42" glow="#ffaa66" />
+                  ) : (
+                    <View style={{
+                      width: 14,
+                      height: 14,
+                      borderRadius: 7,
+                      borderWidth: 1.5,
+                      borderColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.15)',
+                    }} />
+                  )}
+                </View>
+
+                {/* Checklist Label */}
+                <Text style={{
+                  color: isComplete
+                    ? colors.text
+                    : isLoading
+                      ? isDark ? '#FFFFFF' : '#12311E'
+                      : colors.textSecondary,
+                  fontSize: 13.5,
+                  fontWeight: isComplete || isLoading ? '700' : '500',
+                  flex: 1,
+                }}>
+                  {item}
+                </Text>
+              </Animated.View>
+            );
+          })}
         </View>
       </View>
-
-      <ScreenHeading
-        title="Your BiteFix view is **ready**."
-        subtitle="Here is how your scan results **come together**."
-        colors={colors}
-        align="center"
-      />
-      <MomentResultCard colors={colors} isDark={isDark} selected={selected} />
     </ScreenFrame>
   );
 }
@@ -2325,11 +2498,13 @@ export function FinalActivationScreen({
   isDark,
   reduceMotion,
   isActive = true,
+  selected = [],
 }: {
   colors: any;
   isDark: boolean;
   reduceMotion: boolean;
   isActive?: boolean;
+  selected?: OnboardingPriority[];
 }) {
   const { width, height } = useWindowDimensions();
   const orbit = useRef(new Animated.Value(0)).current;
@@ -2503,10 +2678,16 @@ export function FinalActivationScreen({
           letterSpacing: 2.3,
           textTransform: 'uppercase',
           textAlign: 'center',
+          marginBottom: 20,
         }}
       >
         Ready when you are
       </Text>
+
+      {/* Profile scan result card rendered directly below the mascot */}
+      <View style={{ width: '100%', marginTop: 8 }}>
+        <MomentResultCard colors={colors} isDark={isDark} selected={selected} />
+      </View>
     </View>
   );
 }

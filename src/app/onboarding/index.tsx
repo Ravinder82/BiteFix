@@ -384,6 +384,8 @@ export default function OnboardingScreen() {
   const [shoppingFrequency, setShoppingFrequency] = useState<ShoppingFrequency>();
   const [labelReadingFrequency, setLabelReadingFrequency] = useState<'always' | 'sometimes' | 'rarely' | 'never'>();
   const [ingredientReadingFrequency, setIngredientReadingFrequency] = useState<IngredientReadingFrequency>();
+  const [revelationComplete, setRevelationComplete] = useState(false);
+  const [synthesisComplete, setSynthesisComplete] = useState(false);
 
   const reduceMotion = useReduceMotion();
   const pagerRef = useRef<any>(null);
@@ -423,6 +425,14 @@ export default function OnboardingScreen() {
     });
     return () => cancelAnimationFrame(frame);
   }, [screenWidth]);
+
+  useEffect(() => {
+    if (currentScreen === 5) {
+      setRevelationComplete(false);
+    } else if (currentScreen === 8) {
+      setSynthesisComplete(false);
+    }
+  }, [currentScreen]);
 
   useEffect(() => {
     return () => {
@@ -540,7 +550,15 @@ export default function OnboardingScreen() {
     9: 'Activate BiteFix',
   };
 
-  const getCtaLabel = (screen: number) => ONBOARDING_CTA_LABELS[screen] ?? 'Continue';
+  const getCtaLabel = (screen: number) => {
+    if (screen === 5) {
+      return revelationComplete ? "Let's Continue" : "Revealing Score...";
+    }
+    if (screen === 8) {
+      return synthesisComplete ? "Let's Continue" : "Configuring Engine...";
+    }
+    return ONBOARDING_CTA_LABELS[screen] ?? 'Continue';
+  };
 
   const renderScreenContent = (screen: number) => {
     const isActive = screen === currentScreen && !isPaging;
@@ -558,7 +576,15 @@ export default function OnboardingScreen() {
       case 4:
         return <FlagshipPainScreen selected={ingredientReadingFrequency} onSelect={setIngredientReadingFrequency} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} isActive={isActive} />;
       case 5:
-        return <FlagshipRevelationScreen colors={colors} isDark={isDark} reduceMotion={reduceMotion} isActive={isActive} />;
+        return (
+          <FlagshipRevelationScreen
+            colors={colors}
+            isDark={isDark}
+            reduceMotion={reduceMotion}
+            isActive={isActive}
+            onAnimationComplete={() => setRevelationComplete(true)}
+          />
+        );
       case 6:
         return <FlagshipAllergyScreen selected={allergens} onToggle={toggleAllergen} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       case 7:
@@ -575,6 +601,7 @@ export default function OnboardingScreen() {
             isDark={isDark}
             reduceMotion={screenReduceMotion}
             isActive={isActive}
+            onAnimationComplete={() => setSynthesisComplete(true)}
           />
         );
       case 9:
@@ -584,6 +611,7 @@ export default function OnboardingScreen() {
             isDark={isDark}
             reduceMotion={screenReduceMotion}
             isActive={isActive}
+            selected={priorities}
           />
         );
       default:
@@ -602,8 +630,10 @@ export default function OnboardingScreen() {
       (screen === 2 && !shoppingFrequency) ||
       (screen === 3 && !labelReadingFrequency) ||
       (screen === 4 && !ingredientReadingFrequency) ||
+      (screen === 5 && !revelationComplete) ||
       (screen === 6 && allergens.length === 0) ||
-      (screen === 7 && priorities.length === 0);
+      (screen === 7 && priorities.length === 0) ||
+      (screen === 8 && !synthesisComplete);
     const disabledBg = isDark ? '#153622ff' : '#F0F4F1';
     const disabledBorder = isDark ? 'rgba(167, 231, 63, 0.1)' : 'rgba(7, 25, 15, 0.08)';
     const disabledText = isDark ? 'rgba(172, 172, 172, 0.59)' : 'rgba(6, 33, 18, 0.42)';
