@@ -553,7 +553,7 @@ export default function OnboardingScreen() {
       return revelationComplete ? "Let's Continue" : "Revealing Score...";
     }
     if (screen === 7) {
-      return synthesisComplete ? "Let's Continue" : "Configuring Engine...";
+      return synthesisComplete ? "Let's Continue" : 'Configuring Engine';
     }
     return ONBOARDING_CTA_LABELS[screen] ?? 'Continue';
   };

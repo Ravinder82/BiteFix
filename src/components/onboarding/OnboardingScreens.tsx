@@ -120,7 +120,13 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
-function ScreenFrame({ children }: { children: React.ReactNode }) {
+function ScreenFrame({
+  children,
+  verticalAlign = 'center',
+}: {
+  children: React.ReactNode;
+  verticalAlign?: 'center' | 'flex-start';
+}) {
   const { width, height } = useWindowDimensions();
   const horizontalPadding = clamp(width * 0.0615, 18, 24);
   const verticalPadding = clamp(height * 0.017, 10, 16);
@@ -132,7 +138,7 @@ function ScreenFrame({ children }: { children: React.ReactNode }) {
         width: '100%',
         maxWidth: 430,
         alignSelf: 'center',
-        justifyContent: 'center',
+        justifyContent: verticalAlign,
         paddingHorizontal: horizontalPadding,
         paddingTop: verticalPadding,
         paddingBottom: verticalPadding + 8,
@@ -2114,6 +2120,7 @@ function SynthesisRing({
   reduceMotion,
   isActive,
   animateToAmbient = false,
+  size = 140,
 }: {
   phase: 'synthesizing' | 'complete';
   colors: any;
@@ -2121,6 +2128,7 @@ function SynthesisRing({
   reduceMotion: boolean;
   isActive: boolean;
   animateToAmbient?: boolean;
+  size?: number;
 }) {
   const mainRotAnim = useRef(new Animated.Value(0)).current;
   const counterRotAnim = useRef(new Animated.Value(0)).current;
@@ -2132,8 +2140,6 @@ function SynthesisRing({
   const mainDashoffset = useRef(new Animated.Value(69.12)).current;
   const counterDashoffset = useRef(new Animated.Value(164.93)).current;
 
-  const mascotScale = useRef(new Animated.Value(1)).current;
-
   useEffect(() => {
     if (reduceMotion) {
       mainDashoffset.setValue(0);
@@ -2144,7 +2150,6 @@ function SynthesisRing({
     if (!isActive) {
       mainDashoffset.setValue(69.12);
       counterDashoffset.setValue(164.93);
-      mascotScale.setValue(1);
       return;
     }
 
@@ -2160,15 +2165,10 @@ function SynthesisRing({
           duration: 600,
           useNativeDriver: false,
         }),
-        Animated.sequence([
-          Animated.timing(mascotScale, { toValue: 1.12, duration: 150, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-          Animated.timing(mascotScale, { toValue: 1, duration: 300, useNativeDriver: true }),
-        ]),
       ]).start();
     } else {
       mainDashoffset.setValue(69.12);
       counterDashoffset.setValue(164.93);
-      mascotScale.setValue(1);
     }
   }, [phase, isActive, reduceMotion]);
 
@@ -2203,7 +2203,6 @@ function SynthesisRing({
         })
       );
 
-      // Smooth transition from fast spin to ambient when animateToAmbient flips
       if (animateToAmbient) {
         Animated.timing(mainRotAnim, {
           toValue: 1,
@@ -2292,13 +2291,13 @@ function SynthesisRing({
   });
 
   return (
-    <View style={{ width: 140, height: 140, justifyContent: 'center', alignItems: 'center' }}>
+    <View style={{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }}>
       {/* Base layer: secondary blur overlay for volumetric depth in dark mode */}
-      <Svg width={140} height={140} viewBox="0 0 100 100" style={isDark ? { position: 'absolute', filter: 'blur(28px)' } : undefined}>
+      <Svg width={size} height={size} viewBox="0 0 100 100" style={isDark ? { position: 'absolute', filter: 'blur(28px)' } : undefined}>
         <Circle cx="50" cy="50" r="58" fill={isDark ? 'rgba(52, 216, 115, 0.05)' : 'transparent'} />
       </Svg>
 
-      <Svg width={140} height={140} viewBox="0 0 100 100" style={{ position: 'absolute' }}>
+      <Svg width={size} height={size} viewBox="0 0 100 100" style={{ position: 'absolute' }}>
         <Defs>
           <RadialGradient id="synthesisMascotGlow" cx="50%" cy="50%" rx="50%" ry="50%">
             <Stop offset="0%" stopColor={GREEN} stopOpacity={isDark ? 0.30 : 0.18} />
@@ -2325,15 +2324,19 @@ function SynthesisRing({
           strokeDasharray="2 6"
           opacity="0.18"
         />
+
+        {/* Glowing futuristic center scanner core instead of mascot */}
+        <Circle cx="50" cy="50" r="16" fill="url(#synthesisMainGrad)" opacity={isDark ? 0.18 : 0.10} />
+        <Circle cx="50" cy="50" r="6" fill={GREEN} opacity="0.9" />
       </Svg>
 
       <Animated.View style={{
         position: 'absolute',
-        width: 140,
-        height: 140,
+        width: size,
+        height: size,
         transform: reduceMotion ? [] : [{ rotate: mainRotate }],
       }}>
-        <Svg width={140} height={140} viewBox="0 0 100 100">
+        <Svg width={size} height={size} viewBox="0 0 100 100">
           {/* Subtle shadow projection for main arc */}
           <Circle
             cx="50"
@@ -2359,11 +2362,11 @@ function SynthesisRing({
 
       <Animated.View style={{
         position: 'absolute',
-        width: 140,
-        height: 140,
+        width: size,
+        height: size,
         transform: reduceMotion ? [] : [{ rotate: counterRotate }],
       }}>
-        <Svg width={140} height={140} viewBox="0 0 100 100">
+        <Svg width={size} height={size} viewBox="0 0 100 100">
           {/* Subtle shadow projection for counter arc */}
           <Circle
             cx="50"
@@ -2385,15 +2388,6 @@ function SynthesisRing({
             strokeDashoffset={reduceMotion ? 0 : counterDashoffset}
           />
         </Svg>
-      </Animated.View>
-
-      <Animated.View style={{ transform: [{ scale: mascotScale }] }}>
-        <OrbMascot
-          state={reduceMotion ? 'happy' : (phase === 'complete' ? 'happy' : 'thinking')}
-          size={72}
-          reduceMotion={reduceMotion}
-          accessibilityLabel="Synthesizing BiteFix scanner mascot"
-        />
       </Animated.View>
     </View>
   );
@@ -2522,10 +2516,10 @@ function SynthesisCard({
         transform: [{ translateY: cardTranslateY }],
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 14,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        borderRadius: 18,
+        gap: 16,
+        paddingHorizontal: 20,
+        paddingVertical: 14,
+        borderRadius: 22,
         borderWidth: 1.0,
         borderColor: isLoading
           ? (isDark ? 'rgba(52,216,115,0.35)' : 'rgba(1,146,42,0.20)')
@@ -2549,13 +2543,13 @@ function SynthesisCard({
         }} />
       )}
 
-      <View style={{ width: 22, height: 22, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ width: 24, height: 24, justifyContent: 'center', alignItems: 'center' }}>
         {isComplete ? (
           <Animated.View style={{
             transform: [{ scale: checkScale }],
-            width: 20,
-            height: 20,
-            borderRadius: 10,
+            width: 22,
+            height: 22,
+            borderRadius: 11,
             backgroundColor: GREEN,
             alignItems: 'center',
             justifyContent: 'center',
@@ -2565,7 +2559,7 @@ function SynthesisCard({
             shadowRadius: 3,
             elevation: 2,
           }}>
-            <Check size={11} color="#FFFFFF" strokeWidth={3.5} />
+            <Check size={12} color="#FFFFFF" strokeWidth={3.5} />
           </Animated.View>
         ) : isLoading ? (
           <LedLight active={true} color={GREEN} glow={GREEN_BRIGHT} showLabel={false} />
@@ -2583,7 +2577,7 @@ function SynthesisCard({
       <View style={{ flex: 1, flexDirection: 'column' }}>
         <Text style={{
           color: isComplete || isLoading ? colors.text : colors.textSecondary,
-          fontSize: 13,
+          fontSize: 14,
           fontWeight: '800',
           letterSpacing: -0.15,
         }}>
@@ -2592,9 +2586,9 @@ function SynthesisCard({
         <Animated.View style={{ opacity: detailOpacity }}>
           <Text style={{
             color: isComplete ? colors.text : isLoading ? (isDark ? '#FFFFFF' : GREEN) : colors.textSecondary,
-            fontSize: 12,
+            fontSize: 12.5,
             fontWeight: '500',
-            marginTop: 1,
+            marginTop: 2,
           }}>
             {detail}{isLoading ? ellipsis : ''}
           </Text>
@@ -2627,6 +2621,10 @@ function ScannerDossier({
   reduceMotion: boolean;
   isActive: boolean;
 }) {
+  const { width } = useWindowDimensions();
+  const compact = width < 360;
+  const cardPadding = compact ? 18 : 22;
+  const sealSize = compact ? 70 : 80;
   const dossierOpacity = useRef(new Animated.Value(0)).current;
   const dossierScale = useRef(new Animated.Value(0.96)).current;
 
@@ -2692,10 +2690,10 @@ function ScannerDossier({
       width: '100%',
       opacity: dossierOpacity,
       transform: [{ scale: dossierScale }],
-      padding: 18,
-      borderRadius: 22,
-      borderWidth: 1.25,
-      borderColor: isDark ? 'rgba(52,216,115,0.25)' : 'rgba(1,146,42,0.15)',
+      padding: cardPadding,
+      borderRadius: 24,
+      borderWidth: 1.5,
+      borderColor: isDark ? 'rgba(52,216,115,0.32)' : 'rgba(1,146,42,0.18)',
       backgroundColor: isDark ? '#06180E' : '#FFFFFF',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 10 },
@@ -2703,32 +2701,51 @@ function ScannerDossier({
       shadowRadius: 20,
       elevation: 5,
     }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-        <View style={{ width: 64, height: 64, borderRadius: 32, overflow: 'hidden' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+        <View
+          style={{
+            width: sealSize,
+            height: sealSize,
+            borderRadius: sealSize / 2,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: isDark ? 'rgba(52,216,115,0.08)' : '#F3FBF5',
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(52,216,115,0.22)' : 'rgba(1,146,42,0.11)',
+          }}
+        >
           <SynthesisRing
             phase="complete"
             colors={colors}
             isDark={isDark}
             reduceMotion={reduceMotion}
             isActive={isActive}
+            size={sealSize - 8}
           />
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: isDark ? '#FFFFFF' : '#12311E', fontSize: 16, fontWeight: '900', letterSpacing: -0.3 }}>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={{ color: isDark ? GREEN_DARK_ICON : '#6F8B79', fontSize: 10, fontWeight: '900', letterSpacing: 1.25, textTransform: 'uppercase', marginBottom: 3 }}>
+            Your food profile
+          </Text>
+          <Text numberOfLines={1} style={{ color: isDark ? '#FFFFFF' : '#12311E', fontSize: compact ? 16 : 18, fontWeight: '900', letterSpacing: -0.35 }}>
             {name}'s Scanner
           </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
-            <Check size={11} color={isDark ? GREEN_DARK_ICON : GREEN} strokeWidth={3.5} />
-            <Text style={{ color: isDark ? GREEN_DARK_ICON : GREEN, fontSize: 11, fontWeight: '800' }}>
-              Personalized & Ready
+          <View style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 5, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 999, backgroundColor: isDark ? 'rgba(52,216,115,0.12)' : '#EAF8EE' }}>
+            <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: isDark ? GREEN_DARK_ICON : GREEN }} />
+            <Text style={{ color: isDark ? GREEN_DARK_ICON : GREEN, fontSize: 9.5, fontWeight: '900' }}>
+              Ready to scan
             </Text>
           </View>
         </View>
       </View>
 
-      <View style={{ height: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', marginBottom: 12 }} />
+      <View style={{ height: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(1,79,24,0.08)', marginBottom: 12 }} />
 
-      <View style={{ gap: 8, marginBottom: 14 }}>
+      <Text style={{ color: isDark ? 'rgba(255,255,255,0.50)' : '#789080', fontSize: 9.5, fontWeight: '900', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 8 }}>
+        Built around you
+      </Text>
+
+      <View style={{ gap: 4, marginBottom: 16 }}>
         {dossierRows.map((row, i) => {
           const Icon = row.icon;
           const rowOpacity = rowAnims[i];
@@ -2745,27 +2762,38 @@ function ScannerDossier({
                 }],
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: 10,
-                paddingVertical: 3,
+                gap: 12,
+                paddingVertical: 10,
+                paddingHorizontal: 10,
+                borderRadius: 14,
+                backgroundColor: i % 2 === 0
+                  ? (isDark ? 'rgba(255,255,255,0.025)' : '#F7FBF8')
+                  : 'transparent',
               }}
             >
-              <Icon size={15} color={isDark ? GREEN_DARK_ICON : GREEN} strokeWidth={2.5} />
-              <Text style={{ color: colors.textSecondary, fontSize: 12.5, fontWeight: '500', flex: 1 }}>
-                {row.label}
-              </Text>
-              <Text numberOfLines={1} style={{ color: colors.text, fontSize: 12.5, fontWeight: '800', marginRight: 6, maxWidth: 160 }}>
-                {row.value}
-              </Text>
-              <Check size={12} color={isDark ? GREEN_DARK_ICON : GREEN} strokeWidth={3} />
+              <View style={{ width: 28, height: 28, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? 'rgba(52,216,115,0.10)' : '#EAF8EE' }}>
+                <Icon size={16} color={isDark ? GREEN_DARK_ICON : GREEN} strokeWidth={2.5} />
+              </View>
+              <View style={{ flex: 1, minWidth: 0, paddingRight: 3 }}>
+                <Text style={{ color: isDark ? 'rgba(255,255,255,0.52)' : '#718675', fontSize: 11, fontWeight: '800', letterSpacing: 0.15, marginBottom: 2 }}>
+                  {row.label}
+                </Text>
+                <Text style={{ color: colors.text, fontSize: compact ? 12.5 : 13.25, lineHeight: compact ? 17 : 18, fontWeight: '800', flexShrink: 1 }}>
+                  {row.value}
+                </Text>
+              </View>
+              <View style={{ width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? 'rgba(52,216,115,0.12)' : '#EAF8EE', marginTop: 4 }}>
+                <Check size={11} color={isDark ? GREEN_DARK_ICON : GREEN} strokeWidth={3} />
+              </View>
             </Animated.View>
           );
         })}
       </View>
 
       {selectedPriorities.length > 0 && (
-        <View style={{ marginTop: 4 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 9.5, fontWeight: '800', letterSpacing: 1.1, textTransform: 'uppercase', marginBottom: 8 }}>
-            ACTIVE MODULES
+        <View style={{ marginTop: 2 }}>
+          <Text style={{ color: isDark ? 'rgba(255,255,255,0.50)' : '#789080', fontSize: 9.5, fontWeight: '900', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 8 }}>
+            Your active modules
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {selectedPriorities.map((p) => {
@@ -2776,13 +2804,14 @@ function ScannerDossier({
                   style={{
                     paddingHorizontal: 10,
                     paddingVertical: 5,
-                    borderRadius: 8,
-                    backgroundColor: `${GREEN}12`,
+                    borderRadius: 999,
+                    backgroundColor: isDark ? 'rgba(52,216,115,0.10)' : '#EAF8EE',
                     borderWidth: 1,
-                    borderColor: `${GREEN}35`,
+                    borderColor: isDark ? 'rgba(52,216,115,0.24)' : 'rgba(1,146,42,0.23)',
+                    maxWidth: '100%',
                   }}
                 >
-                  <Text style={{ color: GREEN, fontSize: 11, fontWeight: '800' }}>
+                  <Text style={{ color: isDark ? GREEN_DARK_ICON : GREEN, fontSize: 10.5, lineHeight: 14, fontWeight: '900' }}>
                     {label}
                   </Text>
                 </View>
@@ -2818,6 +2847,7 @@ export function MomentOfTruthScreen({
   allergens: string[];
   onAnimationComplete?: () => void;
 }) {
+  const { width } = useWindowDimensions();
   const profileName = name?.trim() ? name : 'Guest';
   
   const allergenCount = allergens.filter(id => id !== 'none').length;
@@ -2862,6 +2892,9 @@ export function MomentOfTruthScreen({
   const title2Opacity = useRef(new Animated.Value(0)).current;
   const checklistOpacity = useRef(new Animated.Value(1)).current;
   const [dossierShown, setDossierShown] = useState(false);
+  const synthesisSealSize = phase === 'complete'
+    ? clamp(width * 0.36, 130, 146)
+    : clamp(width * 0.48, 170, 186);
 
   useEffect(() => {
     if (reduceMotion) {
@@ -2937,17 +2970,18 @@ export function MomentOfTruthScreen({
   }, [isActive, reduceMotion]);
 
   return (
-    <ScreenFrame>
+    <ScreenFrame verticalAlign="flex-start">
       <View
         style={{
-          flex: 1,
+          width: '100%',
           alignItems: 'center',
-          justifyContent: 'center',
+          // Never centre a profile taller than the viewport: that would push the title under the nav.
+          justifyContent: 'flex-start',
           paddingVertical: 10,
         }}
       >
-        {/* Dynamic Big Headings */}
-        <View style={{ width: '100%', minHeight: 84, justifyContent: 'center', marginBottom: 16 }}>
+        {/* Both phases reserve the same measured heading space so the completion copy cannot collide with the navigation. */}
+        <View style={{ width: '100%', minHeight: 142, justifyContent: 'center', marginBottom: 8 }}>
           <Animated.View style={{
             position: 'absolute',
             width: '100%',
@@ -2969,8 +3003,8 @@ export function MomentOfTruthScreen({
             pointerEvents: phase === 'complete' ? 'auto' : 'none',
           }}>
             <ScreenHeading
-              title="Congratulations! **BiteFix Scanner** is Activated for your Profile"
-              subtitle="Built from your profile inputs — here is your complete active snapshot."
+              title="Your **BiteFix Scanner** is ready"
+              subtitle="Built around how you read, shop, and choose food."
               colors={colors}
               align="center"
               display={true}
@@ -2979,13 +3013,14 @@ export function MomentOfTruthScreen({
         </View>
 
         {/* Dynamic Dual-Arc Synthesis Ring */}
-        <View style={{ width: 140, height: 140, justifyContent: 'center', alignItems: 'center', marginVertical: 18 }}>
+        <View style={{ width: synthesisSealSize, height: synthesisSealSize, justifyContent: 'center', alignItems: 'center', marginVertical: 12 }}>
           <SynthesisRing
             phase={phase}
             colors={colors}
             isDark={isDark}
             reduceMotion={reduceMotion}
             isActive={isActive}
+            size={synthesisSealSize}
           />
         </View>
 
