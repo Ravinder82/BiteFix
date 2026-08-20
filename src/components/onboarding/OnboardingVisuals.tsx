@@ -6,7 +6,6 @@ import { OrbMascot } from '../features/OrbMascot';
 import { ProductDataStatusPill } from '../features/ProductDataPills';
 import { NutriScoreTrafficLight } from '../features/NutriScoreTrafficLight';
 import { OnboardingPriority } from '../../types/onboarding.types';
-import Svg, { Line } from 'react-native-svg';
 import { EnergyMeter } from '../ui/energy-meter';
 
 type VisualProps = {
@@ -54,95 +53,6 @@ function Surface({ children, colors, isDark, style }: VisualProps & { children: 
       ]}
     >
       {children}
-    </View>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════
-// SCREEN 7 — FOCUS CONSTELLATION
-// ══════════════════════════════════════════════════════════════
-export function PriorityConstellation({ colors, isDark, reduceMotion = false, selected }: VisualProps & { selected: OnboardingPriority[] }) {
-  const activePriorities = selected.length > 0 ? selected : (['nutrition', 'ingredients'] as OnboardingPriority[]);
-
-  return (
-    <View accessible accessibilityLabel="Selected priorities illuminate around the BiteFix scanner" style={{ height: 175, alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-      {/* Outer Orbit Guide Ring */}
-      <View
-        style={{
-          position: 'absolute',
-          width: 165,
-          height: 165,
-          borderRadius: 82.5,
-          borderWidth: 1.5,
-          borderColor: isDark ? 'rgba(1,146,42,0.22)' : 'rgba(1,146,42,0.18)',
-        }}
-      />
-
-      {/* SVG Connectors */}
-      <Svg width="180" height="180" viewBox="0 0 180 180" style={{ position: 'absolute' }} pointerEvents="none">
-        {activePriorities.map((priority, index) => {
-          const angle = (index / Math.max(activePriorities.length, 1)) * Math.PI * 2 - Math.PI / 2;
-          const r = 62;
-          const x = 90 + Math.cos(angle) * r;
-          const y = 90 + Math.sin(angle) * r;
-          return (
-            <Line
-              key={`conn-${priority}`}
-              x1="90"
-              y1="90"
-              x2={x}
-              y2={y}
-              stroke={PRIORITY_META[priority].color}
-              strokeWidth="1.5"
-              strokeOpacity="0.5"
-              strokeDasharray="3 4"
-            />
-          );
-        })}
-      </Svg>
-
-      {/* Center Mascot */}
-      <OrbMascot state="thinking" size={82} reduceMotion={reduceMotion} showShadow={false} />
-
-      {/* Orbiting Selected Nodes */}
-      {activePriorities.map((priority, index) => {
-        const meta = PRIORITY_META[priority];
-        const angle = (index / Math.max(activePriorities.length, 1)) * Math.PI * 2 - Math.PI / 2;
-        const left = 50 + Math.cos(angle) * 38;
-        const top = 50 + Math.sin(angle) * 38;
-        const Icon = meta.icon;
-
-        return (
-          <View
-            key={priority}
-            style={{
-              position: 'absolute',
-              left: `${left}%`,
-              top: `${top}%`,
-              transform: [{ translateX: -36 }, { translateY: -16 }],
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-              paddingHorizontal: 9,
-              paddingVertical: 6,
-              borderRadius: 999,
-              backgroundColor: isDark ? 'rgba(10,18,12,0.95)' : 'rgba(255,255,255,0.96)',
-              borderWidth: 1.5,
-              borderColor: `${meta.color}70`,
-              shadowColor: meta.color,
-              shadowOffset: { width: 0, height: 3 },
-              shadowOpacity: 0.22,
-              shadowRadius: 8,
-              elevation: 3,
-            }}
-          >
-            <Icon size={12.5} color={meta.color} strokeWidth={2.3} />
-            <Text numberOfLines={1} style={{ color: colors.text, fontSize: 10, fontWeight: '800' }}>
-              {meta.label}
-            </Text>
-          </View>
-        );
-      })}
     </View>
   );
 }

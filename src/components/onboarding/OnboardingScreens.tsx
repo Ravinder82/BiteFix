@@ -1,12 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
-import { Activity, ArrowRight, Check, Droplets, Leaf, Package, ScanLine, ShieldCheck, Sparkles, Tag, UserRound, Zap } from 'lucide-react-native';
+import { Activity, Check, Droplets, Leaf, Package, ShieldCheck, Sparkles, UserRound } from 'lucide-react-native';
 import Svg, { Circle, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { OrbMascot } from '../features/OrbMascot';
 import {
   LabelCompressionVisual,
   MomentResultCard,
-  PriorityConstellation,
 } from './OnboardingVisuals';
 import { IngredientReadingFrequency, OnboardingPriority, ShoppingFrequency } from '../../types/onboarding.types';
 
@@ -47,7 +46,7 @@ const ALLERGEN_OPTIONS: AllergyOption[] = [
   {
     id: 'none',
     label: 'No known food allergies',
-    emoji: '✨',
+    emoji: '🛡️',
     stickerBg: '#F4FAF3',
     stickerBorder: '#1ADB13',
     stickerShadow: '#4F8A43',
@@ -106,12 +105,11 @@ const ALLERGEN_OPTIONS: AllergyOption[] = [
   },
 ];
 
-const PRIORITY_OPTIONS: Array<{ id: OnboardingPriority; label: string; icon: React.ComponentType<any>; color: string }> = [
-  { id: 'ultra_processed', label: 'Less ultra-processed food', icon: Package, color: GREEN },
-  { id: 'nutrition', label: 'Better nutrition profile', icon: Activity, color: TEAL },
-  { id: 'ingredients', label: 'Ingredients and allergens', icon: ShieldCheck, color: GREEN },
-  { id: 'sugar', label: 'Lower sugar intake', icon: Droplets, color: AMBER },
-  { id: 'environment', label: 'Environmental impact', icon: Leaf, color: TEAL },
+const PRIORITY_OPTIONS: Array<{ id: OnboardingPriority; label: string; preview: string; icon: React.ComponentType<any>; color: string }> = [
+  { id: 'ultra_processed', label: 'Less ultra-processed food', preview: 'NOVA 1–4', icon: Package, color: GREEN },
+  { id: 'nutrition', label: 'Better nutrition profile', preview: 'Nutri-Score A–E', icon: Activity, color: TEAL },
+  { id: 'ingredients', label: 'Ingredients and allergens', preview: 'Additives · E-numbers', icon: ShieldCheck, color: GREEN },
+  { id: 'sugar', label: 'Lower sugar intake', preview: '≈ tsp per serving', icon: Droplets, color: AMBER },
 ];
 
 // ══════════════════════════════════════════════════════════════
@@ -194,6 +192,7 @@ function SelectionRow({
   multi = false,
   Icon,
   accent,
+  preview,
 }: {
   label: string;
   selected: boolean;
@@ -203,12 +202,30 @@ function SelectionRow({
   multi?: boolean;
   Icon?: React.ComponentType<any>;
   accent?: string;
+  preview?: string;
 }) {
-  const accentColor = accent || GREEN;
   const { width } = useWindowDimensions();
-  const rowHorizontalPadding = clamp(width * 0.041, 14, 18);
-  const rowGap = clamp(width * 0.033, 11, 14);
   const rowFontSize = clamp(width * 0.0372, 14, 15.5);
+
+  const ledProgress = useRef(new Animated.Value(selected ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.timing(ledProgress, {
+      toValue: selected ? 1 : 0,
+      duration: 180,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+      isInteraction: false,
+    }).start();
+  }, [ledProgress, selected]);
+
+  const ledHaloOpacity = ledProgress.interpolate({ inputRange: [0, 1], outputRange: [0, 0.45] });
+  const ledHaloScale = ledProgress.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1.3] });
+  const ledCoreScale = ledProgress.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] });
+
+  // Use Gen Z pill colors for selections: #14ae97 (soft, vivid teal)
+  const activeColor = '#14ae97';
+  const activeGlow = '#13f5b0';
 
   return (
     <TouchableOpacity
@@ -216,7 +233,7 @@ function SelectionRow({
       activeOpacity={0.82}
       accessibilityRole={multi ? 'checkbox' : 'radio'}
       accessibilityState={{ selected }}
-      accessibilityLabel={label}
+      accessibilityLabel={preview ? `${label}, ${preview}` : label}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
@@ -225,29 +242,56 @@ function SelectionRow({
         paddingHorizontal: 16,
         paddingVertical: 13,
         borderRadius: 17,
-        borderWidth: 1.5,
-        borderColor: selected ? accentColor : isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+        borderWidth: 1.25,
+        borderColor: selected ? activeColor : isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
         backgroundColor: selected
-          ? `${accentColor}12`
+          ? isDark ? 'rgba(20, 174, 151, 0.06)' : 'rgba(20, 174, 151, 0.04)'
           : isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.012)',
       }}
     >
-      {/* Indicator */}
-      <View style={{
-        width: 23,
-        height: 23,
-        borderRadius: multi ? 8 : 12,
-        borderWidth: selected ? 0 : 1.5,
-        borderColor: selected ? 'transparent' : isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)',
-        backgroundColor: selected ? accentColor : 'transparent',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        {selected && <Check size={14} color="#FFFFFF" strokeWidth={3} />}
+      {/* 8K HD LED Indicator */}
+      <View
+        style={{
+          width: 20,
+          height: 20,
+          borderRadius: multi ? 6 : 10,
+          borderWidth: 1.5,
+          borderColor: selected ? activeColor : isDark ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.16)',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.5)',
+        }}
+      >
+        <Animated.View
+          style={{
+            position: 'absolute',
+            width: 24,
+            height: 24,
+            borderRadius: multi ? 8 : 12,
+            borderWidth: 2.5,
+            borderColor: activeGlow,
+            opacity: ledHaloOpacity,
+            transform: [{ scale: ledHaloScale }],
+          }}
+        />
+        <Animated.View
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: multi ? 2 : 4,
+            backgroundColor: activeColor,
+            opacity: ledProgress,
+            transform: [{ scale: ledCoreScale }],
+            shadowColor: activeGlow,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.8,
+            shadowRadius: 4,
+          }}
+        />
       </View>
 
       {/* Optional icon */}
-      {Icon && <Icon size={18} color={selected ? accentColor : colors.textSecondary} strokeWidth={2.1} />}
+      {Icon && <Icon size={18} color={selected ? activeColor : colors.textSecondary} strokeWidth={2.1} />}
 
       {/* Label */}
       <Text style={{
@@ -259,6 +303,22 @@ function SelectionRow({
       }}>
         {label}
       </Text>
+
+      {/* Optional Insight Preview tag */}
+      {preview ? (
+        <Text
+          numberOfLines={1}
+          style={{
+            color: selected ? activeColor : colors.textSecondary,
+            fontSize: 12.5,
+            fontWeight: selected ? '800' : '500',
+            letterSpacing: -0.1,
+            marginLeft: 8,
+          }}
+        >
+          {preview}
+        </Text>
+      ) : null}
     </TouchableOpacity>
   );
 }
@@ -553,14 +613,321 @@ function ContextOptionRow({
   );
 }
 
-function AllergyOptionTile({
+const getCleanLabel = (id: string) => {
+  switch (id) {
+    case 'dairy': return 'Dairy';
+    case 'gluten': return 'Gluten';
+    case 'nuts': return 'Peanuts/Nuts';
+    case 'soy': return 'Soy';
+    case 'eggs': return 'Eggs';
+    default: return '';
+  }
+};
+
+function LedLight({ active, color = '#14ae97', glow = '#13f5b0' }: { active: boolean, color?: string, glow?: string }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+      <View style={{
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: active ? color : 'rgba(150, 150, 150, 0.4)',
+        shadowColor: active ? glow : 'transparent',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: active ? 0.9 : 0,
+        shadowRadius: 5,
+        elevation: active ? 3 : 0,
+      }} />
+      <Text style={{
+        fontSize: 9.5,
+        fontWeight: '900',
+        color: active ? color : 'rgba(150, 150, 150, 0.6)',
+        letterSpacing: 1.2,
+      }}>
+        {active ? 'ACTIVE' : 'STANDBY'}
+      </Text>
+    </View>
+  );
+}
+
+function ShieldStatusBar({
+  selected,
+  colors,
+  isDark,
+}: {
+  selected: string[];
+  colors: any;
+  isDark: boolean;
+}) {
+  const isNone = selected.includes('none');
+  const activeAllergens = selected.filter((id) => id !== 'none');
+  const ledActive = isNone || activeAllergens.length > 0;
+
+  let statusTitle = 'Allergen shield standby';
+  let statusSubtitle = 'Choose ingredients to scan. BiteFix analyzes barcodes and flags matches.';
+  let ledColor = '#e58b42'; // Standby/amber
+  let ledGlow = '#ffaa66';
+
+  if (isNone) {
+    statusTitle = 'All clear';
+    statusSubtitle = 'Zero food allergies selected. Safe scanning enabled.';
+    ledColor = '#7ec201'; // Lime
+    ledGlow = '#a3cb48';
+  } else if (activeAllergens.length > 0) {
+    statusTitle = 'Allergen shield active';
+    statusSubtitle = `BiteFix warning system armed for selected substances.`;
+    ledColor = '#14ae97'; // Teal
+    ledGlow = '#13f5b0';
+  }
+
+  const activeOptions = ALLERGEN_OPTIONS.filter(opt => activeAllergens.includes(opt.id));
+
+  return (
+    <View
+      style={{
+        width: '100%',
+        borderRadius: 22,
+        borderWidth: 1.25,
+        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+        backgroundColor: isDark ? 'rgba(10, 15, 12, 0.7)' : 'rgba(255, 255, 255, 0.8)',
+        padding: 16,
+        marginBottom: 20,
+        shadowColor: ledActive ? ledColor : 'transparent',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: isDark ? 0.16 : 0.06,
+        shadowRadius: 20,
+        elevation: ledActive ? 3 : 0,
+      }}
+    >
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <LedLight active={ledActive} color={ledColor} glow={ledGlow} />
+        <Text style={{ fontSize: 9.5, fontWeight: '700', color: colors.textMuted, letterSpacing: 0.5 }}>
+          BITEFIX ENGINE V1.2
+        </Text>
+      </View>
+
+      <View>
+        <Text
+          style={{
+            color: isDark ? '#FFFFFF' : '#12311E',
+            fontSize: 15.5,
+            fontWeight: '800',
+            letterSpacing: -0.3,
+          }}
+        >
+          {statusTitle}
+        </Text>
+        <Text
+          style={{
+            color: colors.textSecondary,
+            fontSize: 12.5,
+            fontWeight: '500',
+            marginTop: 2,
+            lineHeight: 16.5,
+          }}
+        >
+          {statusSubtitle}
+        </Text>
+      </View>
+
+      {activeOptions.length > 0 && (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 14 }}>
+          {activeOptions.map((opt) => {
+            const cleanLabel = getCleanLabel(opt.id);
+            return (
+              <View
+                key={opt.id}
+                style={{
+                  width: '48.5%',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: isDark ? opt.stickerBorder + '30' : opt.stickerBorder + '80',
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : opt.stickerBg,
+                  marginBottom: 8,
+                }}
+              >
+                <Text style={{ fontSize: 14 }}>{opt.emoji}</Text>
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    fontSize: 12.5,
+                    fontWeight: '700',
+                    color: isDark ? '#FFFFFF' : '#12311E',
+                    flex: 1,
+                  }}
+                >
+                  {cleanLabel}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+      )}
+    </View>
+  );
+}
+
+function PriorityStatusBar({
+  selected,
+  colors,
+  isDark,
+}: {
+  selected: OnboardingPriority[];
+  colors: any;
+  isDark: boolean;
+}) {
+  const activeOptions = PRIORITY_OPTIONS.filter(opt => selected.includes(opt.id));
+  const isActive = activeOptions.length > 0;
+
+  let statusTitle = 'Priorities standby';
+  let statusSubtitle = 'Select priorities below to customize scanning metrics.';
+  let ledActive = false;
+  let ledColor = '#7ec201'; // lime standby
+  let ledGlow = '#a3cb48';
+
+  if (isActive) {
+    statusTitle = `${activeOptions.length} Priority module${activeOptions.length > 1 ? 's' : ''} engaged`;
+    statusSubtitle = 'Custom rules injected into scanning algorithm.';
+    ledActive = true;
+    ledColor = '#14ae97'; // teal active
+    ledGlow = '#13f5b0';
+  }
+
+  return (
+    <View
+      style={{
+        width: '100%',
+        borderRadius: 22,
+        borderWidth: 1.25,
+        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+        backgroundColor: isDark ? 'rgba(10, 15, 12, 0.7)' : 'rgba(255, 255, 255, 0.8)',
+        padding: 16,
+        marginBottom: 20,
+        shadowColor: ledActive ? ledColor : 'transparent',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: isDark ? 0.16 : 0.06,
+        shadowRadius: 20,
+        elevation: ledActive ? 3 : 0,
+      }}
+    >
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <LedLight active={ledActive} color={ledColor} glow={ledGlow} />
+        <Text style={{ fontSize: 9.5, fontWeight: '700', color: colors.textMuted, letterSpacing: 0.5 }}>
+          BITEFIX ENGINE V1.2
+        </Text>
+      </View>
+
+      <View>
+        <Text
+          style={{
+            color: isDark ? '#FFFFFF' : '#12311E',
+            fontSize: 15.5,
+            fontWeight: '800',
+            letterSpacing: -0.3,
+          }}
+        >
+          {statusTitle}
+        </Text>
+        <Text
+          style={{
+            color: colors.textSecondary,
+            fontSize: 12.5,
+            fontWeight: '500',
+            marginTop: 2,
+            lineHeight: 16.5,
+          }}
+        >
+          {statusSubtitle}
+        </Text>
+      </View>
+
+      {isActive && (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 14 }}>
+          {activeOptions.map((opt) => {
+            const Icon = opt.icon;
+            let bg = '#F3F8FF';
+            let border = '#4E8BFF';
+            if (opt.id === 'ultra_processed') { bg = isDark ? 'rgba(78, 139, 255, 0.15)' : '#F3F8FF'; border = '#4E8BFF'; }
+            else if (opt.id === 'nutrition') { bg = isDark ? 'rgba(255, 204, 0, 0.15)' : '#FFF9E9'; border = '#FFCC00'; }
+            else if (opt.id === 'ingredients') { bg = isDark ? 'rgba(229, 139, 66, 0.15)' : '#FFF6F0'; border = '#E58B42'; }
+            else if (opt.id === 'sugar') { bg = isDark ? 'rgba(155, 123, 255, 0.15)' : '#F5F1FF'; border = '#9B7BFF'; }
+
+            return (
+              <View
+                key={opt.id}
+                style={{
+                  width: '48.5%',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                  paddingHorizontal: 12,
+                  paddingVertical: 10,
+                  borderRadius: 14,
+                  borderWidth: 1.25,
+                  borderColor: isDark ? border + '30' : border,
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : bg,
+                  marginBottom: 8,
+                }}
+              >
+                <View style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: 8,
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.8)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderWidth: 1,
+                  borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                }}>
+                  <Icon size={14} color={border} strokeWidth={2.5} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      fontSize: 12.5,
+                      fontWeight: '800',
+                      color: isDark ? '#FFFFFF' : '#12311E',
+                      letterSpacing: -0.2,
+                    }}
+                  >
+                    {opt.preview}
+                  </Text>
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      fontSize: 9.5,
+                      fontWeight: '600',
+                      color: colors.textMuted,
+                      marginTop: 1,
+                    }}
+                  >
+                    {opt.id === 'ultra_processed' ? 'NOVA Check' :
+                     opt.id === 'nutrition' ? 'Grade Scan' :
+                     opt.id === 'ingredients' ? 'Additives' : 'Sugar Filter'}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      )}
+    </View>
+  );
+}
+
+function ShieldRow({
   option,
   selected,
   onPress,
   colors,
   isDark,
   reduceMotion,
-  style,
 }: {
   option: AllergyOption;
   selected: boolean;
@@ -568,7 +935,6 @@ function AllergyOptionTile({
   colors: any;
   isDark: boolean;
   reduceMotion: boolean;
-  style?: any;
 }) {
   const ledProgress = useRef(new Animated.Value(selected ? 1 : 0)).current;
 
@@ -587,84 +953,106 @@ function AllergyOptionTile({
     }).start();
   }, [ledProgress, reduceMotion, selected]);
 
-  const stickerBg = isDark ? 'rgba(255,255,255,0.08)' : option.stickerBg;
-  const stickerBorder = isDark ? 'rgba(150,255,170,0.72)' : option.stickerBorder;
-  const stickerShadow = isDark ? GREEN : option.stickerShadow;
-  const ledHaloOpacity = ledProgress.interpolate({ inputRange: [0, 1], outputRange: [0, 0.65] });
-  const ledHaloScale = ledProgress.interpolate({ inputRange: [0, 1], outputRange: [0.72, 1] });
-  const ledCoreScale = ledProgress.interpolate({ inputRange: [0, 1], outputRange: [0.45, 1] });
+  const ledHaloOpacity = ledProgress.interpolate({ inputRange: [0, 1], outputRange: [0, 0.45] });
+  const ledHaloScale = ledProgress.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1.3] });
+  const ledCoreScale = ledProgress.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] });
+
+  // Use Gen Z pill colors for selections: #14ae97 (soft, vivid teal)
+  const activeColor = '#14ae97';
+  const activeGlow = '#13f5b0';
 
   return (
-    <View style={[{ marginTop: 18 }, style]}>
-      <EmojiSticker
-        emoji={option.emoji}
-        bg={stickerBg}
-        border={stickerBorder}
-        shadowC={stickerShadow}
-        rotation={option.stickerRotation}
-        size={36}
-        style={{ top: -34, ...(option.stickerSide === 'left' ? { left: 8 } : { right: 8 }) }}
-      />
-
-      <TouchableOpacity
-        onPress={onPress}
-        activeOpacity={0.86}
-        accessibilityRole="checkbox"
-        accessibilityState={{ selected }}
-        accessibilityLabel={option.label}
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.84}
+      accessibilityRole="checkbox"
+      accessibilityState={{ selected }}
+      accessibilityLabel={option.label}
+      style={{
+        minHeight: 56,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        borderRadius: 16,
+        borderWidth: 1.25,
+        borderColor: selected ? activeColor : isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+        backgroundColor: selected
+          ? isDark ? 'rgba(20, 174, 151, 0.06)' : 'rgba(20, 174, 151, 0.04)'
+          : isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.012)',
+      }}
+    >
+      {/* 8K HD LED indicator (physical-looking neon LED) */}
+      <View
         style={{
-          minHeight: option.id === 'none' ? 70 : 86,
-          flexDirection: 'row',
+          width: 20,
+          height: 20,
+          borderRadius: 10,
+          borderWidth: 1.5,
+          borderColor: selected ? activeColor : isDark ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.16)',
           alignItems: 'center',
-          gap: 10,
-          paddingHorizontal: 14,
-          paddingVertical: 13,
-          borderRadius: 18,
-          borderWidth: 1.25,
-          borderColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.085)',
-          backgroundColor: isDark ? 'rgba(255,255,255,0.035)' : 'rgba(255,255,255,0.60)',
+          justifyContent: 'center',
+          backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.5)',
         }}
       >
-        <View
+        <Animated.View
           style={{
+            position: 'absolute',
             width: 24,
             height: 24,
-            borderRadius: 8,
-            borderWidth: 1.5,
-            borderColor: isDark ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.16)',
-            alignItems: 'center',
-            justifyContent: 'center',
+            borderRadius: 12,
+            borderWidth: 2.5,
+            borderColor: activeGlow,
+            opacity: ledHaloOpacity,
+            transform: [{ scale: ledHaloScale }],
           }}
-        >
-          <Animated.View
-            style={{
-              position: 'absolute',
-              width: 29,
-              height: 29,
-              borderRadius: 15,
-              borderWidth: 2,
-              borderColor: GREEN,
-              opacity: ledHaloOpacity,
-              transform: [{ scale: ledHaloScale }],
-            }}
-          />
-          <Animated.View
-            style={{
-              width: 10,
-              height: 10,
-              borderRadius: 5,
-              backgroundColor: GREEN,
-              opacity: ledProgress,
-              transform: [{ scale: ledCoreScale }],
-            }}
-          />
-        </View>
+        />
+        <Animated.View
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: 4,
+            backgroundColor: activeColor,
+            opacity: ledProgress,
+            transform: [{ scale: ledCoreScale }],
+            shadowColor: activeGlow,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.8,
+            shadowRadius: 4,
+          }}
+        />
+      </View>
 
-        <Text style={{ color: colors.text, fontSize: 13.5, lineHeight: 18, fontWeight: '700', flex: 1 }}>
-          {option.label}
-        </Text>
-      </TouchableOpacity>
-    </View>
+      {/* Emoji Chip 32x32 rounded-rect with subtle bg */}
+      <View
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: 9,
+          backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.025)',
+          borderWidth: 1,
+          borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Text style={{ fontSize: 16 }}>{option.emoji}</Text>
+      </View>
+
+      {/* Label */}
+      <Text
+        style={{
+          color: selected ? colors.text : colors.textSecondary,
+          fontSize: 14.5,
+          lineHeight: 19,
+          fontWeight: selected ? '700' : '500',
+          flex: 1,
+        }}
+      >
+        {option.label}
+      </Text>
+    </TouchableOpacity>
   );
 }
 
@@ -948,93 +1336,26 @@ export function ContextScreen({ selected, onSelect, colors, isDark, reduceMotion
 // SCREEN 5 — ALLERGIES (moved after the pain point and instant insight)
 // ══════════════════════════════════════════════════════════════
 export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion }: { selected: string[]; onToggle: (id: string) => void; colors: any; isDark: boolean; reduceMotion: boolean }) {
-  const mascotState = selected.some((id) => id !== 'none') ? 'caution' : selected.includes('none') ? 'happy' : 'thinking';
-
-  const none = ALLERGEN_OPTIONS[0];
-  const dairy = ALLERGEN_OPTIONS[1];
-  const gluten = ALLERGEN_OPTIONS[2];
-  const nuts = ALLERGEN_OPTIONS[3];
-  const soy = ALLERGEN_OPTIONS[4];
-  const eggs = ALLERGEN_OPTIONS[5];
-  const { width } = useWindowDimensions();
-  const useSingleColumn = width < 350;
-
   return (
     <ScreenFrame>
-      <View style={{ alignItems: 'center', marginBottom: 12 }}>
-        <OrbMascot
-          state={mascotState}
-          size={88}
-          reduceMotion={reduceMotion}
-          showShadow={false}
-          accessibilityLabel="BiteFix assistant helping set allergy preferences"
-        />
-      </View>
+      <ShieldStatusBar selected={selected} colors={colors} isDark={isDark} />
       <ScreenHeading
-        title="Anything we should **watch for you** ?"
-        subtitle="Tell BiteFix what Ingredients to watch for in the **available product data**."
+        title="Anything we should **watch for you**?"
+        subtitle="Pick anything we should flag when it shows up in a scan."
         colors={colors}
       />
-      <View style={{ gap: 10, marginTop: 2 }}>
-        <AllergyOptionTile
-          option={none}
-          selected={selected.includes(none.id)}
-          onPress={() => onToggle(none.id)}
-          colors={colors}
-          isDark={isDark}
-          reduceMotion={reduceMotion}
-        />
-
-        <View style={{ flexDirection: useSingleColumn ? 'column' : 'row', gap: 10 }}>
-          <AllergyOptionTile
-            option={dairy}
-            selected={selected.includes(dairy.id)}
-            onPress={() => onToggle(dairy.id)}
+      <View style={{ gap: 7, marginTop: 2 }}>
+        {ALLERGEN_OPTIONS.map((option) => (
+          <ShieldRow
+            key={option.id}
+            option={option}
+            selected={selected.includes(option.id)}
+            onPress={() => onToggle(option.id)}
             colors={colors}
             isDark={isDark}
             reduceMotion={reduceMotion}
-            style={useSingleColumn ? undefined : { flex: 1 }}
           />
-          <AllergyOptionTile
-            option={gluten}
-            selected={selected.includes(gluten.id)}
-            onPress={() => onToggle(gluten.id)}
-            colors={colors}
-            isDark={isDark}
-            reduceMotion={reduceMotion}
-            style={useSingleColumn ? undefined : { flex: 1 }}
-          />
-        </View>
-
-        <View style={{ flexDirection: useSingleColumn ? 'column' : 'row', gap: 10 }}>
-          <AllergyOptionTile
-            option={nuts}
-            selected={selected.includes(nuts.id)}
-            onPress={() => onToggle(nuts.id)}
-            colors={colors}
-            isDark={isDark}
-            reduceMotion={reduceMotion}
-            style={useSingleColumn ? undefined : { flex: 1 }}
-          />
-          <AllergyOptionTile
-            option={soy}
-            selected={selected.includes(soy.id)}
-            onPress={() => onToggle(soy.id)}
-            colors={colors}
-            isDark={isDark}
-            reduceMotion={reduceMotion}
-            style={useSingleColumn ? undefined : { flex: 1 }}
-          />
-        </View>
-
-        <AllergyOptionTile
-          option={eggs}
-          selected={selected.includes(eggs.id)}
-          onPress={() => onToggle(eggs.id)}
-          colors={colors}
-          isDark={isDark}
-          reduceMotion={reduceMotion}
-        />
+        ))}
       </View>
     </ScreenFrame>
   );
@@ -1283,13 +1604,13 @@ export function PainScreen({
 export function PrioritiesScreen({ selected, onToggle, colors, isDark, reduceMotion }: { selected: OnboardingPriority[]; onToggle: (id: OnboardingPriority) => void; colors: any; isDark: boolean; reduceMotion: boolean }) {
   return (
     <ScreenFrame>
-      <PriorityConstellation colors={colors} isDark={isDark} reduceMotion={reduceMotion} selected={selected} />
+      <PriorityStatusBar selected={selected} colors={colors} isDark={isDark} />
       <ScreenHeading
         title="What should BiteFix **surface first**?"
-        subtitle="Choose anything that **matters to you**."
+        subtitle="Pick what matters — it goes to the top of every scan."
         colors={colors}
       />
-      <View style={{ gap: 9 }}>
+      <View style={{ gap: 9, marginTop: 4 }}>
         {PRIORITY_OPTIONS.map((option) => (
           <SelectionRow
             key={option.id}
@@ -1309,92 +1630,9 @@ export function PrioritiesScreen({ selected, onToggle, colors, isDark, reduceMot
 }
 
 // ══════════════════════════════════════════════════════════════
-// SCREEN 6 — INSTANT INSIGHT SCORE REVEAL HERO
+// SCREEN 6 — INSTANT INSIGHT SCORE REVEAL HERO (LIQUID MERCURY EDITION)
 // ══════════════════════════════════════════════════════════════
 const AnimatedSvgCircle = Animated.createAnimatedComponent(Circle);
-
-type InsightStage = 'label' | 'scan' | 'insights';
-
-function InsightTrailerSteps({ colors, isDark }: { colors: any; isDark: boolean }) {
-  const { width } = useWindowDimensions();
-
-  const stages: Array<{
-    id: InsightStage;
-    label: string;
-    icon: React.ComponentType<any>;
-  }> = [
-    { id: 'label', label: 'LABEL', icon: Tag },
-    { id: 'scan', label: 'SCAN', icon: ScanLine },
-    { id: 'insights', label: 'INSIGHTS', icon: Zap },
-  ];
-
-  const railWidth = clamp(width * 0.94, 320, 400);
-  const cardIcon = isDark ? '#34D873' : GREEN;
-
-  return (
-    <View style={{ width: railWidth, alignSelf: 'center', marginVertical: 6 }}>
-      <View
-        style={{
-          height: 110,
-          backgroundColor: 'transparent',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        {stages.map((stage, index) => {
-          const Icon = stage.icon;
-
-          return (
-            <React.Fragment key={stage.id}>
-              <View style={{ flex: 1, alignItems: 'center' }}>
-                {/* Neutral glass card — the green icon carries the brand. */}
-                <View
-                  style={{
-                    width: 72,
-                    height: 72,
-                    borderRadius: 22,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: isDark ? 'rgba(12,17,14,0.78)' : 'rgba(236, 247, 166, 0.76)',
-                    borderWidth: 1,
-                    borderColor: GREEN + '55',
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 5 },
-                    shadowOpacity: isDark ? 0.18 : 0.07,
-                    shadowRadius: 12,
-                    elevation: 3,
-                  }}
-                >
-                  <Icon size={34} color={cardIcon} strokeWidth={2.4} />
-                </View>
-                <Text
-                  style={{
-                    marginTop: 6,
-                    color: colors.text,
-                    fontSize: 9,
-                    fontWeight: '900',
-                    letterSpacing: 1.1,
-                  }}
-                >
-                  {stage.label}
-                </Text>
-              </View>
-              {index < stages.length - 1 && (
-                <ArrowRight
-                  size={20}
-                  color={isDark ? 'rgba(52,216,115,0.55)' : 'rgba(1,146,42,0.55)'}
-                  strokeWidth={2.5}
-                  style={{ marginHorizontal: 2 }}
-                />
-              )}
-            </React.Fragment>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
 
 const SURGE_SPARK_ANGLES = [15, 75, 135, 195, 255, 315].map((deg) => (deg * Math.PI) / 180);
 
@@ -1411,11 +1649,10 @@ function MascotScoreRingTeaser({
 }) {
   const { width } = useWindowDimensions();
   const targetScore = 78;
-  const scoreColor = isDark ? '#34D873' : GREEN;
 
-  const ringSize = Math.round(clamp(width * 0.80, 200, 340));
+  const ringSize = Math.round(clamp(width * 0.78, 200, 320));
   const mascotSize = Math.round(ringSize * 0.60);
-  const badgeWidth = Math.min(236, Math.round(width * 0.62));
+  const badgeWidth = Math.min(240, Math.round(width * 0.64));
 
   const [displayedScore, setDisplayedScore] = useState(0);
   const [landed, setLanded] = useState(false);
@@ -1431,22 +1668,21 @@ function MascotScoreRingTeaser({
   const hasRunRef = useRef(false);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // One-shot power surge fired the moment the score lands: ring flash,
-  // mascot pop, lime spark burst, and the UNLOCKED stamp on the badge.
+  // Liquid Lime Mercury power surge fired the moment the score lands
   const fireSurge = useCallback(() => {
     setLanded(true);
     Animated.parallel([
       Animated.sequence([
-        Animated.timing(glowFlash, { toValue: 1, duration: 220, easing: Easing.out(Easing.quad), useNativeDriver: false, isInteraction: false }),
+        Animated.timing(glowFlash, { toValue: 1, duration: 240, easing: Easing.out(Easing.quad), useNativeDriver: false, isInteraction: false }),
         Animated.timing(glowFlash, { toValue: 0, duration: 480, easing: Easing.out(Easing.quad), useNativeDriver: false, isInteraction: false }),
       ]),
       Animated.sequence([
-        Animated.timing(mascotPop, { toValue: 1.1, duration: 160, easing: Easing.out(Easing.quad), useNativeDriver: true, isInteraction: false }),
+        Animated.timing(mascotPop, { toValue: 1.08, duration: 160, easing: Easing.out(Easing.quad), useNativeDriver: true, isInteraction: false }),
         Animated.timing(mascotPop, { toValue: 1, duration: 300, easing: Easing.out(Easing.quad), useNativeDriver: true, isInteraction: false }),
       ]),
       Animated.timing(sparkVal, { toValue: 1, duration: 640, easing: Easing.out(Easing.cubic), useNativeDriver: true, isInteraction: false }),
       Animated.parallel([
-        Animated.timing(stampOpacity, { toValue: 1, duration: 140, useNativeDriver: true, isInteraction: false }),
+        Animated.timing(stampOpacity, { toValue: 1, duration: 160, useNativeDriver: true, isInteraction: false }),
         Animated.sequence([
           Animated.timing(stampScale, { toValue: 1.35, duration: 1, useNativeDriver: true, isInteraction: false }),
           Animated.timing(stampScale, { toValue: 1, duration: 320, easing: Easing.out(Easing.back(1.8)), useNativeDriver: true, isInteraction: false }),
@@ -1526,18 +1762,18 @@ function MascotScoreRingTeaser({
           isInteraction: false,
         }),
       ]),
-      // Phase 2 (450-1800ms, 1350ms duration): Synchronous ring fill + natural score count
+      // Phase 2 (450-2000ms): Synchronous ring fill + natural score count
       Animated.parallel([
         Animated.timing(progressAnim, {
           toValue: targetScore,
-          duration: 2500,
+          duration: 1800,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: false,
           isInteraction: false,
         }),
         Animated.timing(scoreRevealAnim, {
           toValue: 1,
-          duration: 2500,
+          duration: 1800,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
           isInteraction: false,
@@ -1551,10 +1787,10 @@ function MascotScoreRingTeaser({
           isInteraction: false,
         }),
       ]),
-      // Phase 3 (1800-2150ms, 350ms duration): Controlled settle
+      // Phase 3 (2000-2350ms): Controlled settle
       Animated.timing(ringScaleAnim, {
         toValue: 1,
-        duration: 550,
+        duration: 350,
         easing: Easing.inOut(Easing.quad),
         useNativeDriver: true,
         isInteraction: false,
@@ -1599,26 +1835,31 @@ function MascotScoreRingTeaser({
       >
         <Svg width={ringSize} height={ringSize} viewBox="0 0 120 120" style={{ position: 'absolute' }}>
           <Defs>
+            {/* Liquid Lime Mercury Ambient Halo */}
             <RadialGradient id="obScreen6RingGlowV2" cx="50%" cy="50%" rx="50%" ry="50%">
-              <Stop offset="0%" stopColor={scoreColor} stopOpacity="0.32" />
-              <Stop offset="72%" stopColor={scoreColor} stopOpacity="0.06" />
-              <Stop offset="100%" stopColor={scoreColor} stopOpacity="0" />
+              <Stop offset="0%" stopColor="#A3E635" stopOpacity={isDark ? '0.35' : '0.22'} />
+              <Stop offset="65%" stopColor="#65A30D" stopOpacity={isDark ? '0.08' : '0.04'} />
+              <Stop offset="100%" stopColor="#000000" stopOpacity="0" />
             </RadialGradient>
-            <SvgLinearGradient id="obScreen6ScoreGradV2" x1="0%" y1="0%" x2="100%" y2="100%">
-              <Stop offset="0%" stopColor={isDark ? GREEN : GREEN_DEEP} />
-              <Stop offset="55%" stopColor={isDark ? GREEN_BRIGHT : GREEN} />
-              <Stop offset="100%" stopColor={isDark ? GREEN_LIGHT : GREEN_BRIGHT} />
+            {/* Liquid Lime Mercury Metallic Gradient */}
+            <SvgLinearGradient id="obScreen6LimeMercuryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor="#FFFFFF" />
+              <Stop offset="22%" stopColor="#b4dc45ff" />
+              <Stop offset="55%" stopColor="#8cc62fff" />
+              <Stop offset="82%" stopColor="#58900bff" />
+              <Stop offset="100%" stopColor="#156332ff" />
             </SvgLinearGradient>
           </Defs>
           <Circle cx="60" cy="60" r="56" fill="url(#obScreen6RingGlowV2)" />
-          <Circle cx="60" cy="60" r="49" fill="none" stroke={isDark ? 'rgba(111,227,139,0.10)' : 'rgba(1,79,24,0.10)'} strokeWidth="10.5" />
-          <Circle cx="60" cy="60" r="40" fill="none" stroke={scoreColor} strokeWidth="1.2" opacity="0.16" />
+          {/* Precision machined titanium track */}
+          <Circle cx="60" cy="60" r="49" fill="none" stroke={isDark ? 'rgba(163,230,53,0.12)' : 'rgba(21,128,61,0.10)'} strokeWidth="10.5" />
+          <Circle cx="60" cy="60" r="40" fill="none" stroke={isDark ? 'rgba(228,251,162,0.22)' : 'rgba(101,163,13,0.18)'} strokeWidth="1.2" opacity="0.4" />
           <AnimatedSvgCircle
             cx="60"
             cy="60"
             r="49"
             fill="none"
-            stroke="url(#obScreen6ScoreGradV2)"
+            stroke="url(#obScreen6LimeMercuryGrad)"
             strokeWidth="10.5"
             strokeLinecap="round"
             strokeDasharray="307.9"
@@ -1629,15 +1870,15 @@ function MascotScoreRingTeaser({
             })}
             transform="rotate(-90 60 60)"
           />
-          {/* One-shot power flash when the score lands. */}
+          {/* One-shot liquid lime power flash when score lands */}
           <AnimatedSvgCircle
             cx="60"
             cy="60"
             r="49"
             fill="none"
-            stroke={scoreColor}
+            stroke="#E4FBA2"
             strokeWidth="10.5"
-            opacity={glowFlash.interpolate({ inputRange: [0, 1], outputRange: [0, 0.5] })}
+            opacity={glowFlash.interpolate({ inputRange: [0, 1], outputRange: [0, 0.65] })}
             transform="rotate(-90 60 60)"
           />
         </Svg>
@@ -1659,7 +1900,7 @@ function MascotScoreRingTeaser({
           />
         </Animated.View>
 
-        {/* Lime spark burst fired at the unlock moment. */}
+        {/* Liquid Lime / Mercury spark flares fired at the unlock moment */}
         <Animated.View
           pointerEvents="none"
           style={{ position: 'absolute', inset: 0, zIndex: 4 }}
@@ -1682,12 +1923,16 @@ function MascotScoreRingTeaser({
                   width: 6,
                   height: 6,
                   borderRadius: 3,
-                  backgroundColor: LIME,
+                  backgroundColor: '#D9F99D',
+                  shadowColor: '#A3E635',
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: 0.9,
+                  shadowRadius: 6,
                   opacity: sparkVal.interpolate({ inputRange: [0, 0.15, 1], outputRange: [0, 1, 0] }),
                   transform: [
                     { translateX: sparkVal.interpolate({ inputRange: [0, 1], outputRange: [dx * startR, dx * endR] }) },
                     { translateY: sparkVal.interpolate({ inputRange: [0, 1], outputRange: [dy * startR, dy * endR] }) },
-                    { scale: sparkVal.interpolate({ inputRange: [0, 1], outputRange: [1, 0.35] }) },
+                    { scale: sparkVal.interpolate({ inputRange: [0, 1], outputRange: [1.3, 0.3] }) },
                   ],
                 }}
               />
@@ -1696,28 +1941,28 @@ function MascotScoreRingTeaser({
         </Animated.View>
       </Animated.View>
 
-      {/* Unified Score Card directly underneath the ring */}
+      {/* Unified Score Card directly underneath the ring — Dark Shiny Greenish-Black Obsidian */}
       <Animated.View
         style={{
           minWidth: badgeWidth,
           marginTop: -14,
-          paddingHorizontal: 16,
-          paddingVertical: 8,
-          borderRadius: 16,
-          backgroundColor: isDark ? '#0D4419' : GREEN_DEEP,
-          borderWidth: 1,
-          borderColor: isDark ? 'rgba(111,227,139,0.35)' : 'rgba(1,79,24,0.45)',
-          shadowColor: '#000000ff',
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.16,
-          shadowRadius: 14,
-          elevation: 4,
+          paddingHorizontal: 18,
+          paddingVertical: 10,
+          borderRadius: 18,
+          backgroundColor: isDark ? '#06130A' : '#07180D',
+          borderWidth: 1.5,
+          borderColor: isDark ? 'rgba(163,230,53,0.35)' : 'rgba(77,124,15,0.40)',
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: isDark ? 0.45 : 0.25,
+          shadowRadius: 18,
+          elevation: 6,
           alignItems: 'center',
           transform: [{ translateY: badgeLiftAnim }],
           zIndex: 5,
         }}
       >
-        {/* UNLOCKED stamp — straddles the badge top edge at the surge moment. */}
+        {/* UNLOCKED stamp — High-Contrast Vibrant Amber-Gold Capsule (Main Focal Point) */}
         <Animated.View
           pointerEvents="none"
           style={{
@@ -1727,37 +1972,39 @@ function MascotScoreRingTeaser({
             flexDirection: 'row',
             alignItems: 'center',
             gap: 4,
-            paddingHorizontal: 10,
-            paddingVertical: 4.5,
+            paddingHorizontal: 12,
+            paddingVertical: 5,
             borderRadius: 999,
-            backgroundColor: LIME,
-            shadowColor: '#3E7A22',
+            backgroundColor: '#FFB800',
+            borderWidth: 1.2,
+            borderColor: '#FFE57F',
+            shadowColor: '#FF9500',
             shadowOffset: { width: 0, height: 3 },
-            shadowOpacity: 0.35,
+            shadowOpacity: 0.45,
             shadowRadius: 8,
-            elevation: 5,
+            elevation: 6,
             opacity: stampOpacity,
             transform: [{ scale: stampScale }],
             zIndex: 6,
           }}
         >
-          <Sparkles size={10} color="#0A3D12" strokeWidth={2.6} />
-          <Text style={{ color: '#0A3D12', fontSize: 9.5, fontWeight: '900', letterSpacing: 1.4 }}>
+          <Sparkles size={11} color="#291500" strokeWidth={2.8} />
+          <Text style={{ color: '#291500', fontSize: 10, fontWeight: '900', letterSpacing: 1.5 }}>
             UNLOCKED
           </Text>
         </Animated.View>
 
-        <Text style={{ color: '#ffffffff', fontSize: 11.5, fontWeight: '900', letterSpacing: 1.3, textTransform: 'uppercase' }}>
+        <Text style={{ color: isDark ? '#A3E635' : '#84CC16', fontSize: 10.5, fontWeight: '900', letterSpacing: 1.4, textTransform: 'uppercase' }}>
           BITEFIX INTELLIGENCE SCORE™
         </Text>
         <Animated.Text
           style={{
-            color: landed ? LIME : '#ffffffff',
+            color: '#FFFFFF',
             fontSize: 42,
-            lineHeight: 60,
+            lineHeight: 48,
             fontWeight: '900',
             letterSpacing: -1,
-            marginTop: 1,
+            marginTop: 2,
             transform: [{ scale: scoreScale }],
             opacity: scoreOpacity,
           }}
@@ -1792,18 +2039,18 @@ export function RevelationScreen({
         maxWidth: 430,
         alignSelf: 'center',
         paddingHorizontal: horizontalPadding,
-        paddingTop: isCompact ? 6 : 14,
-        paddingBottom: isCompact ? 6 : 12,
+        paddingTop: isCompact ? 10 : 20,
+        paddingBottom: isCompact ? 16 : 28,
         justifyContent: 'space-between',
       }}
     >
-      {/* Upper/Middle Hero Area — generous breathing room & prominent anchor */}
+      {/* Upper/Middle Hero Area — spacious, commanding hero */}
       <View
         style={{
           flex: 1,
           justifyContent: 'center',
           alignItems: 'center',
-          minHeight: isCompact ? 210 : 250,
+          minHeight: isCompact ? 240 : 280,
         }}
       >
         <MascotScoreRingTeaser
@@ -1814,16 +2061,16 @@ export function RevelationScreen({
         />
       </View>
 
-      {/* Lower Content Area — tightly composed editorial block */}
-      <View style={{ alignItems: 'center', width: '100%', marginTop: isCompact ? 6 : 10, marginBottom: isCompact ? 2 : 6 }}>
-        {/* Title — Explicit 2 Real Text Lines (no literal \n, no template parsing bugs) */}
-        <View style={{ alignItems: 'center', marginBottom: isCompact ? 6 : 8, maxWidth: 350 }}>
+      {/* Lower Content Area — clean, de-congested typography block */}
+      <View style={{ alignItems: 'center', width: '100%', marginBottom: isCompact ? 8 : 16 }}>
+        {/* Title — 2 distinct lines with tasteful green accent */}
+        <View style={{ alignItems: 'center', marginBottom: 8, maxWidth: 360 }}>
           <Text
             style={{
               color: colors.text,
-              fontSize: clamp(width * 0.082, 29, 34),
-              lineHeight: clamp(width * 0.098, 35, 40),
-              fontWeight: '700',
+              fontSize: clamp(width * 0.086, 30, 35),
+              lineHeight: clamp(width * 0.102, 36, 42),
+              fontWeight: '900',
               letterSpacing: -0.9,
               textAlign: 'center',
             }}
@@ -1833,9 +2080,9 @@ export function RevelationScreen({
           <Text
             style={{
               color: GREEN,
-              fontSize: clamp(width * 0.082, 29, 34),
-              lineHeight: clamp(width * 0.098, 35, 40),
-              fontWeight: '700',
+              fontSize: clamp(width * 0.086, 30, 35),
+              lineHeight: clamp(width * 0.102, 36, 42),
+              fontWeight: '900',
               letterSpacing: -0.9,
               textAlign: 'center',
             }}
@@ -1844,24 +2091,19 @@ export function RevelationScreen({
           </Text>
         </View>
 
-        {/* Subtitle directly beneath the headline */}
+        {/* Subtitle */}
         <Text
           style={{
             color: colors.textSecondary,
-            fontSize: clamp(width * 0.034, 13.5, 14.5),
-            lineHeight: clamp(width * 0.046, 18, 20),
-            fontWeight: '600',
+            fontSize: clamp(width * 0.038, 14.5, 15.5),
+            lineHeight: clamp(width * 0.054, 21, 23),
+            fontWeight: '500',
             textAlign: 'center',
-            width: '100%',
-            maxWidth: 420,
-            marginBottom: isCompact ? 10 : 14,
+            maxWidth: 340,
           }}
         >
           Your assistant is powered up — turn labels into answers in seconds.
         </Text>
-
-        {/* Compact Insight Trailer: LABEL -> SCAN -> INSIGHTS */}
-        <InsightTrailerSteps colors={colors} isDark={isDark} />
       </View>
     </View>
   );

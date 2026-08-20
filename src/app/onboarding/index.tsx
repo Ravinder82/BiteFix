@@ -47,6 +47,7 @@ import { IngredientReadingFrequency, OnboardingPriority, ShoppingFrequency } fro
 const GREEN = '#01922aff';
 const TOTAL_SCREENS = 10;
 
+const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
 function useReduceMotion() {
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -388,6 +389,29 @@ export default function OnboardingScreen() {
   const pagerRef = useRef<any>(null);
   const pagingUnlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pagingLockRef = useRef(false);
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (reduceMotion) return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerAnim, {
+          toValue: 1,
+          duration: 2000,
+          easing: Easing.inOut(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.delay(1400),
+        Animated.timing(shimmerAnim, {
+          toValue: 0,
+          duration: 0,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [reduceMotion, shimmerAnim]);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -580,9 +604,9 @@ export default function OnboardingScreen() {
       (screen === 4 && !ingredientReadingFrequency) ||
       (screen === 6 && allergens.length === 0) ||
       (screen === 7 && priorities.length === 0);
-    const disabledBg = isDark ? 'rgba(0, 107, 31, 0.22)' : '#E8F6ED';
-    const disabledBorder = isDark ? 'rgba(0, 200, 80, 0.30)' : 'rgba(0, 107, 31, 0.22)';
-    const disabledText = isDark ? 'rgba(100, 240, 140, 0.70)' : 'rgba(0, 107, 31, 0.68)';
+    const disabledBg = isDark ? '#153622ff' : '#F0F4F1';
+    const disabledBorder = isDark ? 'rgba(167, 231, 63, 0.1)' : 'rgba(7, 25, 15, 0.08)';
+    const disabledText = isDark ? 'rgba(172, 172, 172, 0.59)' : 'rgba(6, 33, 18, 0.42)';
 
     return (
       <View style={{ width: screenWidth, height: '100%' }}>
@@ -631,7 +655,7 @@ export default function OnboardingScreen() {
             disabled={ctaDisabled}
             activeOpacity={0.88}
             style={{
-              backgroundColor: ctaDisabled ? disabledBg : '#006B1F',
+              backgroundColor: ctaDisabled ? disabledBg : (isDark ? '#06180E' : '#07190F'),
               borderRadius: 20,
               minHeight: 62,
               alignItems: 'center',
@@ -639,16 +663,45 @@ export default function OnboardingScreen() {
               flexDirection: 'row',
               gap: 8,
               overflow: 'hidden',
-              borderWidth: 1,
-              borderColor: ctaDisabled ? disabledBorder : 'rgba(255,255,255,0.22)',
-              shadowColor: ctaDisabled ? GREEN : '#004A16',
+              position: 'relative',
+              borderWidth: 1.5,
+              borderColor: ctaDisabled ? disabledBorder : 'rgba(163,230,53,0.40)',
+              shadowColor: ctaDisabled ? 'transparent' : (isDark ? '#000000' : '#0A2B14'),
               shadowOffset: { width: 0, height: ctaDisabled ? 2 : 8 },
-              shadowOpacity: ctaDisabled ? 0.05 : 0.28,
+              shadowOpacity: ctaDisabled ? 0.05 : 0.35,
               shadowRadius: ctaDisabled ? 6 : 16,
               elevation: ctaDisabled ? 1 : 6,
             }}
           >
-            <Text style={{ color: ctaDisabled ? disabledText : '#FFFFFF', fontSize: 16.5, fontWeight: '900', letterSpacing: 0.2 }}>
+            {/* Shimmer sweep animation (Safe nested Animated.View for native driver support) */}
+            {!ctaDisabled && !reduceMotion && (
+              <Animated.View
+                pointerEvents="none"
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  bottom: 0,
+                  width: 190,
+                  transform: [
+                    {
+                      translateX: shimmerAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-190, screenWidth + 60],
+                      }),
+                    },
+                    { skewX: '-22deg' },
+                  ],
+                }}
+              >
+                <LinearGradient
+                  colors={['transparent', 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.45)', 'rgba(255,255,255,0.08)', 'transparent']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{ width: '100%', height: '100%' }}
+                />
+              </Animated.View>
+            )}
+            <Text style={{ color: ctaDisabled ? disabledText : '#ffffffff', fontSize: 16.5, fontWeight: '900', letterSpacing: 0.2 }}>
               {getCtaLabel(screen)}
             </Text>
             <ChevronRight size={19} color={ctaDisabled ? disabledText : '#FFFFFF'} strokeWidth={2.6} />
