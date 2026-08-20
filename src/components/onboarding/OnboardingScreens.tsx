@@ -3,7 +3,10 @@ import { Animated, Easing, Platform, Text, TextInput, TouchableOpacity, View, us
 import { Activity, Check, Droplets, Leaf, ListChecks, Package, ShieldCheck, ShoppingBag, Sparkles, UserRound, Zap } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Svg, { Circle, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
 import { OrbMascot } from '../features/OrbMascot';
+
+const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 import { LoaderThree } from '../ui/loader';
 import {
   LabelCompressionVisual,
@@ -650,7 +653,7 @@ const getCleanLabel = (id: string) => {
   }
 };
 
-function LedLight({ active, color = '#14ae97', glow = '#13f5b0', showLabel = true }: { active: boolean, color?: string, glow?: string, showLabel?: boolean }) {
+function LedLight({ active, color = '#14ae97', glow = '#13f5b0', showLabel = true, textColor }: { active: boolean, color?: string, glow?: string, showLabel?: boolean, textColor?: string }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
       <View style={{
@@ -668,7 +671,7 @@ function LedLight({ active, color = '#14ae97', glow = '#13f5b0', showLabel = tru
         <Text style={{
           fontSize: 9.5,
           fontWeight: '900',
-          color: active ? color : 'rgba(150, 150, 150, 0.6)',
+          color: textColor || (active ? color : 'rgba(150, 150, 150, 0.6)'),
           letterSpacing: 1.2,
         }}>
           {active ? 'ACTIVE' : 'STANDBY'}
@@ -719,13 +722,15 @@ function ShieldStatusBar({
   const cardBorder = isDark ? 'rgba(20, 174, 151, 0.25)' : 'rgba(7, 25, 15, 0.15)';
 
   return (
-    <View
+    <LinearGradient
+      colors={isDark ? ['#157d53ff', '#062618ff'] : ['#02c570ff', '#000000ff']}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
       style={{
         width: '100%',
         borderRadius: 22,
         borderWidth: 1.25,
         borderColor: cardBorder,
-        backgroundColor: cardBg,
         padding: 16,
         paddingTop: 18, // Extra padding top for the progress bar
         marginBottom: 20,
@@ -760,8 +765,13 @@ function ShieldStatusBar({
       </View>
 
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <LedLight active={ledActive} color={ledColor} glow={ledGlow} />
-        <Text style={{ fontSize: 9.5, fontWeight: '700', color: 'rgba(255, 255, 255, 0.4)', letterSpacing: 0.5 }}>
+        <LedLight
+          active={ledActive}
+          color={ledColor}
+          glow={ledGlow}
+          textColor={isDark ? undefined : (ledActive ? '#ffffffff' : 'rgba(0, 0, 0, 0.5)')}
+        />
+        <Text style={{ fontSize: 11.5, fontWeight: '700', color: isDark ? 'rgba(255, 255, 255, 0.4)' : '#ffffffff', letterSpacing: 0.5 }}>
           BITEFIX ENGINE V1.2
         </Text>
       </View>
@@ -769,8 +779,8 @@ function ShieldStatusBar({
       <View style={{ flexDirection: 'column', alignItems: 'stretch' }}>
         <Text
           style={{
-            color: '#FFFFFF', // High-contrast white text on dark greenish black
-            fontSize: 16,
+            color: '#FFFFFF', // High-contrast white text on dark cards
+            fontSize: 18,
             fontWeight: '800',
             letterSpacing: -0.3,
           }}
@@ -780,7 +790,7 @@ function ShieldStatusBar({
         <Text
           style={{
             color: 'rgba(255, 255, 255, 0.7)', // High-contrast secondary text
-            fontSize: 12.5,
+            fontSize: 13.5,
             fontWeight: '500',
             marginTop: 3,
             lineHeight: 18, // Fixed line height for clean wrapping
@@ -815,7 +825,7 @@ function ShieldStatusBar({
                 <Text
                   numberOfLines={1}
                   style={{
-                    fontSize: 12.5,
+                    fontSize: 11.5,
                     fontWeight: '700',
                     color: '#FFFFFF', // White text on dark cards
                     flex: 1,
@@ -828,7 +838,7 @@ function ShieldStatusBar({
           })}
         </View>
       )}
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -845,14 +855,14 @@ function PriorityStatusBar({
   const isActive = activeOptions.length > 0;
 
   let statusTitle = 'Priorities standby';
-  let statusSubtitle = 'Select priorities below to customize scanning metrics.';
+  let statusSubtitle = 'Select priorities below to customize your BiteFix Scanner.';
   let ledActive = false;
   let ledColor = '#7ec201'; // lime standby
   let ledGlow = '#a3cb48';
 
   if (isActive) {
-    statusTitle = `${activeOptions.length} Priority module${activeOptions.length > 1 ? 's' : ''} engaged`;
-    statusSubtitle = 'Custom rules injected into scanning algorithm.';
+    statusTitle = `${activeOptions.length} Priority Feature${activeOptions.length > 1 ? 's' : ''} Engaged`;
+    statusSubtitle = 'Priorities customized for BitFix Scan Intelligence';
     ledActive = true;
     ledColor = '#14ae97'; // teal active
     ledGlow = '#13f5b0';
@@ -867,13 +877,15 @@ function PriorityStatusBar({
   const cardBorder = isDark ? 'rgba(20, 174, 151, 0.25)' : 'rgba(7, 25, 15, 0.15)';
 
   return (
-    <View
+    <LinearGradient
+      colors={isDark ? ['#157d53ff', '#062618ff'] : ['#02c570ff', '#000000ff']}
+      start={{ x: 0.5, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
       style={{
         width: '100%',
         borderRadius: 22,
         borderWidth: 1.25,
         borderColor: cardBorder,
-        backgroundColor: cardBg,
         padding: 16,
         paddingTop: 18, // Extra padding top for progress bar
         marginBottom: 20,
@@ -908,8 +920,13 @@ function PriorityStatusBar({
       </View>
 
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <LedLight active={ledActive} color={ledColor} glow={ledGlow} />
-        <Text style={{ fontSize: 9.5, fontWeight: '700', color: 'rgba(255, 255, 255, 0.4)', letterSpacing: 0.5 }}>
+        <LedLight
+          active={ledActive}
+          color={ledColor}
+          glow={ledGlow}
+          textColor={isDark ? undefined : (ledActive ? '#ffffffff' : 'rgba(250, 247, 247, 0.5)')}
+        />
+        <Text style={{ fontSize: 11.5, fontWeight: '700', color: isDark ? 'rgba(255, 255, 255, 0.4)' : '#ffffffff', letterSpacing: 0.5 }}>
           BITEFIX ENGINE V1.2
         </Text>
       </View>
@@ -918,7 +935,7 @@ function PriorityStatusBar({
         <Text
           style={{
             color: '#FFFFFF', // High-contrast white text on dark cards
-            fontSize: 15.5,
+            fontSize: 18,
             fontWeight: '800',
             letterSpacing: -0.3,
           }}
@@ -928,7 +945,7 @@ function PriorityStatusBar({
         <Text
           style={{
             color: 'rgba(255, 255, 255, 0.7)', // High-contrast secondary text
-            fontSize: 12.5,
+            fontSize: 13.5,
             fontWeight: '500',
             marginTop: 3,
             lineHeight: 18, // Fixed line height for clean wrapping
@@ -958,10 +975,10 @@ function PriorityStatusBar({
                   alignItems: 'center',
                   gap: 8,
                   paddingHorizontal: 12,
-                  paddingVertical: 10,
-                  borderRadius: 14,
-                  borderWidth: 1.25,
-                  borderColor: isDark ? border + '30' : border,
+                  paddingVertical: 8,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: isDark ? border + '30' : border + '60',
                   backgroundColor: 'rgba(255, 255, 255, 0.05)',
                   marginBottom: 8,
                 }}
@@ -980,9 +997,9 @@ function PriorityStatusBar({
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
-                    numberOfLines={1}
+                    numberOfLines={2}
                     style={{
-                      fontSize: 12.5,
+                      fontSize: 11.5,
                       fontWeight: '800',
                       color: '#FFFFFF', // White text on dark cards
                       letterSpacing: -0.2,
@@ -1009,7 +1026,7 @@ function PriorityStatusBar({
           })}
         </View>
       )}
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -1968,10 +1985,7 @@ function MascotScoreRingTeaser({
         style={{
           minWidth: badgeWidth,
           marginTop: -14,
-          paddingHorizontal: 18,
-          paddingVertical: 10,
           borderRadius: 18,
-          backgroundColor: isDark ? '#06130A' : '#07180D',
           borderWidth: 1.5,
           borderColor: isDark ? 'rgba(163,230,53,0.35)' : 'rgba(77,124,15,0.40)',
           shadowColor: '#000000',
@@ -1982,8 +1996,43 @@ function MascotScoreRingTeaser({
           alignItems: 'center',
           transform: [{ translateY: badgeLiftAnim }],
           zIndex: 5,
+          position: 'relative',
         }}
       >
+        <LinearGradient
+          colors={isDark ? ['#157d53ff', '#062618ff'] : ['#02c570ff', '#000000ff']}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            borderRadius: 16.5,
+          }}
+        />
+
+        <View style={{ alignItems: 'center', paddingHorizontal: 18, paddingVertical: 10, width: '100%' }}>
+          <Text style={{ color: isDark ? '#A3E635' : '#053A20', fontSize: 13.5, fontWeight: '900', letterSpacing: 1.4, textTransform: 'uppercase' }}>
+            BITEFIX INTELLIGENCE SCORE™
+          </Text>
+          <Animated.Text
+            style={{
+              color: '#FFFFFF',
+              fontSize: 42,
+              lineHeight: 48,
+              fontWeight: '900',
+              letterSpacing: -1,
+              marginTop: 2,
+              transform: [{ scale: scoreScale }],
+              opacity: scoreOpacity,
+            }}
+          >
+            {displayedScore}
+          </Animated.Text>
+        </View>
+
         {/* UNLOCKED stamp — High-Contrast Vibrant Amber-Gold Capsule (Main Focal Point) */}
         <Animated.View
           pointerEvents="none"
@@ -2007,7 +2056,7 @@ function MascotScoreRingTeaser({
             elevation: 6,
             opacity: stampOpacity,
             transform: [{ scale: stampScale }],
-            zIndex: 6,
+            zIndex: 10,
           }}
         >
           <Sparkles size={11} color="#291500" strokeWidth={2.8} />
@@ -2015,24 +2064,6 @@ function MascotScoreRingTeaser({
             UNLOCKED
           </Text>
         </Animated.View>
-
-        <Text style={{ color: isDark ? '#A3E635' : '#84CC16', fontSize: 10.5, fontWeight: '900', letterSpacing: 1.4, textTransform: 'uppercase' }}>
-          BITEFIX INTELLIGENCE SCORE™
-        </Text>
-        <Animated.Text
-          style={{
-            color: '#FFFFFF',
-            fontSize: 42,
-            lineHeight: 48,
-            fontWeight: '900',
-            letterSpacing: -1,
-            marginTop: 2,
-            transform: [{ scale: scoreScale }],
-            opacity: scoreOpacity,
-          }}
-        >
-          {displayedScore}
-        </Animated.Text>
       </Animated.View>
     </View>
   );
@@ -3259,7 +3290,7 @@ export function ActivationStatus({
             </Text>
           </View>
           <Text style={{ color: colors.textSecondary, fontSize: 11, lineHeight: 15, fontWeight: '700', marginTop: 5, textAlign: 'right' }}>
-            {sequenceComplete ? 'Full power · Ready to scan' : `Next signal · ${spotlightLabel}`}
+            {sequenceComplete ? 'Activated · Ready to scan' : `Next signal · ${spotlightLabel}`}
           </Text>
         </View>
       </View>
@@ -3407,7 +3438,7 @@ export function FinalActivationScreen({
         BiteFix Intelligence
       </Text>
       <Text style={{ color: colors.text, fontSize: clamp(width * 0.092, 32, 38), lineHeight: clamp(width * 0.105, 38, 44), fontWeight: '900', letterSpacing: -1.2, textAlign: 'center' }}>
-        full power.
+        Activated!
       </Text>
       <Text style={{ color: colors.textSecondary, fontSize: clamp(width * 0.036, 13, 14.5), lineHeight: clamp(width * 0.053, 19, 22), fontWeight: '500', textAlign: 'center', maxWidth: 330, marginTop: 8, marginBottom: 18 }}>
         Your personal food radar is fully online.
