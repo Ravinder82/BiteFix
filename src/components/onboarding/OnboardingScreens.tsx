@@ -3242,7 +3242,7 @@ function BloomParticle({ x, y, color, size, burst }: { x: number; y: number; col
     ],
   }));
 
-  return <Reanimated.View pointerEvents="none" style={[{ position: 'absolute', width: size, height: size, borderRadius: size / 2, backgroundColor: color }, style]} />;
+  return <Reanimated.View pointerEvents="none" style={[{ position: 'absolute', left: '50%', top: '50%', marginLeft: -size / 2, marginTop: -size / 2, width: size, height: size, borderRadius: size / 2, backgroundColor: color }, style]} />;
 }
 
 export function FinalActivationScreen({
@@ -3413,7 +3413,7 @@ export function FinalActivationScreen({
 
         <Reanimated.View pointerEvents="none" style={[{ position: 'absolute', width: orbSize + 34, height: orbSize + 34, borderRadius: (orbSize + 34) / 2, borderWidth: 2, borderColor: GREEN_LIGHT }, burstRingStyle]} />
 
-        <Reanimated.View pointerEvents="none" style={[{ position: 'absolute', width: orbitRadius * 1.62, height: orbitRadius * 1.62, alignItems: 'center', justifyContent: 'center' }, orbitStyle]}>
+        <Reanimated.View style={[{ position: 'absolute', width: orbitRadius * 1.62, height: orbitRadius * 1.62, alignItems: 'center', justifyContent: 'center' }, orbitStyle]}>
           {orderedFeatures.map((feature, index) => {
             const angle = (index / orderedFeatures.length) * Math.PI * 2 - Math.PI / 2;
             const x = Math.cos(angle) * orbitRadius;
