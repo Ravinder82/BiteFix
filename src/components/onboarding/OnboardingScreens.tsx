@@ -3,6 +3,7 @@ import { Animated, Easing, Text, TextInput, TouchableOpacity, View, useWindowDim
 import { Activity, Check, Droplets, Leaf, Package, ShieldCheck, ShoppingBag, Sparkles, UserRound, Zap } from 'lucide-react-native';
 import Svg, { Circle, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { OrbMascot } from '../features/OrbMascot';
+import { LoaderThree } from '../ui/loader';
 import {
   LabelCompressionVisual,
   MomentResultCard,
@@ -697,7 +698,7 @@ function ShieldStatusBar({
   }
 
   const activeOptions = ALLERGEN_OPTIONS.filter(opt => activeAllergens.includes(opt.id));
-  
+
   // 8K Progress Meter Bar calculation
   const totalOptions = 5;
   const progressPercent = isNone ? 100 : (activeAllergens.length / totalOptions) * 100;
@@ -988,8 +989,8 @@ function PriorityStatusBar({
                     }}
                   >
                     {opt.id === 'ultra_processed' ? 'NOVA Check' :
-                     opt.id === 'nutrition' ? 'Grade Scan' :
-                     opt.id === 'ingredients' ? 'Additives' : 'Sugar Filter'}
+                      opt.id === 'nutrition' ? 'Grade Scan' :
+                        opt.id === 'ingredients' ? 'Additives' : 'Sugar Filter'}
                   </Text>
                 </View>
               </View>
@@ -2623,8 +2624,8 @@ function ScannerDossier({
 }) {
   const { width } = useWindowDimensions();
   const compact = width < 360;
-  const cardPadding = compact ? 18 : 22;
-  const sealSize = compact ? 70 : 80;
+  const cardPadding = compact ? 14 : 16;
+  const sealSize = compact ? 48 : 56;
   const dossierOpacity = useRef(new Animated.Value(0)).current;
   const dossierScale = useRef(new Animated.Value(0.96)).current;
 
@@ -2701,7 +2702,7 @@ function ScannerDossier({
       shadowRadius: 20,
       elevation: 5,
     }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 }}>
         <View
           style={{
             width: sealSize,
@@ -2714,34 +2715,30 @@ function ScannerDossier({
             borderColor: isDark ? 'rgba(52,216,115,0.22)' : 'rgba(1,146,42,0.11)',
           }}
         >
-          <SynthesisRing
-            phase="complete"
-            colors={colors}
-            isDark={isDark}
-            reduceMotion={reduceMotion}
-            isActive={isActive}
-            size={sealSize - 8}
+          <OrbMascot
+            state="happy"
+            size={sealSize * 0.7}
+            reduceMotion={true}
+            showShadow={false}
+            style={{ height: sealSize * 0.7 }}
           />
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={{ color: isDark ? GREEN_DARK_ICON : '#6F8B79', fontSize: 10, fontWeight: '900', letterSpacing: 1.25, textTransform: 'uppercase', marginBottom: 3 }}>
-            Your food profile
-          </Text>
-          <Text numberOfLines={1} style={{ color: isDark ? '#FFFFFF' : '#12311E', fontSize: compact ? 16 : 18, fontWeight: '900', letterSpacing: -0.35 }}>
+          <Text numberOfLines={1} style={{ color: isDark ? '#FFFFFF' : '#12311E', fontSize: compact ? 15 : 17, fontWeight: '900', letterSpacing: -0.35 }}>
             {name}'s Scanner
           </Text>
-          <View style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 5, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 999, backgroundColor: isDark ? 'rgba(52,216,115,0.12)' : '#EAF8EE' }}>
-            <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: isDark ? GREEN_DARK_ICON : GREEN }} />
-            <Text style={{ color: isDark ? GREEN_DARK_ICON : GREEN, fontSize: 9.5, fontWeight: '900' }}>
+          <View style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999, backgroundColor: isDark ? 'rgba(52,216,115,0.12)' : '#EAF8EE' }}>
+            <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: isDark ? GREEN_DARK_ICON : GREEN }} />
+            <Text style={{ color: isDark ? GREEN_DARK_ICON : GREEN, fontSize: 9, fontWeight: '900' }}>
               Ready to scan
             </Text>
           </View>
         </View>
       </View>
 
-      <View style={{ height: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(1,79,24,0.08)', marginBottom: 12 }} />
+      <View style={{ height: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(1,79,24,0.08)', marginBottom: 8 }} />
 
-      <Text style={{ color: isDark ? 'rgba(255,255,255,0.50)' : '#789080', fontSize: 9.5, fontWeight: '900', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 8 }}>
+      <Text style={{ color: isDark ? 'rgba(255,255,255,0.50)' : '#789080', fontSize: 9.5, fontWeight: '900', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 4 }}>
         Built around you
       </Text>
 
@@ -2782,8 +2779,8 @@ function ScannerDossier({
                   {row.value}
                 </Text>
               </View>
-              <View style={{ width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: isDark ? 'rgba(52,216,115,0.12)' : '#EAF8EE', marginTop: 4 }}>
-                <Check size={11} color={isDark ? GREEN_DARK_ICON : GREEN} strokeWidth={3} />
+              <View style={{ justifyContent: 'center', alignItems: 'center', minWidth: 24 }}>
+                <LedLight active={true} color={isDark ? GREEN_BRIGHT : GREEN} glow={GREEN_BRIGHT} showLabel={false} />
               </View>
             </Animated.View>
           );
@@ -2849,10 +2846,10 @@ export function MomentOfTruthScreen({
 }) {
   const { width } = useWindowDimensions();
   const profileName = name?.trim() ? name : 'Guest';
-  
+
   const allergenCount = allergens.filter(id => id !== 'none').length;
   const allergenText = allergens.includes('none') ? 'Standby' : `Watching ${allergenCount}`;
-  
+
   const priorityCount = selected.length || 3;
   const priorityText = `${priorityCount} Active`;
 
@@ -2892,9 +2889,6 @@ export function MomentOfTruthScreen({
   const title2Opacity = useRef(new Animated.Value(0)).current;
   const checklistOpacity = useRef(new Animated.Value(1)).current;
   const [dossierShown, setDossierShown] = useState(false);
-  const synthesisSealSize = phase === 'complete'
-    ? clamp(width * 0.36, 130, 146)
-    : clamp(width * 0.48, 170, 186);
 
   useEffect(() => {
     if (reduceMotion) {
@@ -2981,7 +2975,7 @@ export function MomentOfTruthScreen({
         }}
       >
         {/* Both phases reserve the same measured heading space so the completion copy cannot collide with the navigation. */}
-        <View style={{ width: '100%', minHeight: 142, justifyContent: 'center', marginBottom: 8 }}>
+        <View style={{ width: '100%', minHeight: 96, justifyContent: 'center', marginBottom: 2 }}>
           <Animated.View style={{
             position: 'absolute',
             width: '100%',
@@ -2989,8 +2983,8 @@ export function MomentOfTruthScreen({
             pointerEvents: phase === 'synthesizing' ? 'auto' : 'none',
           }}>
             <ScreenHeading
-              title={`Hi **${profileName}**, your Profile is being **Set**`}
-              subtitle="Compiling your custom scanner parameters across all your answers."
+              title={`Hi **${profileName}**, your Profile is being **Loaded**`}
+              subtitle="Compiling your custom scanner parameters."
               colors={colors}
               align="center"
               display={true}
@@ -3004,7 +2998,7 @@ export function MomentOfTruthScreen({
           }}>
             <ScreenHeading
               title="Your **BiteFix Scanner** is ready"
-              subtitle="Built around how you read, shop, and choose food."
+              subtitle=""
               colors={colors}
               align="center"
               display={true}
@@ -3012,15 +3006,12 @@ export function MomentOfTruthScreen({
           </Animated.View>
         </View>
 
-        {/* Dynamic Dual-Arc Synthesis Ring */}
-        <View style={{ width: synthesisSealSize, height: synthesisSealSize, justifyContent: 'center', alignItems: 'center', marginVertical: 12 }}>
-          <SynthesisRing
+        {/* Dynamic Flat Telemetry Loader */}
+        <View style={{ height: 32, justifyContent: 'center', alignItems: 'center', marginVertical: 4 }}>
+          <LoaderThree
             phase={phase}
-            colors={colors}
             isDark={isDark}
-            reduceMotion={reduceMotion}
             isActive={isActive}
-            size={synthesisSealSize}
           />
         </View>
 
