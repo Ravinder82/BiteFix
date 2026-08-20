@@ -1,1 +1,49 @@
-## Screens 7 + 8 Refinement Plan — Two files only: `OnboardingScreens.tsx` + `OnboardingVisuals.tsx` (not `index.tsx`, not paywall, not screens 1–6 or 9–10) --- ### Screen 7 — Allergies → Shield List **Mascot deleted.** No visual above the heading; the Food Shield status bar becomes the screen's character. **Copy (typo fixed):** Headline: `Anything we should **watch for you**?` (stray space before `?` removed). Subtitle: `Pick anything we should flag when it shows up in a scan.` (replaces the legalese `in the available product data` line — data-honest without the disclaimer tone). **New component: `ShieldStatusBar`** — a compact glass card (same border/shadow language as `AssistantCard` but full-width, ~42pt tall). Left: small shield icon. Right: live text — 3 states: · nothing selected: `No ingredients selected` (muted) · real allergen(s) selected: `Watching 3 ingredients` (green, count updates live) · `none` selected: `All clear — nothing to flag` (green, friendly). Sits between heading and rows. **New component: `ShieldRow`** — replaces `AllergyOptionTile`. Single-column, ~56pt tall, full-width rows. Layout: `[LED dot] [emoji chip 32×32 rounded-rect, subtle bg] [label]`. LED animation reused from existing `AllergyOptionTile` (180ms out-cubic, green halo + core). Selection logic unchanged (none is mutually exclusive). All 6 options in a flat list, gap 7. **Delete:** `AllergyOptionTile` component definition (dead code — only used by AllergyScreen). `EmojiSticker` stays (screens 2/3/4 still use it). --- ### Screen 8 — Priorities → Insight Preview Rows **Constellation + mascot animation deleted.** The screen becomes heading + 5 insight rows — nothing else above. **Copy:** Headline unchanged: `What should BiteFix **surface first**?`. Subtitle: `Pick what matters — it goes to the top of every scan.` (replaces `Choose anything that **matters to you**.`). **Extend `SelectionRow`:** Add optional `preview?: string` prop. When provided, renders the preview text right-aligned inside the row (same line as label, or wraps below on narrow screens). Unselected: muted (`textSecondary`). Selected: accent-colored, weight 800. The preview text is the real insight the priority unlocks: | Priority | Preview text | |---|---| | `ultra_processed` | `NOVA 1–4` | | `nutrition` | `Nutri-Score A–E` | | `ingredients` | `Additives · E-numbers` | | `sugar` | `≈ tsp per serving` | | `environment` | `CO₂ grade` | **Rewrite `PrioritiesScreen`:** Remove `PriorityConstellation` usage. Pass `preview` to each `SelectionRow`. Keep `multi` + `Icon` + `accent` props unchanged. **Delete in `OnboardingVisuals.tsx`:** `PriorityConstellation` component entirely (lines 64–148) — it's only imported by the screen we're rewriting. **Clean imports in `OnboardingScreens.tsx`:** Remove `PriorityConstellation` from the import from `./OnboardingVisuals`. --- ### CTA buttons Not touched. Your shimmer/clear treatment in `index.tsx` is outside the scope. --- ### Dead code cleanup · `AllergyOptionTile` definition deleted from `OnboardingScreens.tsx` · `PriorityConstellation` definition deleted from `OnboardingVisuals.tsx` · `PriorityConstellation` removed from import line in `OnboardingScreens.tsx` · `EmojiSticker` kept (used by screens 2, 3, 4) · `PillSticker` kept (used by screen 2)
+# Screen 9 (MomentOfTruthScreen) — "Two-Act Synthesis Cinematic"
+
+**Single file: `src/components/onboarding/OnboardingScreens.tsx` only** (lines ~2194–2480 rewritten + new sub-components beside it). index.tsx, OnboardingVisuals, MomentResultCard (now screen 10's), CTA, paywall, screens 1–8: all untouched. The `onAnimationComplete` host contract (CTA unlock via `setSynthesisComplete`) is preserved.
+
+## Act 1 — Synthesis (0 → ~4.7s, slower & smoother)
+
+### `SynthesisRing` (new component)
+Dual-arc scanner ring, replaces the single teal arc. 140px container:
+- Static dashed guide circle (r46, `strokeDasharray "2 6"`, green ~18% opacity)
+- Main arc: 270° gradient arc (r44, `url(#grad)` GREEN→GREEN_BRIGHT light / GREEN→GREEN_LIGHT dark), wrapper rotating 0→360° on a 2400ms linear native loop
+- Counter arc: 90° arc (r35) in GREEN_LIGHT, counter-rotating on a 3600ms loop
+- Soft radial green glow behind the mascot (RadialGradient, like screen 6's)
+- `phase: 'synthesizing' | 'complete'`: on complete, arcs animate to full circle (dashoffset→0, 600ms, JS driver, one-shot) and rotation eases into a slow **8000ms ambient loop that never stops** — the continuous revolving ring the user asked for
+- Mascot inside: 'thinking' during synthesis → 'happy' + scale pop (1→1.12→1, 450ms) at completion. reduceMotion: static full ring, happy mascot.
+
+### `SynthesisCard` (new component) — the 4 config cards, now with titles
+Layout: `[status 22px] [Title 13px/800 over detail 12px/500]`. Data:
+1. **User profile** — "Configuring for {name|guest}"
+2. **Shopping rhythm** — "{daily|weekly|monthly|occasional} packaged food"
+3. **Allergen safeguard** — "Watching N substance(s)" / "No allergies — shield on standby"
+4. **Scanner modules** — "Loading N module(s)"
+
+States:
+- **pending** — 35% opacity ghost, hollow-circle status
+- **loading** — green border tint, green-tinted bg, pulsing green LED (reuse `LedLight` with green color/glow props), animated ellipsis on the detail line
+- **complete** — check pops (scale 0.3→1.15→1 spring, green circle + glow), one green wash flash fading to neutral
+
+Entrance per card: fade + translateY 14→0, 320ms out-cubic.
+
+**Timing (the requested extra delay):** card i enters 'loading' at 250 + i·1150ms, completes ~1000ms later (cards complete at ≈1.25s / 2.4s / 3.55s / 4.7s — today it's a 900ms cadence). All timers ref-tracked with the existing cleanup pattern.
+
+## Act 2 — Dossier Reveal (~4.7s → ~6.4s)
+
+- **t≈5.1s:** title crossfades (two stacked ScreenHeadings, opacity swap 400ms) from *"Synthesizing your **BiteFix scanner**..."* / *"Your answers are becoming your personal scanner."* to *"{Name}, your scanner is **ready**."* / *"Built from your answers — here's what it watches for."* Ring flips to 'complete' phase; mascot pops happy.
+- **t≈5.3s:** checklist crossfades out; **`ScannerDossier`** fades/scales in (0.96→1, 400ms):
+  - Header: 64px mini SynthesisRing avatar (ambient rotation) + "{Name}'s Scanner" (16px/900) + verified row (green check-circle + "Personalized & Ready" in GREEN)
+  - Divider, then the 4 parameters as final config rows, staggered 120ms: [green icon 16px] [label] [value right, 800] [✓] — icons: UserRound, ShoppingBag (new lucide import), ShieldCheck, Zap
+  - Footer: "ACTIVE MODULES" eyebrow + chips of the user's selected priorities (labels via `PRIORITY_META` imported from OnboardingVisuals; chip = `${GREEN}12` bg, `${GREEN}35` border, GREEN 11px/800)
+- **t≈6.4s:** `onAnimationComplete()` fires → host CTA unlocks.
+
+## Cross-cutting
+- **Color re-grade:** every `#14ae97` / `#13f5b0` on this screen → brand ramp (GREEN `#01922A`, GREEN_BRIGHT, GREEN_LIGHT, dark icon `#34D873`).
+- **reduceMotion:** jump straight to final state — ready title, full static ring, dossier shown with all rows visible, `onAnimationComplete()` fired immediately (matches current behavior).
+- **!isActive:** full reset to pending (existing pattern), replays on re-entry.
+- Dark-mode variants for every tint/border/glow.
+- New imports: `ShoppingBag` from lucide; `PRIORITY_META` from './OnboardingVisuals'. `MomentResultCard` import stays (still used by screen 10).
+
+## Verify
+`npx tsc --noEmit` clean; memory file updated with screen-9 design decisions.

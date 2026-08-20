@@ -33,7 +33,6 @@ import {
 } from 'lucide-react-native';
 import {
   AllergyScreen as FlagshipAllergyScreen,
-  ContextScreen as FlagshipContextScreen,
   IdentityScreen as FlagshipIdentityScreen,
   PainScreen as FlagshipPainScreen,
   LabelReadingScreen as FlagshipLabelReadingScreen,
@@ -42,10 +41,10 @@ import {
   MomentOfTruthScreen,
   FinalActivationScreen,
 } from '../../components/onboarding/OnboardingScreens';
-import { IngredientReadingFrequency, OnboardingPriority, ShoppingFrequency } from '../../types/onboarding.types';
+import { IngredientReadingFrequency, OnboardingPriority } from '../../types/onboarding.types';
 
 const GREEN = '#01922aff';
-const TOTAL_SCREENS = 10;
+const TOTAL_SCREENS = 9;
 
 const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
@@ -381,7 +380,6 @@ export default function OnboardingScreen() {
   const [name, setName] = useState('');
   const [allergens, setAllergens] = useState<string[]>([]);
   const [priorities, setPriorities] = useState<OnboardingPriority[]>([]);
-  const [shoppingFrequency, setShoppingFrequency] = useState<ShoppingFrequency>();
   const [labelReadingFrequency, setLabelReadingFrequency] = useState<'always' | 'sometimes' | 'rarely' | 'never'>();
   const [ingredientReadingFrequency, setIngredientReadingFrequency] = useState<IngredientReadingFrequency>();
   const [revelationComplete, setRevelationComplete] = useState(false);
@@ -427,9 +425,9 @@ export default function OnboardingScreen() {
   }, [screenWidth]);
 
   useEffect(() => {
-    if (currentScreen === 5) {
+    if (currentScreen === 4) {
       setRevelationComplete(false);
-    } else if (currentScreen === 8) {
+    } else if (currentScreen === 7) {
       setSynthesisComplete(false);
     }
   }, [currentScreen]);
@@ -508,7 +506,7 @@ export default function OnboardingScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const realAllergens = allergens.filter((a) => a !== 'none');
     setAllergenFilters(realAllergens);
-    setOnboardingPreferences({ userPriorities: priorities, shoppingFrequency, ingredientReadingFrequency });
+    setOnboardingPreferences({ userPriorities: priorities, ingredientReadingFrequency });
 
     const goalMap: Record<string, 'ultra_processed' | 'nutri_score' | 'clean_swaps' | 'healthy_habits' | 'none'> = {
       ultra_processed: 'ultra_processed',
@@ -524,7 +522,7 @@ export default function OnboardingScreen() {
 
     setOnboardingComplete(true);
     router.replace('/paywall');
-  }, [allergens, ingredientReadingFrequency, name, priorities, setAllergenFilters, setOnboardingComplete, setOnboardingPreferences, setProfile, setDietPreference, setTrackEcoScore, setTrackOrganic, shoppingFrequency]);
+  }, [allergens, ingredientReadingFrequency, name, priorities, setAllergenFilters, setOnboardingComplete, setOnboardingPreferences, setProfile, setDietPreference, setTrackEcoScore, setTrackOrganic]);
 
   const handleNext = useCallback(() => {
     if (pagingLockRef.current) return;
@@ -546,15 +544,15 @@ export default function OnboardingScreen() {
 
   const ONBOARDING_CTA_LABELS: Record<number, string> = {
     0: 'Get Started',
-    5: "Let's Continue",
-    9: 'Activate BiteFix',
+    4: "Let's Continue",
+    8: 'Activate BiteFix',
   };
 
   const getCtaLabel = (screen: number) => {
-    if (screen === 5) {
+    if (screen === 4) {
       return revelationComplete ? "Let's Continue" : "Revealing Score...";
     }
-    if (screen === 8) {
+    if (screen === 7) {
       return synthesisComplete ? "Let's Continue" : "Configuring Engine...";
     }
     return ONBOARDING_CTA_LABELS[screen] ?? 'Continue';
@@ -570,12 +568,10 @@ export default function OnboardingScreen() {
       case 1:
         return <FlagshipIdentityScreen name={name} onChange={setName} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       case 2:
-        return <FlagshipContextScreen selected={shoppingFrequency} onSelect={setShoppingFrequency} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
-      case 3:
         return <FlagshipLabelReadingScreen selected={labelReadingFrequency} onSelect={setLabelReadingFrequency} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
-      case 4:
+      case 3:
         return <FlagshipPainScreen selected={ingredientReadingFrequency} onSelect={setIngredientReadingFrequency} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} isActive={isActive} />;
-      case 5:
+      case 4:
         return (
           <FlagshipRevelationScreen
             colors={colors}
@@ -585,16 +581,16 @@ export default function OnboardingScreen() {
             onAnimationComplete={() => setRevelationComplete(true)}
           />
         );
-      case 6:
+      case 5:
         return <FlagshipAllergyScreen selected={allergens} onToggle={toggleAllergen} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
-      case 7:
+      case 6:
         return <FlagshipPrioritiesScreen selected={priorities} onToggle={togglePriority} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
-      case 8:
+      case 7:
         return (
           <MomentOfTruthScreen
             selected={priorities}
             name={name}
-            shoppingFrequency={shoppingFrequency}
+            labelReadingFrequency={labelReadingFrequency}
             ingredientReadingFrequency={ingredientReadingFrequency}
             allergens={allergens}
             colors={colors}
@@ -604,7 +600,7 @@ export default function OnboardingScreen() {
             onAnimationComplete={() => setSynthesisComplete(true)}
           />
         );
-      case 9:
+      case 8:
         return (
           <FinalActivationScreen
             colors={colors}
@@ -627,13 +623,12 @@ export default function OnboardingScreen() {
 
     const ctaDisabled =
       (screen === 1 && name.trim().length < 1) ||
-      (screen === 2 && !shoppingFrequency) ||
-      (screen === 3 && !labelReadingFrequency) ||
-      (screen === 4 && !ingredientReadingFrequency) ||
-      (screen === 5 && !revelationComplete) ||
-      (screen === 6 && allergens.length === 0) ||
-      (screen === 7 && priorities.length === 0) ||
-      (screen === 8 && !synthesisComplete);
+      (screen === 2 && !labelReadingFrequency) ||
+      (screen === 3 && !ingredientReadingFrequency) ||
+      (screen === 4 && !revelationComplete) ||
+      (screen === 5 && allergens.length === 0) ||
+      (screen === 6 && priorities.length === 0) ||
+      (screen === 7 && !synthesisComplete);
     const disabledBg = isDark ? '#153622ff' : '#F0F4F1';
     const disabledBorder = isDark ? 'rgba(167, 231, 63, 0.1)' : 'rgba(7, 25, 15, 0.08)';
     const disabledText = isDark ? 'rgba(172, 172, 172, 0.59)' : 'rgba(6, 33, 18, 0.42)';

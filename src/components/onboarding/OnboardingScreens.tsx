@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
-import { Activity, Check, Droplets, Leaf, Package, ShieldCheck, Sparkles, UserRound } from 'lucide-react-native';
+import { Activity, Check, Droplets, Leaf, Package, ShieldCheck, ShoppingBag, Sparkles, UserRound, Zap } from 'lucide-react-native';
 import Svg, { Circle, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { OrbMascot } from '../features/OrbMascot';
 import {
   LabelCompressionVisual,
   MomentResultCard,
+  PRIORITY_META,
 } from './OnboardingVisuals';
 import { IngredientReadingFrequency, OnboardingPriority, ShoppingFrequency } from '../../types/onboarding.types';
 
@@ -631,7 +632,7 @@ const getCleanLabel = (id: string) => {
   }
 };
 
-function LedLight({ active, color = '#14ae97', glow = '#13f5b0' }: { active: boolean, color?: string, glow?: string }) {
+function LedLight({ active, color = '#14ae97', glow = '#13f5b0', showLabel = true }: { active: boolean, color?: string, glow?: string, showLabel?: boolean }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
       <View style={{
@@ -645,14 +646,16 @@ function LedLight({ active, color = '#14ae97', glow = '#13f5b0' }: { active: boo
         shadowRadius: 5,
         elevation: active ? 3 : 0,
       }} />
-      <Text style={{
-        fontSize: 9.5,
-        fontWeight: '900',
-        color: active ? color : 'rgba(150, 150, 150, 0.6)',
-        letterSpacing: 1.2,
-      }}>
-        {active ? 'ACTIVE' : 'STANDBY'}
-      </Text>
+      {showLabel && (
+        <Text style={{
+          fontSize: 9.5,
+          fontWeight: '900',
+          color: active ? color : 'rgba(150, 150, 150, 0.6)',
+          letterSpacing: 1.2,
+        }}>
+          {active ? 'ACTIVE' : 'STANDBY'}
+        </Text>
+      )}
     </View>
   );
 }
@@ -1312,99 +1315,10 @@ export function IdentityScreen({
   );
 }
 
-// ══════════════════════════════════════════════════════════════
-// SCREEN 3 — CONTEXT
-// ══════════════════════════════════════════════════════════════
-export function ContextScreen({ selected, onSelect, colors, isDark, reduceMotion }: { selected?: ShoppingFrequency; onSelect: (value: ShoppingFrequency) => void; colors: any; isDark: boolean; reduceMotion: boolean }) {
-  const options: Array<{
-    id: ShoppingFrequency;
-    label: string;
-    emoji: string;
-    stickerBg: string;
-    stickerBorder: string;
-    stickerShadow: string;
-    stickerRotation: string;
-    stickerSide: 'left' | 'right';
-  }> = [
-      {
-        id: 'rarely',
-        label: "I don't buy packaged food",
-        emoji: '🥦',
-        stickerBg: isDark ? '#202C22' : '#F4FAF3',
-        stickerBorder: isDark ? '#344C38' : '#1ADB13',
-        stickerShadow: '#4F8A43',
-        stickerRotation: '-8deg',
-        stickerSide: 'right',
-      },
-      {
-        id: 'often',
-        label: 'I buy packaged food weekly',
-        emoji: '🛒',
-        stickerBg: isDark ? '#2B2818' : '#FFF9E9',
-        stickerBorder: isDark ? '#564F27' : '#FFCC00',
-        stickerShadow: '#B38A24',
-        stickerRotation: '8deg',
-        stickerSide: 'right',
-      },
-      {
-        id: 'sometimes',
-        label: 'I buy packaged food monthly',
-        emoji: '📅',
-        stickerBg: isDark ? '#20252C' : '#F3F7FF',
-        stickerBorder: isDark ? '#384A61' : '#4E8BFF',
-        stickerShadow: '#5575A8',
-        stickerRotation: '-6deg',
-        stickerSide: 'right',
-      },
-      {
-        id: 'most_trips',
-        label: 'I buy snacks daily',
-        emoji: '🍿',
-        stickerBg: isDark ? '#2C2020' : '#FFF6F3',
-        stickerBorder: isDark ? '#563333' : '#FB3802',
-        stickerShadow: '#B64E3B',
-        stickerRotation: '10deg',
-        stickerSide: 'right',
-      },
-    ];
 
-  return (
-    <ScreenFrame>
-      <View style={{ alignItems: 'center', marginBottom: 8 }}>
-        <OrbMascot state="thinking" size={82} reduceMotion={reduceMotion} accessibilityLabel="Curious BiteFix scanner mascot" />
-      </View>
-
-      <ScreenHeading
-        title="How often do you buy **packaged food**?"
-        subtitle="This helps BiteFix **tune the experience** to your buying habits."
-        colors={colors}
-      />
-
-      <View style={{ gap: 2, marginTop: 2 }}>
-        {options.map((option) => (
-          <ContextOptionRow
-            key={option.id}
-            label={option.label}
-            emoji={option.emoji}
-            stickerBg={option.stickerBg}
-            stickerBorder={option.stickerBorder}
-            stickerShadow={option.stickerShadow}
-            stickerRotation={option.stickerRotation}
-            stickerSide={option.stickerSide}
-            selected={selected === option.id}
-            onPress={() => onSelect(option.id)}
-            colors={colors}
-            isDark={isDark}
-            reduceMotion={reduceMotion}
-          />
-        ))}
-      </View>
-    </ScreenFrame>
-  );
-}
 
 // ══════════════════════════════════════════════════════════════
-// SCREEN 5 — ALLERGIES (moved after the pain point and instant insight)
+// SCREEN 6 — ALLERGY SAFEGUARD
 // ══════════════════════════════════════════════════════════════
 export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion }: { selected: string[]; onToggle: (id: string) => void; colors: any; isDark: boolean; reduceMotion: boolean }) {
   return (
@@ -1433,7 +1347,7 @@ export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion
 }
 
 // ══════════════════════════════════════════════════════════════
-// SCREEN 4 — LABEL READING BEHAVIOR
+// SCREEN 3 — LABEL READING BEHAVIOR
 // ══════════════════════════════════════════════════════════════
 export type LabelReadingFrequency = 'always' | 'sometimes' | 'rarely' | 'never';
 
@@ -1614,7 +1528,7 @@ export function LabelReadingScreen({
 }
 
 // ══════════════════════════════════════════════════════════════
-// SCREEN 4 — PAIN POINT (shown before allergies by the host flow)
+// SCREEN 4 — PRIMARY BARRIER
 // ══════════════════════════════════════════════════════════════
 export function PainScreen({
   selected,
@@ -1670,7 +1584,7 @@ export function PainScreen({
 }
 
 // ══════════════════════════════════════════════════════════════
-// SCREEN 7 — PRIORITIES
+// SCREEN 7 — SCANNER PRIORITIES
 // ══════════════════════════════════════════════════════════════
 export function PrioritiesScreen({ selected, onToggle, colors, isDark, reduceMotion }: { selected: OnboardingPriority[]; onToggle: (id: OnboardingPriority) => void; colors: any; isDark: boolean; reduceMotion: boolean }) {
   return (
@@ -1701,7 +1615,7 @@ export function PrioritiesScreen({ selected, onToggle, colors, isDark, reduceMot
 }
 
 // ══════════════════════════════════════════════════════════════
-// SCREEN 6 — INSTANT INSIGHT SCORE REVEAL HERO (LIQUID MERCURY EDITION)
+// SCREEN 5 — INTELLIGENCE SCORE REVEAL
 // ══════════════════════════════════════════════════════════════
 const AnimatedSvgCircle = Animated.createAnimatedComponent(Circle);
 
@@ -2191,6 +2105,696 @@ export function RevelationScreen({
   );
 }
 
+const GREEN_DARK_ICON = '#34D873';
+
+function SynthesisRing({
+  phase,
+  colors,
+  isDark,
+  reduceMotion,
+  isActive,
+  animateToAmbient = false,
+}: {
+  phase: 'synthesizing' | 'complete';
+  colors: any;
+  isDark: boolean;
+  reduceMotion: boolean;
+  isActive: boolean;
+  animateToAmbient?: boolean;
+}) {
+  const mainRotAnim = useRef(new Animated.Value(0)).current;
+  const counterRotAnim = useRef(new Animated.Value(0)).current;
+  const mainRotationLoop = useRef<Animated.CompositeAnimation | null>(null);
+  const counterRotationLoop = useRef<Animated.CompositeAnimation | null>(null);
+
+  // Circ for main (r44) = 276.46. 270 deg = 207.34. dashoffset = 276.46 - 207.34 = 69.12
+  // Circ for counter (r35) = 219.91. 90 deg = 54.98. dashoffset = 219.91 - 54.98 = 164.93
+  const mainDashoffset = useRef(new Animated.Value(69.12)).current;
+  const counterDashoffset = useRef(new Animated.Value(164.93)).current;
+
+  const mascotScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (reduceMotion) {
+      mainDashoffset.setValue(0);
+      counterDashoffset.setValue(0);
+      return;
+    }
+
+    if (!isActive) {
+      mainDashoffset.setValue(69.12);
+      counterDashoffset.setValue(164.93);
+      mascotScale.setValue(1);
+      return;
+    }
+
+    if (phase === 'complete') {
+      Animated.parallel([
+        Animated.timing(mainDashoffset, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: false,
+        }),
+        Animated.timing(counterDashoffset, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: false,
+        }),
+        Animated.sequence([
+          Animated.timing(mascotScale, { toValue: 1.12, duration: 150, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+          Animated.timing(mascotScale, { toValue: 1, duration: 300, useNativeDriver: true }),
+        ]),
+      ]).start();
+    } else {
+      mainDashoffset.setValue(69.12);
+      counterDashoffset.setValue(164.93);
+      mascotScale.setValue(1);
+    }
+  }, [phase, isActive, reduceMotion]);
+
+  useEffect(() => {
+    if (reduceMotion || !isActive) {
+      mainRotAnim.setValue(0);
+      counterRotAnim.setValue(0);
+      return;
+    }
+
+    if (mainRotationLoop.current) mainRotationLoop.current.stop();
+    if (counterRotationLoop.current) counterRotationLoop.current.stop();
+
+    mainRotAnim.setValue(0);
+    counterRotAnim.setValue(0);
+
+    if (phase === 'synthesizing') {
+      mainRotationLoop.current = Animated.loop(
+        Animated.timing(mainRotAnim, {
+          toValue: 1,
+          duration: animateToAmbient ? 8000 : 2400,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
+      );
+      counterRotationLoop.current = Animated.loop(
+        Animated.timing(counterRotAnim, {
+          toValue: 1,
+          duration: animateToAmbient ? 12000 : 3600,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
+      );
+
+      // Smooth transition from fast spin to ambient when animateToAmbient flips
+      if (animateToAmbient) {
+        Animated.timing(mainRotAnim, {
+          toValue: 1,
+          duration: 8000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }).start();
+        Animated.timing(counterRotAnim, {
+          toValue: 1,
+          duration: 12000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }).start();
+      }
+    } else {
+      mainRotationLoop.current = Animated.loop(
+        Animated.timing(mainRotAnim, {
+          toValue: 1,
+          duration: 8000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
+      );
+      counterRotationLoop.current = Animated.loop(
+        Animated.timing(counterRotAnim, {
+          toValue: 1,
+          duration: 12000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
+      );
+    }
+
+    mainRotationLoop.current.start();
+    counterRotationLoop.current.start();
+
+    return () => {
+      mainRotationLoop.current?.stop();
+      counterRotationLoop.current?.stop();
+    };
+  }, [phase, isActive, reduceMotion, animateToAmbient]);
+
+  const mainRotate = mainRotAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const counterRotate = counterRotAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['360deg', '0deg'],
+  });
+
+  // Ambient rotation for mounted dossier avatar (external trigger)
+  const ambientRotation = useRef(new Animated.Value(0)).current;
+  const ambientLoop = useRef<Animated.CompositeAnimation | null>(null);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      ambientRotation.setValue(0);
+      return;
+    }
+
+    ambientLoop.current?.stop();
+    ambientRotation.setValue(0);
+
+    ambientLoop.current = Animated.loop(
+      Animated.timing(ambientRotation, {
+        toValue: 1,
+        duration: 8000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+        isInteraction: false,
+      })
+    );
+    ambientLoop.current.start();
+
+    return () => {
+      ambientLoop.current?.stop();
+      ambientRotation.setValue(0);
+    };
+  }, [reduceMotion]);
+
+  const ambientRotate = ambientRotation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  return (
+    <View style={{ width: 140, height: 140, justifyContent: 'center', alignItems: 'center' }}>
+      {/* Base layer: secondary blur overlay for volumetric depth in dark mode */}
+      <Svg width={140} height={140} viewBox="0 0 100 100" style={isDark ? { position: 'absolute', filter: 'blur(28px)' } : undefined}>
+        <Circle cx="50" cy="50" r="58" fill={isDark ? 'rgba(52, 216, 115, 0.05)' : 'transparent'} />
+      </Svg>
+
+      <Svg width={140} height={140} viewBox="0 0 100 100" style={{ position: 'absolute' }}>
+        <Defs>
+          <RadialGradient id="synthesisMascotGlow" cx="50%" cy="50%" rx="50%" ry="50%">
+            <Stop offset="0%" stopColor={GREEN} stopOpacity={isDark ? 0.30 : 0.18} />
+            <Stop offset="70%" stopColor={GREEN} stopOpacity={isDark ? 0.06 : 0.02} />
+            <Stop offset="100%" stopColor="#000000" stopOpacity="0" />
+          </RadialGradient>
+
+          <SvgLinearGradient id="synthesisMainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <Stop offset="0%" stopColor={GREEN} />
+            <Stop offset="50%" stopColor={isDark ? GREEN_LIGHT : GREEN_BRIGHT} />
+            <Stop offset="100%" stopColor={isDark ? GREEN_LIGHT : GREEN_BRIGHT} />
+          </SvgLinearGradient>
+        </Defs>
+
+        <Circle cx="50" cy="50" r="48" fill="url(#synthesisMascotGlow)" />
+
+        <Circle
+          cx="50"
+          cy="50"
+          r="46"
+          fill="none"
+          stroke={GREEN}
+          strokeWidth="1.5"
+          strokeDasharray="2 6"
+          opacity="0.18"
+        />
+      </Svg>
+
+      <Animated.View style={{
+        position: 'absolute',
+        width: 140,
+        height: 140,
+        transform: reduceMotion ? [] : [{ rotate: mainRotate }],
+      }}>
+        <Svg width={140} height={140} viewBox="0 0 100 100">
+          {/* Subtle shadow projection for main arc */}
+          <Circle
+            cx="50"
+            cy="52"
+            r="44"
+            fill="none"
+            stroke={isDark ? 'rgba(52, 216, 115, 0.12)' : 'rgba(0, 0, 0, 0.04)'}
+            strokeWidth="6"
+          />
+          <AnimatedSvgCircle
+            cx="50"
+            cy="50"
+            r="44"
+            fill="none"
+            stroke="url(#synthesisMainGrad)"
+            strokeWidth="3.2"
+            strokeLinecap="round"
+            strokeDasharray="276.46"
+            strokeDashoffset={reduceMotion ? 0 : mainDashoffset}
+          />
+        </Svg>
+      </Animated.View>
+
+      <Animated.View style={{
+        position: 'absolute',
+        width: 140,
+        height: 140,
+        transform: reduceMotion ? [] : [{ rotate: counterRotate }],
+      }}>
+        <Svg width={140} height={140} viewBox="0 0 100 100">
+          {/* Subtle shadow projection for counter arc */}
+          <Circle
+            cx="50"
+            cy="51"
+            r="35"
+            fill="none"
+            stroke={isDark ? 'rgba(52, 216, 115, 0.08)' : 'rgba(0, 0, 0, 0.02)'}
+            strokeWidth="5"
+          />
+          <AnimatedSvgCircle
+            cx="50"
+            cy="50"
+            r="35"
+            fill="none"
+            stroke={GREEN_LIGHT}
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeDasharray="219.91"
+            strokeDashoffset={reduceMotion ? 0 : counterDashoffset}
+          />
+        </Svg>
+      </Animated.View>
+
+      <Animated.View style={{ transform: [{ scale: mascotScale }] }}>
+        <OrbMascot
+          state={reduceMotion ? 'happy' : (phase === 'complete' ? 'happy' : 'thinking')}
+          size={72}
+          reduceMotion={reduceMotion}
+          accessibilityLabel="Synthesizing BiteFix scanner mascot"
+        />
+      </Animated.View>
+    </View>
+  );
+}
+
+function SynthesisCard({
+  title,
+  detail,
+  state,
+  delay,
+  colors,
+  isDark,
+  reduceMotion,
+  isActive,
+}: {
+  title: string;
+  detail: string;
+  state: 'pending' | 'loading' | 'complete';
+  delay: number;
+  colors: any;
+  isDark: boolean;
+  reduceMotion: boolean;
+  isActive: boolean;
+}) {
+  const cardOpacity = useRef(new Animated.Value(0)).current;
+  const cardTranslateY = useRef(new Animated.Value(14)).current;
+  const flashOpacity = useRef(new Animated.Value(0)).current;
+  const checkScale = useRef(new Animated.Value(0.3)).current;
+  const detailOpacity = useRef(new Animated.Value(0)).current;
+
+  const isPending = state === 'pending';
+  const isLoading = state === 'loading';
+  const isComplete = state === 'complete';
+
+  useEffect(() => {
+    if (reduceMotion) {
+      cardOpacity.setValue(1);
+      cardTranslateY.setValue(0);
+      checkScale.setValue(1);
+      detailOpacity.setValue(1);
+      return;
+    }
+
+    if (!isActive) {
+      cardOpacity.setValue(0);
+      cardTranslateY.setValue(14);
+      checkScale.setValue(0.3);
+      flashOpacity.setValue(0);
+      detailOpacity.setValue(0);
+      return;
+    }
+
+    const tEntrance = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(cardOpacity, {
+          toValue: isPending ? 0.35 : 1.0,
+          duration: 320,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(cardTranslateY, {
+          toValue: 0,
+          duration: 320,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(detailOpacity, {
+          toValue: isLoading ? 1 : 0,
+          duration: isLoading ? 200 : 0,
+          delay: isLoading ? 100 : 0,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, delay);
+
+    return () => clearTimeout(tEntrance);
+  }, [delay, isActive, reduceMotion]);
+
+  useEffect(() => {
+    if (reduceMotion || !isActive) return;
+
+    if (!isPending) {
+      Animated.timing(cardOpacity, {
+        toValue: 1.0,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [state, isActive, reduceMotion]);
+
+  useEffect(() => {
+    if (reduceMotion || !isActive) return;
+
+    if (isComplete) {
+      Animated.sequence([
+        Animated.timing(flashOpacity, { toValue: 1, duration: 150, useNativeDriver: true }),
+        Animated.timing(flashOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
+      ]).start();
+
+      Animated.spring(checkScale, {
+        toValue: 1,
+        tension: 65,
+        friction: 5,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [state, isActive, reduceMotion]);
+
+  const [ellipsis, setEllipsis] = useState('');
+  useEffect(() => {
+    if (!isLoading) {
+      setEllipsis('');
+      return;
+    }
+    const interval = setInterval(() => {
+      setEllipsis(prev => (prev === '...' ? '.' : prev + '.'));
+    }, 350);
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
+  return (
+    <Animated.View
+      style={{
+        opacity: cardOpacity,
+        transform: [{ translateY: cardTranslateY }],
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 14,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderRadius: 18,
+        borderWidth: 1.0,
+        borderColor: isLoading
+          ? (isDark ? 'rgba(52,216,115,0.35)' : 'rgba(1,146,42,0.20)')
+          : isComplete
+            ? (isDark ? 'rgba(52,216,115,0.25)' : 'rgba(1,146,42,0.15)')
+            : (isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.015)'),
+        backgroundColor: isLoading
+          ? (isDark ? '#06180E' : 'rgba(1,146,42,0.04)')
+          : isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.015)',
+        overflow: 'hidden',
+        position: 'relative',
+      }}
+    >
+      {!reduceMotion && (
+        <Animated.View style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundColor: isDark ? 'rgba(52,216,115,0.15)' : 'rgba(1,146,42,0.08)',
+          opacity: flashOpacity,
+          pointerEvents: 'none',
+        }} />
+      )}
+
+      <View style={{ width: 22, height: 22, justifyContent: 'center', alignItems: 'center' }}>
+        {isComplete ? (
+          <Animated.View style={{
+            transform: [{ scale: checkScale }],
+            width: 20,
+            height: 20,
+            borderRadius: 10,
+            backgroundColor: GREEN,
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: GREEN_BRIGHT,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.8,
+            shadowRadius: 3,
+            elevation: 2,
+          }}>
+            <Check size={11} color="#FFFFFF" strokeWidth={3.5} />
+          </Animated.View>
+        ) : isLoading ? (
+          <LedLight active={true} color={GREEN} glow={GREEN_BRIGHT} showLabel={false} />
+        ) : (
+          <View style={{
+            width: 14,
+            height: 14,
+            borderRadius: 7,
+            borderWidth: 1.5,
+            borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
+          }} />
+        )}
+      </View>
+
+      <View style={{ flex: 1, flexDirection: 'column' }}>
+        <Text style={{
+          color: isComplete || isLoading ? colors.text : colors.textSecondary,
+          fontSize: 13,
+          fontWeight: '800',
+          letterSpacing: -0.15,
+        }}>
+          {title}
+        </Text>
+        <Animated.View style={{ opacity: detailOpacity }}>
+          <Text style={{
+            color: isComplete ? colors.text : isLoading ? (isDark ? '#FFFFFF' : GREEN) : colors.textSecondary,
+            fontSize: 12,
+            fontWeight: '500',
+            marginTop: 1,
+          }}>
+            {detail}{isLoading ? ellipsis : ''}
+          </Text>
+        </Animated.View>
+      </View>
+    </Animated.View>
+  );
+}
+
+function ScannerDossier({
+  name,
+  labelHabitText,
+  painText,
+  allergenText,
+  priorityText,
+  selectedPriorities,
+  colors,
+  isDark,
+  reduceMotion,
+  isActive,
+}: {
+  name: string;
+  labelHabitText: string;
+  painText: string;
+  allergenText: string;
+  priorityText: string;
+  selectedPriorities: OnboardingPriority[];
+  colors: any;
+  isDark: boolean;
+  reduceMotion: boolean;
+  isActive: boolean;
+}) {
+  const dossierOpacity = useRef(new Animated.Value(0)).current;
+  const dossierScale = useRef(new Animated.Value(0.96)).current;
+
+  const row1Opacity = useRef(new Animated.Value(0)).current;
+  const row2Opacity = useRef(new Animated.Value(0)).current;
+  const row3Opacity = useRef(new Animated.Value(0)).current;
+  const row4Opacity = useRef(new Animated.Value(0)).current;
+  const row5Opacity = useRef(new Animated.Value(0)).current;
+  const rowAnims = [row1Opacity, row2Opacity, row3Opacity, row4Opacity, row5Opacity];
+
+  useEffect(() => {
+    if (reduceMotion) {
+      dossierOpacity.setValue(1);
+      dossierScale.setValue(1);
+      rowAnims.forEach(v => v.setValue(1));
+      return;
+    }
+
+    if (!isActive) {
+      dossierOpacity.setValue(0);
+      dossierScale.setValue(0.96);
+      rowAnims.forEach(v => v.setValue(0));
+      return;
+    }
+
+    Animated.parallel([
+      Animated.timing(dossierOpacity, {
+        toValue: 1,
+        duration: 400,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(dossierScale, {
+        toValue: 1,
+        duration: 400,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    const anims = rowAnims.map((val, i) =>
+      Animated.timing(val, {
+        toValue: 1,
+        duration: 250,
+        delay: i * 80,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      })
+    );
+    Animated.parallel(anims).start();
+  }, [isActive, reduceMotion]);
+
+  const dossierRows = [
+    { icon: UserRound, label: 'Profile Identity', value: name },
+    { icon: Leaf, label: 'Label Habit', value: labelHabitText },
+    { icon: Package, label: 'Shopping Barrier', value: painText },
+    { icon: ShieldCheck, label: 'Allergen Safeguard', value: allergenText },
+    { icon: Zap, label: 'Active Scanners', value: priorityText },
+  ];
+
+  return (
+    <Animated.View style={{
+      width: '100%',
+      opacity: dossierOpacity,
+      transform: [{ scale: dossierScale }],
+      padding: 18,
+      borderRadius: 22,
+      borderWidth: 1.25,
+      borderColor: isDark ? 'rgba(52,216,115,0.25)' : 'rgba(1,146,42,0.15)',
+      backgroundColor: isDark ? '#06180E' : '#FFFFFF',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: isDark ? 0.35 : 0.08,
+      shadowRadius: 20,
+      elevation: 5,
+    }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+        <View style={{ width: 64, height: 64, borderRadius: 32, overflow: 'hidden' }}>
+          <SynthesisRing
+            phase="complete"
+            colors={colors}
+            isDark={isDark}
+            reduceMotion={reduceMotion}
+            isActive={isActive}
+          />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: isDark ? '#FFFFFF' : '#12311E', fontSize: 16, fontWeight: '900', letterSpacing: -0.3 }}>
+            {name}'s Scanner
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+            <Check size={11} color={isDark ? GREEN_DARK_ICON : GREEN} strokeWidth={3.5} />
+            <Text style={{ color: isDark ? GREEN_DARK_ICON : GREEN, fontSize: 11, fontWeight: '800' }}>
+              Personalized & Ready
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={{ height: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', marginBottom: 12 }} />
+
+      <View style={{ gap: 8, marginBottom: 14 }}>
+        {dossierRows.map((row, i) => {
+          const Icon = row.icon;
+          const rowOpacity = rowAnims[i];
+          return (
+            <Animated.View
+              key={i}
+              style={{
+                opacity: rowOpacity,
+                transform: [{
+                  translateY: rowOpacity.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [6, 0],
+                  }),
+                }],
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+                paddingVertical: 3,
+              }}
+            >
+              <Icon size={15} color={isDark ? GREEN_DARK_ICON : GREEN} strokeWidth={2.5} />
+              <Text style={{ color: colors.textSecondary, fontSize: 12.5, fontWeight: '500', flex: 1 }}>
+                {row.label}
+              </Text>
+              <Text numberOfLines={1} style={{ color: colors.text, fontSize: 12.5, fontWeight: '800', marginRight: 6, maxWidth: 160 }}>
+                {row.value}
+              </Text>
+              <Check size={12} color={isDark ? GREEN_DARK_ICON : GREEN} strokeWidth={3} />
+            </Animated.View>
+          );
+        })}
+      </View>
+
+      {selectedPriorities.length > 0 && (
+        <View style={{ marginTop: 4 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 9.5, fontWeight: '800', letterSpacing: 1.1, textTransform: 'uppercase', marginBottom: 8 }}>
+            ACTIVE MODULES
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            {selectedPriorities.map((p) => {
+              const label = PRIORITY_META[p]?.label ?? p;
+              return (
+                <View
+                  key={p}
+                  style={{
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                    borderRadius: 8,
+                    backgroundColor: `${GREEN}12`,
+                    borderWidth: 1,
+                    borderColor: `${GREEN}35`,
+                  }}
+                >
+                  <Text style={{ color: GREEN, fontSize: 11, fontWeight: '800' }}>
+                    {label}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      )}
+    </Animated.View>
+  );
+}
+
 export function MomentOfTruthScreen({
   selected,
   name,
@@ -2198,7 +2802,7 @@ export function MomentOfTruthScreen({
   isDark,
   reduceMotion,
   isActive = true,
-  shoppingFrequency,
+  labelReadingFrequency,
   ingredientReadingFrequency,
   allergens,
   onAnimationComplete,
@@ -2209,130 +2813,126 @@ export function MomentOfTruthScreen({
   isDark: boolean;
   reduceMotion: boolean;
   isActive?: boolean;
-  shoppingFrequency?: ShoppingFrequency;
+  labelReadingFrequency?: 'always' | 'sometimes' | 'rarely' | 'never';
   ingredientReadingFrequency?: IngredientReadingFrequency;
   allergens: string[];
   onAnimationComplete?: () => void;
 }) {
-  const profileName = name?.trim() ? name : 'guest';
-  const frequencyText = shoppingFrequency === 'rarely' ? 'occasional' : shoppingFrequency === 'sometimes' ? 'monthly' : shoppingFrequency === 'often' ? 'weekly' : 'daily';
+  const profileName = name?.trim() ? name : 'Guest';
   
   const allergenCount = allergens.filter(id => id !== 'none').length;
-  const allergenText = allergens.includes('none') ? 'No allergies' : `Watching ${allergenCount} substance${allergenCount === 1 ? '' : 's'}`;
+  const allergenText = allergens.includes('none') ? 'Standby' : `Watching ${allergenCount}`;
   
-  const priorityCount = selected.length;
-  const priorityText = `${priorityCount} scanner module${priorityCount === 1 ? '' : 's'}`;
+  const priorityCount = selected.length || 3;
+  const priorityText = `${priorityCount} Active`;
 
-  const checklistItems = [
-    `Configuring profile for ${profileName}...`,
-    `Analyzing ${frequencyText} packaged food frequency...`,
-    `Arming allergen safeguard: ${allergenText}...`,
-    `Injecting engine priorities: ${priorityText}...`,
+  const labelLabels = {
+    always: 'Always checks nutrition labels',
+    sometimes: 'Checks labels when uncertain',
+    rarely: 'Rarely checks food labels',
+    never: 'Never reads label fine print',
+  };
+  const painLabels: Record<IngredientReadingFrequency, string> = {
+    always: 'No time for complex labels',
+    sometimes: 'Confused by hidden additives',
+    when_needed: 'Unclear what ingredients matter',
+    rarely: 'Overwhelmed by choices',
+  };
+
+  const cardConfigs = [
+    { title: 'Profile Identity', detail: `Configuring for ${profileName}` },
+    { title: 'Label Habit', detail: labelReadingFrequency ? labelLabels[labelReadingFrequency] : 'Checks labels when needed' },
+    { title: 'Primary Barrier', detail: ingredientReadingFrequency ? painLabels[ingredientReadingFrequency] : 'Simplifying complex ingredients' },
+    { title: 'Allergen Shield', detail: allergens.includes('none') ? 'No food allergies — shield on standby' : `Watching ${allergenCount} allergen${allergenCount === 1 ? '' : 's'}` },
+    { title: 'Scanner Priorities', detail: `Loading ${priorityCount} priority module${priorityCount === 1 ? '' : 's'}` },
   ];
 
-  const [stepStates, setStepStates] = useState<('pending' | 'loading' | 'complete')[]>(['pending', 'pending', 'pending', 'pending']);
-  
-  const step1Val = useRef(new Animated.Value(0)).current;
-  const step2Val = useRef(new Animated.Value(0)).current;
-  const step3Val = useRef(new Animated.Value(0)).current;
-  const step4Val = useRef(new Animated.Value(0)).current;
-  const stepsAnim = [step1Val, step2Val, step3Val, step4Val];
+  const [phase, setPhase] = useState<'synthesizing' | 'complete'>('synthesizing');
 
-  const spinValue = useRef(new Animated.Value(0)).current;
+  const [c0State, setC0State] = useState<'pending' | 'loading' | 'complete'>('pending');
+  const [c1State, setC1State] = useState<'pending' | 'loading' | 'complete'>('pending');
+  const [c2State, setC2State] = useState<'pending' | 'loading' | 'complete'>('pending');
+  const [c3State, setC3State] = useState<'pending' | 'loading' | 'complete'>('pending');
+  const [c4State, setC4State] = useState<'pending' | 'loading' | 'complete'>('pending');
 
-  useEffect(() => {
-    if (!isActive || reduceMotion) {
-      spinValue.setValue(0);
-      return;
-    }
-    const spinAnim = Animated.loop(
-      Animated.timing(spinValue, {
-        toValue: 1,
-        duration: 2200,
-        easing: Easing.linear,
-        useNativeDriver: true,
-        isInteraction: false,
-      })
-    );
-    spinAnim.start();
-    return () => spinAnim.stop();
-  }, [isActive, reduceMotion]);
+  const cStates = [c0State, c1State, c2State, c3State, c4State];
+  const setCSters = [setC0State, setC1State, setC2State, setC3State, setC4State];
 
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
+  const title1Opacity = useRef(new Animated.Value(1)).current;
+  const title2Opacity = useRef(new Animated.Value(0)).current;
+  const checklistOpacity = useRef(new Animated.Value(1)).current;
+  const [dossierShown, setDossierShown] = useState(false);
 
   useEffect(() => {
     if (reduceMotion) {
-      setStepStates(['complete', 'complete', 'complete', 'complete']);
+      setCSters.forEach(fn => fn('complete'));
+      setPhase('complete');
+      setDossierShown(true);
+      title1Opacity.setValue(0);
+      title2Opacity.setValue(1);
+      checklistOpacity.setValue(0);
       if (onAnimationComplete) {
         onAnimationComplete();
       }
-      stepsAnim.forEach(val => val.setValue(1));
       return;
     }
 
     if (!isActive) {
-      setStepStates(['pending', 'pending', 'pending', 'pending']);
-      stepsAnim.forEach(val => val.setValue(0));
+      setCSters.forEach(fn => fn('pending'));
+      setPhase('synthesizing');
+      setDossierShown(false);
+      title1Opacity.setValue(1);
+      title2Opacity.setValue(0);
+      checklistOpacity.setValue(1);
       return;
     }
 
-    // Reset
-    setStepStates(['loading', 'pending', 'pending', 'pending']);
-    stepsAnim.forEach(val => val.setValue(0));
+    // Reset run
+    setCSters.forEach(fn => fn('pending'));
+    setPhase('synthesizing');
+    setDossierShown(false);
+    title1Opacity.setValue(1);
+    title2Opacity.setValue(0);
+    checklistOpacity.setValue(1);
 
-    // Staggered step fade-in triggers
-    Animated.timing(step1Val, {
-      toValue: 1,
-      duration: 350,
-      useNativeDriver: true,
-      isInteraction: false,
-    }).start();
+    const timers: ReturnType<typeof setTimeout>[] = [];
 
-    const t1 = setTimeout(() => {
-      setStepStates(['complete', 'loading', 'pending', 'pending']);
-      Animated.timing(step2Val, {
-        toValue: 1,
-        duration: 350,
-        useNativeDriver: true,
-        isInteraction: false,
-      }).start();
-    }, 900);
+    // Staggered loadings for 5 cards (150 + i*550ms, completes 450ms later)
+    cardConfigs.forEach((_, i) => {
+      const loadTime = 150 + i * 550;
+      const completeTime = loadTime + 450;
+      timers.push(setTimeout(() => {
+        setCSters[i]('loading');
+      }, loadTime));
+      timers.push(setTimeout(() => {
+        setCSters[i]('complete');
+      }, completeTime));
+    });
 
-    const t2 = setTimeout(() => {
-      setStepStates(['complete', 'complete', 'loading', 'pending']);
-      Animated.timing(step3Val, {
-        toValue: 1,
-        duration: 350,
-        useNativeDriver: true,
-        isInteraction: false,
-      }).start();
-    }, 1800);
+    // t = 3100ms: Title crossfade & ring flip (Card 4 completes at 2800ms)
+    timers.push(setTimeout(() => {
+      setPhase('complete');
+      Animated.parallel([
+        Animated.timing(title1Opacity, { toValue: 0, duration: 400, useNativeDriver: true }),
+        Animated.timing(title2Opacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+      ]).start();
+    }, 3100));
 
-    const t3 = setTimeout(() => {
-      setStepStates(['complete', 'complete', 'complete', 'loading']);
-      Animated.timing(step4Val, {
-        toValue: 1,
-        duration: 350,
-        useNativeDriver: true,
-        isInteraction: false,
-      }).start();
-    }, 2700);
+    // t = 3300ms: Checklist crossfades out, Dossier fades in
+    timers.push(setTimeout(() => {
+      setDossierShown(true);
+      Animated.timing(checklistOpacity, { toValue: 0, duration: 400, useNativeDriver: true }).start();
+    }, 3300));
 
-    const t4 = setTimeout(() => {
-      setStepStates(['complete', 'complete', 'complete', 'complete']);
+    // t = 4500ms: Complete callback
+    timers.push(setTimeout(() => {
       if (onAnimationComplete) {
         onAnimationComplete();
       }
-    }, 3650);
+    }, 4500));
 
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-      clearTimeout(t4);
+      timers.forEach(clearTimeout);
     };
   }, [isActive, reduceMotion]);
 
@@ -2346,133 +2946,86 @@ export function MomentOfTruthScreen({
           paddingVertical: 10,
         }}
       >
-        {/* Title */}
-        <ScreenHeading
-          title="Synthesizing your **BiteFix scanner**..."
-          subtitle="Compiling custom parameters based on your profile inputs."
-          colors={colors}
-          align="center"
-        />
-
-        {/* Beautiful high-tech circular LED rotating loader */}
-        <View style={{ width: 140, height: 140, justifyContent: 'center', alignItems: 'center', marginVertical: 32 }}>
+        {/* Dynamic Big Headings */}
+        <View style={{ width: '100%', minHeight: 84, justifyContent: 'center', marginBottom: 16 }}>
           <Animated.View style={{
             position: 'absolute',
-            width: 130,
-            height: 130,
-            transform: reduceMotion ? [] : [{ rotate: spin }],
+            width: '100%',
+            opacity: title1Opacity,
+            pointerEvents: phase === 'synthesizing' ? 'auto' : 'none',
           }}>
-            <Svg width={130} height={130} viewBox="0 0 100 100">
-              <Circle
-                cx="50"
-                cy="50"
-                r="44"
-                stroke={isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)'}
-                strokeWidth="3.5"
-                fill="none"
-              />
-              <Circle
-                cx="50"
-                cy="50"
-                r="44"
-                stroke="#14ae97"
-                strokeWidth="3.5"
-                fill="none"
-                strokeDasharray="276.4"
-                strokeDashoffset="80"
-                strokeLinecap="round"
-              />
-            </Svg>
+            <ScreenHeading
+              title={`Hi **${profileName}**, your Profile is being **Set**`}
+              subtitle="Compiling your custom scanner parameters across all your answers."
+              colors={colors}
+              align="center"
+              display={true}
+            />
           </Animated.View>
-          <OrbMascot
-            state={stepStates[3] === 'complete' ? 'happy' : 'thinking'}
-            size={76}
+          <Animated.View style={{
+            position: 'absolute',
+            width: '100%',
+            opacity: title2Opacity,
+            pointerEvents: phase === 'complete' ? 'auto' : 'none',
+          }}>
+            <ScreenHeading
+              title="Congratulations! **BiteFix Scanner** is Activated for your Profile"
+              subtitle="Built from your profile inputs — here is your complete active snapshot."
+              colors={colors}
+              align="center"
+              display={true}
+            />
+          </Animated.View>
+        </View>
+
+        {/* Dynamic Dual-Arc Synthesis Ring */}
+        <View style={{ width: 140, height: 140, justifyContent: 'center', alignItems: 'center', marginVertical: 18 }}>
+          <SynthesisRing
+            phase={phase}
+            colors={colors}
+            isDark={isDark}
             reduceMotion={reduceMotion}
-            accessibilityLabel="Synthesizing BiteFix scanner mascot"
+            isActive={isActive}
           />
         </View>
 
-        {/* Staggered checklist */}
-        <View style={{ width: '100%', gap: 10 }}>
-          {checklistItems.map((item, index) => {
-            const state = stepStates[index];
-            const opacityVal = stepsAnim[index];
-            const isComplete = state === 'complete';
-            const isLoading = state === 'loading';
-
-            return (
-              <Animated.View
-                key={index}
-                style={{
-                  opacity: opacityVal,
-                  transform: [{
-                    translateY: opacityVal.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [12, 0],
-                    }),
-                  }],
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 12,
-                  paddingHorizontal: 16,
-                  paddingVertical: 12,
-                  borderRadius: 16,
-                  borderWidth: 1.25,
-                  borderColor: isLoading
-                    ? isDark ? 'rgba(20, 174, 151, 0.3)' : 'rgba(7, 25, 15, 0.15)'
-                    : isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
-                  backgroundColor: isLoading
-                    ? isDark ? '#06180E' : 'rgba(20, 174, 151, 0.04)'
-                    : isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.01)',
-                }}
-              >
-                {/* Status LED / Checkmark */}
-                <View style={{ width: 22, height: 22, justifyContent: 'center', alignItems: 'center' }}>
-                  {isComplete ? (
-                    <View style={{
-                      width: 20,
-                      height: 20,
-                      borderRadius: 10,
-                      backgroundColor: '#14ae97',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      shadowColor: '#13f5b0',
-                      shadowOffset: { width: 0, height: 0 },
-                      shadowOpacity: 0.8,
-                      shadowRadius: 3,
-                      elevation: 2,
-                    }}>
-                      <Check size={11} color="#FFFFFF" strokeWidth={3.5} />
-                    </View>
-                  ) : isLoading ? (
-                    <LedLight active={true} color="#e58b42" glow="#ffaa66" />
-                  ) : (
-                    <View style={{
-                      width: 14,
-                      height: 14,
-                      borderRadius: 7,
-                      borderWidth: 1.5,
-                      borderColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.15)',
-                    }} />
-                  )}
-                </View>
-
-                {/* Checklist Label */}
-                <Text style={{
-                  color: isComplete
-                    ? colors.text
-                    : isLoading
-                      ? isDark ? '#FFFFFF' : '#12311E'
-                      : colors.textSecondary,
-                  fontSize: 13.5,
-                  fontWeight: isComplete || isLoading ? '700' : '500',
-                  flex: 1,
-                }}>
-                  {item}
-                </Text>
-              </Animated.View>
-            );
-          })}
+        {/* Checklist or Scanner Dossier */}
+        <View style={{ width: '100%', minHeight: 330, position: 'relative', marginTop: 8 }}>
+          {!dossierShown ? (
+            <Animated.View style={{
+              width: '100%',
+              opacity: checklistOpacity,
+            }}>
+              <View style={{ gap: 8 }}>
+                {cardConfigs.map((cfg, idx) => (
+                  <SynthesisCard
+                    key={cfg.title}
+                    title={cfg.title}
+                    detail={cfg.detail}
+                    state={cStates[idx]}
+                    delay={idx * 60}
+                    colors={colors}
+                    isDark={isDark}
+                    reduceMotion={reduceMotion}
+                    isActive={isActive}
+                  />
+                ))}
+              </View>
+            </Animated.View>
+          ) : (
+            <ScannerDossier
+              name={profileName}
+              labelHabitText={labelReadingFrequency ? labelLabels[labelReadingFrequency] : 'Checks when needed'}
+              painText={ingredientReadingFrequency ? painLabels[ingredientReadingFrequency] : 'Simplifying ingredients'}
+              allergenText={allergens.includes('none') ? 'Standby' : `Watching ${allergenCount}`}
+              priorityText={priorityText}
+              selectedPriorities={selected}
+              colors={colors}
+              isDark={isDark}
+              reduceMotion={reduceMotion}
+              isActive={dossierShown}
+            />
+          )}
         </View>
       </View>
     </ScreenFrame>
@@ -2481,7 +3034,7 @@ export function MomentOfTruthScreen({
 
 
 // ══════════════════════════════════════════════════════════════
-// SCREEN 10 — FINAL ACTIVATION
+// SCREEN 9 — FINAL ACTIVATION
 // ══════════════════════════════════════════════════════════════
 const FINAL_FEATURE_PILLS = [
   'Processing',
