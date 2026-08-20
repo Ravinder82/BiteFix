@@ -18,7 +18,7 @@ import {
   StatusBar,
   useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useTheme } from '../../hooks/useTheme';
@@ -41,11 +41,19 @@ import {
   RevelationScreen as FlagshipRevelationScreen,
   MomentOfTruthScreen,
   FinalActivationScreen,
+  ActivationStatus,
 } from '../../components/onboarding/OnboardingScreens';
+import type { ActivationStatusState } from '../../components/onboarding/OnboardingScreens';
 import { IngredientReadingFrequency, OnboardingPriority } from '../../types/onboarding.types';
 
 const GREEN = '#01922aff';
 const TOTAL_SCREENS = 9;
+const DEFAULT_ACTIVATION_STATUS: ActivationStatusState = {
+  unlockedCount: 0,
+  total: 7,
+  sequenceComplete: false,
+  spotlightLabel: 'Core scan',
+};
 
 const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
@@ -385,8 +393,10 @@ export default function OnboardingScreen() {
   const [revelationComplete, setRevelationComplete] = useState(false);
   const [synthesisComplete, setSynthesisComplete] = useState(false);
   const [activationComplete, setActivationComplete] = useState(false);
+  const [activationStatus, setActivationStatus] = useState<ActivationStatusState>(DEFAULT_ACTIVATION_STATUS);
 
   const reduceMotion = useReduceMotion();
+  const insets = useSafeAreaInsets();
   const pagerRef = useRef<any>(null);
   const pagingUnlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pagingLockRef = useRef(false);
@@ -432,6 +442,9 @@ export default function OnboardingScreen() {
       setSynthesisComplete(false);
     } else if (currentScreen === 8) {
       setActivationComplete(false);
+      setActivationStatus(DEFAULT_ACTIVATION_STATUS);
+    } else {
+      setActivationStatus(DEFAULT_ACTIVATION_STATUS);
     }
   }, [currentScreen]);
 
@@ -550,7 +563,7 @@ export default function OnboardingScreen() {
   const ONBOARDING_CTA_LABELS: Record<number, string> = {
     0: 'Get Started',
     4: "Let's Continue",
-    8: 'Activate BiteFix',
+    8: 'I am Ready',
   };
 
   const getCtaLabel = (screen: number) => {
@@ -561,7 +574,7 @@ export default function OnboardingScreen() {
       return synthesisComplete ? "Let's Continue" : 'Configuring Engine';
     }
     if (screen === 8) {
-      return activationComplete ? 'Activate BiteFix' : 'Unlocking intelligence';
+      return activationComplete ? 'I am Ready' : 'Unlocking intelligence';
     }
     return ONBOARDING_CTA_LABELS[screen] ?? 'Continue';
   };
@@ -616,6 +629,7 @@ export default function OnboardingScreen() {
             reduceMotion={screenReduceMotion}
             isActive={isActive}
             selected={priorities}
+            onStatusChange={setActivationStatus}
             onAnimationComplete={() => setActivationComplete(true)}
           />
         );
@@ -694,7 +708,17 @@ export default function OnboardingScreen() {
             {renderScreenContent(screen)}
           </ScrollView>
 
-          <View style={{ paddingHorizontal: Math.max(18, Math.min(24, screenWidth * 0.0615)), paddingBottom: 18, paddingTop: 12 }}>
+          <View style={{ paddingHorizontal: Math.max(18, Math.min(24, screenWidth * 0.0615)), paddingBottom: Math.max(18, insets.bottom + 8), paddingTop: screen === 8 ? 8 : 12, gap: screen === 8 ? 10 : 0 }}>
+            {screen === 8 && (
+              <ActivationStatus
+                unlockedCount={activationStatus.unlockedCount}
+                total={activationStatus.total}
+                sequenceComplete={activationStatus.sequenceComplete}
+                spotlightLabel={activationStatus.spotlightLabel}
+                colors={colors}
+                isDark={isDark}
+              />
+            )}
             <TouchableOpacity
               onPress={screen === TOTAL_SCREENS - 1 ? handleComplete : handleNext}
               disabled={ctaDisabled}

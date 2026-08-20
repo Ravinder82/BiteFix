@@ -1170,8 +1170,12 @@ export function IdentityScreen({
   const { width, height } = useWindowDimensions();
   const compositionScale = clamp(width / 390, 0.82, 1.04);
   const verticalScale = clamp(height / 844, 0.88, 1.06);
-  const mascotSize = Math.round(200 * compositionScale);
-  const compositionMinHeight = Math.round(clamp(height * 0.38, 280, 350));
+  const compositionMinHeight = focused
+    ? Math.round(clamp(height * 0.22, 170, 220))
+    : Math.round(clamp(height * 0.38, 280, 350));
+  const mascotSize = focused
+    ? Math.round(150 * compositionScale)
+    : Math.round(200 * compositionScale);
 
   return (
     <View
@@ -1181,7 +1185,7 @@ export function IdentityScreen({
         maxWidth: 430,
         alignSelf: 'center',
         paddingHorizontal: 24,
-        paddingTop: 20,
+        paddingTop: focused ? 8 : 20,
         paddingBottom: 10,
       }}
     >
@@ -1191,70 +1195,74 @@ export function IdentityScreen({
         style={{
           flex: 1,
           minHeight: compositionMinHeight,
-          marginTop: 10,
-          marginBottom: 12,
+          marginTop: focused ? 4 : 10,
+          marginBottom: focused ? 4 : 12,
           position: 'relative',
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
         {/* Layer 1: Food emoji stickers positioned around the mascot. */}
-        <EmojiSticker
-          emoji="🥑"
-          bg={isDark ? '#202C22' : '#F4FAF3'}
-          border={isDark ? '#344C38' : '#fac104ff'}
-          shadowC="#5E8F4B"
-          rotation="-12deg"
-          size={Math.round(50 * compositionScale)}
-          style={{ left: '50%', top: '50%', transform: [{ translateX: -140 * compositionScale }, { translateY: -78 * verticalScale }, { rotate: '-12deg' }] }}
-        />
-        <EmojiSticker
-          emoji="🍎"
-          bg={isDark ? '#2C2020' : '#FFF6F3'}
-          border={isDark ? '#563333' : '#fb3802ff'}
-          shadowC="#B64E3B"
-          rotation="11deg"
-          size={Math.round(55 * compositionScale)}
-          style={{ left: '50%', top: '50%', transform: [{ translateX: 100 * compositionScale }, { translateY: -140 * verticalScale }, { rotate: '11deg' }] }}
-        />
-        <EmojiSticker
-          emoji="🥦"
-          bg={isDark ? '#202C22' : '#F4FAF3'}
-          border={isDark ? '#344C38' : '#1adb13ff'}
-          shadowC="#4F8A43"
-          rotation="-8deg"
-          size={Math.round(60 * compositionScale)}
-          style={{ left: '50%', top: '50%', transform: [{ translateX: -130 * compositionScale }, { translateY: 60 * verticalScale }, { rotate: '-8deg' }] }}
-        />
-        <EmojiSticker
-          emoji="🍋"
-          bg={isDark ? '#2B2818' : '#FFF9E9'}
-          border={isDark ? '#564F27' : '#ffcc00ff'}
-          shadowC="#B38A24"
-          rotation="14deg"
-          size={Math.round(60 * compositionScale)}
-          style={{ left: '50%', top: '50%', transform: [{ translateX: 90 * compositionScale }, { translateY: 60 * verticalScale }, { rotate: '14deg' }] }}
-        />
+        {!focused && (
+          <>
+            <EmojiSticker
+              emoji="🥑"
+              bg={isDark ? '#202C22' : '#F4FAF3'}
+              border={isDark ? '#344C38' : '#fac104ff'}
+              shadowC="#5E8F4B"
+              rotation="-12deg"
+              size={Math.round(50 * compositionScale)}
+              style={{ left: '50%', top: '50%', transform: [{ translateX: -140 * compositionScale }, { translateY: -78 * verticalScale }, { rotate: '-12deg' }] }}
+            />
+            <EmojiSticker
+              emoji="🍎"
+              bg={isDark ? '#2C2020' : '#FFF6F3'}
+              border={isDark ? '#563333' : '#fb3802ff'}
+              shadowC="#B64E3B"
+              rotation="11deg"
+              size={Math.round(55 * compositionScale)}
+              style={{ left: '50%', top: '50%', transform: [{ translateX: 100 * compositionScale }, { translateY: -140 * verticalScale }, { rotate: '11deg' }] }}
+            />
+            <EmojiSticker
+              emoji="🥦"
+              bg={isDark ? '#202C22' : '#F4FAF3'}
+              border={isDark ? '#344C38' : '#1adb13ff'}
+              shadowC="#4F8A43"
+              rotation="-8deg"
+              size={Math.round(60 * compositionScale)}
+              style={{ left: '50%', top: '50%', transform: [{ translateX: -130 * compositionScale }, { translateY: 60 * verticalScale }, { rotate: '-8deg' }] }}
+            />
+            <EmojiSticker
+              emoji="🍋"
+              bg={isDark ? '#2B2818' : '#FFF9E9'}
+              border={isDark ? '#564F27' : '#ffcc00ff'}
+              shadowC="#B38A24"
+              rotation="14deg"
+              size={Math.round(60 * compositionScale)}
+              style={{ left: '50%', top: '50%', transform: [{ translateX: 90 * compositionScale }, { translateY: 60 * verticalScale }, { rotate: '14deg' }] }}
+            />
 
-        {/* Layer 2: Glass Pills (Outer Layer - positioned further away to frame composition) */}
-        <PillSticker
-          label="Personalized just for you"
-          icon={<UserRound size={15} color="#D7FFE2" strokeWidth={2.3} />}
-          bg="#14ae97ff"
-          border="#13f5b0"
-          textColor="#F3FFF6"
-          shadowC="#073A1B"
-          style={{ left: '50%', top: '50%', transform: [{ translateX: -160 * compositionScale }, { translateY: -150 * verticalScale }] }}
-        />
-        <PillSticker
-          label="Your privacy is protected"
-          icon={<ShieldCheck size={15} color="#D7F4FF" strokeWidth={2.3} />}
-          bg="#7ec201ff"
-          border="#a3cb48"
-          textColor="#F4FFFF"
-          shadowC="#103C3F"
-          style={{ left: '50%', top: '50%', transform: [{ translateX: -30 * compositionScale }, { translateY: 140 * verticalScale }] }}
-        />
+            {/* Layer 2: Glass Pills (Outer Layer - positioned further away to frame composition) */}
+            <PillSticker
+              label="Personalized just for you"
+              icon={<UserRound size={15} color="#D7FFE2" strokeWidth={2.3} />}
+              bg="#14ae97ff"
+              border="#13f5b0"
+              textColor="#F3FFF6"
+              shadowC="#073A1B"
+              style={{ left: '50%', top: '50%', transform: [{ translateX: -160 * compositionScale }, { translateY: -150 * verticalScale }] }}
+            />
+            <PillSticker
+              label="Your privacy is protected"
+              icon={<ShieldCheck size={15} color="#D7F4FF" strokeWidth={2.3} />}
+              bg="#7ec201ff"
+              border="#a3cb48"
+              textColor="#F4FFFF"
+              shadowC="#103C3F"
+              style={{ left: '50%', top: '50%', transform: [{ translateX: -30 * compositionScale }, { translateY: 140 * verticalScale }] }}
+            />
+          </>
+        )}
 
         {/* Layer 3: Centered Mascot Container */}
         <View
@@ -3086,12 +3094,12 @@ type ActivationFeature = {
 };
 
 const ACTIVATION_FEATURES: ActivationFeature[] = [
-  { id: 'processing', label: 'Processing', icon: Package, priority: 'ultra_processed' },
-  { id: 'nutrition', label: 'Nutrition', icon: Activity, priority: 'nutrition' },
-  { id: 'allergens', label: 'Allergens', icon: ShieldCheck },
-  { id: 'ingredients', label: 'Ingredients', icon: Sparkles, priority: 'ingredients' },
-  { id: 'additives', label: 'Additives', icon: Check },
-  { id: 'sugar', label: 'Sugar', icon: Droplets, priority: 'sugar' },
+  { id: 'processing', label: 'Processing check', icon: Package, priority: 'ultra_processed' },
+  { id: 'nutrition', label: 'Nutrition insight', icon: Activity, priority: 'nutrition' },
+  { id: 'allergens', label: 'Allergen guard', icon: ShieldCheck },
+  { id: 'ingredients', label: 'Ingredient clarity', icon: Sparkles, priority: 'ingredients' },
+  { id: 'additives', label: 'Additive check', icon: Check },
+  { id: 'sugar', label: 'Sugar signal', icon: Droplets, priority: 'sugar' },
   { id: 'eco', label: 'Eco impact', icon: Leaf, priority: 'environment' },
 ];
 
@@ -3114,120 +3122,139 @@ const PRIORITY_TO_FEATURE_ID: Partial<Record<OnboardingPriority, ActivationFeatu
   environment: 'eco',
 };
 
-function ActivationPill({
+export type ActivationStatusState = {
+  unlockedCount: number;
+  total: number;
+  sequenceComplete: boolean;
+  spotlightLabel: string;
+};
+
+function PowerFeatureRow({
   feature,
+  index,
   isUnlocked,
   isSpotlight,
-  orbit,
-  pillWidth,
+  pulseIndex,
   isDark,
   colors,
   reduceMotion,
+  compact,
 }: {
   feature: ActivationFeature;
+  index: number;
   isUnlocked: boolean;
   isSpotlight: boolean;
-  orbit: ReturnType<typeof useSharedValue<number>>;
-  pillWidth: number;
+  pulseIndex: number;
   isDark: boolean;
   colors: any;
   reduceMotion: boolean;
+  compact: boolean;
 }) {
   const unlockProgress = useSharedValue(reduceMotion ? 1 : 0);
   const spotlightProgress = useSharedValue(reduceMotion && isSpotlight ? 1 : 0);
+  const pulseProgress = useSharedValue(0);
   const Icon = feature.icon;
 
   useEffect(() => {
     if (reduceMotion) {
       unlockProgress.set(isUnlocked ? 1 : 0);
       spotlightProgress.set(isSpotlight ? 1 : 0);
+      pulseProgress.set(0);
       return;
     }
 
     unlockProgress.set(isUnlocked
       ? withSequence(
-        withTiming(0.24, { duration: 80, easing: ReanimatedEasing.out(ReanimatedEasing.quad) }),
-        withSpring(1, { duration: 420, dampingRatio: 0.82 }),
+        withTiming(0.2, { duration: 120, easing: ReanimatedEasing.out(ReanimatedEasing.quad) }),
+        withSpring(1, { duration: 400, dampingRatio: 0.88 }),
       )
-      : withTiming(0, { duration: 120, easing: ReanimatedEasing.out(ReanimatedEasing.quad) }));
-    spotlightProgress.set(withTiming(isSpotlight ? 1 : 0, { duration: 220, easing: ReanimatedEasing.out(ReanimatedEasing.quad) }));
-  }, [isSpotlight, isUnlocked, reduceMotion, spotlightProgress, unlockProgress]);
+      : withTiming(0, { duration: 180, easing: ReanimatedEasing.out(ReanimatedEasing.quad) }));
+    spotlightProgress.set(withTiming(isSpotlight ? 1 : 0, { duration: 260, easing: ReanimatedEasing.out(ReanimatedEasing.quad) }));
+  }, [isSpotlight, isUnlocked, reduceMotion, spotlightProgress, unlockProgress, pulseProgress]);
 
-  const entranceStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(unlockProgress.get(), [0, 1], [0.30, 1], Extrapolation.CLAMP),
+  useEffect(() => {
+    if (reduceMotion || pulseIndex !== index) return;
+    pulseProgress.set(withSequence(
+      withTiming(1, { duration: 220, easing: ReanimatedEasing.out(ReanimatedEasing.quad) }),
+      withTiming(0, { duration: 480, easing: ReanimatedEasing.out(ReanimatedEasing.quad) }),
+    ));
+  }, [index, pulseIndex, pulseProgress, reduceMotion]);
+
+  const rowStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(unlockProgress.get(), [0, 1], [0.4, 1], Extrapolation.CLAMP),
     transform: [
-      { translateY: interpolate(unlockProgress.get(), [0, 1], [14, 0], Extrapolation.CLAMP) },
-      { scale: interpolate(unlockProgress.get(), [0, 1], [0.94, 1], Extrapolation.CLAMP) },
+      { translateY: interpolate(unlockProgress.get(), [0, 1], [12, 0], Extrapolation.CLAMP) },
+      { translateX: interpolate(spotlightProgress.get(), [0, 1], [0, 2], Extrapolation.CLAMP) },
+      { scale: interpolate(spotlightProgress.get(), [0, 1], [1, 1.018], Extrapolation.CLAMP) },
     ],
   }));
 
-  const focusStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(spotlightProgress.get(), [0, 1], [0, 0.75], Extrapolation.CLAMP),
-    transform: [{ scale: interpolate(spotlightProgress.get(), [0, 1], [0.96, 1.08], Extrapolation.CLAMP) }],
-  }));
-
-  const counterOrbitStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${-orbit.get() * 360}deg` }],
+  const glowStyle = useAnimatedStyle(() => ({
+    opacity: Math.max(
+      interpolate(spotlightProgress.get(), [0, 1], [0, 0.75], Extrapolation.CLAMP),
+      interpolate(pulseProgress.get(), [0, 1], [0, 0.65], Extrapolation.CLAMP),
+    ),
+    transform: [{ scale: interpolate(pulseProgress.get(), [0, 1], [0.96, 1.035], Extrapolation.CLAMP) }],
   }));
 
   return (
     <Reanimated.View
       accessible
-      accessibilityLabel={`${feature.label}, ${isUnlocked ? 'unlocked' : 'locked'}`}
-      style={[{ width: pillWidth }, entranceStyle]}
+      accessibilityLabel={`${feature.label}, ${isUnlocked ? 'online' : 'locked'}`}
+      accessibilityState={{ selected: isSpotlight }}
+      style={[{ width: '100%' }, rowStyle]}
     >
       <Reanimated.View
         pointerEvents="none"
         style={[{
           position: 'absolute',
-          left: -4,
-          right: -4,
-          top: -4,
-          bottom: -4,
-          borderRadius: 18,
-          backgroundColor: isDark ? 'rgba(52,216,115,0.25)' : 'rgba(1,146,42,0.14)',
-        }, focusStyle]}
+          left: -5,
+          right: -5,
+          top: -5,
+          bottom: -5,
+          borderRadius: 20,
+          backgroundColor: isDark ? 'rgba(52,216,115,0.22)' : 'rgba(1,146,42,0.13)',
+        }, glowStyle]}
       />
-      <Reanimated.View style={counterOrbitStyle}>
-        <View
-          style={{
-            minHeight: 46,
-            width: pillWidth,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-            paddingHorizontal: 8,
-            paddingVertical: 6,
-            borderRadius: 15,
-            borderWidth: isSpotlight ? 1.5 : 1,
-            borderColor: isSpotlight
-              ? (isDark ? GREEN_LIGHT : GREEN)
-              : isUnlocked
-                ? (isDark ? 'rgba(111,227,139,0.42)' : 'rgba(1,146,42,0.30)')
-                : (isDark ? 'rgba(255,255,255,0.14)' : 'rgba(7,25,15,0.12)'),
-            backgroundColor: isSpotlight
-              ? (isDark ? 'rgba(52,216,115,0.18)' : '#EAF8EE')
-              : isDark
-                ? 'rgba(9,24,15,0.92)'
-                : 'rgba(255,255,255,0.94)',
-            shadowColor: isSpotlight ? GREEN : '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: isSpotlight ? 0.22 : (isDark ? 0.18 : 0.07),
-            shadowRadius: isSpotlight ? 12 : 7,
-            elevation: isSpotlight ? 4 : 2,
-          }}
-        >
-          <View style={{ width: 22, height: 22, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: isUnlocked ? (isDark ? 'rgba(111,227,139,0.16)' : '#DDF5E5') : (isDark ? 'rgba(255,255,255,0.07)' : '#F1F4F1') }}>
-            <Icon size={13} color={isUnlocked ? (isDark ? GREEN_LIGHT : GREEN) : colors.textMuted} strokeWidth={2.5} />
-          </View>
-          <Text numberOfLines={1} style={{ flex: 1, color: isUnlocked ? colors.text : colors.textMuted, fontSize: 10.25, lineHeight: 14, fontWeight: '900', letterSpacing: -0.1 }}>
-            {feature.label}
-          </Text>
-          <View style={{ width: 15, height: 15, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: isUnlocked ? (isDark ? GREEN : '#EAF8EE') : (isDark ? 'rgba(255,255,255,0.08)' : '#F0F3F0') }}>
-            {isUnlocked ? <Check size={9} color={isDark ? '#06180E' : GREEN} strokeWidth={3.5} /> : <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.textMuted }} />}
-          </View>
+      <View
+        style={{
+          minHeight: compact ? 44 : 52,
+          width: '100%',
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: compact ? 10 : 12,
+          paddingHorizontal: compact ? 10 : 14,
+          paddingVertical: compact ? 6 : 8,
+          borderRadius: 18,
+          borderCurve: 'continuous',
+          borderWidth: isSpotlight ? 1.8 : 1,
+          borderColor: isSpotlight
+            ? (isDark ? GREEN_LIGHT : GREEN)
+            : isUnlocked
+              ? (isDark ? 'rgba(111,227,139,0.42)' : 'rgba(1,146,42,0.28)')
+              : (isDark ? 'rgba(255,255,255,0.14)' : 'rgba(7,25,15,0.10)'),
+          backgroundColor: isSpotlight
+            ? (isDark ? 'rgba(52,216,115,0.16)' : '#EAF8EE')
+            : isDark
+              ? 'rgba(9,24,15,0.92)'
+              : 'rgba(255,255,255,0.9)',
+          shadowColor: isSpotlight ? GREEN : '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: isSpotlight ? 0.2 : (isDark ? 0.16 : 0.06),
+          shadowRadius: isSpotlight ? 12 : 8,
+          elevation: isSpotlight ? 4 : 2,
+        }}
+      >
+        <View style={{ width: compact ? 28 : 32, height: compact ? 28 : 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: isUnlocked ? (isDark ? 'rgba(111,227,139,0.17)' : '#DDF5E5') : (isDark ? 'rgba(255,255,255,0.07)' : '#F1F4F1') }}>
+          <Icon size={compact ? 15 : 17} color={isUnlocked ? (isDark ? GREEN_LIGHT : GREEN) : colors.textMuted} strokeWidth={2.5} />
         </View>
-      </Reanimated.View>
+        <Text style={{ flex: 1, minWidth: 0, color: isUnlocked ? colors.text : colors.textMuted, fontSize: compact ? 12.5 : 13.5, lineHeight: compact ? 16 : 18, fontWeight: '900', letterSpacing: -0.1 }}>
+          {feature.label}
+        </Text>
+        <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: isUnlocked ? (isDark ? GREEN : '#EAF8EE') : (isDark ? 'rgba(255,255,255,0.07)' : '#F1F4F1') }}>
+          {isUnlocked ? <Check size={13} color={isDark ? '#06180E' : GREEN} strokeWidth={3.5} /> : <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: colors.textMuted }} />}
+        </View>
+      </View>
     </Reanimated.View>
   );
 }
@@ -3245,7 +3272,7 @@ function BloomParticle({ x, y, color, size, burst }: { x: number; y: number; col
   return <Reanimated.View pointerEvents="none" style={[{ position: 'absolute', left: '50%', top: '50%', marginLeft: -size / 2, marginTop: -size / 2, width: size, height: size, borderRadius: size / 2, backgroundColor: color }, style]} />;
 }
 
-function ActivationStatus({
+export function ActivationStatus({
   unlockedCount,
   total,
   sequenceComplete,
@@ -3263,10 +3290,10 @@ function ActivationStatus({
   return (
     <View
       style={{
-        width: '100%',
-        maxWidth: 340,
-        paddingHorizontal: 16,
-        paddingVertical: 13,
+      width: '100%',
+      maxWidth: 430,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
         borderRadius: 21,
         borderWidth: 1,
         borderColor: sequenceComplete
@@ -3288,24 +3315,24 @@ function ActivationStatus({
             Unlock status
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 1 }}>
-            <Text style={{ color: colors.text, fontSize: 36, lineHeight: 39, fontWeight: '900', fontVariant: ['tabular-nums'], letterSpacing: -1.2 }}>
+            <Text style={{ color: colors.text, fontSize: 42, lineHeight: 45, fontWeight: '900', fontVariant: ['tabular-nums'], letterSpacing: -1.4 }}>
               {String(unlockedCount).padStart(2, '0')}
             </Text>
-            <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '800', marginLeft: 4 }}>
+            <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '800', marginLeft: 5 }}>
               / {String(total).padStart(2, '0')}
             </Text>
           </View>
         </View>
 
-        <View style={{ alignItems: 'flex-end', maxWidth: 168 }}>
+        <View style={{ alignItems: 'flex-end', maxWidth: 190, flexShrink: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
             <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: sequenceComplete ? GREEN : colors.textMuted }} />
             <Text style={{ color: sequenceComplete ? GREEN : colors.textSecondary, fontSize: 10, fontWeight: '900', letterSpacing: 1.1, textTransform: 'uppercase' }}>
-              {sequenceComplete ? 'Full power' : 'Powering up'}
+              {sequenceComplete ? '7 features online' : 'Powering up'}
             </Text>
           </View>
-          <Text numberOfLines={1} style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', marginTop: 5 }}>
-            {sequenceComplete ? `Live spotlight · ${spotlightLabel}` : `Next signal · ${spotlightLabel}`}
+          <Text style={{ color: colors.textSecondary, fontSize: 11, lineHeight: 15, fontWeight: '700', marginTop: 5, textAlign: 'right' }}>
+            {sequenceComplete ? `Full power · ${spotlightLabel}` : `Next signal · ${spotlightLabel}`}
           </Text>
         </View>
       </View>
@@ -3325,6 +3352,7 @@ export function FinalActivationScreen({
   reduceMotion,
   isActive = true,
   selected = [],
+  onStatusChange,
   onAnimationComplete,
 }: {
   colors: any;
@@ -3332,14 +3360,16 @@ export function FinalActivationScreen({
   reduceMotion: boolean;
   isActive?: boolean;
   selected?: OnboardingPriority[];
+  onStatusChange?: (status: ActivationStatusState) => void;
   onAnimationComplete?: () => void;
 }) {
-  const { width } = useWindowDimensions();
-  const compact = width < 360;
-  const orbitRadius = clamp(width * 0.32, compact ? 96 : 110, 124);
-  const orbitDiameter = orbitRadius * 2;
-  const pillWidth = clamp(width * 0.29, 112, 126);
-  const orbSize = Math.round(clamp(width * 0.22, 76, 92));
+  const { width, height } = useWindowDimensions();
+  const compact = width < 360 || height < 860;
+  const orbSize = Math.round(clamp(width * 0.22, compact ? 74 : 84, 94));
+  const coreSize = orbSize + (compact ? 54 : 76);
+  const rowGap = compact ? 5 : 7;
+  const rowHeight = compact ? 44 : 52;
+  const columnHeight = rowHeight * ACTIVATION_FEATURES.length + rowGap * (ACTIVATION_FEATURES.length - 1);
 
   const orderedFeatures = useMemo(() => {
     const prioritizedIds = selected
@@ -3356,28 +3386,45 @@ export function FinalActivationScreen({
       .filter(Boolean);
   }, [selected]);
 
-  const orbit = useSharedValue(0);
   const finalBurst = useSharedValue(0);
+  const ambientPulse = useSharedValue(0);
+  const beamProgress = useSharedValue(0);
   const [unlockedCount, setUnlockedCount] = useState(0);
   const [sequenceComplete, setSequenceComplete] = useState(false);
   const [spotlightIndex, setSpotlightIndex] = useState(0);
+  const [activeUnlockIndex, setActiveUnlockIndex] = useState(-1);
+  const [pulseIndex, setPulseIndex] = useState(-1);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const onStatusChangeRef = useRef(onStatusChange);
+  onStatusChangeRef.current = onStatusChange;
   const onAnimationCompleteRef = useRef(onAnimationComplete);
   onAnimationCompleteRef.current = onAnimationComplete;
 
   useEffect(() => {
-    if (!isActive || reduceMotion) {
-      orbit.set(0);
+    if (!isActive || reduceMotion || !sequenceComplete) {
+      ambientPulse.set(0);
       return;
     }
 
-    orbit.set(withRepeat(
-      withTiming(1, { duration: 26000, easing: ReanimatedEasing.linear }),
+    ambientPulse.set(withRepeat(
+      withSequence(
+        withTiming(1, { duration: 1700, easing: ReanimatedEasing.inOut(ReanimatedEasing.quad) }),
+        withTiming(0, { duration: 1700, easing: ReanimatedEasing.inOut(ReanimatedEasing.quad) }),
+      ),
       -1,
       false,
     ));
-    return () => orbit.set(0);
-  }, [isActive, orbit, reduceMotion]);
+    return () => ambientPulse.set(0);
+  }, [ambientPulse, isActive, reduceMotion, sequenceComplete]);
+
+  useEffect(() => {
+    if (reduceMotion || activeUnlockIndex < 0) {
+      beamProgress.set(0);
+      return;
+    }
+    const target = (activeUnlockIndex + 0.5) / orderedFeatures.length;
+    beamProgress.set(withTiming(target, { duration: 520, easing: ReanimatedEasing.out(ReanimatedEasing.quad) }));
+  }, [activeUnlockIndex, beamProgress, orderedFeatures.length, reduceMotion]);
 
   useEffect(() => {
     timersRef.current.forEach(clearTimeout);
@@ -3385,22 +3432,49 @@ export function FinalActivationScreen({
     setUnlockedCount(0);
     setSequenceComplete(false);
     setSpotlightIndex(0);
+    setActiveUnlockIndex(-1);
+    setPulseIndex(-1);
     finalBurst.set(0);
+    ambientPulse.set(0);
+    beamProgress.set(0);
+
+    const initialStatus: ActivationStatusState = {
+      unlockedCount: 0,
+      total: orderedFeatures.length,
+      sequenceComplete: false,
+      spotlightLabel: orderedFeatures[0]?.label ?? 'Core scan',
+    };
+    onStatusChangeRef.current?.(initialStatus);
 
     if (!isActive) return;
 
     if (reduceMotion) {
       setUnlockedCount(orderedFeatures.length);
       setSequenceComplete(true);
+      setActiveUnlockIndex(-1);
+      onStatusChangeRef.current?.({
+        unlockedCount: orderedFeatures.length,
+        total: orderedFeatures.length,
+        sequenceComplete: true,
+        spotlightLabel: orderedFeatures[0]?.label ?? 'Core scan',
+      });
       onAnimationCompleteRef.current?.();
       return;
     }
 
-    const unlockStart = 360;
-    const unlockStep = 320;
+    const unlockStart = 650;
+    const unlockStep = 720;
     orderedFeatures.forEach((_, index) => {
       timersRef.current.push(setTimeout(() => {
         setUnlockedCount(index + 1);
+        setActiveUnlockIndex(index);
+        setPulseIndex(index);
+        onStatusChangeRef.current?.({
+          unlockedCount: index + 1,
+          total: orderedFeatures.length,
+          sequenceComplete: false,
+          spotlightLabel: orderedFeatures[Math.min(index + 1, orderedFeatures.length - 1)]?.label ?? 'Core scan',
+        });
         if (Platform.OS === 'ios') {
           Haptics.selectionAsync();
         }
@@ -3408,15 +3482,23 @@ export function FinalActivationScreen({
         if (index === orderedFeatures.length - 1) {
           const completeTimer = setTimeout(() => {
             setSequenceComplete(true);
+            setActiveUnlockIndex(-1);
+            setPulseIndex(-1);
             finalBurst.set(withSequence(
-              withTiming(1, { duration: 220, easing: ReanimatedEasing.out(ReanimatedEasing.quad) }),
-              withTiming(0, { duration: 720, easing: ReanimatedEasing.out(ReanimatedEasing.quad) }),
+              withTiming(1, { duration: 280, easing: ReanimatedEasing.out(ReanimatedEasing.quad) }),
+              withTiming(0, { duration: 900, easing: ReanimatedEasing.out(ReanimatedEasing.quad) }),
             ));
+            onStatusChangeRef.current?.({
+              unlockedCount: orderedFeatures.length,
+              total: orderedFeatures.length,
+              sequenceComplete: true,
+              spotlightLabel: orderedFeatures[0]?.label ?? 'Core scan',
+            });
             if (Platform.OS === 'ios') {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             }
             onAnimationCompleteRef.current?.();
-          }, 540);
+          }, 900);
           timersRef.current.push(completeTimer);
         }
       }, unlockStart + index * unlockStep));
@@ -3436,8 +3518,23 @@ export function FinalActivationScreen({
     return () => clearInterval(spotlightTimer);
   }, [isActive, orderedFeatures.length, reduceMotion, sequenceComplete]);
 
-  const orbitStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${orbit.get() * 360}deg` }],
+  const ambientRingStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(ambientPulse.get(), [0, 1], [0.65, 1], Extrapolation.CLAMP),
+    transform: [{ scale: interpolate(ambientPulse.get(), [0, 1], [0.98, 1.03], Extrapolation.CLAMP) }],
+  }));
+
+  const scanBeamStyle = useAnimatedStyle(() => ({
+    opacity: sequenceComplete && activeUnlockIndex < 0
+      ? interpolate(ambientPulse.get(), [0, 1], [0.12, 0.54], Extrapolation.CLAMP)
+      : activeUnlockIndex < 0
+        ? 0
+        : interpolate(beamProgress.get(), [0, 1], [0.88, 0.98], Extrapolation.CLAMP),
+    transform: [{ translateY: interpolate(
+      sequenceComplete && activeUnlockIndex < 0 ? ambientPulse.get() : beamProgress.get(),
+      [0, 1],
+      [0, Math.max(0, columnHeight - rowHeight)],
+      Extrapolation.CLAMP,
+    ) }],
   }));
 
   const burstRingStyle = useAnimatedStyle(() => ({
@@ -3454,8 +3551,8 @@ export function FinalActivationScreen({
         alignSelf: 'center',
         alignItems: 'center',
         paddingHorizontal: clamp(width * 0.055, 18, 24),
-        paddingTop: 18,
-        paddingBottom: 24,
+      paddingTop: compact ? 8 : 14,
+      paddingBottom: 16,
       }}
       accessible
       accessibilityLabel="BiteFix Intelligence full power"
@@ -3470,8 +3567,8 @@ export function FinalActivationScreen({
         Your personal food radar is fully online.
       </Text>
 
-      <View style={{ width: orbitDiameter, height: orbitDiameter, alignItems: 'center', justifyContent: 'center', marginTop: 36, marginBottom: 10 }}>
-        <Svg width={orbitDiameter} height={orbitDiameter} viewBox="0 0 100 100" style={{ position: 'absolute' }}>
+      <View style={{ width: coreSize, height: coreSize, alignItems: 'center', justifyContent: 'center', marginTop: compact ? 16 : 24, marginBottom: compact ? 8 : 12 }}>
+        <Svg width={coreSize} height={coreSize} viewBox="0 0 100 100" style={{ position: 'absolute' }}>
           <Defs>
             <RadialGradient id="activationCoreGlow" cx="50%" cy="50%" rx="50%" ry="50%">
               <Stop offset="0%" stopColor={GREEN_BRIGHT} stopOpacity={isDark ? 0.26 : 0.18} />
@@ -3486,28 +3583,7 @@ export function FinalActivationScreen({
         </Svg>
 
         <Reanimated.View pointerEvents="none" style={[{ position: 'absolute', width: orbSize + 34, height: orbSize + 34, borderRadius: (orbSize + 34) / 2, borderWidth: 2, borderColor: GREEN_LIGHT }, burstRingStyle]} />
-
-        <Reanimated.View style={[{ position: 'absolute', width: orbitRadius * 1.62, height: orbitRadius * 1.62, alignItems: 'center', justifyContent: 'center' }, orbitStyle]}>
-          {orderedFeatures.map((feature, index) => {
-            const angle = (index / orderedFeatures.length) * Math.PI * 2 - Math.PI / 2;
-            const x = Math.cos(angle) * orbitRadius;
-            const y = Math.sin(angle) * orbitRadius * 0.84;
-            return (
-              <View key={feature.id} style={{ position: 'absolute', left: orbitRadius + x - pillWidth / 2, top: orbitRadius + y - 23, width: pillWidth }}>
-                <ActivationPill
-                  feature={feature}
-                  isUnlocked={index < unlockedCount}
-                  isSpotlight={sequenceComplete && spotlightIndex === index}
-                  orbit={orbit}
-                  pillWidth={pillWidth}
-                  isDark={isDark}
-                  colors={colors}
-                  reduceMotion={reduceMotion}
-                />
-              </View>
-            );
-          })}
-        </Reanimated.View>
+        <Reanimated.View pointerEvents="none" style={[{ position: 'absolute', width: orbSize + 52, height: orbSize + 52, borderRadius: (orbSize + 52) / 2, borderWidth: 1.5, borderColor: '#E8C36A' }, ambientRingStyle]} />
 
         <View pointerEvents="none" style={{ position: 'absolute', width: orbSize + 30, height: orbSize + 30, alignItems: 'center', justifyContent: 'center' }}>
           {BLOOM_PARTICLES.map((particle, index) => <BloomParticle key={index} {...particle} burst={finalBurst} />)}
@@ -3523,14 +3599,24 @@ export function FinalActivationScreen({
         </View>
       </View>
 
-      <ActivationStatus
-        unlockedCount={unlockedCount}
-        total={orderedFeatures.length}
-        sequenceComplete={sequenceComplete}
-        spotlightLabel={orderedFeatures[sequenceComplete ? spotlightIndex : Math.min(unlockedCount, orderedFeatures.length - 1)]?.label ?? 'Core scan'}
-        colors={colors}
-        isDark={isDark}
-      />
+      <View style={{ width: '100%', minHeight: columnHeight, position: 'relative', paddingLeft: 14, gap: rowGap }}>
+        <View pointerEvents="none" style={{ position: 'absolute', left: 5, top: -14, bottom: 0, width: 2, borderRadius: 1, backgroundColor: isDark ? 'rgba(111,227,139,0.16)' : 'rgba(1,146,42,0.14)' }} />
+        <Reanimated.View pointerEvents="none" style={[{ position: 'absolute', left: 1, top: -14, width: 10, height: 24, borderRadius: 6, backgroundColor: GREEN_BRIGHT, shadowColor: GREEN_BRIGHT, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.85, shadowRadius: 10, elevation: 4 }, scanBeamStyle]} />
+        {orderedFeatures.map((feature, index) => (
+          <PowerFeatureRow
+            key={feature.id}
+            feature={feature}
+            index={index}
+            isUnlocked={index < unlockedCount}
+            isSpotlight={sequenceComplete && spotlightIndex === index}
+            pulseIndex={pulseIndex}
+            isDark={isDark}
+            colors={colors}
+            reduceMotion={reduceMotion}
+            compact={compact}
+          />
+        ))}
+      </View>
     </View>
   );
 }
