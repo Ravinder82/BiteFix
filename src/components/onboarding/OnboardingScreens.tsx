@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Activity, ArrowRight, Check, Droplets, Leaf, Package, ScanLine, ShieldCheck, Sparkles, Tag, UserRound, Zap } from 'lucide-react-native';
 import Svg, { Circle, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
@@ -14,6 +14,10 @@ import { IngredientReadingFrequency, OnboardingPriority, ShoppingFrequency } fro
 // DESIGN TOKENS & TYPOGRAPHY SYSTEM
 // ══════════════════════════════════════════════════════════════
 const GREEN = '#01922A';
+const GREEN_DEEP = '#014F18';
+const GREEN_BRIGHT = '#1FB44E';
+const GREEN_LIGHT = '#6FE38B';
+const LIME = '#A9E34B';
 const AMBER = '#D97706';
 const TEAL = '#0F766E';
 
@@ -1244,16 +1248,6 @@ export function PainScreen({
 
   return (
     <ScreenFrame>
-      <View style={{ alignItems: 'center', marginBottom: 4 }}>
-        <OrbMascot
-          state="caution"
-          size={110}
-          reduceMotion={reduceMotion}
-          showShadow={false}
-          accessibilityLabel="Empathetic BiteFix assistant highlighting label-reading friction"
-        />
-      </View>
-
       <LabelCompressionVisual
         colors={colors}
         isDark={isDark}
@@ -1321,75 +1315,21 @@ const AnimatedSvgCircle = Animated.createAnimatedComponent(Circle);
 
 type InsightStage = 'label' | 'scan' | 'insights';
 
-function InsightTrailerSteps({
-  colors,
-  isDark,
-  reduceMotion,
-  isActive = true,
-}: {
-  colors: any;
-  isDark: boolean;
-  reduceMotion: boolean;
-  isActive?: boolean;
-}) {
+function InsightTrailerSteps({ colors, isDark }: { colors: any; isDark: boolean }) {
   const { width } = useWindowDimensions();
-  const glowPulse = useRef(new Animated.Value(0)).current;
 
   const stages: Array<{
     id: InsightStage;
     label: string;
-    bgColor: string;
-    borderColor: string;
-    shadowColor: string;
-    iconColor: string;
     icon: React.ComponentType<any>;
   }> = [
-      { id: 'label', label: 'LABEL', bgColor: '#5656edff', borderColor: '#545353ff', shadowColor: '#6a68faff', iconColor: '#FFFFFF', icon: Tag },
-      { id: 'scan', label: 'SCAN', bgColor: '#ff7446ff', borderColor: '#7f7e7eff', shadowColor: '#ff601eff', iconColor: '#FFFFFF', icon: ScanLine },
-      { id: 'insights', label: 'INSIGHTS', bgColor: '#ff4e4eff', borderColor: '#767575ff', shadowColor: '#e03131ff', iconColor: '#FFFFFF', icon: Zap },
-    ];
-
-  useEffect(() => {
-    if (reduceMotion) {
-      glowPulse.setValue(0);
-      return;
-    }
-    const pulseAnim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowPulse, {
-          toValue: 1,
-          duration: 1000,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(glowPulse, {
-          toValue: 0,
-          duration: 1000,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    if (isActive) {
-      pulseAnim.start();
-    } else {
-      pulseAnim.stop();
-      glowPulse.setValue(0);
-    }
-    return () => pulseAnim.stop();
-  }, [glowPulse, isActive, reduceMotion]);
+    { id: 'label', label: 'LABEL', icon: Tag },
+    { id: 'scan', label: 'SCAN', icon: ScanLine },
+    { id: 'insights', label: 'INSIGHTS', icon: Zap },
+  ];
 
   const railWidth = clamp(width * 0.94, 320, 400);
-
-  const glowScale = glowPulse.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1.0, 1.25],
-  });
-
-  const glowOpacity = glowPulse.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.65, 0.15],
-  });
+  const cardIcon = isDark ? '#34D873' : GREEN;
 
   return (
     <View style={{ width: railWidth, alignSelf: 'center', marginVertical: 6 }}>
@@ -1407,44 +1347,26 @@ function InsightTrailerSteps({
 
           return (
             <React.Fragment key={stage.id}>
-              <View style={{ flex: 1, alignItems: 'center', opacity: 1 }}>
-                <View style={{ width: 72, height: 72, alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                  <Animated.View
-                    style={{
-                      position: 'absolute',
-                      width: 72,
-                      height: 72,
-                      borderRadius: 22,
-                      borderWidth: 3,
-                      borderColor: stage.borderColor,
-                      shadowColor: stage.borderColor,
-                      shadowOffset: { width: 0, height: 0 },
-                      shadowOpacity: 0.8,
-                      shadowRadius: 10,
-                      opacity: glowOpacity,
-                      transform: [{ scale: glowScale }],
-                    }}
-                  />
-                  <Animated.View
-                    style={{
-                      width: 72,
-                      height: 72,
-                      borderRadius: 22,
-                      backgroundColor: stage.bgColor,
-                      borderWidth: 2.5,
-                      borderColor: stage.borderColor,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      shadowColor: stage.shadowColor,
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.25,
-                      shadowRadius: 8,
-                      elevation: 3,
-                      transform: [{ scale: 1.05 }],
-                    }}
-                  >
-                    <Icon size={34} color={stage.iconColor} strokeWidth={2.4} />
-                  </Animated.View>
+              <View style={{ flex: 1, alignItems: 'center' }}>
+                {/* Neutral glass card — the green icon carries the brand. */}
+                <View
+                  style={{
+                    width: 72,
+                    height: 72,
+                    borderRadius: 22,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: isDark ? 'rgba(12,17,14,0.78)' : 'rgba(236, 247, 166, 0.76)',
+                    borderWidth: 1,
+                    borderColor: GREEN + '55',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 5 },
+                    shadowOpacity: isDark ? 0.18 : 0.07,
+                    shadowRadius: 12,
+                    elevation: 3,
+                  }}
+                >
+                  <Icon size={34} color={cardIcon} strokeWidth={2.4} />
                 </View>
                 <Text
                   style={{
@@ -1461,7 +1383,7 @@ function InsightTrailerSteps({
               {index < stages.length - 1 && (
                 <ArrowRight
                   size={20}
-                  color={stages[index + 1].borderColor}
+                  color={isDark ? 'rgba(52,216,115,0.55)' : 'rgba(1,146,42,0.55)'}
                   strokeWidth={2.5}
                   style={{ marginHorizontal: 2 }}
                 />
@@ -1473,6 +1395,8 @@ function InsightTrailerSteps({
     </View>
   );
 }
+
+const SURGE_SPARK_ANGLES = [15, 75, 135, 195, 255, 315].map((deg) => (deg * Math.PI) / 180);
 
 function MascotScoreRingTeaser({
   colors,
@@ -1487,18 +1411,52 @@ function MascotScoreRingTeaser({
 }) {
   const { width } = useWindowDimensions();
   const targetScore = 78;
-  const scoreColor = '#2DD4BF';
+  const scoreColor = isDark ? '#34D873' : GREEN;
 
   const ringSize = Math.round(clamp(width * 0.80, 200, 340));
   const mascotSize = Math.round(ringSize * 0.60);
   const badgeWidth = Math.min(236, Math.round(width * 0.62));
 
   const [displayedScore, setDisplayedScore] = useState(0);
+  const [landed, setLanded] = useState(false);
   const progressAnim = useRef(new Animated.Value(0)).current;
   const ringScaleAnim = useRef(new Animated.Value(0.94)).current;
   const scoreRevealAnim = useRef(new Animated.Value(0)).current;
   const badgeLiftAnim = useRef(new Animated.Value(8)).current;
+  const stampScale = useRef(new Animated.Value(0)).current;
+  const stampOpacity = useRef(new Animated.Value(0)).current;
+  const mascotPop = useRef(new Animated.Value(1)).current;
+  const sparkVal = useRef(new Animated.Value(0)).current;
+  const glowFlash = useRef(new Animated.Value(0)).current;
   const hasRunRef = useRef(false);
+  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // One-shot power surge fired the moment the score lands: ring flash,
+  // mascot pop, lime spark burst, and the UNLOCKED stamp on the badge.
+  const fireSurge = useCallback(() => {
+    setLanded(true);
+    Animated.parallel([
+      Animated.sequence([
+        Animated.timing(glowFlash, { toValue: 1, duration: 220, easing: Easing.out(Easing.quad), useNativeDriver: false, isInteraction: false }),
+        Animated.timing(glowFlash, { toValue: 0, duration: 480, easing: Easing.out(Easing.quad), useNativeDriver: false, isInteraction: false }),
+      ]),
+      Animated.sequence([
+        Animated.timing(mascotPop, { toValue: 1.1, duration: 160, easing: Easing.out(Easing.quad), useNativeDriver: true, isInteraction: false }),
+        Animated.timing(mascotPop, { toValue: 1, duration: 300, easing: Easing.out(Easing.quad), useNativeDriver: true, isInteraction: false }),
+      ]),
+      Animated.timing(sparkVal, { toValue: 1, duration: 640, easing: Easing.out(Easing.cubic), useNativeDriver: true, isInteraction: false }),
+      Animated.parallel([
+        Animated.timing(stampOpacity, { toValue: 1, duration: 140, useNativeDriver: true, isInteraction: false }),
+        Animated.sequence([
+          Animated.timing(stampScale, { toValue: 1.35, duration: 1, useNativeDriver: true, isInteraction: false }),
+          Animated.timing(stampScale, { toValue: 1, duration: 320, easing: Easing.out(Easing.back(1.8)), useNativeDriver: true, isInteraction: false }),
+        ]),
+      ]),
+    ]).start();
+
+    if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+    settleTimerRef.current = setTimeout(() => setLanded(false), 650);
+  }, [glowFlash, mascotPop, sparkVal, stampOpacity, stampScale]);
 
   useEffect(() => {
     if (reduceMotion) {
@@ -1510,7 +1468,10 @@ function MascotScoreRingTeaser({
       ringScaleAnim.setValue(1);
       scoreRevealAnim.setValue(1);
       badgeLiftAnim.setValue(0);
+      stampScale.setValue(1);
+      stampOpacity.setValue(1);
       setDisplayedScore(targetScore);
+      setLanded(true);
       hasRunRef.current = true;
       return;
     }
@@ -1524,7 +1485,12 @@ function MascotScoreRingTeaser({
       ringScaleAnim.setValue(0.94);
       scoreRevealAnim.setValue(0);
       badgeLiftAnim.setValue(8);
+      stampScale.setValue(0);
+      stampOpacity.setValue(0);
+      sparkVal.setValue(0);
+      glowFlash.setValue(0);
       setDisplayedScore(0);
+      setLanded(false);
       hasRunRef.current = false;
       return;
     }
@@ -1595,20 +1561,29 @@ function MascotScoreRingTeaser({
       }),
     ]);
 
-    animation.start(() => setDisplayedScore(targetScore));
+    animation.start(({ finished }) => {
+      if (!finished) return;
+      setDisplayedScore(targetScore);
+      fireSurge();
+    });
 
     return () => {
       progressAnim.removeListener(listener);
       animation.stop();
+      if (settleTimerRef.current) {
+        clearTimeout(settleTimerRef.current);
+        settleTimerRef.current = null;
+      }
       progressAnim.stopAnimation();
       ringScaleAnim.stopAnimation();
       scoreRevealAnim.stopAnimation();
       badgeLiftAnim.stopAnimation();
     };
-  }, [badgeLiftAnim, isActive, progressAnim, reduceMotion, ringScaleAnim, scoreRevealAnim]);
+  }, [badgeLiftAnim, fireSurge, isActive, progressAnim, reduceMotion, ringScaleAnim, scoreRevealAnim]);
 
   const scoreScale = scoreRevealAnim.interpolate({ inputRange: [0, 1], outputRange: [0.82, 1] });
   const scoreOpacity = scoreRevealAnim.interpolate({ inputRange: [0, 0.2, 1], outputRange: [0, 0.7, 1] });
+  const sparkSpread = Math.round(ringSize * 0.16);
 
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center' }}>
@@ -1630,13 +1605,13 @@ function MascotScoreRingTeaser({
               <Stop offset="100%" stopColor={scoreColor} stopOpacity="0" />
             </RadialGradient>
             <SvgLinearGradient id="obScreen6ScoreGradV2" x1="0%" y1="0%" x2="100%" y2="100%">
-              <Stop offset="0%" stopColor="#2DD4BF" />
-              <Stop offset="55%" stopColor="#10B981" />
-              <Stop offset="100%" stopColor="#84CC16" />
+              <Stop offset="0%" stopColor={isDark ? GREEN : GREEN_DEEP} />
+              <Stop offset="55%" stopColor={isDark ? GREEN_BRIGHT : GREEN} />
+              <Stop offset="100%" stopColor={isDark ? GREEN_LIGHT : GREEN_BRIGHT} />
             </SvgLinearGradient>
           </Defs>
           <Circle cx="60" cy="60" r="56" fill="url(#obScreen6RingGlowV2)" />
-          <Circle cx="60" cy="60" r="49" fill="none" stroke={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(10,50,35,0.08)'} strokeWidth="10.5" />
+          <Circle cx="60" cy="60" r="49" fill="none" stroke={isDark ? 'rgba(111,227,139,0.10)' : 'rgba(1,79,24,0.10)'} strokeWidth="10.5" />
           <Circle cx="60" cy="60" r="40" fill="none" stroke={scoreColor} strokeWidth="1.2" opacity="0.16" />
           <AnimatedSvgCircle
             cx="60"
@@ -1654,17 +1629,71 @@ function MascotScoreRingTeaser({
             })}
             transform="rotate(-90 60 60)"
           />
+          {/* One-shot power flash when the score lands. */}
+          <AnimatedSvgCircle
+            cx="60"
+            cy="60"
+            r="49"
+            fill="none"
+            stroke={scoreColor}
+            strokeWidth="10.5"
+            opacity={glowFlash.interpolate({ inputRange: [0, 1], outputRange: [0, 0.5] })}
+            transform="rotate(-90 60 60)"
+          />
         </Svg>
 
-        <View style={{ alignItems: 'center', justifyContent: 'center', zIndex: 3 }}>
+        <Animated.View
+          style={{
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 3,
+            transform: [{ scale: mascotPop }],
+          }}
+        >
           <OrbMascot
             state="happy"
             size={mascotSize}
             reduceMotion={reduceMotion}
             showShadow={false}
-            accessibilityLabel="BiteFix mascot revealing product intelligence score"
+            accessibilityLabel="BiteFix assistant powered up with BiteFix Intelligence"
           />
-        </View>
+        </Animated.View>
+
+        {/* Lime spark burst fired at the unlock moment. */}
+        <Animated.View
+          pointerEvents="none"
+          style={{ position: 'absolute', inset: 0, zIndex: 4 }}
+        >
+          {SURGE_SPARK_ANGLES.map((angle, index) => {
+            const dx = Math.cos(angle);
+            const dy = Math.sin(angle);
+            const startR = ringSize * 0.42;
+            const endR = ringSize * 0.42 + sparkSpread;
+
+            return (
+              <Animated.View
+                key={index}
+                style={{
+                  position: 'absolute',
+                  left: '50%',
+                  top: '50%',
+                  marginLeft: -3,
+                  marginTop: -3,
+                  width: 6,
+                  height: 6,
+                  borderRadius: 3,
+                  backgroundColor: LIME,
+                  opacity: sparkVal.interpolate({ inputRange: [0, 0.15, 1], outputRange: [0, 1, 0] }),
+                  transform: [
+                    { translateX: sparkVal.interpolate({ inputRange: [0, 1], outputRange: [dx * startR, dx * endR] }) },
+                    { translateY: sparkVal.interpolate({ inputRange: [0, 1], outputRange: [dy * startR, dy * endR] }) },
+                    { scale: sparkVal.interpolate({ inputRange: [0, 1], outputRange: [1, 0.35] }) },
+                  ],
+                }}
+              />
+            );
+          })}
+        </Animated.View>
       </Animated.View>
 
       {/* Unified Score Card directly underneath the ring */}
@@ -1675,9 +1704,9 @@ function MascotScoreRingTeaser({
           paddingHorizontal: 16,
           paddingVertical: 8,
           borderRadius: 16,
-          backgroundColor: isDark ? '#148603ff' : '#000000ff',
+          backgroundColor: isDark ? '#0D4419' : GREEN_DEEP,
           borderWidth: 1,
-          borderColor: 'rgba(0, 0, 0, 0.32)',
+          borderColor: isDark ? 'rgba(111,227,139,0.35)' : 'rgba(1,79,24,0.45)',
           shadowColor: '#000000ff',
           shadowOffset: { width: 0, height: 6 },
           shadowOpacity: 0.16,
@@ -1688,12 +1717,42 @@ function MascotScoreRingTeaser({
           zIndex: 5,
         }}
       >
+        {/* UNLOCKED stamp — straddles the badge top edge at the surge moment. */}
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: -13,
+            alignSelf: 'center',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
+            paddingHorizontal: 10,
+            paddingVertical: 4.5,
+            borderRadius: 999,
+            backgroundColor: LIME,
+            shadowColor: '#3E7A22',
+            shadowOffset: { width: 0, height: 3 },
+            shadowOpacity: 0.35,
+            shadowRadius: 8,
+            elevation: 5,
+            opacity: stampOpacity,
+            transform: [{ scale: stampScale }],
+            zIndex: 6,
+          }}
+        >
+          <Sparkles size={10} color="#0A3D12" strokeWidth={2.6} />
+          <Text style={{ color: '#0A3D12', fontSize: 9.5, fontWeight: '900', letterSpacing: 1.4 }}>
+            UNLOCKED
+          </Text>
+        </Animated.View>
+
         <Text style={{ color: '#ffffffff', fontSize: 11.5, fontWeight: '900', letterSpacing: 1.3, textTransform: 'uppercase' }}>
           BITEFIX INTELLIGENCE SCORE™
         </Text>
         <Animated.Text
           style={{
-            color: '#ffffffff',
+            color: landed ? LIME : '#ffffffff',
             fontSize: 42,
             lineHeight: 60,
             fontWeight: '900',
@@ -1769,7 +1828,7 @@ export function RevelationScreen({
               textAlign: 'center',
             }}
           >
-            See the answer
+            BiteFix Intelligence
           </Text>
           <Text
             style={{
@@ -1781,7 +1840,7 @@ export function RevelationScreen({
               textAlign: 'center',
             }}
           >
-            in seconds.
+            unlocked.
           </Text>
         </View>
 
@@ -1798,16 +1857,11 @@ export function RevelationScreen({
             marginBottom: isCompact ? 10 : 14,
           }}
         >
-          Turn food labels into useful decisions in seconds.
+          Your assistant is powered up — turn labels into answers in seconds.
         </Text>
 
         {/* Compact Insight Trailer: LABEL -> SCAN -> INSIGHTS */}
-        <InsightTrailerSteps
-          colors={colors}
-          isDark={isDark}
-          reduceMotion={reduceMotion}
-          isActive={isActive}
-        />
+        <InsightTrailerSteps colors={colors} isDark={isDark} />
       </View>
     </View>
   );
