@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Platform, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
-import { Activity, Check, Droplets, Leaf, Package, ShieldCheck, ShoppingBag, Sparkles, UserRound, Zap } from 'lucide-react-native';
+import { Activity, Check, Droplets, Leaf, ListChecks, Package, ShieldCheck, ShoppingBag, Sparkles, UserRound, Zap } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Svg, { Circle, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { OrbMascot } from '../features/OrbMascot';
@@ -715,7 +715,7 @@ function ShieldStatusBar({
   const progressPercent = isNone ? 100 : (activeAllergens.length / totalOptions) * 100;
 
   // Dark greenish black CTA button color scheme
-  const cardBg = isDark ? '#06180E' : '#07190F';
+  const cardBg = isDark ? '#07190F' : '#07190F';
   const cardBorder = isDark ? 'rgba(20, 174, 151, 0.25)' : 'rgba(7, 25, 15, 0.15)';
 
   return (
@@ -3097,13 +3097,13 @@ const ACTIVATION_FEATURES: ActivationFeature[] = [
   { id: 'processing', label: 'Processing check', icon: Package, priority: 'ultra_processed' },
   { id: 'nutrition', label: 'Nutrition insight', icon: Activity, priority: 'nutrition' },
   { id: 'allergens', label: 'Allergen guard', icon: ShieldCheck },
-  { id: 'ingredients', label: 'Ingredient clarity', icon: Sparkles, priority: 'ingredients' },
+  { id: 'ingredients', label: 'Ingredient clarity', icon: ListChecks, priority: 'ingredients' },
   { id: 'additives', label: 'Additive check', icon: Check },
   { id: 'sugar', label: 'Sugar signal', icon: Droplets, priority: 'sugar' },
   { id: 'eco', label: 'Eco impact', icon: Leaf, priority: 'environment' },
 ];
 
-const BLOOM_PARTICLES = [
+const BLOOM_PARTICLES: Array<{ x: number; y: number; color: string; size: number }> = [
   { x: -92, y: -48, color: GREEN_BRIGHT, size: 5 },
   { x: -66, y: 78, color: LIME, size: 4 },
   { x: 18, y: -105, color: GREEN_LIGHT, size: 4 },
@@ -3290,10 +3290,10 @@ export function ActivationStatus({
   return (
     <View
       style={{
-      width: '100%',
-      maxWidth: 430,
-      paddingHorizontal: 16,
-      paddingVertical: 14,
+        width: '100%',
+        maxWidth: 430,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
         borderRadius: 21,
         borderWidth: 1,
         borderColor: sequenceComplete
@@ -3529,12 +3529,14 @@ export function FinalActivationScreen({
       : activeUnlockIndex < 0
         ? 0
         : interpolate(beamProgress.get(), [0, 1], [0.88, 0.98], Extrapolation.CLAMP),
-    transform: [{ translateY: interpolate(
-      sequenceComplete && activeUnlockIndex < 0 ? ambientPulse.get() : beamProgress.get(),
-      [0, 1],
-      [0, Math.max(0, columnHeight - rowHeight)],
-      Extrapolation.CLAMP,
-    ) }],
+    transform: [{
+      translateY: interpolate(
+        sequenceComplete && activeUnlockIndex < 0 ? ambientPulse.get() : beamProgress.get(),
+        [0, 1],
+        [0, Math.max(0, columnHeight - rowHeight)],
+        Extrapolation.CLAMP,
+      )
+    }],
   }));
 
   const burstRingStyle = useAnimatedStyle(() => ({
@@ -3551,8 +3553,8 @@ export function FinalActivationScreen({
         alignSelf: 'center',
         alignItems: 'center',
         paddingHorizontal: clamp(width * 0.055, 18, 24),
-      paddingTop: compact ? 8 : 14,
-      paddingBottom: 16,
+        paddingTop: compact ? 8 : 14,
+        paddingBottom: 16,
       }}
       accessible
       accessibilityLabel="BiteFix Intelligence full power"
@@ -3586,7 +3588,7 @@ export function FinalActivationScreen({
         <Reanimated.View pointerEvents="none" style={[{ position: 'absolute', width: orbSize + 52, height: orbSize + 52, borderRadius: (orbSize + 52) / 2, borderWidth: 1.5, borderColor: '#E8C36A' }, ambientRingStyle]} />
 
         <View pointerEvents="none" style={{ position: 'absolute', width: orbSize + 30, height: orbSize + 30, alignItems: 'center', justifyContent: 'center' }}>
-          {BLOOM_PARTICLES.map((particle, index) => <BloomParticle key={index} {...particle} burst={finalBurst} />)}
+          {BLOOM_PARTICLES.map((particle: { x: number; y: number; color: string; size: number }, index: number) => <BloomParticle key={index} {...particle} burst={finalBurst} />)}
         </View>
 
         <View style={{ zIndex: 4, alignItems: 'center', justifyContent: 'center' }}>
