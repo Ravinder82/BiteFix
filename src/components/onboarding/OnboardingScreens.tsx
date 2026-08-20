@@ -1,15 +1,26 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Animated, Easing, Platform, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Activity, Check, Droplets, Leaf, Package, ShieldCheck, ShoppingBag, Sparkles, UserRound, Zap } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 import Svg, { Circle, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { OrbMascot } from '../features/OrbMascot';
 import { LoaderThree } from '../ui/loader';
 import {
   LabelCompressionVisual,
-  MomentResultCard,
   PRIORITY_META,
 } from './OnboardingVisuals';
 import { IngredientReadingFrequency, OnboardingPriority, ShoppingFrequency } from '../../types/onboarding.types';
+import Reanimated, {
+  Easing as ReanimatedEasing,
+  Extrapolation,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 
 // ══════════════════════════════════════════════════════════════
 // DESIGN TOKENS & TYPOGRAPHY SYSTEM
@@ -1143,12 +1154,14 @@ function ShieldRow({
 export function IdentityScreen({
   name,
   onChange,
+  onSubmit,
   colors,
   isDark,
   reduceMotion = false,
 }: {
   name: string;
   onChange: (name: string) => void;
+  onSubmit?: () => void;
   colors: any;
   isDark: boolean;
   reduceMotion?: boolean;
@@ -1289,6 +1302,7 @@ export function IdentityScreen({
             onChangeText={onChange}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
+            onSubmitEditing={onSubmit}
             placeholder="First name"
             placeholderTextColor={colors.textMuted}
             maxLength={40}
@@ -3062,15 +3076,174 @@ export function MomentOfTruthScreen({
 // ══════════════════════════════════════════════════════════════
 // SCREEN 9 — FINAL ACTIVATION
 // ══════════════════════════════════════════════════════════════
-const FINAL_FEATURE_PILLS = [
-  'Processing',
-  'Nutrition',
-  'Allergens',
-  'Ingredients',
-  'Additives',
-  'Sugar',
-  'Eco Impact',
-] as const;
+type ActivationFeatureId = 'processing' | 'nutrition' | 'allergens' | 'ingredients' | 'additives' | 'sugar' | 'eco';
+
+type ActivationFeature = {
+  id: ActivationFeatureId;
+  label: string;
+  icon: React.ComponentType<any>;
+  priority?: OnboardingPriority;
+};
+
+const ACTIVATION_FEATURES: ActivationFeature[] = [
+  { id: 'processing', label: 'Processing check', icon: Package, priority: 'ultra_processed' },
+  { id: 'nutrition', label: 'Nutrition insight', icon: Activity, priority: 'nutrition' },
+  { id: 'allergens', label: 'Allergen guard', icon: ShieldCheck },
+  { id: 'ingredients', label: 'Ingredient clarity', icon: Sparkles, priority: 'ingredients' },
+  { id: 'additives', label: 'Additive check', icon: Check },
+  { id: 'sugar', label: 'Sugar signal', icon: Droplets, priority: 'sugar' },
+  { id: 'eco', label: 'Eco impact', icon: Leaf, priority: 'environment' },
+];
+
+const BLOOM_PARTICLES = [
+  { x: -92, y: -48, color: GREEN_BRIGHT, size: 5 },
+  { x: -66, y: 78, color: LIME, size: 4 },
+  { x: 18, y: -105, color: GREEN_LIGHT, size: 4 },
+  { x: 92, y: -38, color: '#E8C36A', size: 5 },
+  { x: 106, y: 52, color: GREEN_BRIGHT, size: 4 },
+  { x: 34, y: 104, color: LIME, size: 5 },
+  { x: -104, y: 34, color: GREEN_LIGHT, size: 3 },
+  { x: -20, y: -112, color: '#E8C36A', size: 3 },
+];
+
+const PRIORITY_TO_FEATURE_ID: Partial<Record<OnboardingPriority, ActivationFeatureId>> = {
+  ultra_processed: 'processing',
+  nutrition: 'nutrition',
+  ingredients: 'ingredients',
+  sugar: 'sugar',
+  environment: 'eco',
+};
+
+function ActivationPill({
+  feature,
+  isUnlocked,
+  isSpotlight,
+  orbit,
+  pillWidth,
+  isDark,
+  colors,
+  reduceMotion,
+}: {
+  feature: ActivationFeature;
+  isUnlocked: boolean;
+  isSpotlight: boolean;
+  orbit: ReturnType<typeof useSharedValue<number>>;
+  pillWidth: number;
+  isDark: boolean;
+  colors: any;
+  reduceMotion: boolean;
+}) {
+  const unlockProgress = useSharedValue(reduceMotion ? 1 : 0);
+  const spotlightProgress = useSharedValue(reduceMotion && isSpotlight ? 1 : 0);
+  const Icon = feature.icon;
+
+  useEffect(() => {
+    if (reduceMotion) {
+      unlockProgress.set(isUnlocked ? 1 : 0);
+      spotlightProgress.set(isSpotlight ? 1 : 0);
+      return;
+    }
+
+    unlockProgress.set(isUnlocked
+      ? withSequence(
+        withTiming(0.24, { duration: 80, easing: ReanimatedEasing.out(ReanimatedEasing.quad) }),
+        withSpring(1, { duration: 420, dampingRatio: 0.82 }),
+      )
+      : withTiming(0, { duration: 120, easing: ReanimatedEasing.out(ReanimatedEasing.quad) }));
+    spotlightProgress.set(withTiming(isSpotlight ? 1 : 0, { duration: 220, easing: ReanimatedEasing.out(ReanimatedEasing.quad) }));
+  }, [isSpotlight, isUnlocked, reduceMotion, spotlightProgress, unlockProgress]);
+
+  const entranceStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(unlockProgress.get(), [0, 1], [0.30, 1], Extrapolation.CLAMP),
+    transform: [
+      { translateY: interpolate(unlockProgress.get(), [0, 1], [14, 0], Extrapolation.CLAMP) },
+      { scale: interpolate(unlockProgress.get(), [0, 1], [0.94, 1], Extrapolation.CLAMP) },
+    ],
+  }));
+
+  const focusStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(spotlightProgress.get(), [0, 1], [0, 0.75], Extrapolation.CLAMP),
+    transform: [{ scale: interpolate(spotlightProgress.get(), [0, 1], [0.96, 1.08], Extrapolation.CLAMP) }],
+  }));
+
+  const counterOrbitStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${-orbit.get() * 360}deg` }],
+  }));
+
+  return (
+    <Reanimated.View
+      accessible
+      accessibilityLabel={`${feature.label}, ${isUnlocked ? 'unlocked' : 'locked'}`}
+      style={[{ width: pillWidth }, entranceStyle]}
+    >
+      <Reanimated.View
+        pointerEvents="none"
+        style={[{
+          position: 'absolute',
+          left: -4,
+          right: -4,
+          top: -4,
+          bottom: -4,
+          borderRadius: 18,
+          backgroundColor: isDark ? 'rgba(52,216,115,0.25)' : 'rgba(1,146,42,0.14)',
+        }, focusStyle]}
+      />
+      <Reanimated.View style={counterOrbitStyle}>
+        <View
+          style={{
+            minHeight: 46,
+            width: pillWidth,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            paddingHorizontal: 8,
+            paddingVertical: 6,
+            borderRadius: 15,
+            borderWidth: isSpotlight ? 1.5 : 1,
+            borderColor: isSpotlight
+              ? (isDark ? GREEN_LIGHT : GREEN)
+              : isUnlocked
+                ? (isDark ? 'rgba(111,227,139,0.42)' : 'rgba(1,146,42,0.30)')
+                : (isDark ? 'rgba(255,255,255,0.14)' : 'rgba(7,25,15,0.12)'),
+            backgroundColor: isSpotlight
+              ? (isDark ? 'rgba(52,216,115,0.18)' : '#EAF8EE')
+              : isDark
+                ? 'rgba(9,24,15,0.92)'
+                : 'rgba(255,255,255,0.94)',
+            shadowColor: isSpotlight ? GREEN : '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: isSpotlight ? 0.22 : (isDark ? 0.18 : 0.07),
+            shadowRadius: isSpotlight ? 12 : 7,
+            elevation: isSpotlight ? 4 : 2,
+          }}
+        >
+          <View style={{ width: 22, height: 22, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: isUnlocked ? (isDark ? 'rgba(111,227,139,0.16)' : '#DDF5E5') : (isDark ? 'rgba(255,255,255,0.07)' : '#F1F4F1') }}>
+            <Icon size={13} color={isUnlocked ? (isDark ? GREEN_LIGHT : GREEN) : colors.textMuted} strokeWidth={2.5} />
+          </View>
+          <Text style={{ flex: 1, color: isUnlocked ? colors.text : colors.textMuted, fontSize: 10.5, lineHeight: 14, fontWeight: '900', letterSpacing: -0.1 }}>
+            {feature.label}
+          </Text>
+          <View style={{ width: 15, height: 15, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: isUnlocked ? (isDark ? GREEN : '#EAF8EE') : (isDark ? 'rgba(255,255,255,0.08)' : '#F0F3F0') }}>
+            {isUnlocked ? <Check size={9} color={isDark ? '#06180E' : GREEN} strokeWidth={3.5} /> : <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.textMuted }} />}
+          </View>
+        </View>
+      </Reanimated.View>
+    </Reanimated.View>
+  );
+}
+
+function BloomParticle({ x, y, color, size, burst }: { x: number; y: number; color: string; size: number; burst: ReturnType<typeof useSharedValue<number>> }) {
+  const style = useAnimatedStyle(() => ({
+    opacity: interpolate(burst.get(), [0, 0.18, 1], [0, 1, 0], Extrapolation.CLAMP),
+    transform: [
+      { translateX: x * burst.get() },
+      { translateY: y * burst.get() },
+      { scale: interpolate(burst.get(), [0, 0.18, 1], [0.7, 1.2, 0.35], Extrapolation.CLAMP) },
+    ],
+  }));
+
+  return <Reanimated.View pointerEvents="none" style={[{ position: 'absolute', width: size, height: size, borderRadius: size / 2, backgroundColor: color }, style]} />;
+}
 
 export function FinalActivationScreen({
   colors,
@@ -3078,195 +3251,210 @@ export function FinalActivationScreen({
   reduceMotion,
   isActive = true,
   selected = [],
+  onAnimationComplete,
 }: {
   colors: any;
   isDark: boolean;
   reduceMotion: boolean;
   isActive?: boolean;
   selected?: OnboardingPriority[];
+  onAnimationComplete?: () => void;
 }) {
-  const { width, height } = useWindowDimensions();
-  const orbit = useRef(new Animated.Value(0)).current;
-
+  const { width } = useWindowDimensions();
   const compact = width < 360;
-  const radius = clamp(Math.min(width * 0.29, height * 0.15), compact ? 92 : 104, 118);
-  const orbSize = Math.round(clamp(width * 0.235, 78, 94));
-  const pillWidth = clamp(width * 0.17, 62, 72);
+  const orbitRadius = clamp(width * 0.34, compact ? 100 : 110, 128);
+  const orbitDiameter = orbitRadius * 2;
+  const pillWidth = clamp(width * 0.27, compact ? 96 : 102, 112);
+  const orbSize = Math.round(clamp(width * 0.22, 76, 92));
+
+  const orderedFeatures = useMemo(() => {
+    const prioritizedIds = selected
+      .map((priority) => PRIORITY_TO_FEATURE_ID[priority])
+      .filter((id): id is ActivationFeatureId => Boolean(id));
+    const seen = new Set<ActivationFeatureId>();
+    return [...prioritizedIds, ...ACTIVATION_FEATURES.map((feature) => feature.id)]
+      .filter((id) => {
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      })
+      .map((id) => ACTIVATION_FEATURES.find((feature) => feature.id === id)!)
+      .filter(Boolean);
+  }, [selected]);
+
+  const orbit = useSharedValue(0);
+  const finalBurst = useSharedValue(0);
+  const [unlockedCount, setUnlockedCount] = useState(0);
+  const [sequenceComplete, setSequenceComplete] = useState(false);
+  const [spotlightIndex, setSpotlightIndex] = useState(0);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const onAnimationCompleteRef = useRef(onAnimationComplete);
+  onAnimationCompleteRef.current = onAnimationComplete;
 
   useEffect(() => {
-    if (reduceMotion || !isActive) {
-      orbit.stopAnimation();
-      orbit.setValue(0);
+    if (!isActive || reduceMotion) {
+      orbit.set(0);
       return;
     }
 
-    const animation = Animated.loop(
-      Animated.timing(orbit, {
-        toValue: 1,
-        duration: 22000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-        isInteraction: false,
-      }),
-    );
-
-    animation.start();
-    return () => {
-      animation.stop();
-      orbit.stopAnimation();
-    };
+    orbit.set(withRepeat(
+      withTiming(1, { duration: 26000, easing: ReanimatedEasing.linear }),
+      -1,
+      false,
+    ));
+    return () => orbit.set(0);
   }, [isActive, orbit, reduceMotion]);
 
-  const rotate = orbit.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
+  useEffect(() => {
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+    setUnlockedCount(0);
+    setSequenceComplete(false);
+    setSpotlightIndex(0);
+    finalBurst.set(0);
 
-  const counterRotate = orbit.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '-360deg'],
-  });
+    if (!isActive) return;
+
+    if (reduceMotion) {
+      setUnlockedCount(orderedFeatures.length);
+      setSequenceComplete(true);
+      onAnimationCompleteRef.current?.();
+      return;
+    }
+
+    const unlockStart = 360;
+    const unlockStep = 320;
+    orderedFeatures.forEach((_, index) => {
+      timersRef.current.push(setTimeout(() => {
+        setUnlockedCount(index + 1);
+        if (Platform.OS === 'ios') {
+          Haptics.selectionAsync();
+        }
+
+        if (index === orderedFeatures.length - 1) {
+          const completeTimer = setTimeout(() => {
+            setSequenceComplete(true);
+            finalBurst.set(withSequence(
+              withTiming(1, { duration: 220, easing: ReanimatedEasing.out(ReanimatedEasing.quad) }),
+              withTiming(0, { duration: 720, easing: ReanimatedEasing.out(ReanimatedEasing.quad) }),
+            ));
+            if (Platform.OS === 'ios') {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            }
+            onAnimationCompleteRef.current?.();
+          }, 540);
+          timersRef.current.push(completeTimer);
+        }
+      }, unlockStart + index * unlockStep));
+    });
+
+    return () => {
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current = [];
+    };
+  }, [finalBurst, isActive, orderedFeatures, reduceMotion]);
+
+  useEffect(() => {
+    if (!isActive || reduceMotion || !sequenceComplete) return;
+    const spotlightTimer = setInterval(() => {
+      setSpotlightIndex((current) => (current + 1) % orderedFeatures.length);
+    }, 1800);
+    return () => clearInterval(spotlightTimer);
+  }, [isActive, orderedFeatures.length, reduceMotion, sequenceComplete]);
+
+  const orbitStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${orbit.get() * 360}deg` }],
+  }));
+
+  const burstRingStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(finalBurst.get(), [0, 0.18, 1], [0, 0.9, 0], Extrapolation.CLAMP),
+    transform: [{ scale: interpolate(finalBurst.get(), [0, 1], [0.86, 1.7], Extrapolation.CLAMP) }],
+  }));
 
   return (
     <View
       style={{
-        flex: 1,
+        flexGrow: 1,
         width: '100%',
         maxWidth: 430,
         alignSelf: 'center',
         alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: clamp(width * 0.06, 20, 28),
-        paddingVertical: clamp(height * 0.03, 18, 28),
+        paddingHorizontal: clamp(width * 0.055, 18, 24),
+        paddingTop: 18,
+        paddingBottom: 24,
       }}
       accessible
-      accessibilityLabel="Your BiteFix scanner is ready"
+      accessibilityLabel="BiteFix Intelligence full power"
     >
-      <Text
-        style={{
-          color: colors.text,
-          fontSize: clamp(width * 0.062, 23, 26),
-          lineHeight: clamp(width * 0.078, 30, 34),
-          fontWeight: '900',
-          letterSpacing: -0.45,
-          textAlign: 'center',
-          marginBottom: 7,
-        }}
-      >
-        Your BiteFix Scanner Is Ready
+      <Text style={{ color: GREEN, fontSize: 10.5, fontWeight: '900', letterSpacing: 2.3, textTransform: 'uppercase', textAlign: 'center', marginBottom: 7 }}>
+        BiteFix Intelligence
+      </Text>
+      <Text style={{ color: colors.text, fontSize: clamp(width * 0.092, 32, 38), lineHeight: clamp(width * 0.105, 38, 44), fontWeight: '900', letterSpacing: -1.2, textAlign: 'center' }}>
+        full power.
+      </Text>
+      <Text style={{ color: colors.textSecondary, fontSize: clamp(width * 0.036, 13, 14.5), lineHeight: clamp(width * 0.053, 19, 22), fontWeight: '500', textAlign: 'center', maxWidth: 330, marginTop: 8 }}>
+        Your personal food radar is fully online.
       </Text>
 
-      <Text
-        style={{
-          color: colors.textSecondary,
-          fontSize: clamp(width * 0.034, 12.5, 14),
-          lineHeight: clamp(width * 0.052, 19, 21),
-          fontWeight: '500',
-          textAlign: 'center',
-          maxWidth: 350,
-          marginBottom: clamp(height * 0.04, 28, 38),
-        }}
-      >
-        Scan a product and let BiteFix turn available food data into a clear snapshot.
-      </Text>
+      <View style={{ width: orbitDiameter, height: orbitDiameter, alignItems: 'center', justifyContent: 'center', marginTop: 22, marginBottom: 10 }}>
+        <Svg width={orbitDiameter} height={orbitDiameter} viewBox="0 0 100 100" style={{ position: 'absolute' }}>
+          <Defs>
+            <RadialGradient id="activationCoreGlow" cx="50%" cy="50%" rx="50%" ry="50%">
+              <Stop offset="0%" stopColor={GREEN_BRIGHT} stopOpacity={isDark ? 0.26 : 0.18} />
+              <Stop offset="72%" stopColor={GREEN} stopOpacity={isDark ? 0.08 : 0.04} />
+              <Stop offset="100%" stopColor={GREEN} stopOpacity="0" />
+            </RadialGradient>
+          </Defs>
+          <Circle cx="50" cy="50" r="48" fill="url(#activationCoreGlow)" />
+          <Circle cx="50" cy="50" r="46" fill="none" stroke={GREEN} strokeWidth="1.1" strokeDasharray="1.5 5.5" opacity={isDark ? 0.42 : 0.22} />
+          <Circle cx="50" cy="50" r="36" fill="none" stroke={GREEN_LIGHT} strokeWidth="1.2" strokeDasharray="28 196" strokeLinecap="round" opacity={isDark ? 0.75 : 0.55} />
+          <Circle cx="50" cy="50" r="29" fill="none" stroke="#E8C36A" strokeWidth="1.15" opacity={isDark ? 0.7 : 0.52} />
+        </Svg>
 
-      <View
-        style={{
-          width: radius * 2,
-          height: radius * 2,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: clamp(height * 0.03, 18, 28),
-        }}
-      >
-        <OrbMascot
-          state="happy"
-          size={orbSize}
-          reduceMotion={reduceMotion}
-          accessibilityLabel="Happy BiteFix scanner mascot"
-        />
+        <Reanimated.View pointerEvents="none" style={[{ position: 'absolute', width: orbSize + 34, height: orbSize + 34, borderRadius: (orbSize + 34) / 2, borderWidth: 2, borderColor: GREEN_LIGHT }, burstRingStyle]} />
 
-        <Animated.View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            width: radius * 2,
-            height: radius * 2,
-            transform: reduceMotion ? [] : [{ rotate }],
-          }}
-        >
-          {FINAL_FEATURE_PILLS.map((pill, index) => {
-            const angle = (index / FINAL_FEATURE_PILLS.length) * Math.PI * 2;
-            const r = radius - 16;
-            const x = Math.cos(angle) * r;
-            const y = Math.sin(angle) * r;
-
+        <Reanimated.View pointerEvents="none" style={[{ position: 'absolute', width: orbitRadius * 1.62, height: orbitRadius * 1.62, alignItems: 'center', justifyContent: 'center' }, orbitStyle]}>
+          {orderedFeatures.map((feature, index) => {
+            const angle = (index / orderedFeatures.length) * Math.PI * 2 - Math.PI / 2;
+            const x = Math.cos(angle) * orbitRadius;
+            const y = Math.sin(angle) * orbitRadius * 0.84;
             return (
-              <Animated.View
-                key={pill}
-                style={{
-                  position: 'absolute',
-                  left: radius + x - pillWidth / 2,
-                  top: radius + y - 12,
-                  width: pillWidth,
-                  alignItems: 'center',
-                  transform: reduceMotion ? [] : [{ rotate: counterRotate }],
-                }}
-              >
-                <View
-                  style={{
-                    minWidth: pillWidth,
-                    backgroundColor: isDark
-                      ? 'rgba(20, 24, 22, 0.95)'
-                      : 'rgba(255, 255, 255, 0.96)',
-                    borderRadius: 12,
-                    paddingHorizontal: 7,
-                    paddingVertical: 4,
-                    borderWidth: 1,
-                    borderColor: `${GREEN}50`,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: isDark ? 0.25 : 0.08,
-                    shadowRadius: 4,
-                    elevation: 2,
-                  }}
-                >
-                  <Text
-                    numberOfLines={1}
-                    style={{
-                      color: colors.text,
-                      fontSize: clamp(width * 0.024, 8.5, 9.5),
-                      fontWeight: '800',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {pill}
-                  </Text>
-                </View>
-              </Animated.View>
+              <View key={feature.id} style={{ position: 'absolute', left: orbitRadius + x - pillWidth / 2, top: orbitRadius + y - 23, width: pillWidth }}>
+                <ActivationPill
+                  feature={feature}
+                  isUnlocked={index < unlockedCount}
+                  isSpotlight={sequenceComplete && spotlightIndex === index}
+                  orbit={orbit}
+                  pillWidth={pillWidth}
+                  isDark={isDark}
+                  colors={colors}
+                  reduceMotion={reduceMotion}
+                />
+              </View>
             );
           })}
-        </Animated.View>
+        </Reanimated.View>
+
+        <View pointerEvents="none" style={{ position: 'absolute', width: orbSize + 30, height: orbSize + 30, alignItems: 'center', justifyContent: 'center' }}>
+          {BLOOM_PARTICLES.map((particle, index) => <BloomParticle key={index} {...particle} burst={finalBurst} />)}
+        </View>
+
+        <View style={{ zIndex: 4, alignItems: 'center', justifyContent: 'center' }}>
+          <OrbMascot
+            state={sequenceComplete ? 'happy' : 'thinking'}
+            size={orbSize}
+            reduceMotion={reduceMotion}
+            accessibilityLabel={sequenceComplete ? 'BiteFix Intelligence fully powered' : 'BiteFix Intelligence powering up'}
+          />
+        </View>
       </View>
 
-      <Text
-        style={{
-          color: GREEN,
-          fontSize: 10.5,
-          fontWeight: '900',
-          letterSpacing: 2.3,
-          textTransform: 'uppercase',
-          textAlign: 'center',
-          marginBottom: 20,
-        }}
-      >
-        Ready when you are
+      <Text style={{ color: sequenceComplete ? GREEN : colors.textMuted, fontSize: 10.5, fontWeight: '900', letterSpacing: 2.1, textTransform: 'uppercase', textAlign: 'center', marginTop: 6 }}>
+        {sequenceComplete ? '7 features online' : `${unlockedCount} / ${orderedFeatures.length} unlocking`}
       </Text>
-
-      {/* Profile scan result card rendered directly below the mascot */}
-      <View style={{ width: '100%', marginTop: 8 }}>
-        <MomentResultCard colors={colors} isDark={isDark} selected={selected} />
-      </View>
+      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textAlign: 'center', marginTop: 8 }}>
+        {sequenceComplete ? 'Your scanner is tuned to you.' : 'Calibrating your food intelligence.'}
+      </Text>
     </View>
   );
 }

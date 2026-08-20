@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Animated,
+  Keyboard,
   KeyboardAvoidingView,
   Easing,
   Image,
@@ -17,7 +18,7 @@ import {
   StatusBar,
   useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useTheme } from '../../hooks/useTheme';
@@ -362,8 +363,7 @@ function WelcomeScreen({ colors, isDark, isActive, reduceMotion }: { colors: any
 // ══════════════════════════════════════════════════════════
 export default function OnboardingScreen() {
   const { colors, isDark } = useTheme();
-  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
   const {
     setOnboardingComplete,
     setProfile,
@@ -384,6 +384,7 @@ export default function OnboardingScreen() {
   const [ingredientReadingFrequency, setIngredientReadingFrequency] = useState<IngredientReadingFrequency>();
   const [revelationComplete, setRevelationComplete] = useState(false);
   const [synthesisComplete, setSynthesisComplete] = useState(false);
+  const [activationComplete, setActivationComplete] = useState(false);
 
   const reduceMotion = useReduceMotion();
   const pagerRef = useRef<any>(null);
@@ -429,6 +430,8 @@ export default function OnboardingScreen() {
       setRevelationComplete(false);
     } else if (currentScreen === 7) {
       setSynthesisComplete(false);
+    } else if (currentScreen === 8) {
+      setActivationComplete(false);
     }
   }, [currentScreen]);
 
@@ -526,6 +529,7 @@ export default function OnboardingScreen() {
 
   const handleNext = useCallback(() => {
     if (pagingLockRef.current) return;
+    Keyboard.dismiss();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (currentScreen < TOTAL_SCREENS - 1) {
       goTo(currentScreen + 1);
@@ -537,6 +541,7 @@ export default function OnboardingScreen() {
   const handleBack = useCallback(() => {
     if (pagingLockRef.current) return;
     if (currentScreen > 0) {
+      Keyboard.dismiss();
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       goTo(currentScreen - 1);
     }
@@ -555,6 +560,9 @@ export default function OnboardingScreen() {
     if (screen === 7) {
       return synthesisComplete ? "Let's Continue" : 'Configuring Engine';
     }
+    if (screen === 8) {
+      return activationComplete ? 'Activate BiteFix' : 'Unlocking intelligence';
+    }
     return ONBOARDING_CTA_LABELS[screen] ?? 'Continue';
   };
 
@@ -566,7 +574,7 @@ export default function OnboardingScreen() {
       case 0:
         return <WelcomeScreen colors={colors} isDark={isDark} isActive={isActive} reduceMotion={screenReduceMotion} />;
       case 1:
-        return <FlagshipIdentityScreen name={name} onChange={setName} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
+        return <FlagshipIdentityScreen name={name} onChange={setName} onSubmit={() => { if (name.trim().length >= 1) handleNext(); }} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       case 2:
         return <FlagshipLabelReadingScreen selected={labelReadingFrequency} onSelect={setLabelReadingFrequency} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       case 3:
@@ -608,6 +616,7 @@ export default function OnboardingScreen() {
             reduceMotion={screenReduceMotion}
             isActive={isActive}
             selected={priorities}
+            onAnimationComplete={() => setActivationComplete(true)}
           />
         );
       default:
@@ -628,7 +637,8 @@ export default function OnboardingScreen() {
       (screen === 4 && !revelationComplete) ||
       (screen === 5 && allergens.length === 0) ||
       (screen === 6 && priorities.length === 0) ||
-      (screen === 7 && !synthesisComplete);
+      (screen === 7 && !synthesisComplete) ||
+      (screen === 8 && !activationComplete);
     const disabledBg = isDark ? '#153622ff' : '#F0F4F1';
     const disabledBorder = isDark ? 'rgba(167, 231, 63, 0.1)' : 'rgba(7, 25, 15, 0.08)';
     const disabledText = isDark ? 'rgba(172, 172, 172, 0.59)' : 'rgba(6, 33, 18, 0.42)';
@@ -642,37 +652,51 @@ export default function OnboardingScreen() {
               <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600' }}>Back</Text>
             </TouchableOpacity>
 
-            <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-              {Array.from({ length: TOTAL_SCREENS }).map((_, i) => (
-                <View key={i} style={{ width: i === screen ? 18 : 6, height: 6, borderRadius: 3, backgroundColor: i === screen ? GREEN : colors.textMuted + '50' }} />
-              ))}
+            <View style={{
+              backgroundColor: isDark ? 'rgba(52, 216, 115, 0.12)' : '#EAF8EE',
+              paddingHorizontal: 12,
+              paddingVertical: 5,
+              borderRadius: 999,
+              borderWidth: 1,
+              borderColor: isDark ? 'rgba(52, 216, 115, 0.25)' : 'rgba(1, 146, 42, 0.15)',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Text style={{
+                color: isDark ? '#34d873' : '#01922a',
+                fontSize: 12,
+                fontWeight: '900',
+                letterSpacing: 0.2,
+              }}>
+                Step {screen + 1} of {TOTAL_SCREENS}
+              </Text>
             </View>
 
-            <Text style={{ color: colors.textMuted, fontSize: 12, fontWeight: '600', width: 52, textAlign: 'right' }}>
-              {screen + 1}/{TOTAL_SCREENS}
-            </Text>
+            <View style={{ width: 52 }} />
           </View>
         )}
 
-        <View style={{ flex: 1 }}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
           <ScrollView
             style={{ flex: 1 }}
             contentContainerStyle={{
               flexGrow: 1,
-              minHeight: Math.max(0, screenHeight - insets.top - insets.bottom - (screen > 0 ? 42 : 0) - 100),
               paddingBottom: 18,
             }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
-            automaticallyAdjustKeyboardInsets
+            automaticallyAdjustKeyboardInsets={false}
             nestedScrollEnabled
             bounces={false}
             scrollEnabled
           >
             {renderScreenContent(screen)}
           </ScrollView>
-        </View>
+        </KeyboardAvoidingView>
 
         <View style={{ paddingHorizontal: Math.max(18, Math.min(24, screenWidth * 0.0615)), paddingBottom: 18, paddingTop: 12 }}>
           <TouchableOpacity
@@ -739,10 +763,7 @@ export default function OnboardingScreen() {
   const pageWidth = Math.max(screenWidth, 1);
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: colors.background }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
         <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
@@ -770,6 +791,6 @@ export default function OnboardingScreen() {
           ))}
         </ScrollView>
       </SafeAreaView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
