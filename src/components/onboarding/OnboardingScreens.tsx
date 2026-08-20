@@ -1703,6 +1703,25 @@ function MascotScoreRingTeaser({
   }, [glowFlash, mascotPop, sparkVal, stampOpacity, stampScale]);
 
   useEffect(() => {
+    if (!isActive) {
+      progressAnim.stopAnimation();
+      ringScaleAnim.stopAnimation();
+      scoreRevealAnim.stopAnimation();
+      badgeLiftAnim.stopAnimation();
+      progressAnim.setValue(0);
+      ringScaleAnim.setValue(0.94);
+      scoreRevealAnim.setValue(0);
+      badgeLiftAnim.setValue(8);
+      stampScale.setValue(0);
+      stampOpacity.setValue(0);
+      sparkVal.setValue(0);
+      glowFlash.setValue(0);
+      setDisplayedScore(0);
+      setLanded(false);
+      hasRunRef.current = false;
+      return;
+    }
+
     if (reduceMotion) {
       progressAnim.stopAnimation();
       ringScaleAnim.stopAnimation();
@@ -1720,25 +1739,6 @@ function MascotScoreRingTeaser({
       if (onAnimationComplete) {
         onAnimationComplete();
       }
-      return;
-    }
-
-    if (!isActive) {
-      progressAnim.stopAnimation();
-      ringScaleAnim.stopAnimation();
-      scoreRevealAnim.stopAnimation();
-      badgeLiftAnim.stopAnimation();
-      progressAnim.setValue(0);
-      ringScaleAnim.setValue(0.94);
-      scoreRevealAnim.setValue(0);
-      badgeLiftAnim.setValue(8);
-      stampScale.setValue(0);
-      stampOpacity.setValue(0);
-      sparkVal.setValue(0);
-      glowFlash.setValue(0);
-      setDisplayedScore(0);
-      setLanded(false);
-      hasRunRef.current = false;
       return;
     }
 
@@ -2156,15 +2156,15 @@ function SynthesisRing({
   const counterDashoffset = useRef(new Animated.Value(164.93)).current;
 
   useEffect(() => {
-    if (reduceMotion) {
-      mainDashoffset.setValue(0);
-      counterDashoffset.setValue(0);
-      return;
-    }
-
     if (!isActive) {
       mainDashoffset.setValue(69.12);
       counterDashoffset.setValue(164.93);
+      return;
+    }
+
+    if (reduceMotion) {
+      mainDashoffset.setValue(0);
+      counterDashoffset.setValue(0);
       return;
     }
 
@@ -2438,20 +2438,20 @@ function SynthesisCard({
   const isComplete = state === 'complete';
 
   useEffect(() => {
-    if (reduceMotion) {
-      cardOpacity.setValue(1);
-      cardTranslateY.setValue(0);
-      checkScale.setValue(1);
-      detailOpacity.setValue(1);
-      return;
-    }
-
     if (!isActive) {
       cardOpacity.setValue(0);
       cardTranslateY.setValue(14);
       checkScale.setValue(0.3);
       flashOpacity.setValue(0);
       detailOpacity.setValue(0);
+      return;
+    }
+
+    if (reduceMotion) {
+      cardOpacity.setValue(1);
+      cardTranslateY.setValue(0);
+      checkScale.setValue(1);
+      detailOpacity.setValue(1);
       return;
     }
 
@@ -2651,17 +2651,17 @@ function ScannerDossier({
   const rowAnims = [row1Opacity, row2Opacity, row3Opacity, row4Opacity, row5Opacity];
 
   useEffect(() => {
-    if (reduceMotion) {
-      dossierOpacity.setValue(1);
-      dossierScale.setValue(1);
-      rowAnims.forEach(v => v.setValue(1));
-      return;
-    }
-
     if (!isActive) {
       dossierOpacity.setValue(0);
       dossierScale.setValue(0.96);
       rowAnims.forEach(v => v.setValue(0));
+      return;
+    }
+
+    if (reduceMotion) {
+      dossierOpacity.setValue(1);
+      dossierScale.setValue(1);
+      rowAnims.forEach(v => v.setValue(1));
       return;
     }
 
@@ -2905,6 +2905,16 @@ export function MomentOfTruthScreen({
   const [dossierShown, setDossierShown] = useState(false);
 
   useEffect(() => {
+    if (!isActive) {
+      setCSters.forEach(fn => fn('pending'));
+      setPhase('synthesizing');
+      setDossierShown(false);
+      title1Opacity.setValue(1);
+      title2Opacity.setValue(0);
+      checklistOpacity.setValue(1);
+      return;
+    }
+
     if (reduceMotion) {
       setCSters.forEach(fn => fn('complete'));
       setPhase('complete');
@@ -2915,16 +2925,6 @@ export function MomentOfTruthScreen({
       if (onAnimationComplete) {
         onAnimationComplete();
       }
-      return;
-    }
-
-    if (!isActive) {
-      setCSters.forEach(fn => fn('pending'));
-      setPhase('synthesizing');
-      setDossierShown(false);
-      title1Opacity.setValue(1);
-      title2Opacity.setValue(0);
-      checklistOpacity.setValue(1);
       return;
     }
 
@@ -3086,12 +3086,12 @@ type ActivationFeature = {
 };
 
 const ACTIVATION_FEATURES: ActivationFeature[] = [
-  { id: 'processing', label: 'Processing check', icon: Package, priority: 'ultra_processed' },
-  { id: 'nutrition', label: 'Nutrition insight', icon: Activity, priority: 'nutrition' },
-  { id: 'allergens', label: 'Allergen guard', icon: ShieldCheck },
-  { id: 'ingredients', label: 'Ingredient clarity', icon: Sparkles, priority: 'ingredients' },
-  { id: 'additives', label: 'Additive check', icon: Check },
-  { id: 'sugar', label: 'Sugar signal', icon: Droplets, priority: 'sugar' },
+  { id: 'processing', label: 'Processing', icon: Package, priority: 'ultra_processed' },
+  { id: 'nutrition', label: 'Nutrition', icon: Activity, priority: 'nutrition' },
+  { id: 'allergens', label: 'Allergens', icon: ShieldCheck },
+  { id: 'ingredients', label: 'Ingredients', icon: Sparkles, priority: 'ingredients' },
+  { id: 'additives', label: 'Additives', icon: Check },
+  { id: 'sugar', label: 'Sugar', icon: Droplets, priority: 'sugar' },
   { id: 'eco', label: 'Eco impact', icon: Leaf, priority: 'environment' },
 ];
 
@@ -3220,7 +3220,7 @@ function ActivationPill({
           <View style={{ width: 22, height: 22, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: isUnlocked ? (isDark ? 'rgba(111,227,139,0.16)' : '#DDF5E5') : (isDark ? 'rgba(255,255,255,0.07)' : '#F1F4F1') }}>
             <Icon size={13} color={isUnlocked ? (isDark ? GREEN_LIGHT : GREEN) : colors.textMuted} strokeWidth={2.5} />
           </View>
-          <Text style={{ flex: 1, color: isUnlocked ? colors.text : colors.textMuted, fontSize: 10.5, lineHeight: 14, fontWeight: '900', letterSpacing: -0.1 }}>
+          <Text numberOfLines={1} style={{ flex: 1, color: isUnlocked ? colors.text : colors.textMuted, fontSize: 10.25, lineHeight: 14, fontWeight: '900', letterSpacing: -0.1 }}>
             {feature.label}
           </Text>
           <View style={{ width: 15, height: 15, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: isUnlocked ? (isDark ? GREEN : '#EAF8EE') : (isDark ? 'rgba(255,255,255,0.08)' : '#F0F3F0') }}>
@@ -3245,6 +3245,80 @@ function BloomParticle({ x, y, color, size, burst }: { x: number; y: number; col
   return <Reanimated.View pointerEvents="none" style={[{ position: 'absolute', left: '50%', top: '50%', marginLeft: -size / 2, marginTop: -size / 2, width: size, height: size, borderRadius: size / 2, backgroundColor: color }, style]} />;
 }
 
+function ActivationStatus({
+  unlockedCount,
+  total,
+  sequenceComplete,
+  spotlightLabel,
+  colors,
+  isDark,
+}: {
+  unlockedCount: number;
+  total: number;
+  sequenceComplete: boolean;
+  spotlightLabel: string;
+  colors: any;
+  isDark: boolean;
+}) {
+  return (
+    <View
+      style={{
+        width: '100%',
+        maxWidth: 340,
+        paddingHorizontal: 16,
+        paddingVertical: 13,
+        borderRadius: 21,
+        borderWidth: 1,
+        borderColor: sequenceComplete
+          ? (isDark ? 'rgba(111,227,139,0.34)' : 'rgba(1,146,42,0.22)')
+          : (isDark ? 'rgba(255,255,255,0.10)' : 'rgba(7,25,15,0.09)'),
+        backgroundColor: sequenceComplete
+          ? (isDark ? 'rgba(52,216,115,0.10)' : '#F1FAF3')
+          : (isDark ? 'rgba(255,255,255,0.035)' : 'rgba(255,255,255,0.72)'),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: isDark ? 0.18 : 0.05,
+        shadowRadius: 12,
+        elevation: 2,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <View>
+          <Text style={{ color: colors.textMuted, fontSize: 9.5, fontWeight: '900', letterSpacing: 1.5, textTransform: 'uppercase' }}>
+            Unlock status
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 1 }}>
+            <Text style={{ color: colors.text, fontSize: 36, lineHeight: 39, fontWeight: '900', fontVariant: ['tabular-nums'], letterSpacing: -1.2 }}>
+              {String(unlockedCount).padStart(2, '0')}
+            </Text>
+            <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '800', marginLeft: 4 }}>
+              / {String(total).padStart(2, '0')}
+            </Text>
+          </View>
+        </View>
+
+        <View style={{ alignItems: 'flex-end', maxWidth: 168 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: sequenceComplete ? GREEN : colors.textMuted }} />
+            <Text style={{ color: sequenceComplete ? GREEN : colors.textSecondary, fontSize: 10, fontWeight: '900', letterSpacing: 1.1, textTransform: 'uppercase' }}>
+              {sequenceComplete ? 'Full power' : 'Powering up'}
+            </Text>
+          </View>
+          <Text numberOfLines={1} style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', marginTop: 5 }}>
+            {sequenceComplete ? `Live spotlight · ${spotlightLabel}` : `Next signal · ${spotlightLabel}`}
+          </Text>
+        </View>
+      </View>
+
+      <View style={{ flexDirection: 'row', gap: 4, marginTop: 11 }}>
+        {Array.from({ length: total }).map((_, index) => (
+          <View key={index} style={{ flex: 1, height: 5, borderRadius: 3, backgroundColor: index < unlockedCount ? (sequenceComplete ? GREEN : GREEN_LIGHT) : (isDark ? 'rgba(255,255,255,0.12)' : '#DCE7DF') }} />
+        ))}
+      </View>
+    </View>
+  );
+}
+
 export function FinalActivationScreen({
   colors,
   isDark,
@@ -3262,9 +3336,9 @@ export function FinalActivationScreen({
 }) {
   const { width } = useWindowDimensions();
   const compact = width < 360;
-  const orbitRadius = clamp(width * 0.34, compact ? 100 : 110, 128);
+  const orbitRadius = clamp(width * 0.32, compact ? 96 : 110, 124);
   const orbitDiameter = orbitRadius * 2;
-  const pillWidth = clamp(width * 0.27, compact ? 96 : 102, 112);
+  const pillWidth = clamp(width * 0.29, 112, 126);
   const orbSize = Math.round(clamp(width * 0.22, 76, 92));
 
   const orderedFeatures = useMemo(() => {
@@ -3396,7 +3470,7 @@ export function FinalActivationScreen({
         Your personal food radar is fully online.
       </Text>
 
-      <View style={{ width: orbitDiameter, height: orbitDiameter, alignItems: 'center', justifyContent: 'center', marginTop: 22, marginBottom: 10 }}>
+      <View style={{ width: orbitDiameter, height: orbitDiameter, alignItems: 'center', justifyContent: 'center', marginTop: 36, marginBottom: 10 }}>
         <Svg width={orbitDiameter} height={orbitDiameter} viewBox="0 0 100 100" style={{ position: 'absolute' }}>
           <Defs>
             <RadialGradient id="activationCoreGlow" cx="50%" cy="50%" rx="50%" ry="50%">
@@ -3449,12 +3523,14 @@ export function FinalActivationScreen({
         </View>
       </View>
 
-      <Text style={{ color: sequenceComplete ? GREEN : colors.textMuted, fontSize: 10.5, fontWeight: '900', letterSpacing: 2.1, textTransform: 'uppercase', textAlign: 'center', marginTop: 6 }}>
-        {sequenceComplete ? '7 features online' : `${unlockedCount} / ${orderedFeatures.length} unlocking`}
-      </Text>
-      <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textAlign: 'center', marginTop: 8 }}>
-        {sequenceComplete ? 'Your scanner is tuned to you.' : 'Calibrating your food intelligence.'}
-      </Text>
+      <ActivationStatus
+        unlockedCount={unlockedCount}
+        total={orderedFeatures.length}
+        sequenceComplete={sequenceComplete}
+        spotlightLabel={orderedFeatures[sequenceComplete ? spotlightIndex : Math.min(unlockedCount, orderedFeatures.length - 1)]?.label ?? 'Core scan'}
+        colors={colors}
+        isDark={isDark}
+      />
     </View>
   );
 }

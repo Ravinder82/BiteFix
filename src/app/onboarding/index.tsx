@@ -644,42 +644,39 @@ export default function OnboardingScreen() {
     const disabledText = isDark ? 'rgba(172, 172, 172, 0.59)' : 'rgba(6, 33, 18, 0.42)';
 
     return (
-      <View style={{ width: screenWidth, height: '100%' }}>
-        {screen > 0 && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 }}>
-            <TouchableOpacity onPress={handleBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4 }}>
-              <ChevronLeft size={18} color={colors.textSecondary} strokeWidth={2} />
-              <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600' }}>Back</Text>
-            </TouchableOpacity>
+      <View style={{ flex: 1, width: screenWidth }}>
+        <View style={{ flex: 1, width: '100%' }}>
+          {screen > 0 && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 }}>
+              <TouchableOpacity onPress={handleBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4 }}>
+                <ChevronLeft size={18} color={colors.textSecondary} strokeWidth={2} />
+                <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600' }}>Back</Text>
+              </TouchableOpacity>
 
-            <View style={{
-              backgroundColor: isDark ? 'rgba(52, 216, 115, 0.12)' : '#EAF8EE',
-              paddingHorizontal: 12,
-              paddingVertical: 5,
-              borderRadius: 999,
-              borderWidth: 1,
-              borderColor: isDark ? 'rgba(52, 216, 115, 0.25)' : 'rgba(1, 146, 42, 0.15)',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <Text style={{
-                color: isDark ? '#34d873' : '#01922a',
-                fontSize: 12,
-                fontWeight: '900',
-                letterSpacing: 0.2,
+              <View style={{
+                backgroundColor: isDark ? 'rgba(52, 216, 115, 0.12)' : '#EAF8EE',
+                paddingHorizontal: 12,
+                paddingVertical: 5,
+                borderRadius: 999,
+                borderWidth: 1,
+                borderColor: isDark ? 'rgba(52, 216, 115, 0.25)' : 'rgba(1, 146, 42, 0.15)',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}>
-                Step {screen + 1} of {TOTAL_SCREENS}
-              </Text>
+                <Text style={{
+                  color: isDark ? '#34d873' : '#01922a',
+                  fontSize: 12,
+                  fontWeight: '900',
+                  letterSpacing: 0.2,
+                }}>
+                  Step {screen + 1} of {TOTAL_SCREENS}
+                </Text>
+              </View>
+
+              <View style={{ width: 52 }} />
             </View>
+          )}
 
-            <View style={{ width: 52 }} />
-          </View>
-        )}
-
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
           <ScrollView
             style={{ flex: 1 }}
             contentContainerStyle={{
@@ -696,65 +693,65 @@ export default function OnboardingScreen() {
           >
             {renderScreenContent(screen)}
           </ScrollView>
-        </KeyboardAvoidingView>
 
-        <View style={{ paddingHorizontal: Math.max(18, Math.min(24, screenWidth * 0.0615)), paddingBottom: 18, paddingTop: 12 }}>
-          <TouchableOpacity
-            onPress={screen === TOTAL_SCREENS - 1 ? handleComplete : handleNext}
-            disabled={ctaDisabled}
-            activeOpacity={0.88}
-            style={{
-              backgroundColor: ctaDisabled ? disabledBg : (isDark ? '#06180E' : '#07190F'),
-              borderRadius: 20,
-              minHeight: 62,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'row',
-              gap: 8,
-              overflow: 'hidden',
-              position: 'relative',
-              borderWidth: 1.5,
-              borderColor: ctaDisabled ? disabledBorder : 'rgba(163,230,53,0.40)',
-              shadowColor: ctaDisabled ? 'transparent' : (isDark ? '#000000' : '#0A2B14'),
-              shadowOffset: { width: 0, height: ctaDisabled ? 2 : 8 },
-              shadowOpacity: ctaDisabled ? 0.05 : 0.35,
-              shadowRadius: ctaDisabled ? 6 : 16,
-              elevation: ctaDisabled ? 1 : 6,
-            }}
-          >
-            {/* Shimmer sweep animation (Safe nested Animated.View for native driver support) */}
-            {!ctaDisabled && !reduceMotion && (
-              <Animated.View
-                pointerEvents="none"
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  bottom: 0,
-                  width: 190,
-                  transform: [
-                    {
-                      translateX: shimmerAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [-190, screenWidth + 60],
-                      }),
-                    },
-                    { skewX: '-22deg' },
-                  ],
-                }}
-              >
-                <LinearGradient
-                  colors={['transparent', 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.45)', 'rgba(255,255,255,0.08)', 'transparent']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={{ width: '100%', height: '100%' }}
-                />
-              </Animated.View>
-            )}
-            <Text style={{ color: ctaDisabled ? disabledText : '#ffffffff', fontSize: 16.5, fontWeight: '900', letterSpacing: 0.2 }}>
-              {getCtaLabel(screen)}
-            </Text>
-            <ChevronRight size={19} color={ctaDisabled ? disabledText : '#FFFFFF'} strokeWidth={2.6} />
-          </TouchableOpacity>
+          <View style={{ paddingHorizontal: Math.max(18, Math.min(24, screenWidth * 0.0615)), paddingBottom: 18, paddingTop: 12 }}>
+            <TouchableOpacity
+              onPress={screen === TOTAL_SCREENS - 1 ? handleComplete : handleNext}
+              disabled={ctaDisabled}
+              activeOpacity={0.88}
+              style={{
+                backgroundColor: ctaDisabled ? disabledBg : (isDark ? '#06180E' : '#07190F'),
+                borderRadius: 20,
+                minHeight: 62,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+                gap: 8,
+                overflow: 'hidden',
+                position: 'relative',
+                borderWidth: 1.5,
+                borderColor: ctaDisabled ? disabledBorder : 'rgba(163,230,53,0.40)',
+                shadowColor: ctaDisabled ? 'transparent' : (isDark ? '#000000' : '#0A2B14'),
+                shadowOffset: { width: 0, height: ctaDisabled ? 2 : 8 },
+                shadowOpacity: ctaDisabled ? 0.05 : 0.35,
+                shadowRadius: ctaDisabled ? 6 : 16,
+                elevation: ctaDisabled ? 1 : 6,
+                width: '100%',
+              }}
+            >
+              {!ctaDisabled && !reduceMotion && (
+                <Animated.View
+                  pointerEvents="none"
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    bottom: 0,
+                    width: 190,
+                    transform: [
+                      {
+                        translateX: shimmerAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [-190, screenWidth + 60],
+                        }),
+                      },
+                      { skewX: '-22deg' },
+                    ],
+                  }}
+                >
+                  <LinearGradient
+                    colors={['transparent', 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.45)', 'rgba(255,255,255,0.08)', 'transparent']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                </Animated.View>
+              )}
+              <Text style={{ color: ctaDisabled ? disabledText : '#ffffffff', fontSize: 16.5, fontWeight: '900', letterSpacing: 0.2 }}>
+                {getCtaLabel(screen)}
+              </Text>
+              <ChevronRight size={19} color={ctaDisabled ? disabledText : '#FFFFFF'} strokeWidth={2.6} />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );
@@ -763,7 +760,10 @@ export default function OnboardingScreen() {
   const pageWidth = Math.max(screenWidth, 1);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
         <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
 
@@ -791,6 +791,6 @@ export default function OnboardingScreen() {
           ))}
         </ScrollView>
       </SafeAreaView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
