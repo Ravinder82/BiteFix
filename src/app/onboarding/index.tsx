@@ -358,9 +358,6 @@ function WelcomeScreen({ colors, isDark, isActive, reduceMotion }: { colors: any
           Start <Text style={{ fontWeight: '900', color: GREEN }}>Scanning</Text>.{'\n'}
           Get <Text style={{ fontWeight: '900', color: GREEN }}>Instant Insights</Text>.
         </Text>
-        <Text style={{ color: colors.textSecondary, fontSize: 13.5, fontWeight: '600', textAlign: 'center', lineHeight: 20, maxWidth: 370, marginTop: 12 }}>
-          Scan any barcode. See the NOVA Score, Additives, Nutritional Value and more. In seconds!
-        </Text>
       </View>
     </View>
   );
@@ -724,17 +721,14 @@ export default function OnboardingScreen() {
               disabled={ctaDisabled}
               activeOpacity={0.88}
               style={{
-                backgroundColor: ctaDisabled ? disabledBg : (isDark ? '#06180E' : '#07190F'),
                 borderRadius: 20,
                 minHeight: 62,
-                alignItems: 'center',
+                alignItems: 'stretch',
                 justifyContent: 'center',
-                flexDirection: 'row',
-                gap: 8,
                 overflow: 'hidden',
                 position: 'relative',
                 borderWidth: 1.5,
-                borderColor: ctaDisabled ? disabledBorder : 'rgba(163,230,53,0.40)',
+                borderColor: ctaDisabled ? disabledBorder : 'rgba(20, 174, 151, 0.38)',
                 shadowColor: ctaDisabled ? 'transparent' : (isDark ? '#000000' : '#0A2B14'),
                 shadowOffset: { width: 0, height: ctaDisabled ? 2 : 8 },
                 shadowOpacity: ctaDisabled ? 0.05 : 0.35,
@@ -743,37 +737,53 @@ export default function OnboardingScreen() {
                 width: '100%',
               }}
             >
-              {!ctaDisabled && !reduceMotion && (
-                <Animated.View
-                  pointerEvents="none"
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    bottom: 0,
-                    width: 190,
-                    transform: [
-                      {
-                        translateX: shimmerAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [-190, screenWidth + 60],
-                        }),
-                      },
-                      { skewX: '-22deg' },
-                    ],
-                  }}
-                >
-                  <LinearGradient
-                    colors={['transparent', 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.45)', 'rgba(255,255,255,0.08)', 'transparent']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={{ width: '100%', height: '100%' }}
-                  />
-                </Animated.View>
-              )}
-              <Text style={{ color: ctaDisabled ? disabledText : '#ffffffff', fontSize: 16.5, fontWeight: '900', letterSpacing: 0.2 }}>
-                {getCtaLabel(screen)}
-              </Text>
-              <ChevronRight size={19} color={ctaDisabled ? disabledText : '#FFFFFF'} strokeWidth={2.6} />
+              <LinearGradient
+                colors={ctaDisabled
+                  ? [disabledBg, disabledBg]
+                  : (isDark ? ['#157d53ff', '#062618ff'] : ['#1ed988ff', '#000000ff'])}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={{
+                  flex: 1,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  paddingHorizontal: 16,
+                }}
+              >
+                {!ctaDisabled && !reduceMotion && (
+                  <Animated.View
+                    pointerEvents="none"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      bottom: 0,
+                      width: 190,
+                      transform: [
+                        {
+                          translateX: shimmerAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [-190, screenWidth + 60],
+                          }),
+                        },
+                        { skewX: '-22deg' },
+                      ],
+                    }}
+                  >
+                    <LinearGradient
+                      colors={['transparent', 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.45)', 'rgba(255,255,255,0.08)', 'transparent']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={{ width: '100%', height: '100%' }}
+                    />
+                  </Animated.View>
+                )}
+                <Text style={{ color: ctaDisabled ? disabledText : '#ffffffff', fontSize: 16.5, fontWeight: '900', letterSpacing: 0.2 }}>
+                  {getCtaLabel(screen)}
+                </Text>
+                <ChevronRight size={19} color={ctaDisabled ? disabledText : '#FFFFFF'} strokeWidth={2.6} />
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </View>
