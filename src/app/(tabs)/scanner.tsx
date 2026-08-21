@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
@@ -10,6 +9,7 @@ import {
   AppState,
   AppStateStatus,
 } from 'react-native';
+import { Text } from '../../components/Text';
 import { useIsFocused } from '@react-navigation/native';
 import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
 import AnimatedReanimated, {

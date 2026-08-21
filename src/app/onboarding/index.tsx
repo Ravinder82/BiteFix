@@ -5,7 +5,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
-  Text,
   Platform,
   TouchableOpacity,
   ScrollView,
@@ -18,6 +17,7 @@ import {
   StatusBar,
   useWindowDimensions,
 } from 'react-native';
+import { Text } from '../../components/Text';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';

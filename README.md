@@ -117,8 +117,8 @@ eas update --branch production --message "description"
 ### Paywall
 RevenueCat-powered subscription with Monthly and Annual plans. Annual plan shown at 50% off. Introductory offers managed via App Store Connect.
 
-### Asset Preloading
-All carousel images and the welcome background are prefetched via `Asset.loadAsync` during onboarding so the home screen renders instantly with zero lag.
+### Asset Loading
+Carousel images load through `expo-image` with memory-disk caching, so artwork is cached after the first launch. There is no explicit preloading step.
 
 ---
 

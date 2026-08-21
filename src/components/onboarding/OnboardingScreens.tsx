@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Platform, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Animated, Easing, Platform, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Text } from '../Text';
 import { Activity, Check, Droplets, Leaf, ListChecks, Package, ShieldCheck, ShoppingBag, Sparkles, UserRound, Zap } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Svg, { Circle, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';

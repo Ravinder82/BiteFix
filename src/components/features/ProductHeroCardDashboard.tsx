@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Animated as RNAnimated } from 'react-native';
+import { View, TouchableOpacity, Animated as RNAnimated } from 'react-native';
+import { Text } from '../Text';
 import { Image } from 'expo-image';
 import { Bookmark, Trash2, Droplets, AlertOctagon } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';

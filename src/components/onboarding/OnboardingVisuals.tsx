@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, Text, View, useWindowDimensions } from 'react-native';
+import { Animated, Easing, View, useWindowDimensions } from 'react-native';
+import { Text } from '../Text';
 import { Activity, Droplets, Leaf, Package, ShieldCheck } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { OnboardingPriority } from '../../types/onboarding.types';

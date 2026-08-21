@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '../Text';
 import { BarChart2, Activity, ShieldAlert, CheckCircle2, AlertCircle } from 'lucide-react-native';
 import { NutritionIntelligenceData, NutritionInsightItem } from '../../types/app.types';
 

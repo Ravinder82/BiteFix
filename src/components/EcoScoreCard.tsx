@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Text } from './Text';
 import { Globe, Leaf, CheckCircle } from 'lucide-react-native';
 import { useTheme } from '../hooks/useTheme';
 import Animated, {

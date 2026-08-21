@@ -7,14 +7,14 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { AppState, type AppStateStatus } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
-import { useFonts, Inter_300Light, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold, Inter_900Black } from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // Removed unsafe defaultProps mutation. Use custom Text component for styling.
 
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
+import { Text } from '../components/Text';
 
 class GlobalErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -59,21 +59,11 @@ class GlobalErrorBoundary extends React.Component<
 export default function RootLayout() {
   const { theme, colors, isDark } = useTheme();
 
-  const [fontsLoaded, fontError] = useFonts({
-    Inter_300Light,
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
-    Inter_800ExtraBold,
-    Inter_900Black,
-  });
-
+  // No custom fonts to load — the app renders in the native system font
+  // (SF Pro on iOS), so the splash screen can hide immediately.
   useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync().catch(() => {});
-    }
-  }, [fontsLoaded, fontError]);
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
 
   // ── Canonical One-Time RevenueCat Initialization ──────────────────────
   // Configures RevenueCat Purchases exactly once per app session on startup
@@ -122,12 +112,7 @@ export default function RootLayout() {
     return () => subscription.remove();
   }, []);
 
-  if (!fontsLoaded && !fontError) {
-    return null;
-  }
-
-  return (
-    <GlobalErrorBoundary>
+  return (    <GlobalErrorBoundary>
       <SafeAreaProvider>
         <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
           <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>

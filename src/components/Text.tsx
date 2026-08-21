@@ -3,9 +3,12 @@ import { Text as RNText, TextProps as RNTextProps, TextStyle } from 'react-nativ
 
 export interface TextProps extends RNTextProps {}
 
+// System-font pipeline: SF Pro on iOS, platform system font elsewhere.
+// No custom fontFamily is ever set — numeric fontWeight passes through to the
+// system font, which resolves genuine ultra-light…black weights natively.
 export const Text: React.FC<TextProps> = (props) => {
   const { style, ...rest } = props;
-  
+
   // Resolve styles into a flat object
   const flatStyle = React.useMemo(() => {
     if (!style) return {};
@@ -14,31 +17,6 @@ export const Text: React.FC<TextProps> = (props) => {
     }
     return style as TextStyle;
   }, [style]);
-
-  // Map font weights to specific Inter fonts for cross-platform compatibility
-  let fontFamily = 'Inter_500Medium'; // Made bolder by default per user request
-  const weight = flatStyle.fontWeight;
-  
-  if (weight === 'bold' || weight === '700') {
-    fontFamily = 'Inter_700Bold';
-  } else if (weight === 'normal' || weight === '400') {
-    fontFamily = 'Inter_500Medium'; // Mapped normal to 500 Medium for better readability
-  } else if (weight === '100' || weight === '200' || weight === '300') {
-    fontFamily = 'Inter_300Light';
-  } else if (weight === '500') {
-    fontFamily = 'Inter_500Medium';
-  } else if (weight === '600') {
-    fontFamily = 'Inter_600SemiBold'; 
-  } else if (weight === '800') {
-    fontFamily = 'Inter_800ExtraBold';
-  } else if (weight === '900' || weight === 'black') {
-    fontFamily = 'Inter_900Black';
-  }
-
-  // Also handle font-family overrides if they were explicitly provided
-  if (flatStyle.fontFamily && flatStyle.fontFamily.includes('Inter')) {
-    fontFamily = flatStyle.fontFamily;
-  }
 
   // Apply Apple SF Pro tracking table dynamically based on font size if not explicitly set
   let letterSpacing = flatStyle.letterSpacing;
@@ -59,12 +37,12 @@ export const Text: React.FC<TextProps> = (props) => {
   }
 
   return (
-    <RNText 
-      {...rest} 
+    <RNText
+      {...rest}
       style={[
-        style, 
-        { fontFamily, fontWeight: undefined, letterSpacing } // clear fontWeight to avoid Android crashes/fallbacks, apply tracking
-      ]} 
+        style,
+        { letterSpacing } // SF Pro tracking only — font family and weight stay native
+      ]}
     />
   );
 };

@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '../Text';
 import { ShieldCheck, ShieldAlert, CheckCircle2, Search, Leaf } from 'lucide-react-native';
 import { AdditiveDetail } from '../../types/app.types';
 import { evaluateGutHealth, parseENumber } from '../../utils/gutShieldEvaluator';

@@ -12,9 +12,8 @@ import { MainDisclaimerModal } from '../../components/MainDisclaimerModal';
 import { GutAndAdditivesCard } from '../../components/features/GutAndAdditivesCard';
 import { NutritionIntelligenceCard } from '../../components/features/NutritionIntelligenceCard';
 import { EcoScoreCard } from '../../components/EcoScoreCard';
-import { ScanBarcode, Settings, Flame, Candy, ShieldAlert, Globe, Activity, Award, Heart } from 'lucide-react-native';
+import { Settings, Flame, Candy, ShieldAlert, Globe, Activity, Award, Heart } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { getBiteFixScoreColor } from '../../utils/format';
 import Svg, { Circle } from 'react-native-svg';
 import { detectShieldAlerts, deriveNutritionIntelligence } from '../../utils/scannerAPI';
 import { evaluateGutHealth } from '../../utils/gutShieldEvaluator';
@@ -212,7 +211,6 @@ export default function HomeScreen() {
     dietPreference,
     allergenFilters,
     activeScanResult,
-    setActiveScanResult,
     totalProductsScanned,
     totalProductsNotFound,
   } = useAppStore();

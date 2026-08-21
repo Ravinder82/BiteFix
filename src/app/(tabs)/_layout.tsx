@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity, Platform, Text } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
+import { Text } from '../../components/Text';
 import { Tabs, Redirect, usePathname, router } from 'expo-router';
 import { useTheme } from '../../hooks/useTheme';
 import { useAppStore } from '../../stores/appStore';
