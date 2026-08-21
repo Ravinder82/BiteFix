@@ -255,7 +255,7 @@ export const useAppStore = create<AppState>()(
         ),
       })),
 
-      clearCollection: () => set({ collection: [] }),
+      clearCollection: () => set({ collection: [], activeScanResult: null }),
 
       clearAllData: () => set({
         onboardingComplete: false,

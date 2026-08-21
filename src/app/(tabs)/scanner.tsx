@@ -3,27 +3,15 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
   ActivityIndicator,
-  ScrollView,
   StyleSheet,
   SafeAreaView,
   Platform,
-  Dimensions,
-  KeyboardAvoidingView,
-  Modal,
   AppState,
   AppStateStatus,
-  Alert,
 } from 'react-native';
-import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
 import { useIsFocused } from '@react-navigation/native';
 import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
-
-
 import AnimatedReanimated, {
   useSharedValue,
   useAnimatedStyle,
@@ -40,57 +28,26 @@ import Svg, { Rect, Defs, LinearGradient as SvgLinearGradient, Stop } from 'reac
 const AnimatedRect = AnimatedReanimated.createAnimatedComponent(Rect);
 import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
-import { formatSugar } from '../../utils/sugar';
-import { formatWeight, getNovaShortLabel, getNovaColor, getNovaLabel } from '../../utils/format';
-
 import {
-  ScanResultData,
   isAbortError,
   isRequestTimeoutError,
   lookupOpenFoodFacts,
-  fetchWithTimeout,
-  extractSugarFromNutriments,
-  parseQuantityString,
-  detectShieldAlerts,
-  API_TIMEOUT_MS
 } from '../../utils/scannerAPI';
 import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
-import { NutritionFacts } from '../../components/features/NutritionFacts';
-import ProductHeroCardDashboard from '../../components/features/ProductHeroCardDashboard';
-import { ShieldPillCard } from '../../components/ShieldPillCard';
 import { SubscriptionModal } from '../../components/SubscriptionModal';
-import { EcoScoreCard } from '../../components/EcoScoreCard';
-import { GutShieldCard } from '../../components/features/GutShieldCard';
-import { AdditiveDetectiveCard } from '../../components/features/AdditiveDetectiveCard';
-import { evaluateGutHealth } from '../../utils/gutShieldEvaluator';
-import { AdditiveDetail } from '../../types/app.types';
 import {
-  Keyboard,
-  ArrowLeft,
-  Camera as CameraIcon,
-  HelpCircle,
   AlertCircle,
   Zap,
   ZapOff,
-  CheckCircle,
-  RotateCcw,
-  X,
-  Bookmark,
-  Search,
-  Share2,
-  Plus,
-  Award,
-  RefreshCw,
-  ChevronRight,
-  ChevronLeft,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { BlurView } from 'expo-blur';
+import { router } from 'expo-router';
 
 // ─────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────
-type ScanMode = 'camera' | 'result' | 'not-found';
+type ScanMode = 'camera' | 'not-found';
 
 // Minimum delay before next scan can fire (prevents double-scans)
 const SCAN_COOLDOWN_MS = 2_500;
@@ -100,14 +57,8 @@ const PRODUCT_BARCODE_TYPES = ['qr', 'upc_a', 'upc_e', 'ean13', 'ean8', 'code128
 // Main Scanner Screen
 // ─────────────────────────────────────────────────────────
 export default function ScannerScreen() {
-  const { colors, isDark } = useTheme();
-  const { sugarUnit, addToCollection, collection, isPremium, freeScansUsed, incrementFreeScans, allergenFilters, dietPreference, setActiveScanResult, incrementProductsScanned, incrementProductsNotFound } = useAppStore();
-
-  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-  const reticleWidth = 350;
-  const reticleHeight = 220;
-  const reticleTop = (screenHeight - reticleHeight) / 2;
-  const reticleLeft = (screenWidth - reticleWidth) / 2;
+  const { colors } = useTheme();
+  const { isPremium, freeScansUsed, incrementFreeScans, setActiveScanResult, incrementProductsScanned, incrementProductsNotFound } = useAppStore();
 
   // Camera permission hook from expo-camera
   const [permission, requestPermission] = useCameraPermissions();
@@ -120,7 +71,6 @@ export default function ScannerScreen() {
   const [torchOn, setTorchOn] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
-  // cameraReady: set to true only after the CameraView fires onCameraReady
   const [cameraReady, setCameraReady] = useState(false);
   const scannerIsVisible = isFocused && appState === 'active';
   const scannerIsLive = scannerIsVisible && mode === 'camera' && permission?.granted === true;
@@ -300,22 +250,6 @@ export default function ScannerScreen() {
     setTorchOn((prev) => !prev);
   };
 
-  // Capture button animation
-  const captureScale = useSharedValue(1);
-  const captureStyle = useAnimatedStyle(() => ({ transform: [{ scale: captureScale.value }] }));
-
-
-
-  // Scan Result State
-  const [scanResult, setScanResult] = useState<ScanResultData | null>(null);
-
-  const [alternatives, setAlternatives] = useState<ScanResultData[]>([]);
-  const [selectedAltIndex, setSelectedAltIndex] = useState(0);
-  const [loadingAlternatives, setLoadingAlternatives] = useState(false);
-  const [showAlternatives, setShowAlternatives] = useState(false);
-
-
-
   // Stop camera-owned side effects whenever the scanner is not the active screen.
   useEffect(() => {
     if (!scannerIsLive) {
@@ -399,7 +333,6 @@ export default function ScannerScreen() {
         }
 
         if (isCurrentLookup()) {
-          setScanResult(lookupResult);
           productFound = true;
         }
       }
@@ -439,7 +372,6 @@ export default function ScannerScreen() {
         incrementProductsScanned();
         setActiveScanResult(freshResult);
         setMode('camera');
-        setScanResult(null);
         isScanningRef.current = false;
         loadingRef.current = false;
         setLoading(false);
@@ -475,7 +407,6 @@ export default function ScannerScreen() {
 
   const resetScanner = () => {
     stopActiveScannerSession();
-    setScanResult(null);
     setErrorMsg(null);
     isScanningRef.current = false;
     setLoading(false);

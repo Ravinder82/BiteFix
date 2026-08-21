@@ -2,14 +2,10 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, Text, View, useWindowDimensions } from 'react-native';
 import { Activity, Droplets, Leaf, Package, ShieldCheck } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { OrbMascot } from '../features/OrbMascot';
-import { ProductDataStatusPill } from '../features/ProductDataPills';
-import { NutriScoreTrafficLight } from '../features/NutriScoreTrafficLight';
 import { OnboardingPriority } from '../../types/onboarding.types';
-import { EnergyMeter } from '../ui/energy-meter';
 
 type VisualProps = {
-  colors: any;
+  colors?: any;
   isDark: boolean;
   reduceMotion?: boolean;
 };
@@ -18,10 +14,6 @@ const GREEN = '#01922A';
 const AMBER = '#D97706';
 const TEAL = '#0F766E';
 
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
-}
-
 export const PRIORITY_META: Record<OnboardingPriority, { label: string; color: string; icon: React.ComponentType<any> }> = {
   ultra_processed: { label: 'Processing Level', color: GREEN, icon: Package },
   nutrition: { label: 'Nutrition Intelligence', color: TEAL, icon: Activity },
@@ -29,33 +21,6 @@ export const PRIORITY_META: Record<OnboardingPriority, { label: string; color: s
   ingredients: { label: 'Ingredient Review', color: GREEN, icon: ShieldCheck },
   environment: { label: 'Eco Impact', color: TEAL, icon: Leaf },
 };
-
-function Surface({ children, colors, isDark, style }: VisualProps & { children: React.ReactNode; style?: any }) {
-  const { width } = useWindowDimensions();
-  const padding = clamp(width * 0.041, 12, 16);
-
-  return (
-    <View
-      style={[
-        {
-          backgroundColor: isDark ? 'rgba(255,255,255,0.038)' : 'rgba(255,255,255,0.85)',
-          borderColor: isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.06)',
-          borderWidth: 1,
-          borderRadius: 22,
-          padding,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: isDark ? 0.18 : 0.05,
-          shadowRadius: 16,
-          elevation: 2,
-        },
-        style,
-      ]}
-    >
-      {children}
-    </View>
-  );
-}
 
 // ══════════════════════════════════════════════════════════════
 // SCREEN 5 — INGREDIENTS LABEL VISUAL
@@ -208,116 +173,5 @@ export function LabelCompressionVisual({ isDark, reduceMotion = false, isActive 
         </View>
       </View>
     </View>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════
-// SCREEN 8 — MOMENT OF TRUTH RESULT CARD
-// ══════════════════════════════════════════════════════════════
-export function MomentResultCard({ colors, isDark, selected }: VisualProps & { selected: OnboardingPriority[] }) {
-  const { width } = useWindowDimensions();
-  const compact = width < 360;
-  const visiblePriorities = selected.length > 0 ? selected : ((['nutrition', 'ingredients', 'sugar'] as OnboardingPriority[]));
-
-  return (
-    <Surface
-      colors={colors}
-      isDark={isDark}
-      style={{
-        marginBottom: 16,
-        padding: 16,
-        backgroundColor: isDark ? 'rgba(18,22,20,0.98)' : '#FFFFFF',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: isDark ? 0.22 : 0.08,
-        shadowRadius: 18,
-        elevation: 4,
-        borderWidth: 1,
-        borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-      }}
-    >
-      {/* Product Identity Header */}
-      <View style={{ flexDirection: compact ? 'column' : 'row', alignItems: compact ? 'flex-start' : 'center', justifyContent: 'space-between', marginBottom: 12, gap: compact ? 8 : 8 }}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.textSecondary, fontSize: 9.5, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase' }}>
-            Product Scan
-          </Text>
-          <Text style={{ color: colors.text, fontSize: compact ? 15 : 16, fontWeight: '900', marginTop: 2 }}>
-            Organic Dark Chocolate 72%
-          </Text>
-        </View>
-        <View style={{ flexDirection: 'row', gap: 5, flexShrink: 1, alignSelf: compact ? 'flex-start' : 'auto' }}>
-          <ProductDataStatusPill status="complete" colors={colors} isDark={isDark} />
-        </View>
-      </View>
-
-      <View style={{ height: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', marginBottom: 14 }} />
-
-      {/* BiteFix Score + NutriScore hero row */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-        <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontSize: 25 }}>🍫</Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: colors.textMuted, fontSize: 9, fontWeight: '800', letterSpacing: 1.2 }}>
-            BITEFIX INTELLIGENCE SCORE™
-          </Text>
-          <Text style={{ color: colors.text, fontSize: 32, lineHeight: 36, fontWeight: '900' }}>
-            78
-          </Text>
-        </View>
-        <NutriScoreTrafficLight grade="b" compact isDark={isDark} colors={colors} />
-      </View>
-
-      <View style={{ marginBottom: 16 }}>
-        <EnergyMeter value={78} colors={colors} label="Overall Score Meter" />
-      </View>
-
-      {/* Breakdown signal rows */}
-      <View style={{ gap: 8 }}>
-        {visiblePriorities.slice(0, 4).map((priority) => {
-          const meta = PRIORITY_META[priority];
-          const value =
-            priority === 'sugar'
-              ? '≈ 1.8 tsp (Low)'
-              : priority === 'environment'
-                ? 'Grade A'
-                : priority === 'nutrition'
-                  ? 'Balanced Profile'
-                  : priority === 'ultra_processed'
-                    ? 'NOVA 2 (Processed)'
-                    : 'No Harmful Additives';
-
-          const isEmphasized = selected.includes(priority);
-
-          return (
-            <View
-              key={priority}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingVertical: 10,
-                paddingHorizontal: 12,
-                borderRadius: 13,
-                backgroundColor: isEmphasized ? `${meta.color}14` : isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-                borderWidth: 1,
-                borderColor: isEmphasized ? `${meta.color}38` : 'transparent',
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, flexShrink: 1 }}>
-                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: meta.color }} />
-                <Text numberOfLines={1} style={{ color: isEmphasized ? colors.text : colors.textSecondary, fontSize: 12.5, fontWeight: isEmphasized ? '800' : '600', flexShrink: 1 }}>
-                  {meta.label}
-                </Text>
-              </View>
-              <Text numberOfLines={1} style={{ color: isEmphasized ? meta.color : colors.text, fontSize: 12.5, fontWeight: '900', marginLeft: 8 }}>
-                {value}
-              </Text>
-            </View>
-          );
-        })}
-      </View>
-    </Surface>
   );
 }

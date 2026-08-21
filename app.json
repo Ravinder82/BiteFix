@@ -12,7 +12,7 @@
       "supportsTablet": false,
       "infoPlist": {
         "CFBundleDisplayName": "BiteFix",
-        "NSCameraUsageDescription": "BiteFix needs access to the camera to scan food barcodes and analyze scores.",
+        "NSCameraUsageDescription": "BiteFix needs access to the camera to scan food barcodes and analyze nutritional content.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -34,7 +34,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "BiteFix needs access to your camera to scan food barcodes and analyse their content.",
+          "cameraPermission": "BiteFix needs access to the camera to scan food barcodes and analyze nutritional content.",
           "microphonePermission": false,
           "recordAudioAndroid": false,
           "barcodeScannerEnabled": true
@@ -50,13 +50,6 @@
           }
         }
       ],
-      [
-        "@react-native-google-signin/google-signin",
-        {
-          "iosUrlScheme": "com.googleusercontent.apps.1097829102652-jgmhd81kr0c36338ci9tlmh1n3milght"
-        }
-      ],
-      "expo-apple-authentication",
       "expo-asset"
     ],
     "extra": {
