@@ -26,7 +26,7 @@ import {
   ActivityIndicator,
   Alert
 } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withDelay, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withDelay, withSpring, withTiming, withRepeat, withSequence, Easing } from 'react-native-reanimated';
 import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useTheme } from '../hooks/useTheme';
@@ -48,56 +48,38 @@ import {
   Globe,
   Brain,
   Flame,
+  ScanLine,
+  Unlock,
+  Leaf,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
-// ── Gold accent colour for premium branding ───────────────
-const GOLD = '#D4AF37';
-
-// ── Feature list ─────────────────────────────────────────
+// ── Feature list (Uniform Dimensions & Rich Visuals) ───────
 const FEATURES = [
   {
-    icon: Zap,
-    color: '#34C759',
-    bg: 'rgba(52,199,89,0.12)',
-    title: 'Unlimited Scans',
-    subtitle: 'Scan any product with no daily limits or scan restrictions.',
-    badge: 'TOP FEATURE',
-  },
-  {
-    icon: Brain,
-    color: '#00C288',
-    bg: 'rgba(0,194,136,0.12)',
-    title: 'Nutrition Intelligence',
-    subtitle: 'Dynamic protein, fibre, sodium, and micronutrient profile insights.',
-  },
-  {
-    icon: Activity,
-    color: '#FF9500',
-    bg: 'rgba(255,149,0,0.10)',
     title: 'BiteFix Intelligence Score™',
-    subtitle: 'Deterministic 6-factor score and NOVA processing detection.',
+    subtitle: 'Instant deterministic 6-factor score and NOVA processing detection.',
+    icon: Activity,
+    color: '#6EE041',
+    rotation: '-10deg',
+    footerType: 'nova',
   },
   {
-    icon: ShieldAlert,
-    color: '#FF6B6B',
-    bg: 'rgba(255,107,107,0.10)',
-    title: 'Ingredient & Additive Review',
-    subtitle: 'Identifies emulsifiers, sweeteners, and flagged additives.',
+    title: 'Unlimited Scanning',
+    subtitle: 'Scan any product with no daily limits or scan restrictions.',
+    icon: ScanLine,
+    color: '#2DD4BF',
+    rotation: '6deg',
+    footerType: 'scanRate',
   },
   {
-    icon: Flame,
-    color: '#F97316',
-    bg: 'rgba(249,115,22,0.10)',
-    title: 'Sugar & Energy Impact',
-    subtitle: 'Estimated sugar equivalent teaspoons and jogging burn time.',
-  },
-  {
-    icon: Globe,
-    color: '#4D8DE8',
-    bg: 'rgba(77,141,232,0.10)',
-    title: 'Eco-Score & Carbon Footprint',
-    subtitle: 'Available CO₂ estimates and sustainable sourcing signals.',
+    title: 'Everything Unlocked',
+    subtitle: 'Get full access to all features and deep ingredient intelligence.',
+    icon: Unlock,
+    color: '#8B5CF6',
+    rotation: '-6deg',
+    badge: 'ALL ACCESS',
+    footerType: 'allUnlocked',
   },
 ] as const;
 
@@ -131,6 +113,39 @@ export default function PaywallScreen() {
 
   const remainingFreeScans = Math.max(0, 5 - (freeScansUsed || 0));
   const hasFreeScansAvailable = !isPremium && remainingFreeScans > 0;
+
+  // ── Liquid Glass Concentric Breathing Pulse ──────────────
+  const breathScale = useSharedValue(1);
+  const breathOpacity = useSharedValue(0.85);
+
+  useEffect(() => {
+    breathScale.value = withRepeat(
+      withSequence(
+        withTiming(1.06, { duration: 2500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.96, { duration: 2500, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+    breathOpacity.value = withRepeat(
+      withSequence(
+        withTiming(1.0, { duration: 2500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.65, { duration: 2500, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+  }, []);
+
+  const animatedOuterRingStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: breathScale.value }],
+    opacity: breathOpacity.value,
+  }));
+
+  const animatedInnerRingStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + (breathScale.value - 1) * 0.7 }],
+    opacity: 0.85 + (breathOpacity.value - 0.65) * 0.4,
+  }));
 
   // ── Verify RevenueCat Entitlement on Mount ────────────────
   useEffect(() => {
@@ -245,16 +260,16 @@ export default function PaywallScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* ── Header Row ──────────────────────────────────── */}
-        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', paddingTop: 16 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', paddingTop: 8, paddingBottom: 2 }}>
           {/* Dismiss button available for premium users or users with free scans left */}
           {isPremium || hasFreeScansAvailable ? (
             <TouchableOpacity
               onPress={handleDismiss}
               accessibilityLabel="Close paywall"
               style={{
-                width: 36,
-                height: 36,
-                borderRadius: 18,
+                width: 34,
+                height: 34,
+                borderRadius: 17,
                 backgroundColor: colors.surfaceRaised,
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -262,80 +277,312 @@ export default function PaywallScreen() {
                 borderColor: colors.border,
               }}
             >
-              <X size={18} color={colors.text} />
+              <X size={17} color={colors.text} />
             </TouchableOpacity>
-          ) : <View />}
+          ) : <View style={{ width: 34, height: 34 }} />}
         </View>
 
+        {/* ── Hero Orbital Mascot Scene ─────────────────────── */}
+        <View style={{ alignItems: 'center', marginTop: 4, marginBottom: 8 }}>
+          {/* Orbital Canvas with 2 Concentric Liquid Glass Breathing Rings & Mascot */}
+          <View style={{ width: 270, height: 166, alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
 
-        {/* ── Hero Banner ──────────────────────────────────── */}
-        <View style={{ alignItems: 'center', marginTop: 20, marginBottom: 24 }}>
-          <OrbMascot state="happy" size={90} />
+            {/* Outer Liquid Glass Breathing Ring */}
+            <Animated.View
+              style={[
+                {
+                  position: 'absolute',
+                  width: 196,
+                  height: 196,
+                  borderRadius: 98,
+                  backgroundColor: isDark ? 'rgba(21, 125, 83, 0.12)' : 'rgba(2, 197, 112, 0.08)',
+                  borderWidth: 2,
+                  borderColor: isDark ? 'rgba(30, 217, 136, 0.35)' : 'rgba(2, 197, 112, 0.30)',
+                  shadowColor: isDark ? '#157d53' : '#02c539ff',
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: isDark ? 0.45 : 0.25,
+                  shadowRadius: 16,
+                  elevation: 3,
+                },
+                animatedOuterRingStyle,
+              ]}
+              pointerEvents="none"
+            />
 
-          <View style={{
-            backgroundColor: 'rgba(212,175,55,0.1)',
-            borderColor: GOLD + '50',
-            borderWidth: 1,
-            paddingHorizontal: 14,
-            paddingVertical: 5,
-            borderRadius: 14,
-            marginTop: 18,
-            marginBottom: 10,
-          }}>
-            <Text style={{ color: GOLD, fontSize: 10, fontWeight: '900', letterSpacing: 1.8, textTransform: 'uppercase' }}>
-              ✦  B I T E F I X   P R E M I U M  ✦
+            {/* Inner Liquid Glass Breathing Ring */}
+            <Animated.View
+              style={[
+                {
+                  position: 'absolute',
+                  width: 164,
+                  height: 164,
+                  borderRadius: 82,
+                  backgroundColor: isDark ? 'rgba(21, 125, 83, 0.18)' : 'rgba(255, 255, 255, 0.44)',
+                  borderWidth: 2.5,
+                  borderColor: isDark ? 'rgba(30, 217, 136, 0.65)' : 'rgba(2, 197, 112, 0.55)',
+                  shadowColor: isDark ? '#1ed988' : '#019153ff',
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: isDark ? 0.60 : 0.35,
+                  shadowRadius: 10,
+                  elevation: 5,
+                },
+                animatedInnerRingStyle,
+              ]}
+              pointerEvents="none"
+            />
+
+            {/* Central Mascot (Size 130) */}
+            <OrbMascot state="happy" size={130} />
+
+            {/* Top-Left: Scan Viewfinder Sticker */}
+            <View
+              style={{
+                position: 'absolute',
+                top: -4,
+                left: 14,
+                width: 52,
+                height: 52,
+                borderRadius: 26,
+                backgroundColor: '#6EE041',
+                borderWidth: 2.5,
+                borderColor: '#FFFFFF',
+                alignItems: 'center',
+                justifyContent: 'center',
+                shadowColor: '#16A34A',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.40,
+                shadowRadius: 8,
+                elevation: 6,
+                transform: [{ rotate: '-8deg' }],
+                zIndex: 4,
+              }}
+            >
+              <ScanLine size={24} color="#FFFFFF" strokeWidth={2.5} />
+            </View>
+
+            {/* Top-Right: Safety Shield Guard Sticker */}
+            <View
+              style={{
+                position: 'absolute',
+                top: -10,
+                right: 24,
+                width: 52,
+                height: 52,
+                borderRadius: 26,
+                backgroundColor: '#EF4444',
+                borderWidth: 2.5,
+                borderColor: '#FFFFFF',
+                alignItems: 'center',
+                justifyContent: 'center',
+                shadowColor: '#EF4444',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.40,
+                shadowRadius: 8,
+                elevation: 6,
+                transform: [{ rotate: '7deg' }],
+                zIndex: 4,
+              }}
+            >
+              <ShieldAlert size={24} color="#FFFFFF" strokeWidth={2.5} />
+            </View>
+
+            {/* Bottom-Left: Unlocked Access Sticker */}
+            <View
+              style={{
+                position: 'absolute',
+                bottom: -2,
+                left: 18,
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                backgroundColor: '#8B5CF6',
+                borderWidth: 2.5,
+                borderColor: '#FFFFFF',
+                alignItems: 'center',
+                justifyContent: 'center',
+                shadowColor: '#8B5CF6',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.40,
+                shadowRadius: 8,
+                elevation: 6,
+                transform: [{ rotate: '9deg' }],
+                zIndex: 4,
+              }}
+            >
+              <Unlock size={22} color="#FFFFFF" strokeWidth={2.5} />
+            </View>
+
+            {/* Bottom-Right: Clean Eco Leaf Sticker */}
+            <View
+              style={{
+                position: 'absolute',
+                bottom: 6,
+                right: 14,
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                backgroundColor: '#2DD4BF',
+                borderWidth: 2.5,
+                borderColor: '#FFFFFF',
+                alignItems: 'center',
+                justifyContent: 'center',
+                shadowColor: '#2DD4BF',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.40,
+                shadowRadius: 8,
+                elevation: 6,
+                transform: [{ rotate: '-6deg' }],
+                zIndex: 4,
+              }}
+            >
+              <Leaf size={22} color="#FFFFFF" strokeWidth={2.5} />
+            </View>
+          </View>
+
+          {/* ✦ BITEFIX PREMIUM Solid Sticker Pill with Tilt ✦ */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              backgroundColor: '#FF8A00',
+              borderWidth: 2,
+              borderColor: '#FFFFFF',
+              paddingHorizontal: 15,
+              paddingVertical: 5,
+              borderRadius: 999,
+              marginTop: 10,
+              marginBottom: 8,
+              shadowColor: '#C45100',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.45,
+              shadowRadius: 8,
+              elevation: 6,
+              transform: [{ rotate: '-3.5deg' }],
+            }}
+          >
+            <Crown size={13} color="#FFFFFF" strokeWidth={2.8} />
+            <Text
+              style={{
+                color: '#FFFFFF',
+                fontSize: 10.5,
+                fontWeight: '900',
+                letterSpacing: 1.6,
+                textTransform: 'uppercase',
+              }}
+            >
+              BITEFIX PREMIUM
             </Text>
           </View>
 
-          <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', textAlign: 'center', letterSpacing: -0.5 }}>
-            Scan Once. Know More.
+          {/* Title ("Scan" and "Know" both in gradient color, bolder & bigger) */}
+          <Text
+            style={{
+              textAlign: 'center',
+              lineHeight: 38,
+              marginTop: 6,
+            }}
+          >
+            <Text style={{ color: isDark ? '#6EE041' : '#129b89ff', fontSize: 34, fontWeight: '900', letterSpacing: -0.8 }}>Scan </Text>
+            <Text style={{ color: colors.text, fontSize: 30, fontWeight: '800', letterSpacing: -0.6 }}>Once.</Text>
+            {'\n'}
+            <Text style={{ color: isDark ? '#6EE041' : '#55c628ff', fontSize: 34, fontWeight: '900', letterSpacing: -0.8 }}>Know </Text>
+            <Text style={{ color: colors.text, fontSize: 30, fontWeight: '800', letterSpacing: -0.6 }}>More.</Text>
           </Text>
-          <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '500', textAlign: 'center', marginTop: 6, maxWidth: 300, lineHeight: 19 }}>
-            Full access to all features, nutrition intelligence, and unlimited scans.
+          <Text
+            style={{
+              color: colors.textSecondary,
+              fontSize: 13.5,
+              lineHeight: 18,
+              fontWeight: '500',
+              textAlign: 'center',
+              marginTop: 8,
+              marginBottom: 20,
+              maxWidth: 320,
+            }}
+          >
+            Instant food intelligence with unlimited scans.
           </Text>
         </View>
 
-        <View style={{
-          backgroundColor: colors.surface,
-          borderRadius: 20,
-          borderWidth: 1,
-          borderColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
-          paddingVertical: 6,
-          marginBottom: 24,
-          overflow: 'hidden',
-        }}>
+        {/* ── 3 Elevated Tactile Feature Cards (Uniform Dimensions) ── */}
+        <View style={{ gap: 14, marginBottom: 24 }}>
           {FEATURES.map((f, idx) => {
             const Icon = f.icon;
-            const isLast = idx === FEATURES.length - 1;
             const badge = (f as any).badge;
+            const footerType = (f as any).footerType;
+
             return (
               <AnimatedListItem key={f.title} index={idx}>
-                <View style={{
-                  flexDirection: 'row', alignItems: 'center', gap: 12,
-                  paddingHorizontal: 16, paddingVertical: 10,
-                  borderBottomWidth: isLast ? 0 : 1,
-                  borderBottomColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-                }}>
-                  <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: f.bg, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Icon size={17} color={f.color} strokeWidth={2.1} />
+                <View
+                  style={{
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.045)' : '#FFFFFF',
+                    borderRadius: 18,
+                    borderWidth: 1.25,
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+                    paddingVertical: 15,
+                    paddingHorizontal: 16,
+                    minHeight: 76,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 14,
+                    shadowColor: '#000000',
+                    shadowOffset: { width: 0, height: 3 },
+                    shadowOpacity: isDark ? 0.18 : 0.04,
+                    shadowRadius: 10,
+                    elevation: 2,
+                  }}
+                >
+                  {/* Tactile Circular Sticker Icon */}
+                  <View
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 24,
+                      backgroundColor: f.color,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 2,
+                      borderColor: '#FFFFFF',
+                      shadowColor: f.color,
+                      shadowOffset: { width: 0, height: 3 },
+                      shadowOpacity: 0.35,
+                      shadowRadius: 6,
+                      elevation: 4,
+                      transform: [{ rotate: f.rotation }],
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Icon size={22} color="#FFFFFF" strokeWidth={2.4} />
                   </View>
+
+                  {/* Card Content */}
                   <View style={{ flex: 1 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                      <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800', letterSpacing: -0.1 }}>{f.title}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6, flexWrap: 'wrap' }}>
+                      <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800', letterSpacing: -0.2 }}>
+                        {f.title}
+                      </Text>
                       {badge && (
-                        <View style={{
-                          backgroundColor: isDark ? 'rgba(52,199,89,0.20)' : 'rgba(52,199,89,0.15)',
-                          paddingHorizontal: 6,
-                          paddingVertical: 1.5,
-                          borderRadius: 4,
-                        }}>
-                          <Text style={{ color: '#34C759', fontSize: 8.5, fontWeight: '900', letterSpacing: 0.4 }}>
+                        <View
+                          style={{
+                            backgroundColor: isDark ? 'rgba(139, 92, 246, 0.20)' : 'rgba(139, 92, 246, 0.12)',
+                            paddingHorizontal: 6,
+                            paddingVertical: 1.5,
+                            borderRadius: 5,
+                            borderWidth: 0.8,
+                            borderColor: isDark ? 'rgba(139, 92, 246, 0.35)' : 'rgba(139, 92, 246, 0.25)',
+                          }}
+                        >
+                          <Text style={{ color: isDark ? '#A78BFA' : '#7C3AED', fontSize: 8, fontWeight: '900', letterSpacing: 0.5 }}>
                             {badge}
                           </Text>
                         </View>
                       )}
                     </View>
-                    <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 2, lineHeight: 15 }}>{f.subtitle}</Text>
+
+                    <Text style={{ color: colors.textSecondary, fontSize: 12.5, fontWeight: '500', marginTop: 4, lineHeight: 17 }}>
+                      {f.subtitle}
+                    </Text>
                   </View>
                 </View>
               </AnimatedListItem>
@@ -344,7 +591,7 @@ export default function PaywallScreen() {
         </View>
 
         {/* Bottom Padding for floating actions */}
-        <View style={{ height: 160 }} />
+        <View style={{ height: 170 }} />
       </ScrollView>
 
       {/* ── Floating Bottom Actions ───────────────────────── */}
@@ -439,9 +686,9 @@ export default function PaywallScreen() {
       </View>
 
       {/* ── Subscription Bottom Sheet Modal ───────────────── */}
-      <SubscriptionModal 
-        visible={isModalVisible} 
-        onClose={() => setIsModalVisible(false)} 
+      <SubscriptionModal
+        visible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
         showCloseButton={hasFreeScansAvailable}
       />
 

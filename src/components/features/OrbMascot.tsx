@@ -341,7 +341,7 @@ function OrbMascotComponent({
 
   const orbStyle = useAnimatedStyle(() => ({
     transform: [
-      { translateY: lift.value },
+      { translateY: 0 },
       { rotateZ: `${turn.value}deg` },
       { scaleY: squash.value },
       { scale: resultScale.value === 0.84 && visualState !== 'clean' ? 1 : resultScale.value },
