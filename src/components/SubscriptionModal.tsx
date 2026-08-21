@@ -8,8 +8,11 @@ import {
   Alert,
   Linking,
   StyleSheet,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
+  Animated,
+  useWindowDimensions
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '@/components/Text';
 import { useTheme } from '../hooks/useTheme';
 import { useAppStore } from '../stores/appStore';
@@ -26,11 +29,31 @@ export interface SubscriptionModalProps {
 }
 
 export function SubscriptionModal({ visible, onClose, showCloseButton = true }: SubscriptionModalProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { isPremium, freeScansUsed } = useAppStore();
 
   const remainingFreeScans = Math.max(0, 5 - (freeScansUsed || 0));
   const hasFreeScansAvailable = !isPremium && remainingFreeScans > 0;
+
+  const { width: screenWidth } = useWindowDimensions();
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerAnim, {
+          toValue: 1,
+          duration: 3200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shimmerAnim, {
+          toValue: 0,
+          duration: 0,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [shimmerAnim]);
 
   // ── Component State ─────────────────────────────────────
   const [selectedPlan, setSelectedPlan] = useState<PlanTier>('annual');
@@ -306,24 +329,70 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
                 disabled={isProcessing || isFetchingProducts || fetchPricesFailed}
                 activeOpacity={0.88}
                 style={{
-                  backgroundColor: (isProcessing || isFetchingProducts || fetchPricesFailed) ? colors.text + '55' : colors.text,
                   borderRadius: 24,
-                  paddingVertical: 18,
-                  alignItems: 'center',
+                  minHeight: 56,
+                  alignItems: 'stretch',
                   justifyContent: 'center',
-                  shadowColor: colors.text,
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 12,
-                  elevation: 4,
+                  overflow: 'hidden',
+                  position: 'relative',
+                  borderWidth: 1.5,
+                  borderColor: (isProcessing || isFetchingProducts || fetchPricesFailed) ? 'transparent' : 'rgba(20, 174, 151, 0.38)',
+                  shadowColor: (isProcessing || isFetchingProducts || fetchPricesFailed) ? 'transparent' : (isDark ? '#000000' : '#0A2B14'),
+                  shadowOffset: { width: 0, height: (isProcessing || isFetchingProducts || fetchPricesFailed) ? 2 : 8 },
+                  shadowOpacity: (isProcessing || isFetchingProducts || fetchPricesFailed) ? 0.05 : 0.35,
+                  shadowRadius: (isProcessing || isFetchingProducts || fetchPricesFailed) ? 6 : 16,
+                  elevation: (isProcessing || isFetchingProducts || fetchPricesFailed) ? 1 : 6,
                 }}
               >
-                {isProcessing
-                  ? <ActivityIndicator color={colors.background} size="small" />
-                  : <Text style={{ color: colors.background, fontSize: 16, fontWeight: '800' }}>
-                    Subscribe
-                  </Text>
-                }
+                <LinearGradient
+                  colors={(isProcessing || isFetchingProducts || fetchPricesFailed)
+                    ? [colors.text + '55', colors.text + '55']
+                    : (isDark ? ['#157d53ff', '#062618ff'] : ['#1ed988ff', '#000000ff'])}
+                  start={{ x: 0.5, y: 0 }}
+                  end={{ x: 0.5, y: 1 }}
+                  style={{
+                    flex: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    paddingHorizontal: 16,
+                  }}
+                >
+                  {!(isProcessing || isFetchingProducts || fetchPricesFailed) && (
+                    <Animated.View
+                      pointerEvents="none"
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        bottom: 0,
+                        width: 190,
+                        transform: [
+                          {
+                            translateX: shimmerAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [-190, screenWidth + 60],
+                            }),
+                          },
+                          { skewX: '-22deg' },
+                        ],
+                      }}
+                    >
+                      <LinearGradient
+                        colors={['transparent', 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.45)', 'rgba(255,255,255,0.08)', 'transparent']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={{ width: '100%', height: '100%' }}
+                      />
+                    </Animated.View>
+                  )}
+                  {isProcessing ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '800' }}>
+                      Subscribe
+                    </Text>
+                  )}
+                </LinearGradient>
               </TouchableOpacity>
 
               {/* Legal Links */}

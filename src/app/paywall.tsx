@@ -15,7 +15,7 @@
 //   6. Unmount→ disconnect from native store
 // ═══════════════════════════════════════════════════════════
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -24,8 +24,11 @@ import {
   Platform,
   StyleSheet,
   ActivityIndicator,
-  Alert
+  Alert,
+  Animated as RNAnimated,
+  useWindowDimensions
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { useSharedValue, useAnimatedStyle, withDelay, withSpring, withTiming, withRepeat, withSequence, Easing } from 'react-native-reanimated';
 import { Text } from '@/components/Text';
 import { router } from 'expo-router';
@@ -113,6 +116,26 @@ export default function PaywallScreen() {
 
   const remainingFreeScans = Math.max(0, 5 - (freeScansUsed || 0));
   const hasFreeScansAvailable = !isPremium && remainingFreeScans > 0;
+
+  const { width: screenWidth } = useWindowDimensions();
+  const shimmerAnim = useRef(new RNAnimated.Value(0)).current;
+
+  useEffect(() => {
+    RNAnimated.loop(
+      RNAnimated.sequence([
+        RNAnimated.timing(shimmerAnim, {
+          toValue: 1,
+          duration: 3200,
+          useNativeDriver: true,
+        }),
+        RNAnimated.timing(shimmerAnim, {
+          toValue: 0,
+          duration: 0,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [shimmerAnim]);
 
   // ── Liquid Glass Concentric Breathing Pulse ──────────────
   const breathScale = useSharedValue(1);
@@ -616,18 +639,63 @@ export default function PaywallScreen() {
             }}
             activeOpacity={0.88}
             style={{
-              backgroundColor: colors.surface,
               borderRadius: 24,
+              minHeight: 56,
+              alignItems: 'stretch',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              position: 'relative',
               borderWidth: 1.5,
-              borderColor: colors.border,
-              paddingVertical: 18,
-              alignItems: 'center',
+              borderColor: 'rgba(20, 174, 151, 0.38)',
+              shadowColor: isDark ? '#000000' : '#0A2B14',
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.35,
+              shadowRadius: 16,
+              elevation: 6,
               marginBottom: 12,
             }}
           >
-            <Text style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>
-              Try For Free (5 Free Scans)
-            </Text>
+            <LinearGradient
+              colors={isDark ? ['#157d53ff', '#062618ff'] : ['#1ed988ff', '#000000ff']}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+              style={{
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingHorizontal: 16,
+              }}
+            >
+              <RNAnimated.View
+                pointerEvents="none"
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  bottom: 0,
+                  width: 190,
+                  transform: [
+                    {
+                      translateX: shimmerAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-190, screenWidth + 60],
+                      }),
+                    },
+                    { skewX: '-22deg' },
+                  ],
+                }}
+              >
+                <LinearGradient
+                  colors={['transparent', 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.45)', 'rgba(255,255,255,0.08)', 'transparent']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{ width: '100%', height: '100%' }}
+                />
+              </RNAnimated.View>
+              <Text style={{ color: '#ffffffff', fontSize: 16, fontWeight: '800' }}>
+                Try For Free (5 Free Scans)
+              </Text>
+            </LinearGradient>
           </TouchableOpacity>
         )}
 
@@ -638,20 +706,62 @@ export default function PaywallScreen() {
           }}
           activeOpacity={0.88}
           style={{
-            backgroundColor: colors.success,
             borderRadius: 24,
-            paddingVertical: 18,
-            alignItems: 'center',
-            shadowColor: colors.success,
-            shadowOffset: { width: 0, height: 6 },
+            minHeight: 56,
+            alignItems: 'stretch',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            position: 'relative',
+            borderWidth: 1.5,
+            borderColor: 'rgba(20, 174, 151, 0.38)',
+            shadowColor: isDark ? '#000000' : '#0A2B14',
+            shadowOffset: { width: 0, height: 8 },
             shadowOpacity: 0.35,
             shadowRadius: 16,
-            elevation: 8,
+            elevation: 6,
           }}
         >
-          <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 0.6 }}>
-            Subscribe to Premium
-          </Text>
+          <LinearGradient
+            colors={isDark ? ['#157d53ff', '#062618ff'] : ['#1ed988ff', '#000000ff']}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingHorizontal: 16,
+            }}
+          >
+            <RNAnimated.View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                width: 190,
+                transform: [
+                  {
+                    translateX: shimmerAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [-190, screenWidth + 60],
+                    }),
+                  },
+                  { skewX: '-22deg' },
+                ],
+              }}
+            >
+              <LinearGradient
+                colors={['transparent', 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.45)', 'rgba(255,255,255,0.08)', 'transparent']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{ width: '100%', height: '100%' }}
+              />
+            </RNAnimated.View>
+            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 0.6 }}>
+              Subscribe to Premium
+            </Text>
+          </LinearGradient>
         </TouchableOpacity>
 
         <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 20, marginTop: 12 }}>
