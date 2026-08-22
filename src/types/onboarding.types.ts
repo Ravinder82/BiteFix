@@ -7,4 +7,5 @@ export type OnboardingPriority =
   | 'nutrition'
   | 'sugar'
   | 'ingredients'
-  | 'environment';
+  | 'environment'
+  | 'all';

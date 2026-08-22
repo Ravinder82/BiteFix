@@ -534,7 +534,14 @@ export default function OnboardingScreen() {
 
   const togglePriority = useCallback((id: OnboardingPriority) => {
     Haptics.selectionAsync();
-    setPriorities((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
+    const core: OnboardingPriority[] = ['ultra_processed', 'nutrition', 'ingredients', 'sugar'];
+    setPriorities((prev) => {
+      if (id === 'all') {
+        const isAllSelected = core.every((p) => prev.includes(p));
+        return isAllSelected ? [] : [...core];
+      }
+      return prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id];
+    });
   }, []);
 
   const finishPaging = useCallback((settledScreen?: number) => {

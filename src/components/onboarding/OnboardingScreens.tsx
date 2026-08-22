@@ -931,6 +931,7 @@ function PriorityStatusBar({
 }) {
   const activeOptions = PRIORITY_OPTIONS.filter(opt => selected.includes(opt.id));
   const isActive = activeOptions.length > 0;
+  const isAll = activeOptions.length === PRIORITY_OPTIONS.length;
 
   let statusTitle = 'Priorities standby';
   let statusSubtitle = 'Select priorities below to customize your BiteFix Scanner.';
@@ -938,16 +939,22 @@ function PriorityStatusBar({
   let ledColor = '#7ec201'; // lime standby
   let ledGlow = '#a3cb48';
 
-  if (isActive) {
+  if (isAll) {
+    statusTitle = 'All Priority Features Engaged';
+    statusSubtitle = 'Full scan suite customized for BiteFix Scan Intelligence';
+    ledActive = true;
+    ledColor = '#14ae97'; // teal active
+    ledGlow = '#13f5b0';
+  } else if (isActive) {
     statusTitle = `${activeOptions.length} Priority Feature${activeOptions.length > 1 ? 's' : ''} Engaged`;
-    statusSubtitle = 'Priorities customized for BitFix Scan Intelligence';
+    statusSubtitle = 'Priorities customized for BiteFix Scan Intelligence';
     ledActive = true;
     ledColor = '#14ae97'; // teal active
     ledGlow = '#13f5b0';
   }
 
   // 8K Progress Meter Bar calculation
-  const totalOptions = 4;
+  const totalOptions = PRIORITY_OPTIONS.length;
   const progressPercent = (activeOptions.length / totalOptions) * 100;
 
   // Dark greenish black CTA button color scheme
@@ -1450,7 +1457,7 @@ export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion
       <ShieldStatusBar selected={selected} colors={colors} isDark={isDark} />
       <ScreenHeading
         title="Anything we should **watch for you**?"
-        subtitle="Informational only — we simply flag these when they appear in a product's published data."
+        subtitle=""
         colors={colors}
       />
       <View style={{ gap: 10, marginTop: 4 }}>
@@ -1486,11 +1493,11 @@ export function OilWatchlistScreen({ selected, onToggle, colors, isDark, reduceM
         noneTitle="Oil Watchlist Unlocked"
         noneSubtitle="No oils selected. Clean scanning enabled."
         activeTitle="Oil Watchlist Unlocked"
-        activeSubtitle="BiteFix flags selected oils found in ingredient data."
+        activeSubtitle="BiteFix flags Oils when they show up in ingredient data."
       />
       <ScreenHeading
         title="Any **oils** we should keep an eye on?"
-        subtitle="Purely informational — extracted from published data, no judgments."
+        subtitle=""
         colors={colors}
       />
       <View style={{ gap: 10, marginTop: 4 }}>
@@ -1751,12 +1758,14 @@ export function PainScreen({
 // SCREEN 7 — SCANNER PRIORITIES
 // ══════════════════════════════════════════════════════════════
 export function PrioritiesScreen({ selected, onToggle, colors, isDark, reduceMotion }: { selected: OnboardingPriority[]; onToggle: (id: OnboardingPriority) => void; colors: any; isDark: boolean; reduceMotion: boolean }) {
+  const allSelected = PRIORITY_OPTIONS.every((option) => selected.includes(option.id));
+
   return (
     <ScreenFrame>
       <PriorityStatusBar selected={selected} colors={colors} isDark={isDark} />
       <ScreenHeading
-        title="What should BiteFix **surface first**?"
-        subtitle="Pick what matters — it goes to the top of every scan."
+        title="Pick what matters most to **you!**"
+        subtitle=""
         colors={colors}
       />
       <View style={{ gap: 9, marginTop: 4 }}>
@@ -1773,6 +1782,17 @@ export function PrioritiesScreen({ selected, onToggle, colors, isDark, reduceMot
             accent={option.color}
           />
         ))}
+        <SelectionRow
+          key="all"
+          label="All of Them"
+          selected={allSelected}
+          onPress={() => onToggle('all')}
+          colors={colors}
+          isDark={isDark}
+          multi
+          Icon={Sparkles}
+          accent="#10B981"
+        />
       </View>
     </ScreenFrame>
   );
@@ -1914,10 +1934,10 @@ function DemoScanSequence({
 
     Animated.spring(verdictEntrance, { toValue: 1, friction: 8, tension: 42, useNativeDriver: true }).start();
     Animated.timing(arcAnim, { toValue: 1, duration: 1200, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
-    
+
     const listenerId = scoreAnim.addListener(({ value }) => setScoreText(String(Math.round(value))));
     Animated.timing(scoreAnim, { toValue: DEMO_SCORE, duration: 1200, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
-    
+
     const t = setTimeout(() => {
       scoreAnim.removeListener(listenerId);
       onCompleteRef.current?.();
