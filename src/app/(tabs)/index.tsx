@@ -1,21 +1,26 @@
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
-import { View, ScrollView, TouchableOpacity, SafeAreaView, FlatList, Dimensions, TextInput } from 'react-native';
+import { View, ScrollView, TouchableOpacity, SafeAreaView, FlatList, Dimensions } from 'react-native';
 import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAppStore } from '@/stores/appStore';
 import { useTheme } from '@/hooks/useTheme';
+import { useMountAnim } from '@/hooks/useMountAnim';
 import { OrbMascot as Mascot } from '@/components/features/OrbMascot';
 import ProductHeroCardDashboard from '@/components/features/ProductHeroCardDashboard';
 import { MainDisclaimerModal } from '@/components/MainDisclaimerModal';
 import { AdditivesIntelligenceCard } from '@/components/features/AdditivesIntelligenceCard';
-import { NutritionIntelligenceCard } from '@/components/features/NutritionIntelligenceCard';
+import { NovaProcessingCard } from '@/components/features/NovaProcessingCard';
+import { UnifiedNutritionCard } from '@/components/features/UnifiedNutritionCard';
+import { SugarImpactCard } from '@/components/features/SugarImpactCard';
 import { EcoScoreCard } from '@/components/EcoScoreCard';
-import { Settings, Flame, Candy, ShieldAlert, Globe, Activity, Award, Heart } from 'lucide-react-native';
+import { BurnOutCard } from '@/components/features/BurnOutCard';
+import { KnowledgeSectionHeader } from '@/components/features/KnowledgeSectionHeader';
+import { Settings, ShieldCheck, Cog, FlaskConical, Activity, Candy, Globe, Flame } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Svg, { Circle } from 'react-native-svg';
-import { detectShieldAlerts, deriveNutritionIntelligence } from '@/utils/scannerAPI';
+import { detectShieldAlerts, deriveNutritionIntelligence, type ScanResultData } from '@/utils/scannerAPI';
 import AnimatedReanimated, {
   useSharedValue,
   useAnimatedStyle,
@@ -23,22 +28,46 @@ import AnimatedReanimated, {
   withSequence,
   withTiming,
   Easing,
-  useAnimatedProps,
-  withDelay,
 } from 'react-native-reanimated';
 
-// ─── One-shot mount animation — runs ONCE, never during scroll ───
-function useMountAnim(delay: number) {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(14);
-  useEffect(() => {
-    opacity.value = withDelay(delay, withTiming(1, { duration: 320, easing: Easing.out(Easing.quad) }));
-    translateY.value = withDelay(delay, withTiming(0, { duration: 320, easing: Easing.out(Easing.quad) }));
-  }, []);
-  return useAnimatedStyle(() => ({ opacity: opacity.value, transform: [{ translateY: translateY.value }] }));
-}
-
-const AnimatedTextInput = AnimatedReanimated.createAnimatedComponent(TextInput);
+// ─── Knowledge Layer narrative copy matrix ────────────────────────
+const KNOWLEDGE_COPY = {
+  verdict: {
+    step: 1, category: 'Safety & Verdict', icon: ShieldCheck, accent: '#6EE041',
+    title: 'Overall Verdict & Personal Safeguards',
+    subtitle: 'Instant synthesis of your product\'s purity score along with active allergen and oil watchlist checks.',
+  },
+  processing: {
+    step: 2, category: 'Processing', icon: Cog, accent: '#F5A623',
+    title: 'Ultra-Processing & Formulation',
+    subtitle: 'Evaluates the degree of industrial transformation and synthetic formulation in this food.',
+  },
+  additives: {
+    step: 3, category: 'Additives', icon: FlaskConical, accent: '#8B5CF6',
+    title: 'Chemical & Additive Audit',
+    subtitle: 'Categorizes all preservatives, emulsifiers, and artificial agents found in published ingredient data.',
+  },
+  nutrition: {
+    step: 4, category: 'Nutrition', icon: Activity, accent: '#FBBF24',
+    title: 'Nutrient Density & Balance',
+    subtitle: 'Combines official Nutri-Score grading with a deep breakdown of essential macros and minerals.',
+  },
+  sugar: {
+    step: 5, category: 'Sugar', icon: Candy, accent: '#F59E0B',
+    title: 'Metabolic Sugar Load',
+    subtitle: 'Provides an approximate estimation of sugar content converted into physical teaspoons and unmasks hidden sweeteners.',
+  },
+  climate: {
+    step: 6, category: 'Climate', icon: Globe, accent: '#2DD4BF',
+    title: 'Planetary & Eco Impact',
+    subtitle: 'Provides an approximate assessment of the product\'s ecological footprint, estimated carbon emissions, and packaging impact.',
+  },
+  energy: {
+    step: 7, category: 'Energy', icon: Flame, accent: '#FB923C',
+    title: 'Physical Energy Cost',
+    subtitle: 'Calculates the approximate physical activity required to burn off this product\'s estimated caloric intake.',
+  },
+} as const;
 
 const CAROUSEL_ITEMS = [
   {
@@ -47,7 +76,7 @@ const CAROUSEL_ITEMS = [
     subtitle: 'Chemical Additives',
     description: 'Find emulsifiers, thickeners, preservatives, and coloring agents hidden in lists.',
     image: require('../../../assets/images/oil_paint/additive_detective_oil.png'),
-    icon: ShieldAlert,
+    icon: ShieldCheck,
     color: '#10B981', // green
   },
   {
@@ -56,7 +85,7 @@ const CAROUSEL_ITEMS = [
     subtitle: 'Microbiome Safety',
     description: 'Flag artificial sweeteners and gut barrier disruptors that induce inflammation.',
     image: require('../../../assets/images/oil_paint/gut_shield_pro_oil.png'),
-    icon: Heart,
+    icon: ShieldCheck,
     color: '#34D399', // bright green
   },
   {
@@ -74,7 +103,7 @@ const CAROUSEL_ITEMS = [
     subtitle: 'Dietary Shield',
     description: 'Check instantly for gluten, dairy, nuts, or non-vegan ingredients matching your preferences.',
     image: require('../../../assets/images/oil_paint/allergen_alert_oil.png'),
-    icon: ShieldAlert,
+    icon: ShieldCheck,
     color: '#EF4444', // red
   },
   {
@@ -110,7 +139,7 @@ const CAROUSEL_ITEMS = [
     subtitle: 'Nova Classification',
     description: 'Avoid Ultra-Processed Foods (Group 4) and audit overall ingredient safety at a glance.',
     image: require('../../../assets/images/oil_paint/basket_score_impasto.png'),
-    icon: Award,
+    icon: Cog,
     color: '#8B5CF6', // purple
   },
 ];
@@ -270,51 +299,6 @@ export default function HomeScreen() {
 
     return () => clearInterval(interval);
   }, [activeIndex, hasActiveResult]);
-
-  const totalSugarTeaspoons = hasActiveResult ? (activeScanResult.sugarTeaspoons ?? 0) : 0;
-  const totalBasketCalories = hasActiveResult ? Math.round(activeScanResult.calories ?? 0) : 0;
-
-  const animatedSugarVal = useSharedValue(0);
-
-  useEffect(() => {
-    if (hasActiveResult) {
-      animatedSugarVal.value = 0;
-      animatedSugarVal.value = withDelay(
-        500, // Wait for cards to slide in
-        withTiming(totalSugarTeaspoons, { duration: 1500, easing: Easing.out(Easing.cubic) })
-      );
-    }
-  }, [totalSugarTeaspoons, hasActiveResult]);
-
-  const animatedSugarProps = useAnimatedProps<any>(() => {
-    return {
-      text: animatedSugarVal.value.toFixed(1),
-    };
-  });
-  
-  const animatedSmallSugarProps = useAnimatedProps<any>(() => {
-    return {
-      text: `${animatedSugarVal.value.toFixed(1)} tsp`,
-    };
-  });
-
-  const burnDownActivities = useMemo(() => {
-    if (!hasActiveResult || !activeScanResult.calories) return null;
-    const calories = activeScanResult.calories;
-    const jogMins = Math.round(calories / 8.5);
-    const cycleMins = Math.round(calories / 6.5);
-    const swimMins = Math.round(calories / 7.5);
-    const walkMins = Math.round(calories / 4.2);
-    return { jogMins, cycleMins, swimMins, walkMins };
-  }, [activeScanResult, hasActiveResult]);
-
-  const formatBurnTime = (mins: number): string => {
-    if (!mins || mins <= 0) return '0m';
-    if (mins < 60) return `${mins}m`;
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
-    return m > 0 ? `${h}h ${m}m` : `${h}h`;
-  };
 
   const alerts = useMemo(() => {
     if (!hasActiveResult) return [];
@@ -554,19 +538,13 @@ export default function HomeScreen() {
             </View>
           </View>
         ) : (
-          /* Active Scanned Product Dashboard Layout */
-        <ScanResultCards
-          activeScanResult={activeScanResult}
-          alerts={alerts}
-          colors={colors}
-          isDark={isDark}
-          onOpenDisclaimer={() => setDisclaimerModalVisible(true)}
-          animatedSugarProps={animatedSugarProps}
-          animatedSmallSugarProps={animatedSmallSugarProps}
-            totalSugarTeaspoons={totalSugarTeaspoons}
-            totalBasketCalories={totalBasketCalories}
-            burnDownActivities={burnDownActivities}
-            formatBurnTime={formatBurnTime}
+          /* Active Scanned Product — Knowledge & Intelligence Audit Flow */
+          <ScanResultCards
+            activeScanResult={activeScanResult}
+            alerts={alerts}
+            colors={colors}
+            isDark={isDark}
+            onOpenDisclaimer={() => setDisclaimerModalVisible(true)}
           />
         )}
       </ScrollView>
@@ -578,19 +556,36 @@ export default function HomeScreen() {
   );
 }
 
-// ─── Extracted result cards — each gets its own mount anim ───────
-// Keeps HomeScreen render lean; animations are isolated per-card.
+// ─── Extracted result cards — each section gets its own mount anim ──
+// Section 1–7 of the Knowledge & Intelligence audit flow, top to bottom.
 function ScanResultCards({
-  activeScanResult, alerts, colors, isDark,
-  animatedSugarProps, animatedSmallSugarProps,
-  totalSugarTeaspoons, totalBasketCalories, burnDownActivities, formatBurnTime, onOpenDisclaimer,
-}: any) {
+  activeScanResult,
+  alerts,
+  colors,
+  isDark,
+  onOpenDisclaimer,
+}: {
+  activeScanResult: ScanResultData;
+  alerts: { id: string; type: 'allergen' | 'oil'; name: string }[];
+  colors: any;
+  isDark: boolean;
+  onOpenDisclaimer: () => void;
+}) {
+  const header1 = useMountAnim(40);
   const card1 = useMountAnim(60);
-  const card2 = useMountAnim(120);
-  const card2b = useMountAnim(180);
-  const card3 = useMountAnim(240);
-  const card4 = useMountAnim(300);
-  const card5 = useMountAnim(360);
+  const header2 = useMountAnim(90);
+  const card2 = useMountAnim(110);
+  const header3 = useMountAnim(140);
+  const card3 = useMountAnim(160);
+  const header4 = useMountAnim(190);
+  const card4 = useMountAnim(210);
+  const header5 = useMountAnim(240);
+  const card5 = useMountAnim(260);
+  const header6 = useMountAnim(290);
+  const card6 = useMountAnim(310);
+  const header7 = useMountAnim(340);
+  const card7 = useMountAnim(360);
+  const footer = useMountAnim(400);
 
   const nutritionIntelligence = activeScanResult?.nutritionIntelligence ?? deriveNutritionIntelligence({
     protein100g: activeScanResult?.proteinGrams,
@@ -601,8 +596,19 @@ function ScanResultCards({
   });
 
   return (
-    <View style={{ gap: 16 }}>
-      {/* 1. Hero Card */}
+    <View style={{ gap: 10 }}>
+      {/* ── Section 1 · Mascot & BiteFix Intelligence Score ── */}
+      <AnimatedReanimated.View style={header1}>
+        <KnowledgeSectionHeader
+          step={KNOWLEDGE_COPY.verdict.step}
+          category={KNOWLEDGE_COPY.verdict.category}
+          title={KNOWLEDGE_COPY.verdict.title}
+          subtitle={KNOWLEDGE_COPY.verdict.subtitle}
+          accentColor={isDark ? KNOWLEDGE_COPY.verdict.accent : '#4A8A1A'}
+          icon={KNOWLEDGE_COPY.verdict.icon}
+          isDark={isDark}
+        />
+      </AnimatedReanimated.View>
       <AnimatedReanimated.View style={card1}>
         <ProductHeroCardDashboard
           scanResult={activeScanResult}
@@ -612,8 +618,39 @@ function ScanResultCards({
         />
       </AnimatedReanimated.View>
 
-      {/* 2. Additives Intelligence — categories + LED levels */}
+      {/* ── Section 2 · Standalone NOVA Processing ── */}
+      <AnimatedReanimated.View style={header2}>
+        <KnowledgeSectionHeader
+          step={KNOWLEDGE_COPY.processing.step}
+          category={KNOWLEDGE_COPY.processing.category}
+          title={KNOWLEDGE_COPY.processing.title}
+          subtitle={KNOWLEDGE_COPY.processing.subtitle}
+          accentColor={KNOWLEDGE_COPY.processing.accent}
+          icon={KNOWLEDGE_COPY.processing.icon}
+          isDark={isDark}
+        />
+      </AnimatedReanimated.View>
       <AnimatedReanimated.View style={card2}>
+        <NovaProcessingCard
+          novaClass={activeScanResult.novaClass}
+          colors={colors}
+          isDark={isDark}
+        />
+      </AnimatedReanimated.View>
+
+      {/* ── Section 3 · Additives Intelligence ── */}
+      <AnimatedReanimated.View style={header3}>
+        <KnowledgeSectionHeader
+          step={KNOWLEDGE_COPY.additives.step}
+          category={KNOWLEDGE_COPY.additives.category}
+          title={KNOWLEDGE_COPY.additives.title}
+          subtitle={KNOWLEDGE_COPY.additives.subtitle}
+          accentColor={KNOWLEDGE_COPY.additives.accent}
+          icon={KNOWLEDGE_COPY.additives.icon}
+          isDark={isDark}
+        />
+      </AnimatedReanimated.View>
+      <AnimatedReanimated.View style={card3}>
         <AdditivesIntelligenceCard
           additives={activeScanResult.additives ?? []}
           colors={colors}
@@ -621,140 +658,67 @@ function ScanResultCards({
         />
       </AnimatedReanimated.View>
 
-      {/* 2b. Nutrition Intelligence */}
-      <AnimatedReanimated.View style={card2b}>
-        <NutritionIntelligenceCard
+      {/* ── Section 4 · Unified Nutrition & Nutri-Score ── */}
+      <AnimatedReanimated.View style={header4}>
+        <KnowledgeSectionHeader
+          step={KNOWLEDGE_COPY.nutrition.step}
+          category={KNOWLEDGE_COPY.nutrition.category}
+          title={KNOWLEDGE_COPY.nutrition.title}
+          subtitle={KNOWLEDGE_COPY.nutrition.subtitle}
+          accentColor={KNOWLEDGE_COPY.nutrition.accent}
+          icon={KNOWLEDGE_COPY.nutrition.icon}
+          isDark={isDark}
+        />
+      </AnimatedReanimated.View>
+      <AnimatedReanimated.View style={card4}>
+        <UnifiedNutritionCard
+          nutriScoreGrade={activeScanResult.nutriScore}
           nutritionIntelligence={nutritionIntelligence}
           colors={colors}
           isDark={isDark}
         />
       </AnimatedReanimated.View>
 
-      {/* 3. Sugar Impact Card */}
-      <AnimatedReanimated.View style={card3}>
-            <View
-              style={{
-                backgroundColor: isDark ? 'rgba(5, 10, 6, 0.96)' : '#FFFFFF',
-                borderColor: isDark ? 'rgba(251,191,36,0.22)' : 'rgba(217,119,6,0.15)',
-                borderWidth: 1.5,
-                borderRadius: 24,
-                padding: 20,
-                shadowColor: isDark ? '#FBBF24' : '#D97706',
-                shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: isDark ? 0.18 : 0.07,
-                shadowRadius: 18,
-                elevation: 6,
-                overflow: 'hidden',
-              }}
-            >
-              {/* Subtle amber aurora */}
-              <View style={{
-                position: 'absolute', top: -50, right: -50,
-                width: 160, height: 160, borderRadius: 80,
-                backgroundColor: isDark ? 'rgba(251,191,36,0.07)' : 'rgba(217,119,6,0.05)',
-              }} pointerEvents="none" />
+      {/* ── Section 5 · Sugar Impact ── */}
+      <AnimatedReanimated.View style={header5}>
+        <KnowledgeSectionHeader
+          step={KNOWLEDGE_COPY.sugar.step}
+          category={KNOWLEDGE_COPY.sugar.category}
+          title={KNOWLEDGE_COPY.sugar.title}
+          subtitle={KNOWLEDGE_COPY.sugar.subtitle}
+          accentColor={KNOWLEDGE_COPY.sugar.accent}
+          icon={KNOWLEDGE_COPY.sugar.icon}
+          isDark={isDark}
+        />
+      </AnimatedReanimated.View>
+      <AnimatedReanimated.View style={card5}>
+        <SugarImpactCard
+          sugarTeaspoons={activeScanResult.sugarTeaspoons}
+          sugarGrams={activeScanResult.sugarGrams}
+          sugarPer100g={activeScanResult.sugarPer100g}
+          servingSize={activeScanResult.servingSize}
+          whoLimitServingPercent={activeScanResult.whoLimitServingPercent}
+          hasHiddenSugars={activeScanResult.hasHiddenSugars}
+          hiddenSugars={activeScanResult.hiddenSugars}
+          hiddenSugarCount={activeScanResult.hiddenSugarCount}
+          colors={colors}
+          isDark={isDark}
+        />
+      </AnimatedReanimated.View>
 
-              {/* Header */}
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <View style={{
-                    width: 36, height: 36, borderRadius: 12,
-                    backgroundColor: isDark ? 'rgba(251,191,36,0.14)' : 'rgba(217,119,6,0.10)',
-                    alignItems: 'center', justifyContent: 'center',
-                    borderWidth: 1, borderColor: isDark ? 'rgba(251,191,36,0.25)' : 'rgba(217,119,6,0.18)',
-                  }}>
-                    <Candy size={18} color={isDark ? '#FBBF24' : '#D97706'} strokeWidth={2.2} />
-                  </View>
-                  <View>
-                    <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', letterSpacing: -0.3 }}>
-                      Estimated Sugar Equivalent
-                    </Text>
-                    <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', marginTop: 1 }}>
-                      Serving: {activeScanResult.servingSize || '100 g / 100 ml'}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-
-
-              {/* Main Teaspoons & Grams Row */}
-              <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10, marginBottom: 14 }}>
-                <View>
-                  <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-                    <Text style={{ color: colors.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.8 }}>
-                      ≈
-                    </Text>
-                    <AnimatedTextInput
-                      animatedProps={animatedSugarProps}
-                      editable={false}
-                      style={{ color: colors.text, fontSize: 40, fontWeight: '900', letterSpacing: -1.5, padding: 0, margin: 0 }}
-                    />
-                    <Text style={{ color: isDark ? '#FBBF24' : '#D97706', fontSize: 16, fontWeight: '800' }}>
-                      tsp
-                    </Text>
-                  </View>
-                  <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '700', marginTop: 2 }}>
-                    sugar equivalent
-                  </Text>
-                </View>
-                <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', marginBottom: 4 }}>
-                  {activeScanResult.sugarGrams ?? activeScanResult.sugarPer100g ?? 0} g per serving
-                </Text>
-              </View>
-
-              {/* WHO Limit Gauge */}
-              {(() => {
-                const whoPercent = activeScanResult.whoLimitServingPercent ?? Math.min(500, Math.round((totalSugarTeaspoons / 12) * 100));
-                const gaugeColor = whoPercent > 100 ? (isDark ? '#F87171' : '#DC2626') : whoPercent > 50 ? (isDark ? '#FBBF24' : '#D97706') : (isDark ? '#34D399' : '#16A34A');
-                return (
-                  <View style={{
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(248,250,248,0.95)',
-                    padding: 14, borderRadius: 16, borderWidth: 1,
-                    borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', gap: 8,
-                  }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text style={{ color: colors.textSecondary, fontSize: 11.5, fontWeight: '700' }}>
-                        Daily Reference Comparison
-                      </Text>
-                      <Text style={{ color: gaugeColor, fontSize: 12, fontWeight: '900' }}>
-                        {whoPercent}% of 50 g reference
-                      </Text>
-                    </View>
-                    <View style={{ height: 8, borderRadius: 4, overflow: 'hidden', backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}>
-                      <View style={{ height: '100%', width: `${Math.min(100, whoPercent)}%`, backgroundColor: gaugeColor, borderRadius: 4 }} />
-                    </View>
-                  </View>
-                );
-              })()}
-
-              {/* Stealth Sugar Tag if any */}
-              {activeScanResult.hasHiddenSugars && activeScanResult.hiddenSugars && activeScanResult.hiddenSugars.length > 0 && (
-                <View style={{
-                  marginTop: 10,
-                  backgroundColor: isDark ? 'rgba(248,113,113,0.08)' : 'rgba(239,68,68,0.06)',
-                  borderColor: isDark ? 'rgba(248,113,113,0.22)' : 'rgba(239,68,68,0.18)',
-                  borderWidth: 1, borderRadius: 14, padding: 12, gap: 6,
-                }}>
-                  <Text style={{ color: isDark ? '#F87171' : '#DC2626', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    Sugar-Related Ingredients Found ({activeScanResult.hiddenSugarCount || activeScanResult.hiddenSugars.length})
-                  </Text>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                    {activeScanResult.hiddenSugars.map((s: string, idx: number) => (
-                      <View key={idx} style={{
-                        backgroundColor: isDark ? 'rgba(248,113,113,0.12)' : 'rgba(239,68,68,0.10)',
-                        paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8,
-                      }}>
-                        <Text style={{ color: isDark ? '#F87171' : '#DC2626', fontSize: 10.5, fontWeight: '700' }}>{s}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-            </View>
-            </AnimatedReanimated.View>
-
-      {/* 4. Carbon Footprint */}
-      <AnimatedReanimated.View style={card4}>
+      {/* ── Section 6 · Planetary & Carbon Footprint ── */}
+      <AnimatedReanimated.View style={header6}>
+        <KnowledgeSectionHeader
+          step={KNOWLEDGE_COPY.climate.step}
+          category={KNOWLEDGE_COPY.climate.category}
+          title={KNOWLEDGE_COPY.climate.title}
+          subtitle={KNOWLEDGE_COPY.climate.subtitle}
+          accentColor={KNOWLEDGE_COPY.climate.accent}
+          icon={KNOWLEDGE_COPY.climate.icon}
+          isDark={isDark}
+        />
+      </AnimatedReanimated.View>
+      <AnimatedReanimated.View style={card6}>
         <EcoScoreCard
           grade={activeScanResult.ecoscoreGrade}
           carbonFootprint={activeScanResult.carbonFootprint100g}
@@ -764,105 +728,28 @@ function ScanResultCards({
         />
       </AnimatedReanimated.View>
 
+      {/* ── Section 7 · Calorie Burn Out / Physical Cost ── */}
+      <AnimatedReanimated.View style={header7}>
+        <KnowledgeSectionHeader
+          step={KNOWLEDGE_COPY.energy.step}
+          category={KNOWLEDGE_COPY.energy.category}
+          title={KNOWLEDGE_COPY.energy.title}
+          subtitle={KNOWLEDGE_COPY.energy.subtitle}
+          accentColor={KNOWLEDGE_COPY.energy.accent}
+          icon={KNOWLEDGE_COPY.energy.icon}
+          isDark={isDark}
+        />
+      </AnimatedReanimated.View>
+      <AnimatedReanimated.View style={card7}>
+        <BurnOutCard
+          calories={activeScanResult.calories}
+          colors={colors}
+          isDark={isDark}
+        />
+      </AnimatedReanimated.View>
 
-      {/* 5. Burn Down Activity Card */}
-      <AnimatedReanimated.View style={card5}>
-            <View
-              style={{
-                backgroundColor: isDark ? 'rgba(5, 10, 6, 0.96)' : '#FFFFFF',
-
-                borderColor: isDark ? 'rgba(251,146,60,0.22)' : 'rgba(234,88,12,0.15)',
-                borderWidth: 1.5,
-                borderRadius: 24,
-                padding: 20,
-                shadowColor: isDark ? '#FB923C' : '#EA580C',
-                shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: isDark ? 0.18 : 0.07,
-                shadowRadius: 18,
-                elevation: 6,
-                overflow: 'hidden',
-              }}
-            >
-              {/* Subtle orange aurora */}
-              <View style={{
-                position: 'absolute', bottom: -50, left: -50,
-                width: 160, height: 160, borderRadius: 80,
-                backgroundColor: isDark ? 'rgba(251,146,60,0.07)' : 'rgba(234,88,12,0.05)',
-              }} pointerEvents="none" />
-
-              {/* Header */}
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <View style={{
-                    width: 36, height: 36, borderRadius: 12,
-                    backgroundColor: isDark ? 'rgba(251,146,60,0.14)' : 'rgba(234,88,12,0.10)',
-                    alignItems: 'center', justifyContent: 'center',
-                    borderWidth: 1, borderColor: isDark ? 'rgba(251,146,60,0.25)' : 'rgba(234,88,12,0.18)',
-                  }}>
-                    <Flame size={18} color={isDark ? '#FB923C' : '#EA580C'} strokeWidth={2.2} />
-                  </View>
-                  <View>
-                    <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', letterSpacing: -0.3 }}>
-                      Activity Equivalent
-                    </Text>
-                    <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', marginTop: 1 }}>
-                      Approximate Activity Time
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={{
-                  backgroundColor: isDark ? 'rgba(251,146,60,0.12)' : 'rgba(234,88,12,0.10)',
-                  borderColor: isDark ? 'rgba(251,146,60,0.28)' : 'rgba(234,88,12,0.22)',
-                  borderWidth: 1.5,
-                  paddingHorizontal: 11,
-                  paddingVertical: 5,
-                  borderRadius: 10,
-                }}>
-                  <Text style={{ color: isDark ? '#FB923C' : '#EA580C', fontSize: 13, fontWeight: '900', letterSpacing: 0.3 }}>
-                    {totalBasketCalories} kcal
-                  </Text>
-                </View>
-              </View>
-
-              {/* Workout Burn Times Grid */}
-              <View style={{ gap: 8 }}>
-                {[
-                  { key: 'jog',   label: 'Jogging',       rate: '8.5 kcal/min', mins: burnDownActivities?.jogMins ?? 0,   color: isDark ? '#FB923C' : '#EA580C' },
-                  { key: 'cycle', label: 'Cycling',       rate: '6.5 kcal/min', mins: burnDownActivities?.cycleMins ?? 0, color: isDark ? '#22D3EE' : '#0891B2' },
-                  { key: 'swim',  label: 'Swimming',      rate: '7.5 kcal/min', mins: burnDownActivities?.swimMins ?? 0,  color: isDark ? '#34D399' : '#16A34A' },
-                  { key: 'walk',  label: 'Brisk Walking', rate: '4.2 kcal/min', mins: burnDownActivities?.walkMins ?? 0,  color: isDark ? '#2DD4BF' : '#0F766E' },
-                ].map((act) => (
-                  <View
-                    key={act.key}
-                    style={{
-                      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-                      backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(248,250,248,0.95)',
-                      paddingVertical: 11, paddingHorizontal: 14, borderRadius: 14,
-                      borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                    }}
-                  >
-                    <View>
-                      <Text style={{ color: colors.text, fontSize: 13, fontWeight: '700' }}>{act.label}</Text>
-                      <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '600' }}>{act.rate}</Text>
-                    </View>
-                    <View style={{
-                      backgroundColor: `${act.color}18`,
-                      borderColor: `${act.color}30`,
-                      borderWidth: 1,
-                      paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8,
-                    }}>
-                      <Text style={{ color: act.color, fontSize: 13, fontWeight: '900' }}>
-                        ≈{formatBurnTime(act.mins)}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            </View>
-            </AnimatedReanimated.View>
-
-      <AnimatedReanimated.View style={card5}>
+      {/* Disclaimer footer */}
+      <AnimatedReanimated.View style={footer}>
         <View style={{ alignItems: 'center', paddingTop: 2, paddingBottom: 6 }}>
           <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '600', marginBottom: 6 }}>
             Results are based on available product data.
