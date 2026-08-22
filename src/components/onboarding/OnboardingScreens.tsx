@@ -1848,8 +1848,8 @@ export function PrioritiesScreen({ selected, onToggle, colors, isDark, reduceMot
     <ScreenFrame>
       <PriorityStatusBar selected={selected} colors={colors} isDark={isDark} />
       <ScreenHeading
-        title="Pick what matters most to **you!**"
-        subtitle="Tell us what you want to surface first in your Scan Result!"
+        title="Pick your **Clean Food** choices!"
+        subtitle="Tell us what matters most when you look at your Scan Result!"
         colors={colors}
       />
       <View style={{ gap: 9, marginTop: 4 }}>
@@ -1868,7 +1868,7 @@ export function PrioritiesScreen({ selected, onToggle, colors, isDark, reduceMot
           <SelectionRow
             key={option.id}
             label={option.label}
-            selected={selected.includes(option.id)}
+            selected={!allSelected && selected.includes(option.id)}
             onPress={() => onToggle(option.id)}
             colors={colors}
             isDark={isDark}
