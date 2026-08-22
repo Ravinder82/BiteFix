@@ -188,7 +188,7 @@ const OIL_OPTIONS: AllergyOption[] = [
 const PRIORITY_OPTIONS: Array<{ id: OnboardingPriority; label: string; preview: string; icon: React.ComponentType<any>; color: string }> = [
   { id: 'ultra_processed', label: 'Less ultra-processed food', preview: 'NOVA 1–4', icon: Package, color: GREEN },
   { id: 'nutrition', label: 'Better nutrition profile', preview: 'Nutri-Score A–E', icon: Activity, color: TEAL },
-  { id: 'ingredients', label: 'Ingredients and allergens', preview: 'Additives · E-numbers', icon: ShieldCheck, color: GREEN },
+  { id: 'ingredients', label: 'Ingredients Intelligence', preview: 'Additives · E-numbers', icon: ShieldCheck, color: GREEN },
   { id: 'sugar', label: 'Lower sugar intake', preview: '≈ tsp per serving', icon: Droplets, color: AMBER },
 ];
 
@@ -1849,7 +1849,7 @@ export function PrioritiesScreen({ selected, onToggle, colors, isDark, reduceMot
       <PriorityStatusBar selected={selected} colors={colors} isDark={isDark} />
       <ScreenHeading
         title="Pick what matters most to **you!**"
-        subtitle=""
+        subtitle="Tell us what you want to surface first in your Scan Result!"
         colors={colors}
       />
       <View style={{ gap: 9, marginTop: 4 }}>
