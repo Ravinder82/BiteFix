@@ -1453,7 +1453,7 @@ export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion
         subtitle="Informational only — we simply flag these when they appear in a product's published data."
         colors={colors}
       />
-      <View style={{ gap: 10, marginTop: -20 }}>
+      <View style={{ gap: 10, marginTop: 4 }}>
         {ALLERGEN_OPTIONS.map((option) => (
           <ShieldRow
             key={option.id}
@@ -1493,7 +1493,7 @@ export function OilWatchlistScreen({ selected, onToggle, colors, isDark, reduceM
         subtitle="Purely informational — extracted from published data, no judgments."
         colors={colors}
       />
-      <View style={{ gap: 10, marginTop: -20 }}>
+      <View style={{ gap: 10, marginTop: 4 }}>
         {OIL_OPTIONS.map((option) => (
           <ShieldRow
             key={option.id}
@@ -1858,6 +1858,7 @@ function DemoScanSequence({
   colors,
   isDark,
   reduceMotion,
+  isActive = true,
   skipSignal,
   onVerdictShown,
   onComplete,
@@ -1865,6 +1866,7 @@ function DemoScanSequence({
   colors: any;
   isDark: boolean;
   reduceMotion: boolean;
+  isActive?: boolean;
   skipSignal: boolean;
   onVerdictShown: () => void;
   onComplete: () => void;
@@ -1873,6 +1875,7 @@ function DemoScanSequence({
   const [stage, setStage] = useState<'barcode' | 'verdict'>(reduceMotion ? 'verdict' : 'barcode');
   const [holding, setHolding] = useState(false);
   const completedRef = useRef(false);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const barcodeEntrance = useRef(new Animated.Value(0)).current;
   const verdictEntrance = useRef(new Animated.Value(0)).current;
@@ -1904,62 +1907,104 @@ function DemoScanSequence({
     scanProgress.setValue(1);
     onVerdictShownRef.current?.();
     setStage('verdict');
+
+    verdictEntrance.setValue(0);
+    arcAnim.setValue(0);
+    scoreAnim.setValue(0);
+
+    Animated.spring(verdictEntrance, { toValue: 1, friction: 8, tension: 42, useNativeDriver: true }).start();
+    Animated.timing(arcAnim, { toValue: 1, duration: 1200, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
+    
+    const listenerId = scoreAnim.addListener(({ value }) => setScoreText(String(Math.round(value))));
+    Animated.timing(scoreAnim, { toValue: DEMO_SCORE, duration: 1200, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
+    
+    const t = setTimeout(() => {
+      scoreAnim.removeListener(listenerId);
+      onCompleteRef.current?.();
+    }, DEMO_VERDICT_MS);
+    timersRef.current.push(t);
   }, [beamY, scanProgress]);
 
   useEffect(() => {
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+    beamY.stopAnimation();
+    scanProgress.stopAnimation();
+
+    if (!isActive) {
+      completedRef.current = false;
+      setStage('barcode');
+      setHolding(false);
+      barcodeEntrance.setValue(0);
+      verdictEntrance.setValue(0);
+      beamY.setValue(0);
+      arcAnim.setValue(0);
+      scoreAnim.setValue(0);
+      scanProgress.setValue(0);
+      setScoreText('0');
+      return;
+    }
+
     if (reduceMotion) {
+      completedRef.current = true;
+      setStage('verdict');
       barcodeEntrance.setValue(1);
       verdictEntrance.setValue(1);
       arcAnim.setValue(1);
+      scoreAnim.setValue(DEMO_SCORE);
       setScoreText(String(DEMO_SCORE));
-      if (!completedRef.current) {
-        completedRef.current = true;
-        onVerdictShownRef.current?.();
-        onCompleteRef.current?.();
-      }
+      onVerdictShownRef.current?.();
+      onCompleteRef.current?.();
       return;
     }
-    if (stage === 'barcode') {
-      Animated.spring(barcodeEntrance, { toValue: 1, friction: 8, tension: 42, useNativeDriver: true }).start();
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(beamY, { toValue: 1, duration: 1050, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-          Animated.timing(beamY, { toValue: 0, duration: 1050, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-        ])
-      ).start();
-      // Failsafe: the scan auto-completes for users who never hold the card.
-      const failsafe = setTimeout(completeScan, DEMO_SCAN_FAILSAFE_MS);
-      return () => {
-        clearTimeout(failsafe);
-        beamY.stopAnimation();
-      };
-    }
-    Animated.spring(verdictEntrance, { toValue: 1, friction: 8, tension: 42, useNativeDriver: true }).start();
-    Animated.timing(arcAnim, { toValue: 1, duration: 1400, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
-    const listenerId = scoreAnim.addListener(({ value }) => setScoreText(String(Math.round(value))));
-    Animated.timing(scoreAnim, { toValue: DEMO_SCORE, duration: 1400, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
-    const t = setTimeout(() => onCompleteRef.current?.(), DEMO_VERDICT_MS);
+
+    completedRef.current = false;
+    setStage('barcode');
+    setHolding(false);
+    barcodeEntrance.setValue(0);
+    verdictEntrance.setValue(0);
+    beamY.setValue(0);
+    arcAnim.setValue(0);
+    scoreAnim.setValue(0);
+    scanProgress.setValue(0);
+    setScoreText('0');
+
+    Animated.spring(barcodeEntrance, { toValue: 1, friction: 8, tension: 42, useNativeDriver: true }).start();
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(beamY, { toValue: 1, duration: 1050, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(beamY, { toValue: 0, duration: 1050, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      ])
+    ).start();
+
+    // Auto-scan failsafe
+    const failsafe = setTimeout(completeScan, DEMO_SCAN_FAILSAFE_MS);
+    timersRef.current.push(failsafe);
+
     return () => {
-      clearTimeout(t);
-      scoreAnim.removeListener(listenerId);
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current = [];
+      beamY.stopAnimation();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stage, reduceMotion]);
+  }, [isActive, reduceMotion, completeScan]);
 
   // Tap-to-skip anywhere on the screen fast-forwards to the final verdict.
   useEffect(() => {
-    if (!skipSignal || completedRef.current) return;
-    completeScan();
+    if (!skipSignal || !isActive || completedRef.current) return;
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+    completedRef.current = true;
+    setStage('verdict');
     verdictEntrance.setValue(1);
     arcAnim.setValue(1);
     scoreAnim.stopAnimation();
     setScoreText(String(DEMO_SCORE));
+    onVerdictShownRef.current?.();
     onCompleteRef.current?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [skipSignal]);
+  }, [skipSignal, isActive]);
 
   const pressIn = () => {
-    if (completedRef.current || stage !== 'barcode') return;
+    if (completedRef.current || stage !== 'barcode' || !isActive) return;
     setHolding(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Animated.timing(scanProgress, { toValue: 1, duration: DEMO_HOLD_MS, easing: Easing.linear, useNativeDriver: false }).start(({ finished }) => {
@@ -1968,13 +2013,14 @@ function DemoScanSequence({
   };
 
   const pressOut = () => {
-    if (completedRef.current) return;
+    if (completedRef.current || !isActive) return;
     setHolding(false);
     scanProgress.stopAnimation();
     Animated.timing(scanProgress, { toValue: 0, duration: 180, useNativeDriver: false }).start();
   };
 
-  return (    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 14 }}>
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 14 }}>
       {/* Status chip — mirrors the live scanner status */}
       <View
         style={{
@@ -1987,7 +2033,7 @@ function DemoScanSequence({
         }}
       >
         <Text style={{ color: isDark ? '#FFFFFF' : '#11301F', fontSize: 9.5, fontWeight: '900', letterSpacing: 1.2, textTransform: 'uppercase' }}>
-          {stage === 'barcode' ? (holding ? 'Scanning…' : 'Press & Hold To Scan') : 'Instant Verdict'}
+          {stage === 'barcode' ? (holding ? 'Scanning…' : 'Press & Hold To Scan') : 'BiteFix Intelligence Score'}
         </Text>
       </View>
 
@@ -2729,6 +2775,7 @@ export function RevelationScreen({
           colors={colors}
           isDark={isDark}
           reduceMotion={reduceMotion}
+          isActive={isActive}
           skipSignal={skipCount > 0}
           onVerdictShown={() => setVerdictShown(true)}
           onComplete={() => {
@@ -2785,7 +2832,7 @@ export function RevelationScreen({
             }}
           >
             Your assistant is powered up — one scan gives an{' '}
-            <Text style={{ color: GREEN, fontWeight: '800' }}>instant verdict</Text>, on any product.
+            <Text style={{ color: GREEN, fontWeight: '800' }}>instant intelligence score</Text>, on any product.
           </Text>
         </View>
       )}

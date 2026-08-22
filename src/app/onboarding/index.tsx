@@ -636,7 +636,7 @@ export default function OnboardingScreen() {
 
   const getCtaLabel = (screen: number) => {
     if (screen === 6) {
-      return revelationComplete ? "Let's Continue" : 'Revealing Verdict...';
+      return revelationComplete ? "Let's Continue" : 'Revealing Intelligence...';
     }
     if (screen === 7) {
       return activationComplete ? 'I am Ready' : 'Unlocking intelligence';
