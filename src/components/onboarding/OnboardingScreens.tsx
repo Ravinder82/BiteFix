@@ -1812,9 +1812,12 @@ const SURGE_SPARK_ANGLES = [15, 75, 135, 195, 255, 315].map((deg) => (deg * Math
 // ══════════════════════════════════════════════════════════════
 
 const DEMO_HOLD_MS = 800;
+const DEMO_ANALYSE_MS = 1500;
 const DEMO_SCAN_FAILSAFE_MS = 3200;
-const DEMO_VERDICT_MS = 2400;
+// Unlocks the CTA right as the score finishes counting — no dead window.
+const DEMO_VERDICT_MS = 1400;
 const DEMO_BARCODE_DIGITS = '2001234000017';
+const ANALYSE_STEP_LABELS = ['Reading barcode…', 'Matching product…', 'Building your result…'];
 const DEMO_SCORE = 17;
 const DEMO_RING_SIZE = 150;
 
@@ -1874,6 +1877,82 @@ function Ean13Barcode({ barColor, width }: { barColor: string; width: number }) 
 
 const DEMO_NUTRI_GRADES = ['A', 'B', 'C', 'D', 'E'];
 
+// ── Pipeline rail — the single loading indicator that spans the whole demo. ──
+// Scan → Analyse → Result. The CTA unlocks the instant "Result" completes, so
+// the rail visibly answers "how long until the button works?".
+function DemoProgressRail({
+  stage,
+  resultReady,
+  holdProgress,
+  analyseProgress,
+  colors,
+  isDark,
+}: {
+  stage: 'barcode' | 'analysing' | 'verdict';
+  resultReady: boolean;
+  holdProgress: Animated.Value;
+  analyseProgress: Animated.Value;
+  colors: any;
+  isDark: boolean;
+}) {
+  const trackColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)';
+
+  const steps = [
+    { key: 'scan', label: 'Scan', state: stage === 'barcode' ? ('active' as const) : ('done' as const) },
+    { key: 'analyse', label: 'Analyse', state: stage === 'analysing' ? ('active' as const) : stage === 'verdict' ? ('done' as const) : ('pending' as const) },
+    { key: 'result', label: 'Result', state: resultReady ? ('done' as const) : stage === 'verdict' ? ('active' as const) : ('pending' as const) },
+  ];
+
+  return (
+    <View
+      style={{ flexDirection: 'row', alignItems: 'center', width: '100%', maxWidth: 330 }}
+      accessible
+      accessibilityLabel={`Demo progress: ${stage === 'barcode' ? 'waiting to scan' : stage === 'analysing' ? 'analysing product' : resultReady ? 'result ready' : 'building result'}`}
+    >
+      {steps.map((step, i) => (
+        <React.Fragment key={step.key}>
+          {i > 0 && (
+            <View style={{ flex: 1, height: 2, borderRadius: 1, backgroundColor: trackColor, marginHorizontal: 7, overflow: 'hidden' }}>
+              {/* First connector grows with the user's thumb; second tracks the analyse beat. */}
+              <Animated.View
+                style={{
+                  height: '100%',
+                  borderRadius: 1,
+                  backgroundColor: GREEN,
+                  width: (i === 1 ? holdProgress : analyseProgress).interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
+                }}
+              />
+            </View>
+          )}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+            <View
+              style={
+                step.state === 'active'
+                  ? { width: 9, height: 9, borderRadius: 5, backgroundColor: GREEN, shadowColor: GREEN, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 5, elevation: 3 }
+                  : step.state === 'done'
+                  ? { width: 7, height: 7, borderRadius: 4, backgroundColor: GREEN, opacity: 0.85 }
+                  : { width: 7, height: 7, borderRadius: 4, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.18)' }
+              }
+            />
+            <Text
+              style={{
+                color: step.state === 'active' ? GREEN : step.state === 'done' ? colors.textSecondary : colors.textMuted,
+                fontSize: 9,
+                fontWeight: '900',
+                letterSpacing: 0.8,
+                textTransform: 'uppercase',
+                opacity: step.state === 'pending' ? 0.7 : 1,
+              }}
+            >
+              {step.label}
+            </Text>
+          </View>
+        </React.Fragment>
+      ))}
+    </View>
+  );
+}
+
 function DemoScanSequence({
   colors,
   isDark,
@@ -1881,6 +1960,7 @@ function DemoScanSequence({
   isActive = true,
   skipSignal,
   onVerdictShown,
+  onStageChange,
   onComplete,
 }: {
   colors: any;
@@ -1889,11 +1969,14 @@ function DemoScanSequence({
   isActive?: boolean;
   skipSignal: boolean;
   onVerdictShown: () => void;
+  onStageChange?: (stage: 'barcode' | 'analysing' | 'verdict') => void;
   onComplete: () => void;
 }) {
   const { width } = useWindowDimensions();
-  const [stage, setStage] = useState<'barcode' | 'verdict'>(reduceMotion ? 'verdict' : 'barcode');
+  const [stage, setStage] = useState<'barcode' | 'analysing' | 'verdict'>(reduceMotion ? 'verdict' : 'barcode');
   const [holding, setHolding] = useState(false);
+  const [analyseStep, setAnalyseStep] = useState(0);
+  const [resultReady, setResultReady] = useState(false);
   const completedRef = useRef(false);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -1903,12 +1986,20 @@ function DemoScanSequence({
   const arcAnim = useRef(new Animated.Value(0)).current;
   const scoreAnim = useRef(new Animated.Value(0)).current;
   const scanProgress = useRef(new Animated.Value(0)).current;
+  const analyseAnim = useRef(new Animated.Value(0)).current;
   const [scoreText, setScoreText] = useState('0');
 
   const onVerdictShownRef = useRef(onVerdictShown);
   onVerdictShownRef.current = onVerdictShown;
+  const onStageChangeRef = useRef(onStageChange);
+  onStageChangeRef.current = onStageChange;
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
+
+  // Narrate every stage cut to the parent (drives the CTA label).
+  useEffect(() => {
+    onStageChangeRef.current?.(stage);
+  }, [stage]);
 
   const cardBg = isDark ? 'rgba(17,23,19,0.97)' : '#FFFFFF';
   const cardBorder = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(7,25,15,0.08)';
@@ -1918,14 +2009,9 @@ function DemoScanSequence({
   const barcodeWidth = Math.round(clamp(width * 0.58, 200, 260));
   const ringCircumference = 2 * Math.PI * (DEMO_RING_SIZE / 2 - 8);
 
-  const completeScan = useCallback(() => {
-    if (completedRef.current) return;
-    completedRef.current = true;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    beamY.stopAnimation();
-    scanProgress.stopAnimation();
-    scanProgress.setValue(1);
-    onVerdictShownRef.current?.();
+  // Beat 3: the verdict card. onComplete fires the moment the score lands —
+  // the rail's Result dot completes and the CTA unlocks in the same tick.
+  const showVerdict = useCallback(() => {
     setStage('verdict');
 
     verdictEntrance.setValue(0);
@@ -1937,30 +2023,56 @@ function DemoScanSequence({
 
     const listenerId = scoreAnim.addListener(({ value }) => setScoreText(String(Math.round(value))));
     Animated.timing(scoreAnim, { toValue: DEMO_SCORE, duration: 1200, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
+    onVerdictShownRef.current?.();
 
     const t = setTimeout(() => {
       scoreAnim.removeListener(listenerId);
+      setResultReady(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       onCompleteRef.current?.();
     }, DEMO_VERDICT_MS);
     timersRef.current.push(t);
-  }, [beamY, scanProgress]);
+  }, [arcAnim, scoreAnim, verdictEntrance]);
+
+  // Beat 2: the hold completes — run a short, narrated "analysing" beat so the
+  // barcode → verdict swap reads as a pipeline instead of an unexplained cut.
+  const beginAnalysis = useCallback(() => {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    beamY.stopAnimation();
+    setHolding(false);
+    scanProgress.setValue(1);
+    setStage('analysing');
+    analyseAnim.setValue(0);
+    setAnalyseStep(0);
+
+    const t1 = setTimeout(() => setAnalyseStep(1), Math.round(DEMO_ANALYSE_MS / 3));
+    const t2 = setTimeout(() => setAnalyseStep(2), Math.round((DEMO_ANALYSE_MS / 3) * 2));
+    const t3 = setTimeout(showVerdict, DEMO_ANALYSE_MS);
+    timersRef.current.push(t1, t2, t3);
+  }, [analyseAnim, beamY, scanProgress, showVerdict]);
 
   useEffect(() => {
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
     beamY.stopAnimation();
     scanProgress.stopAnimation();
+    analyseAnim.stopAnimation();
 
     if (!isActive) {
       completedRef.current = false;
       setStage('barcode');
       setHolding(false);
+      setAnalyseStep(0);
+      setResultReady(false);
       barcodeEntrance.setValue(0);
       verdictEntrance.setValue(0);
       beamY.setValue(0);
       arcAnim.setValue(0);
       scoreAnim.setValue(0);
       scanProgress.setValue(0);
+      analyseAnim.setValue(0);
       setScoreText('0');
       return;
     }
@@ -1968,10 +2080,14 @@ function DemoScanSequence({
     if (reduceMotion) {
       completedRef.current = true;
       setStage('verdict');
+      setAnalyseStep(2);
+      setResultReady(true);
       barcodeEntrance.setValue(1);
       verdictEntrance.setValue(1);
       arcAnim.setValue(1);
       scoreAnim.setValue(DEMO_SCORE);
+      scanProgress.setValue(1);
+      analyseAnim.setValue(1);
       setScoreText(String(DEMO_SCORE));
       onVerdictShownRef.current?.();
       onCompleteRef.current?.();
@@ -1981,12 +2097,15 @@ function DemoScanSequence({
     completedRef.current = false;
     setStage('barcode');
     setHolding(false);
+    setAnalyseStep(0);
+    setResultReady(false);
     barcodeEntrance.setValue(0);
     verdictEntrance.setValue(0);
     beamY.setValue(0);
     arcAnim.setValue(0);
     scoreAnim.setValue(0);
     scanProgress.setValue(0);
+    analyseAnim.setValue(0);
     setScoreText('0');
 
     Animated.spring(barcodeEntrance, { toValue: 1, friction: 8, tension: 42, useNativeDriver: true }).start();
@@ -1997,8 +2116,9 @@ function DemoScanSequence({
       ])
     ).start();
 
-    // Auto-scan failsafe
-    const failsafe = setTimeout(completeScan, DEMO_SCAN_FAILSAFE_MS);
+    // Auto-scan failsafe: if the user never holds, the demo runs itself —
+    // through the same narrated pipeline, so it still reads as "scanning".
+    const failsafe = setTimeout(beginAnalysis, DEMO_SCAN_FAILSAFE_MS);
     timersRef.current.push(failsafe);
 
     return () => {
@@ -2006,18 +2126,26 @@ function DemoScanSequence({
       timersRef.current = [];
       beamY.stopAnimation();
     };
-  }, [isActive, reduceMotion, completeScan]);
+  }, [isActive, reduceMotion, beginAnalysis, analyseAnim, arcAnim, barcodeEntrance, beamY, scanProgress, scoreAnim, verdictEntrance]);
 
   // Tap-to-skip anywhere on the screen fast-forwards to the final verdict.
   useEffect(() => {
-    if (!skipSignal || !isActive || completedRef.current) return;
+    if (!skipSignal || !isActive) return;
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
     completedRef.current = true;
+    beamY.stopAnimation();
+    setHolding(false);
+    setAnalyseStep(2);
+    setResultReady(true);
     setStage('verdict');
+    barcodeEntrance.setValue(1);
     verdictEntrance.setValue(1);
     arcAnim.setValue(1);
     scoreAnim.stopAnimation();
+    scoreAnim.setValue(DEMO_SCORE);
+    scanProgress.setValue(1);
+    analyseAnim.setValue(1);
     setScoreText(String(DEMO_SCORE));
     onVerdictShownRef.current?.();
     onCompleteRef.current?.();
@@ -2028,7 +2156,7 @@ function DemoScanSequence({
     setHolding(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Animated.timing(scanProgress, { toValue: 1, duration: DEMO_HOLD_MS, easing: Easing.linear, useNativeDriver: false }).start(({ finished }) => {
-      if (finished) completeScan();
+      if (finished) beginAnalysis();
     });
   };
 
@@ -2053,19 +2181,30 @@ function DemoScanSequence({
         }}
       >
         <Text style={{ color: isDark ? '#FFFFFF' : '#11301F', fontSize: 9.5, fontWeight: '900', letterSpacing: 1.2, textTransform: 'uppercase' }}>
-          {stage === 'barcode' ? (holding ? 'Scanning…' : 'Press & Hold To Scan') : 'BiteFix Intelligence Score'}
+          {stage === 'barcode'
+            ? holding
+              ? 'Scanning…'
+              : 'Press & Hold To Scan'
+            : stage === 'analysing'
+            ? ANALYSE_STEP_LABELS[analyseStep]
+            : 'BiteFix Intelligence Score'}
         </Text>
       </View>
 
-      {stage === 'barcode' ? (
-        /* ── Beat 1: hold-to-scan the barcode under the beam ── */
+      {stage !== 'verdict' ? (
+        /* ── Beats 1-2: hold-to-scan, then the narrated analysing beat ── */
         <Animated.View
           style={{
             opacity: barcodeEntrance,
             transform: [{ scale: barcodeEntrance.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }, { translateY: barcodeEntrance.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }],
           }}
         >
-          <Pressable onPressIn={pressIn} onPressOut={pressOut} accessibilityLabel="Demo barcode. Press and hold to scan.">
+          <Pressable
+            onPressIn={pressIn}
+            onPressOut={pressOut}
+            pointerEvents={stage === 'barcode' ? 'auto' : 'none'}
+            accessibilityLabel="Demo barcode. Press and hold to scan."
+          >
             <Animated.View
               style={{
                 backgroundColor: cardBg,
@@ -2084,27 +2223,29 @@ function DemoScanSequence({
             >
               <View>
                 <Ean13Barcode barColor={barColor} width={barcodeWidth} />
-                <Animated.View
-                  pointerEvents="none"
-                  style={{
-                    position: 'absolute',
-                    left: -8,
-                    right: -8,
-                    height: 16,
-                    transform: [{ translateY: beamY.interpolate({ inputRange: [0, 1], outputRange: [-10, Math.round(barcodeWidth * 0.42) + 16] }) }],
-                  }}
-                >
-                  <LinearGradient
-                    colors={['rgba(1,146,42,0)', 'rgba(1,146,42,0.30)', 'rgba(1,146,42,0)']}
-                    locations={[0, 0.5, 1]}
-                    start={{ x: 0.5, y: 0 }}
-                    end={{ x: 0.5, y: 1 }}
-                    style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 16, borderRadius: 8 }}
-                  />
-                  <View style={{ position: 'absolute', left: 0, right: 0, top: 7, height: 2, borderRadius: 1, backgroundColor: GREEN }} />
-                </Animated.View>
+                {stage === 'barcode' && (
+                  <Animated.View
+                    pointerEvents="none"
+                    style={{
+                      position: 'absolute',
+                      left: -8,
+                      right: -8,
+                      height: 16,
+                      transform: [{ translateY: beamY.interpolate({ inputRange: [0, 1], outputRange: [-10, Math.round(barcodeWidth * 0.42) + 16] }) }],
+                    }}
+                  >
+                    <LinearGradient
+                      colors={['rgba(1,146,42,0)', 'rgba(1,146,42,0.30)', 'rgba(1,146,42,0)']}
+                      locations={[0, 0.5, 1]}
+                      start={{ x: 0.5, y: 0 }}
+                      end={{ x: 0.5, y: 1 }}
+                      style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 16, borderRadius: 8 }}
+                    />
+                    <View style={{ position: 'absolute', left: 0, right: 0, top: 7, height: 2, borderRadius: 1, backgroundColor: GREEN }} />
+                  </Animated.View>
+                )}
               </View>
-              {/* Hold progress */}
+              {/* Hold progress → analysing progress (same track, continuous story) */}
               <View
                 style={{
                   alignSelf: 'stretch',
@@ -2120,13 +2261,15 @@ function DemoScanSequence({
                     height: '100%',
                     borderRadius: 3,
                     backgroundColor: GREEN,
-                    width: scanProgress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
+                    width: (stage === 'analysing' ? analyseAnim : scanProgress).interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
                   }}
                 />
               </View>
-              <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', textAlign: 'center', marginTop: 8 }}>
-                {holding ? 'Keep holding…' : 'Hold to run the scan'}
-              </Text>
+              {stage === 'barcode' && (
+                <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', textAlign: 'center', marginTop: 8 }}>
+                  {holding ? 'Keep holding…' : 'Hold to run the scan'}
+                </Text>
+              )}
             </Animated.View>
           </Pressable>
         </Animated.View>
@@ -2141,7 +2284,7 @@ function DemoScanSequence({
             borderWidth: 1.5,
             borderRadius: 24,
             padding: 18,
-            gap: 10,
+            gap: 12,
             width: Math.min(width - 44, 372),
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 10 },
@@ -2183,7 +2326,7 @@ function DemoScanSequence({
           </View>
 
           {/* Purity Score ring */}
-          <View style={{ alignItems: 'center', marginTop: 2 }}>
+          <View style={{ alignItems: 'center', marginTop: 6 }}>
             <View style={{ width: DEMO_RING_SIZE, height: DEMO_RING_SIZE, alignItems: 'center', justifyContent: 'center' }}>
               <Svg width={DEMO_RING_SIZE} height={DEMO_RING_SIZE}>
                 <Circle cx={DEMO_RING_SIZE / 2} cy={DEMO_RING_SIZE / 2} r={DEMO_RING_SIZE / 2 - 8} stroke={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'} strokeWidth={9} fill="none" />
@@ -2337,6 +2480,16 @@ function DemoScanSequence({
           </Text>
         </Animated.View>
       )}
+
+      {/* Persistent pipeline rail — its Result step completes exactly when the CTA unlocks */}
+      <DemoProgressRail
+        stage={stage}
+        resultReady={resultReady}
+        holdProgress={scanProgress}
+        analyseProgress={analyseAnim}
+        colors={colors}
+        isDark={isDark}
+      />
     </View>
   );
 }
@@ -2750,12 +2903,14 @@ export function RevelationScreen({
   reduceMotion,
   isActive = true,
   onAnimationComplete,
+  onStageChange,
 }: {
   colors: any;
   isDark: boolean;
   reduceMotion: boolean;
   isActive?: boolean;
   onAnimationComplete?: () => void;
+  onStageChange?: (stage: 'barcode' | 'analysing' | 'verdict') => void;
 }) {
   const { width, height } = useWindowDimensions();
   const horizontalPadding = clamp(width * 0.0615, 18, 24);
@@ -2798,6 +2953,7 @@ export function RevelationScreen({
           isActive={isActive}
           skipSignal={skipCount > 0}
           onVerdictShown={() => setVerdictShown(true)}
+          onStageChange={onStageChange}
           onComplete={() => {
             setVerdictShown(true);
             onAnimationComplete?.();
@@ -2811,16 +2967,16 @@ export function RevelationScreen({
       </TouchableOpacity>
 
       {verdictShown && (
-        <View style={{ alignItems: 'center', width: '100%', paddingBottom: isCompact ? 2 : 6 }}>
+        <View style={{ alignItems: 'center', width: '100%', marginTop: 18, paddingBottom: isCompact ? 2 : 6 }}>
           {/* Title — 2 distinct lines with tasteful green accent */}
-          <View style={{ alignItems: 'center', marginBottom: 6, maxWidth: 360 }}>
+          <View style={{ alignItems: 'center', marginBottom: 8, maxWidth: 360 }}>
             <Text
               style={{
                 color: colors.text,
-                fontSize: clamp(width * 0.086, 30, 35),
-                lineHeight: clamp(width * 0.102, 36, 42),
+                fontSize: clamp(width * 0.082, 28, 32),
+                lineHeight: clamp(width * 0.098, 34, 38),
                 fontWeight: '900',
-                letterSpacing: -0.9,
+                letterSpacing: -0.8,
                 textAlign: 'center',
               }}
             >
@@ -2829,10 +2985,10 @@ export function RevelationScreen({
             <Text
               style={{
                 color: GREEN,
-                fontSize: clamp(width * 0.086, 30, 35),
-                lineHeight: clamp(width * 0.102, 36, 42),
+                fontSize: clamp(width * 0.082, 28, 32),
+                lineHeight: clamp(width * 0.098, 34, 38),
                 fontWeight: '900',
-                letterSpacing: -0.9,
+                letterSpacing: -0.8,
                 textAlign: 'center',
               }}
             >

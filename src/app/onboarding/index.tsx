@@ -452,6 +452,7 @@ export default function OnboardingScreen() {
   const [priorities, setPriorities] = useState<OnboardingPriority[]>([]);
   const [ingredientReadingFrequency, setIngredientReadingFrequency] = useState<IngredientReadingFrequency>();
   const [revelationComplete, setRevelationComplete] = useState(false);
+  const [revealStage, setRevealStage] = useState<'barcode' | 'analysing' | 'verdict'>('barcode');
   const [activationComplete, setActivationComplete] = useState(false);
   const [activationStatus, setActivationStatus] = useState<ActivationStatusState>(DEFAULT_ACTIVATION_STATUS);
 
@@ -498,6 +499,7 @@ export default function OnboardingScreen() {
   useEffect(() => {
     if (currentScreen === 6) {
       setRevelationComplete(false);
+      setRevealStage('barcode');
     } else if (currentScreen === 7) {
       setActivationComplete(false);
       setActivationStatus(DEFAULT_ACTIVATION_STATUS);
@@ -643,7 +645,11 @@ export default function OnboardingScreen() {
 
   const getCtaLabel = (screen: number) => {
     if (screen === 6) {
-      return revelationComplete ? "Let's Continue" : 'Revealing Intelligence...';
+      // The disabled button narrates the demo pipeline stage by stage.
+      if (revelationComplete) return "Let's Continue";
+      if (revealStage === 'verdict') return 'Revealing Intelligence...';
+      if (revealStage === 'analysing') return 'Analysing Product...';
+      return 'Hold To Scan';
     }
     if (screen === 7) {
       return activationComplete ? 'I am Ready' : 'Unlocking intelligence';
@@ -675,6 +681,7 @@ export default function OnboardingScreen() {
             isDark={isDark}
             reduceMotion={reduceMotion}
             isActive={isActive}
+            onStageChange={setRevealStage}
             onAnimationComplete={() => setRevelationComplete(true)}
           />
         );
