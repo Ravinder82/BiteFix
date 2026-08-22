@@ -140,7 +140,7 @@ export function SugarImpactCard({
           </Text>
         </View>
         <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', marginBottom: 4 }}>
-          {sugarGrams ?? sugarPer100g ?? 0} g per serving
+          {sugarGrams ?? sugarPer100g ?? 0} g{sugarGrams !== undefined ? ' per serving' : ' per 100 g / 100 ml'}
         </Text>
       </View>
 

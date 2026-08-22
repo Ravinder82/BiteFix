@@ -34,28 +34,28 @@ import AnimatedReanimated, {
 const KNOWLEDGE_COPY = {
   verdict: {
     step: 1, category: 'Safety & Verdict', icon: ShieldCheck, accent: '#6EE041',
-    title: 'Overall Verdict & Personal Safeguards',
-    subtitle: 'Instant synthesis of your product\'s purity score along with active allergen and oil watchlist checks.',
+    title: 'Product Overview & Personal Flags',
+    subtitle: 'Instant synthesis of your product\'s data profile along with active allergen and oil watchlist checks.',
   },
   processing: {
     step: 2, category: 'Processing', icon: Cog, accent: '#F5A623',
-    title: 'Ultra-Processing & Formulation',
-    subtitle: 'Evaluates the degree of industrial transformation and synthetic formulation in this food.',
+    title: 'Processing Level & Formulation',
+    subtitle: 'Evaluates the degree of industrial processing and additive formulation in this food.',
   },
   additives: {
     step: 3, category: 'Additives', icon: FlaskConical, accent: '#8B5CF6',
-    title: 'Chemical & Additive Audit',
-    subtitle: 'Categorizes all preservatives, emulsifiers, and artificial agents found in published ingredient data.',
+    title: 'Additive & Ingredient Audit',
+    subtitle: 'Categorizes all preservatives, emulsifiers, and other additive ingredients found in published ingredient data.',
   },
   nutrition: {
     step: 4, category: 'Nutrition', icon: Activity, accent: '#FBBF24',
     title: 'Nutrient Density & Balance',
-    subtitle: 'Combines official Nutri-Score grading with a deep breakdown of essential macros and minerals.',
+    subtitle: 'Combines Nutri-Score grading with a breakdown of available macros and minerals.',
   },
   sugar: {
     step: 5, category: 'Sugar', icon: Candy, accent: '#F59E0B',
-    title: 'Metabolic Sugar Load',
-    subtitle: 'Provides an approximate estimation of sugar content converted into physical teaspoons and unmasks hidden sweeteners.',
+    title: 'Estimated Sugar Equivalent',
+    subtitle: 'Provides an approximate estimation of sugar content converted into physical teaspoons and lists sugar-related ingredients.',
   },
   climate: {
     step: 6, category: 'Climate', icon: Globe, accent: '#2DD4BF',
@@ -64,8 +64,8 @@ const KNOWLEDGE_COPY = {
   },
   energy: {
     step: 7, category: 'Energy', icon: Flame, accent: '#FB923C',
-    title: 'Physical Energy Cost',
-    subtitle: 'Calculates the approximate physical activity required to burn off this product\'s estimated caloric intake.',
+    title: 'Activity Equivalent',
+    subtitle: 'Calculates the approximate physical activity time that matches this product\'s estimated calories per serving.',
   },
 } as const;
 
@@ -73,8 +73,8 @@ const CAROUSEL_ITEMS = [
   {
     id: 'additive',
     title: 'Additive Detective',
-    subtitle: 'Chemical Additives',
-    description: 'Find emulsifiers, thickeners, preservatives, and coloring agents hidden in lists.',
+    subtitle: 'Food Additives',
+    description: 'Identify emulsifiers, thickeners, preservatives, and coloring agents in the ingredient list.',
     image: require('../../../assets/images/oil_paint/additive_detective_oil.png'),
     icon: ShieldCheck,
     color: '#10B981', // green
@@ -82,8 +82,8 @@ const CAROUSEL_ITEMS = [
   {
     id: 'gut',
     title: 'Gut Shield Pro',
-    subtitle: 'Microbiome Safety',
-    description: 'Flag artificial sweeteners and gut barrier disruptors that induce inflammation.',
+    subtitle: 'Microbiome Research',
+    description: 'Flags ingredients classified as artificial sweeteners and emulsifiers referenced in gut microbiome studies.',
     image: require('../../../assets/images/oil_paint/gut_shield_pro_oil.png'),
     icon: ShieldCheck,
     color: '#34D399', // bright green
@@ -100,7 +100,7 @@ const CAROUSEL_ITEMS = [
   {
     id: 'allergen',
     title: 'Allergen Alert',
-    subtitle: 'Dietary Shield',
+    subtitle: 'Dietary Filters',
     description: 'Check instantly for gluten, dairy, nuts, or non-vegan ingredients matching your preferences.',
     image: require('../../../assets/images/oil_paint/allergen_alert_oil.png'),
     icon: ShieldCheck,
@@ -110,7 +110,7 @@ const CAROUSEL_ITEMS = [
     id: 'carbon',
     title: 'Planetary Audit',
     subtitle: 'Eco Carbon Footprint',
-    description: 'Track the true environmental footprint of production and packaging. A world-first ecological score.',
+    description: 'Track the estimated environmental footprint of production and packaging with an ecological score.',
     image: require('../../../assets/images/oil_paint/eco_climate_oil.png'),
     icon: Globe,
     color: '#3B82F6', // blue
@@ -119,7 +119,7 @@ const CAROUSEL_ITEMS = [
     id: 'sugar',
     title: 'Metabolic Audit',
     subtitle: 'Sugar Investigator',
-    description: 'Visualize hidden sugars converted into equivalent physical teaspoons to manage glycemic load.',
+    description: 'Visualize total sugars converted into equivalent teaspoons, with WHO intake reference points.',
     image: require('../../../assets/images/oil_paint/sugar_audit_oil.png'),
     icon: Candy,
     color: '#F59E0B', // amber
@@ -128,7 +128,7 @@ const CAROUSEL_ITEMS = [
     id: 'burn',
     title: 'Physical Cost',
     subtitle: 'Calorie Burn Down',
-    description: 'See the precise minutes of running, cycling, or swimming required to offset the energy intake.',
+    description: 'See the estimated minutes of running, cycling, or swimming equivalent to this energy intake.',
     image: require('../../../assets/images/oil_paint/calorie_burn_oil.png'),
     icon: Flame,
     color: '#EF4444', // red
@@ -137,7 +137,7 @@ const CAROUSEL_ITEMS = [
     id: 'nova',
     title: 'Whole Health Grade',
     subtitle: 'Nova Classification',
-    description: 'Avoid Ultra-Processed Foods (Group 4) and audit overall ingredient safety at a glance.',
+    description: 'See the NOVA group (Group 4 = ultra-processed) and an additive overview at a glance.',
     image: require('../../../assets/images/oil_paint/basket_score_impasto.png'),
     icon: Cog,
     color: '#8B5CF6', // purple
@@ -352,7 +352,7 @@ export default function HomeScreen() {
               BiteFix
             </Text>
             <Text style={{ color: colors.primary, fontSize: 9.5, fontWeight: '800', letterSpacing: 1.6 }}>
-              Scan.Audit.Eat Clean
+              Scan.Audit.Know Your Food
             </Text>
           </View>
         </View>

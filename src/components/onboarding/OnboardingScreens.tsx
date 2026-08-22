@@ -192,6 +192,32 @@ const PRIORITY_OPTIONS: Array<{ id: OnboardingPriority; label: string; preview: 
   { id: 'sugar', label: 'Lower sugar intake', preview: '≈ tsp per serving', icon: Droplets, color: AMBER },
 ];
 
+// Oil concern ranks (1–5) synthesized from nutrition research: trans-fat content,
+// saturated-fat load, omega-6 ratio, refining contaminants and pesticide exposure.
+// 5 = strongest evidence to avoid, 1 = least concern.
+const OIL_CONCERN_RANKS: Record<string, { rank: number; note: string }> = {
+  pho_oil: {
+    rank: 5,
+    note: 'Industrial trans fats — WHO guidance advises limiting them as much as possible.',
+  },
+  palm_kernel_oil: {
+    rank: 4,
+    note: 'About 82% saturated fat, heavy refining — among the most flagged fats in research.',
+  },
+  palm_oil: {
+    rank: 3,
+    note: 'About 50% saturated fat; refining can form 3-MCPD and glycidyl compounds.',
+  },
+  cottonseed_oil: {
+    rank: 3,
+    note: 'Very high omega-6 content; cotton is a non-food crop, so residues are tracked.',
+  },
+  coconut_oil: {
+    rank: 2,
+    note: 'About 90% saturated fat — research advises moderation, though less refined.',
+  },
+};
+
 // ══════════════════════════════════════════════════════════════
 // SHARED COMPONENTS
 // ══════════════════════════════════════════════════════════════
@@ -753,7 +779,7 @@ function ShieldStatusBar({
   lockedTitle = 'Allergen Shield Locked',
   lockedSubtitle = 'Choose ingredients below to activate your allergen safeguard.',
   noneTitle = 'Allergen Shield Unlocked',
-  noneSubtitle = 'No ingredients selected. Safe scanning enabled.',
+  noneSubtitle = 'No ingredients selected. Full scanning enabled.',
   activeTitle = 'Allergen Shield Unlocked',
   activeSubtitle = 'BiteFix checks for selected ingredients for You.',
 }: {
@@ -1115,6 +1141,46 @@ function PriorityStatusBar({
   );
 }
 
+// ─── Oil Concern Battery — phone-style SVG meter ────────────────
+// Five segments fill to the oil's research rank (5 = strongest evidence to avoid).
+function OilBatteryMeter({ rank, isDark }: { rank: number; isDark: boolean; muted?: string }) {
+  const color = rank >= 4 ? '#EF4444' : rank >= 3 ? '#E5A50A' : GREEN_BRIGHT;
+  const emptyFill = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.07)';
+  const segments = [1, 2, 3, 4, 5];
+
+  return (
+    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={36} height={17} viewBox="0 0 36 17">
+        {/* Battery body */}
+        <Rect
+          x={1}
+          y={1.5}
+          width={30}
+          height={14}
+          rx={3.75}
+          strokeWidth={1.5}
+          stroke={isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.22)'}
+          fill={isDark ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.6)'}
+        />
+        {/* Positive nub */}
+        <Rect x={32.5} y={5.5} width={3} height={6} rx={1.2} fill={isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.22)'} />
+        {/* Charge segments */}
+        {segments.map((seg) => (
+          <Rect
+            key={seg}
+            x={3 + (seg - 1) * 5.2}
+            y={4}
+            width={4.4}
+            height={9}
+            rx={1.2}
+            fill={seg <= rank ? color : emptyFill}
+          />
+        ))}
+      </Svg>
+    </View>
+  );
+}
+
 function ShieldRow({
   option,
   selected,
@@ -1122,6 +1188,8 @@ function ShieldRow({
   colors,
   isDark,
   reduceMotion,
+  concernRank,
+  concernNote,
 }: {
   option: AllergyOption;
   selected: boolean;
@@ -1129,6 +1197,8 @@ function ShieldRow({
   colors: any;
   isDark: boolean;
   reduceMotion: boolean;
+  concernRank?: number;
+  concernNote?: string;
 }) {
   const ledProgress = useRef(new Animated.Value(selected ? 1 : 0)).current;
 
@@ -1161,7 +1231,7 @@ function ShieldRow({
       activeOpacity={0.84}
       accessibilityRole="checkbox"
       accessibilityState={{ selected }}
-      accessibilityLabel={option.label}
+      accessibilityLabel={concernRank !== undefined ? `${option.label}, research limit rating ${concernRank} out of 5` : option.label}
       style={{
         minHeight: 56,
         flexDirection: 'row',
@@ -1234,18 +1304,29 @@ function ShieldRow({
         <Text style={{ fontSize: 16 }}>{option.emoji}</Text>
       </View>
 
-      {/* Label */}
-      <Text
-        style={{
-          color: selected ? colors.text : colors.textSecondary,
-          fontSize: 14.5,
-          lineHeight: 19,
-          fontWeight: selected ? '700' : '500',
-          flex: 1,
-        }}
-      >
-        {option.label}
-      </Text>
+      {/* Label + optional research note */}
+      <View style={{ flex: 1, flexDirection: 'column' }}>
+        <Text
+          style={{
+            color: selected ? colors.text : colors.textSecondary,
+            fontSize: 14.5,
+            lineHeight: 19,
+            fontWeight: selected ? '700' : '500',
+          }}
+        >
+          {option.label}
+        </Text>
+        {selected && concernNote !== undefined && (
+          <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '600', lineHeight: 14.5, marginTop: 1.5, paddingRight: 8 }}>
+            {concernNote}
+          </Text>
+        )}
+      </View>
+
+      {/* Oil concern battery meter (research rank out of 5) */}
+      {concernRank !== undefined && (
+        <OilBatteryMeter rank={concernRank} isDark={isDark} muted={colors.textMuted} />
+      )}
     </TouchableOpacity>
   );
 }
@@ -1456,8 +1537,8 @@ export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion
     <ScreenFrame>
       <ShieldStatusBar selected={selected} colors={colors} isDark={isDark} />
       <ScreenHeading
-        title="Anything we should **watch for you**?"
-        subtitle=""
+        title="Do you have any food-related **Allergies**?"
+        subtitle="Tell us what we should **watch for you!**"
         colors={colors}
       />
       <View style={{ gap: 10, marginTop: 4 }}>
@@ -1491,15 +1572,16 @@ export function OilWatchlistScreen({ selected, onToggle, colors, isDark, reduceM
         lockedTitle="Oil Watchlist Locked"
         lockedSubtitle="Choose oils below to activate your oil indicator."
         noneTitle="Oil Watchlist Unlocked"
-        noneSubtitle="No oils selected. Clean scanning enabled."
+        noneSubtitle="No oils selected. Full scanning enabled."
         activeTitle="Oil Watchlist Unlocked"
         activeSubtitle="BiteFix flags Oils when they show up in ingredient data."
       />
       <ScreenHeading
-        title="Any **oils** we should keep an eye on?"
-        subtitle=""
+        title="Any **Oils** we should keep an eye on?"
+        subtitle="Tell us which **Oils** you don't want in your Food!"
         colors={colors}
       />
+      {/* Battery meter legend — how to read the research rank */}
       <View style={{ gap: 10, marginTop: 4 }}>
         {OIL_OPTIONS.map((option) => (
           <ShieldRow
@@ -1510,6 +1592,8 @@ export function OilWatchlistScreen({ selected, onToggle, colors, isDark, reduceM
             colors={colors}
             isDark={isDark}
             reduceMotion={reduceMotion}
+            concernRank={OIL_CONCERN_RANKS[option.id]?.rank}
+            concernNote={OIL_CONCERN_RANKS[option.id]?.note}
           />
         ))}
       </View>
@@ -1677,7 +1761,7 @@ export function LabelReadingScreen({
       <View style={{ marginBottom: -2 }}>
         <ScreenHeading
           title="Do you read food **labels** before buying?"
-          subtitle="Tell us how often you actually stop to check."
+          subtitle="Tell us how often you stop to check labels."
           colors={colors}
         />
 
@@ -1930,8 +2014,8 @@ function DemoProgressRail({
                 step.state === 'active'
                   ? { width: 9, height: 9, borderRadius: 5, backgroundColor: GREEN, shadowColor: GREEN, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 5, elevation: 3 }
                   : step.state === 'done'
-                  ? { width: 7, height: 7, borderRadius: 4, backgroundColor: GREEN, opacity: 0.85 }
-                  : { width: 7, height: 7, borderRadius: 4, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.18)' }
+                    ? { width: 7, height: 7, borderRadius: 4, backgroundColor: GREEN, opacity: 0.85 }
+                    : { width: 7, height: 7, borderRadius: 4, borderWidth: 1.5, borderColor: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.18)' }
               }
             />
             <Text
@@ -2186,8 +2270,8 @@ function DemoScanSequence({
               ? 'Scanning…'
               : 'Press & Hold To Scan'
             : stage === 'analysing'
-            ? ANALYSE_STEP_LABELS[analyseStep]
-            : 'BiteFix Intelligence Score'}
+              ? ANALYSE_STEP_LABELS[analyseStep]
+              : 'BiteFix Intelligence Score'}
         </Text>
       </View>
 
@@ -2372,7 +2456,7 @@ function DemoScanSequence({
             >
               <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: red }} />
               <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 }}>
-                PURITY SCORE: {scoreText}
+                PRODUCT SCORE: {scoreText}
               </Text>
             </View>
           </View>
@@ -2426,7 +2510,7 @@ function DemoScanSequence({
               </View>
             </View>
             <View style={{ backgroundColor: isDark ? 'rgba(248,113,113,0.14)' : '#FDECEC', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}>
-              <Text style={{ color: red, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 }}>WARNING</Text>
+              <Text style={{ color: red, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 }}>FLAGGED</Text>
             </View>
           </View>
 
@@ -2445,7 +2529,7 @@ function DemoScanSequence({
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '900', letterSpacing: 1.2 }}>NUTRI-SCORE</Text>
               <View style={{ backgroundColor: isDark ? 'rgba(251,146,60,0.14)' : '#FFEDD5', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 }}>
-                <Text style={{ color: isDark ? '#FB923C' : '#EA580C', fontSize: 10.5, fontWeight: '900' }}>Grade E · Poor Quality</Text>
+                <Text style={{ color: isDark ? '#FB923C' : '#EA580C', fontSize: 10.5, fontWeight: '900' }}>Grade E · Lower Nutrition</Text>
               </View>
             </View>
             <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -2476,7 +2560,7 @@ function DemoScanSequence({
 
           {/* Bridge to personal value */}
           <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '700', textAlign: 'center', marginTop: 2 }}>
-            This could be every product you pick up.
+            See this level of detail on any product.
           </Text>
         </Animated.View>
       )}

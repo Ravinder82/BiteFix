@@ -559,7 +559,7 @@ export function deriveNutritionIntelligence(opts: {
   let proteinItem: NutritionInsightItem | undefined;
   if (opts.protein100g !== undefined) {
     const p = opts.protein100g;
-    const level: NutritionInsightLevel = p >= 15 ? 'Strong' : p >= 6 ? 'Good Source' : p >= 2 ? 'Moderate' : 'Lower';
+    const level: NutritionInsightLevel = p >= 15 ? 'High' : p >= 6 ? 'Notable Amount' : p >= 2 ? 'Moderate' : 'Lower';
     const tone = p >= 6 ? 'positive' : 'neutral';
     proteinItem = { id: 'protein', label: 'Protein', value: `${p}g`, level, tone };
     insights.push(proteinItem);
@@ -568,7 +568,7 @@ export function deriveNutritionIntelligence(opts: {
   let fibreItem: NutritionInsightItem | undefined;
   if (opts.fibre100g !== undefined) {
     const f = opts.fibre100g;
-    const level: NutritionInsightLevel = f >= 6 ? 'Strong' : f >= 3 ? 'Good Source' : f >= 1 ? 'Moderate' : 'Lower';
+    const level: NutritionInsightLevel = f >= 6 ? 'High' : f >= 3 ? 'Notable Amount' : f >= 1 ? 'Moderate' : 'Lower';
     const tone = f >= 3 ? 'positive' : 'neutral';
     fibreItem = { id: 'fibre', label: 'Fibre', value: `${f}g`, level, tone };
     insights.push(fibreItem);

@@ -355,11 +355,11 @@ export default function ScannerScreen() {
         await delay(700);
         if (!isStillValid()) return;
         
-        setLoadingText('Analyzing gut health safety...');
+        setLoadingText('Reviewing microbiome research data...');
         await delay(700);
         if (!isStillValid()) return;
         
-        setLoadingText('Calculating carbon footprint...');
+        setLoadingText('Estimating carbon footprint...');
         await delay(700);
         if (!isStillValid()) return;
 

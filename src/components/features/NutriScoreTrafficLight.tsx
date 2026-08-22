@@ -45,7 +45,7 @@ export const NUTRI_SCORE_CONFIG: Record<string, GradeConfig> = {
     letter: 'D',
     color: '#EE8100', // Orange
     label: 'Lower Nutrition Profile',
-    desc: 'Higher in sugar, saturated fat, calories, or salt',
+    desc: 'Higher in sugar, saturated fat, calories, or salt per available data',
   },
   e: {
     letter: 'E',

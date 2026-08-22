@@ -43,8 +43,8 @@ export type ProductDataSource = 'open_food_facts' | 'usda_fooddata_central';
 // Nutrition Intelligence Data Types
 // ─────────────────────────────────────────────────────────
 export type NutritionInsightLevel =
-  | 'Strong'
-  | 'Good Source'
+  | 'High'
+  | 'Notable Amount'
   | 'Moderate'
   | 'Higher'
   | 'Lower'

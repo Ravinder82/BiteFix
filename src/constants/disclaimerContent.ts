@@ -23,7 +23,7 @@ export const DISCLAIMER_SECTIONS: DisclaimerSection[] = [
   },
   {
     title: 'Ingredient Flags — Informational Only',
-    body: "Allergen Shield and Oil Watchlist flags are simple indicators of whether a selected ingredient or oil appears in a product's published ingredient data. They are not judgments about any product or brand, are not health advice, and do not measure how much of an ingredient a product contains.",
+    body: "Allergen Flags and Oil Watchlist indicators simply show whether a selected ingredient or oil appears in a product's published ingredient data. They are not judgments about any product or brand, are not health advice, and do not measure how much of an ingredient a product contains.",
   },
   {
     title: 'Data Limitations',

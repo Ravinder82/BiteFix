@@ -36,10 +36,10 @@ export function BurnOutCard({ calories = 0, colors, isDark }: BurnOutCardProps) 
   const activities = useMemo(() => {
     const kcal = Math.round(calories);
     return [
-      { key: 'jog', label: 'Jogging', rate: `${BURN_RATES.jog} kcal/min`, mins: Math.round(kcal / BURN_RATES.jog), color: isDark ? '#FB923C' : '#EA580C' },
-      { key: 'cycle', label: 'Cycling', rate: `${BURN_RATES.cycle} kcal/min`, mins: Math.round(kcal / BURN_RATES.cycle), color: isDark ? '#22D3EE' : '#0891B2' },
-      { key: 'swim', label: 'Swimming', rate: `${BURN_RATES.swim} kcal/min`, mins: Math.round(kcal / BURN_RATES.swim), color: isDark ? '#34D399' : '#16A34A' },
-      { key: 'walk', label: 'Brisk Walking', rate: `${BURN_RATES.walk} kcal/min`, mins: Math.round(kcal / BURN_RATES.walk), color: isDark ? '#2DD4BF' : '#0F766E' },
+      { key: 'jog', label: 'Jogging', rate: `≈${BURN_RATES.jog} kcal/min avg`, mins: Math.round(kcal / BURN_RATES.jog), color: isDark ? '#FB923C' : '#EA580C' },
+      { key: 'cycle', label: 'Cycling', rate: `≈${BURN_RATES.cycle} kcal/min avg`, mins: Math.round(kcal / BURN_RATES.cycle), color: isDark ? '#22D3EE' : '#0891B2' },
+      { key: 'swim', label: 'Swimming', rate: `≈${BURN_RATES.swim} kcal/min avg`, mins: Math.round(kcal / BURN_RATES.swim), color: isDark ? '#34D399' : '#16A34A' },
+      { key: 'walk', label: 'Brisk Walking', rate: `≈${BURN_RATES.walk} kcal/min avg`, mins: Math.round(kcal / BURN_RATES.walk), color: isDark ? '#2DD4BF' : '#0F766E' },
     ];
   }, [calories, isDark]);
 

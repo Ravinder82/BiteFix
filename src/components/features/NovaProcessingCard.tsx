@@ -19,10 +19,10 @@ const NOVA_TIERS: { group: NOVAClass; short: string }[] = [
 ];
 
 const NOVA_DESCRIPTIONS: Record<NOVAClass, string> = {
-  1: 'Unprocessed or minimally processed foods — edible plants, animals and fungi kept close to their natural state. No added sugar, salt, fats or industrial additives.',
+  1: 'Unprocessed or minimally processed foods — edible plants, animals and fungi kept close to their natural state. No added sugar, salt, fats, or food additives.',
   2: 'Pressed, refined or fermented culinary ingredients such as oils, butter, sugar and salt — extracted from whole foods and used to prepare Group 1 dishes.',
   3: 'Processed foods made by adding salt, oil or sugar to whole foods — such as canned vegetables, cheese or fresh bread. Modest industrial intervention.',
-  4: 'Ultra-processed formulations manufactured mostly from substances extracted from foods or synthesized in labs — flavors, colors, emulsifiers and sweeteners dominate the recipe.',
+  4: 'Ultra-processed products made mostly from ingredients extracted from foods or produced synthetically — flavors, colors, emulsifiers and sweeteners make up much of the recipe.',
 };
 
 /** Standalone NOVA classification card — 4-tier processing spectrum + research-backed context. */

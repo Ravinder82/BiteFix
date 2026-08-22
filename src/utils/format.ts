@@ -138,9 +138,9 @@ export function getNovaColor(novaClass?: NOVAClass): string {
 /** Returns a user-friendly description for an additive risk level */
 export function getAdditiveRiskDescription(riskLevel: AdditiveRiskLevel): string {
   switch (riskLevel) {
-    case 'low': return 'Generally Recognized as Safe';
-    case 'moderate': return 'Accepted with Moderate Scrutiny';
-    case 'elevated': return 'Widely Studied for Caution';
+    case 'low': return 'Widely Permitted Additive';
+    case 'moderate': return 'Reviewed with Published Notes';
+    case 'elevated': return 'Referenced in Caution Studies';
     default: return 'No Data Available';
   }
 }

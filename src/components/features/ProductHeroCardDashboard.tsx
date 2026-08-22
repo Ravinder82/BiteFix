@@ -150,7 +150,7 @@ export default function ProductHeroCardDashboard({
   } else if (biteFixScore >= 40) {
     ledColor = '#E07B39';
     ledLabel = 'Review Profile';
-    ratingDesc = 'Some signals warrant closer review';
+    ratingDesc = 'Some data points fall in review ranges';
   } else {
     ledColor = '#EF4444';
     ledLabel = 'Lower Profile';
@@ -398,7 +398,7 @@ export default function ProductHeroCardDashboard({
                   style={{ color: colors.text, fontSize: 9.5, fontWeight: '900', letterSpacing: 0.4, flexShrink: 0 }}
                   numberOfLines={1}
                 >
-                  BITEFIX INTELLIGENCE SCORE™: {biteFixScore}
+                  BITEFIX SCORE™ (ESTIMATED): {biteFixScore}
                 </Text>
               </View>
             </View>
@@ -476,7 +476,7 @@ export default function ProductHeroCardDashboard({
         const allergenHits = alerts.filter((a) => a.type === 'allergen');
         const oilHits = alerts.filter((a) => a.type === 'oil');
         const groups = [
-          { key: 'allergen', title: 'Allergen Shield', items: allergenHits, color: '#EF4444', Icon: AlertOctagon, tag: 'ON ALERT' },
+          { key: 'allergen', title: 'Allergen Flags', items: allergenHits, color: '#EF4444', Icon: AlertOctagon, tag: 'LISTED' },
           { key: 'oil', title: 'Oil Watchlist', items: oilHits, color: '#F59E0B', Icon: Droplets, tag: 'DETECTED' },
         ].filter((g) => g.items.length > 0);
         if (groups.length === 0) return null;

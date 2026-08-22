@@ -66,7 +66,7 @@ export function UnifiedNutritionCard({
             Nutri-Score & Nutrient Breakdown
           </Text>
           <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', marginTop: 1 }}>
-            {activeGrade ? `Official Grade ${activeGrade.letter.toUpperCase()} · ${activeGrade.label}` : 'Grade not yet available in published data'}
+            {activeGrade ? `Nutri-Score Grade ${activeGrade.letter.toUpperCase()} · ${activeGrade.label}` : 'Grade not yet available in published data'}
           </Text>
         </View>
       </View>

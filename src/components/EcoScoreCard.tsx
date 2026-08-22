@@ -156,10 +156,10 @@ export function EcoScoreCard({ grade, carbonFootprint, isOrganic, isVegan, isVeg
             </View>
             <View>
               <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900', letterSpacing: -0.4 }}>
-                Carbon Footprint
+                Estimated Carbon Footprint
               </Text>
               <Text style={{ color: isDark ? '#2DD4BF' : '#0F766E', fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
-                Carbon Footprint Estimate
+                Per 100 g of product
               </Text>
             </View>
           </View>
@@ -178,7 +178,7 @@ export function EcoScoreCard({ grade, carbonFootprint, isOrganic, isVegan, isVeg
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
               <Text style={{ color: colors.text, fontSize: 28, fontWeight: '900', letterSpacing: -1 }}>
-                {carbonFootprint !== undefined ? `${carbonFootprint.toFixed(1)}` : '—'}
+                {carbonFootprint !== undefined ? `≈${carbonFootprint.toFixed(1)}` : '—'}
               </Text>
               <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '700' }}>
                 g CO₂ / 100g
