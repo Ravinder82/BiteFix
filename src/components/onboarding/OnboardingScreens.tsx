@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Platform, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Animated, Easing, Platform, Pressable, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Text } from '../Text';
 import { Activity, Check, Droplets, Leaf, ListChecks, Package, ShieldCheck, ShoppingBag, Sparkles, UserRound, Zap } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -1670,12 +1670,14 @@ const SURGE_SPARK_ANGLES = [15, 75, 135, 195, 255, 315].map((deg) => (deg * Math
 
 // ══════════════════════════════════════════════════════════════
 // DEMO SCAN — a real barcode in, an instant verdict out.
-// Hardcoded Nutella example (EAN 3017620422003); zero network.
+// Fictional product (in-store-range EAN 2001234000017 — never
+// assigned to any real item worldwide); zero network, zero brand risk.
 // ══════════════════════════════════════════════════════════════
 
-const DEMO_SCAN_MS = 3000;
-const DEMO_VERDICT_MS = 3400;
-const DEMO_BARCODE_DIGITS = '3017620422003';
+const DEMO_HOLD_MS = 800;
+const DEMO_SCAN_FAILSAFE_MS = 3200;
+const DEMO_VERDICT_MS = 2400;
+const DEMO_BARCODE_DIGITS = '2001234000017';
 const DEMO_SCORE = 17;
 const DEMO_RING_SIZE = 150;
 
@@ -1725,9 +1727,9 @@ function Ean13Barcode({ barColor, width }: { barColor: string; width: number }) 
         ))}
       </Svg>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignSelf: 'stretch', paddingHorizontal: 6, marginTop: 5 }}>
-        <Text style={{ color: barColor, fontSize: 13, fontWeight: '700', letterSpacing: 2 }}>3</Text>
-        <Text style={{ color: barColor, fontSize: 13, fontWeight: '700', letterSpacing: 2 }}>017620</Text>
-        <Text style={{ color: barColor, fontSize: 13, fontWeight: '700', letterSpacing: 2 }}>422003</Text>
+        <Text style={{ color: barColor, fontSize: 13, fontWeight: '700', letterSpacing: 2 }}>{DEMO_BARCODE_DIGITS.slice(0, 1)}</Text>
+        <Text style={{ color: barColor, fontSize: 13, fontWeight: '700', letterSpacing: 2 }}>{DEMO_BARCODE_DIGITS.slice(1, 7)}</Text>
+        <Text style={{ color: barColor, fontSize: 13, fontWeight: '700', letterSpacing: 2 }}>{DEMO_BARCODE_DIGITS.slice(7, 13)}</Text>
       </View>
     </View>
   );
@@ -1739,22 +1741,34 @@ function DemoScanSequence({
   colors,
   isDark,
   reduceMotion,
+  skipSignal,
+  onVerdictShown,
   onComplete,
 }: {
   colors: any;
   isDark: boolean;
   reduceMotion: boolean;
+  skipSignal: boolean;
+  onVerdictShown: () => void;
   onComplete: () => void;
 }) {
   const { width } = useWindowDimensions();
   const [stage, setStage] = useState<'barcode' | 'verdict'>(reduceMotion ? 'verdict' : 'barcode');
+  const [holding, setHolding] = useState(false);
+  const completedRef = useRef(false);
 
   const barcodeEntrance = useRef(new Animated.Value(0)).current;
   const verdictEntrance = useRef(new Animated.Value(0)).current;
   const beamY = useRef(new Animated.Value(0)).current;
   const arcAnim = useRef(new Animated.Value(0)).current;
   const scoreAnim = useRef(new Animated.Value(0)).current;
+  const scanProgress = useRef(new Animated.Value(0)).current;
   const [scoreText, setScoreText] = useState('0');
+
+  const onVerdictShownRef = useRef(onVerdictShown);
+  onVerdictShownRef.current = onVerdictShown;
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   const cardBg = isDark ? 'rgba(17,23,19,0.97)' : '#FFFFFF';
   const cardBorder = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(7,25,15,0.08)';
@@ -1764,12 +1778,28 @@ function DemoScanSequence({
   const barcodeWidth = Math.round(clamp(width * 0.58, 200, 260));
   const ringCircumference = 2 * Math.PI * (DEMO_RING_SIZE / 2 - 8);
 
+  const completeScan = useCallback(() => {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    beamY.stopAnimation();
+    scanProgress.stopAnimation();
+    scanProgress.setValue(1);
+    onVerdictShownRef.current?.();
+    setStage('verdict');
+  }, [beamY, scanProgress]);
+
   useEffect(() => {
     if (reduceMotion) {
+      barcodeEntrance.setValue(1);
       verdictEntrance.setValue(1);
       arcAnim.setValue(1);
       setScoreText(String(DEMO_SCORE));
-      onComplete();
+      if (!completedRef.current) {
+        completedRef.current = true;
+        onVerdictShownRef.current?.();
+        onCompleteRef.current?.();
+      }
       return;
     }
     if (stage === 'barcode') {
@@ -1780,12 +1810,10 @@ function DemoScanSequence({
           Animated.timing(beamY, { toValue: 0, duration: 1050, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
         ])
       ).start();
-      const t = setTimeout(() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        setStage('verdict');
-      }, DEMO_SCAN_MS);
+      // Failsafe: the scan auto-completes for users who never hold the card.
+      const failsafe = setTimeout(completeScan, DEMO_SCAN_FAILSAFE_MS);
       return () => {
-        clearTimeout(t);
+        clearTimeout(failsafe);
         beamY.stopAnimation();
       };
     }
@@ -1793,13 +1821,41 @@ function DemoScanSequence({
     Animated.timing(arcAnim, { toValue: 1, duration: 1400, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
     const listenerId = scoreAnim.addListener(({ value }) => setScoreText(String(Math.round(value))));
     Animated.timing(scoreAnim, { toValue: DEMO_SCORE, duration: 1400, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
-    const t = setTimeout(onComplete, DEMO_VERDICT_MS);
+    const t = setTimeout(() => onCompleteRef.current?.(), DEMO_VERDICT_MS);
     return () => {
       clearTimeout(t);
       scoreAnim.removeListener(listenerId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage, reduceMotion]);
+
+  // Tap-to-skip anywhere on the screen fast-forwards to the final verdict.
+  useEffect(() => {
+    if (!skipSignal || completedRef.current) return;
+    completeScan();
+    verdictEntrance.setValue(1);
+    arcAnim.setValue(1);
+    scoreAnim.stopAnimation();
+    setScoreText(String(DEMO_SCORE));
+    onCompleteRef.current?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [skipSignal]);
+
+  const pressIn = () => {
+    if (completedRef.current || stage !== 'barcode') return;
+    setHolding(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Animated.timing(scanProgress, { toValue: 1, duration: DEMO_HOLD_MS, easing: Easing.linear, useNativeDriver: false }).start(({ finished }) => {
+      if (finished) completeScan();
+    });
+  };
+
+  const pressOut = () => {
+    if (completedRef.current) return;
+    setHolding(false);
+    scanProgress.stopAnimation();
+    Animated.timing(scanProgress, { toValue: 0, duration: 180, useNativeDriver: false }).start();
+  };
 
   return (    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 14 }}>
       {/* Status chip — mirrors the live scanner status */}
@@ -1814,51 +1870,82 @@ function DemoScanSequence({
         }}
       >
         <Text style={{ color: isDark ? '#FFFFFF' : '#11301F', fontSize: 9.5, fontWeight: '900', letterSpacing: 1.2, textTransform: 'uppercase' }}>
-          {stage === 'barcode' ? 'Scanning Product' : 'Instant Verdict'}
+          {stage === 'barcode' ? (holding ? 'Scanning…' : 'Press & Hold To Scan') : 'Instant Verdict'}
         </Text>
       </View>
 
       {stage === 'barcode' ? (
-        /* ── Beat 1: the real barcode under the scan beam ── */
+        /* ── Beat 1: hold-to-scan the barcode under the beam ── */
         <Animated.View
           style={{
             opacity: barcodeEntrance,
             transform: [{ scale: barcodeEntrance.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }, { translateY: barcodeEntrance.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }],
-            backgroundColor: cardBg,
-            borderColor: cardBorder,
-            borderWidth: 1.5,
-            borderRadius: 24,
-            paddingVertical: 26,
-            paddingHorizontal: 22,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 10 },
-            shadowOpacity: isDark ? 0.35 : 0.10,
-            shadowRadius: 24,
-            elevation: 8,
           }}
         >
-          <View>
-            <Ean13Barcode barColor={barColor} width={barcodeWidth} />
+          <Pressable onPressIn={pressIn} onPressOut={pressOut} accessibilityLabel="Demo barcode. Press and hold to scan.">
             <Animated.View
-              pointerEvents="none"
               style={{
-                position: 'absolute',
-                left: -8,
-                right: -8,
-                height: 16,
-                transform: [{ translateY: beamY.interpolate({ inputRange: [0, 1], outputRange: [-10, Math.round(barcodeWidth * 0.42) + 16] }) }],
+                backgroundColor: cardBg,
+                borderColor: cardBorder,
+                borderWidth: 1.5,
+                borderRadius: 24,
+                paddingVertical: 26,
+                paddingHorizontal: 22,
+                transform: [{ scale: scanProgress.interpolate({ inputRange: [0, 1], outputRange: [1, 0.97] }) }],
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 10 },
+                shadowOpacity: isDark ? 0.35 : 0.10,
+                shadowRadius: 24,
+                elevation: 8,
               }}
             >
-              <LinearGradient
-                colors={['rgba(1,146,42,0)', 'rgba(1,146,42,0.30)', 'rgba(1,146,42,0)']}
-                locations={[0, 0.5, 1]}
-                start={{ x: 0.5, y: 0 }}
-                end={{ x: 0.5, y: 1 }}
-                style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 16, borderRadius: 8 }}
-              />
-              <View style={{ position: 'absolute', left: 0, right: 0, top: 7, height: 2, borderRadius: 1, backgroundColor: GREEN }} />
+              <View>
+                <Ean13Barcode barColor={barColor} width={barcodeWidth} />
+                <Animated.View
+                  pointerEvents="none"
+                  style={{
+                    position: 'absolute',
+                    left: -8,
+                    right: -8,
+                    height: 16,
+                    transform: [{ translateY: beamY.interpolate({ inputRange: [0, 1], outputRange: [-10, Math.round(barcodeWidth * 0.42) + 16] }) }],
+                  }}
+                >
+                  <LinearGradient
+                    colors={['rgba(1,146,42,0)', 'rgba(1,146,42,0.30)', 'rgba(1,146,42,0)']}
+                    locations={[0, 0.5, 1]}
+                    start={{ x: 0.5, y: 0 }}
+                    end={{ x: 0.5, y: 1 }}
+                    style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 16, borderRadius: 8 }}
+                  />
+                  <View style={{ position: 'absolute', left: 0, right: 0, top: 7, height: 2, borderRadius: 1, backgroundColor: GREEN }} />
+                </Animated.View>
+              </View>
+              {/* Hold progress */}
+              <View
+                style={{
+                  alignSelf: 'stretch',
+                  height: 5,
+                  borderRadius: 3,
+                  marginTop: 16,
+                  overflow: 'hidden',
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                }}
+              >
+                <Animated.View
+                  style={{
+                    height: '100%',
+                    borderRadius: 3,
+                    backgroundColor: GREEN,
+                    width: scanProgress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
+                  }}
+                />
+              </View>
+              <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700', textAlign: 'center', marginTop: 8 }}>
+                {holding ? 'Keep holding…' : 'Hold to run the scan'}
+              </Text>
             </Animated.View>
-          </View>
+          </Pressable>
         </Animated.View>
       ) : (
         /* ── Beat 2: the instant verdict card — mirrors the real result screen ── */
@@ -1895,9 +1982,9 @@ function DemoScanSequence({
               <Text style={{ fontSize: 24 }}>🍫</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', letterSpacing: 1.4 }}>FERRERO</Text>
-              <Text style={{ color: colors.text, fontSize: 19, fontWeight: '900', letterSpacing: -0.4 }} numberOfLines={1}>
-                Nutella
+              <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', letterSpacing: 1.4 }}>COCOA & CO</Text>
+              <Text style={{ color: colors.text, fontSize: 17.5, fontWeight: '900', letterSpacing: -0.4 }} numberOfLines={1} adjustsFontSizeToFit>
+                Choco Hazelnut Spread
               </Text>
             </View>
             <View
@@ -2060,6 +2147,11 @@ function DemoScanSequence({
               High in sugars, saturated fats, calories, or salt
             </Text>
           </View>
+
+          {/* Bridge to personal value */}
+          <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '700', textAlign: 'center', marginTop: 2 }}>
+            This could be every product you pick up.
+          </Text>
         </Animated.View>
       )}
     </View>
@@ -2485,12 +2577,23 @@ export function RevelationScreen({
   const { width, height } = useWindowDimensions();
   const horizontalPadding = clamp(width * 0.0615, 18, 24);
   const isCompact = height < 700;
-  const [demoDone, setDemoDone] = useState(false);
+  const [verdictShown, setVerdictShown] = useState(false);
+  const [skipCount, setSkipCount] = useState(0);
 
   // Replay the demo whenever the screen is re-entered.
   useEffect(() => {
-    if (!isActive) setDemoDone(false);
+    if (!isActive) {
+      setVerdictShown(false);
+      setSkipCount(0);
+    }
   }, [isActive]);
+
+  // One screen: scan on top, verdict below. Tap anywhere to skip.
+  const skipAll = () => {
+    setSkipCount((c) => (c === 0 ? 1 : c));
+    setVerdictShown(true);
+    onAnimationComplete?.();
+  };
 
   return (
     <View
@@ -2501,88 +2604,73 @@ export function RevelationScreen({
         alignSelf: 'center',
         paddingHorizontal: horizontalPadding,
         paddingTop: isCompact ? 10 : 20,
-        paddingBottom: isCompact ? 16 : 28,
-        justifyContent: 'space-between',
+        paddingBottom: isCompact ? 12 : 20,
       }}
     >
-      {demoDone ? (
-        <>
-      {/* Upper/Middle Hero Area — spacious, commanding hero */}
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: isCompact ? 240 : 280,
-        }}
-      >
-        <MascotScoreRingTeaser
+      <TouchableOpacity activeOpacity={0.9} onPress={skipAll} style={{ flex: 1 }}>
+        <DemoScanSequence
           colors={colors}
           isDark={isDark}
           reduceMotion={reduceMotion}
-          isActive={isActive}
-          onAnimationComplete={onAnimationComplete}
-        />
-      </View>
-
-      {/* Lower Content Area — clean, de-congested typography block */}
-      <View style={{ alignItems: 'center', width: '100%', marginBottom: isCompact ? 8 : 16 }}>
-        {/* Title — 2 distinct lines with tasteful green accent */}
-        <View style={{ alignItems: 'center', marginBottom: 8, maxWidth: 360 }}>
-          <Text
-            style={{
-              color: colors.text,
-              fontSize: clamp(width * 0.086, 30, 35),
-              lineHeight: clamp(width * 0.102, 36, 42),
-              fontWeight: '900',
-              letterSpacing: -0.9,
-              textAlign: 'center',
-            }}
-          >
-            BiteFix Intelligence
-          </Text>
-          <Text
-            style={{
-              color: GREEN,
-              fontSize: clamp(width * 0.086, 30, 35),
-              lineHeight: clamp(width * 0.102, 36, 42),
-              fontWeight: '900',
-              letterSpacing: -0.9,
-              textAlign: 'center',
-            }}
-          >
-            unlocked.
-          </Text>
-        </View>
-
-        {/* Subtitle */}
-        <Text
-          style={{
-            color: colors.textSecondary,
-            fontSize: clamp(width * 0.038, 14.5, 15.5),
-            lineHeight: clamp(width * 0.054, 21, 23),
-            fontWeight: '500',
-            textAlign: 'center',
-            maxWidth: 340,
+          skipSignal={skipCount > 0}
+          onVerdictShown={() => setVerdictShown(true)}
+          onComplete={() => {
+            setVerdictShown(true);
+            onAnimationComplete?.();
           }}
-        >
-          Your assistant is powered up — one scan gives an{' '}
-          <Text style={{ color: GREEN, fontWeight: '800' }}>instant verdict</Text>, on any product.
-        </Text>
-      </View>
-        </>
-      ) : (
-        <TouchableOpacity activeOpacity={0.9} onPress={() => setDemoDone(true)} style={{ flex: 1 }}>
-          <DemoScanSequence
-            colors={colors}
-            isDark={isDark}
-            reduceMotion={reduceMotion}
-            onComplete={() => setDemoDone(true)}
-          />
-          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textAlign: 'center' }}>
+        />
+        {!verdictShown && (
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textAlign: 'center', marginTop: 10 }}>
             Tap to skip
           </Text>
-        </TouchableOpacity>
+        )}
+      </TouchableOpacity>
+
+      {verdictShown && (
+        <View style={{ alignItems: 'center', width: '100%', paddingBottom: isCompact ? 2 : 6 }}>
+          {/* Title — 2 distinct lines with tasteful green accent */}
+          <View style={{ alignItems: 'center', marginBottom: 6, maxWidth: 360 }}>
+            <Text
+              style={{
+                color: colors.text,
+                fontSize: clamp(width * 0.086, 30, 35),
+                lineHeight: clamp(width * 0.102, 36, 42),
+                fontWeight: '900',
+                letterSpacing: -0.9,
+                textAlign: 'center',
+              }}
+            >
+              BiteFix Intelligence
+            </Text>
+            <Text
+              style={{
+                color: GREEN,
+                fontSize: clamp(width * 0.086, 30, 35),
+                lineHeight: clamp(width * 0.102, 36, 42),
+                fontWeight: '900',
+                letterSpacing: -0.9,
+                textAlign: 'center',
+              }}
+            >
+              unlocked.
+            </Text>
+          </View>
+
+          {/* Subtitle */}
+          <Text
+            style={{
+              color: colors.textSecondary,
+              fontSize: clamp(width * 0.038, 14.5, 15.5),
+              lineHeight: clamp(width * 0.054, 21, 23),
+              fontWeight: '500',
+              textAlign: 'center',
+              maxWidth: 340,
+            }}
+          >
+            Your assistant is powered up — one scan gives an{' '}
+            <Text style={{ color: GREEN, fontWeight: '800' }}>instant verdict</Text>, on any product.
+          </Text>
+        </View>
       )}
     </View>
   );
@@ -3727,12 +3815,20 @@ export function ActivationStatus({
   );
 }
 
+const PAIN_BARRIER_LABELS: Record<IngredientReadingFrequency, string> = {
+  always: 'No time for complex labels',
+  sometimes: 'Confused by hidden additives',
+  when_needed: 'Unclear what ingredients matter',
+  rarely: 'Overwhelmed by choices',
+};
+
 export function FinalActivationScreen({
   colors,
   isDark,
   reduceMotion,
   isActive = true,
   selected = [],
+  painAnswer,
   onStatusChange,
   onAnimationComplete,
 }: {
@@ -3741,6 +3837,7 @@ export function FinalActivationScreen({
   reduceMotion: boolean;
   isActive?: boolean;
   selected?: OnboardingPriority[];
+  painAnswer?: IngredientReadingFrequency;
   onStatusChange?: (status: ActivationStatusState) => void;
   onAnimationComplete?: () => void;
 }) {
@@ -3802,8 +3899,8 @@ export function FinalActivationScreen({
       return;
     }
 
-    const unlockStart = 500;
-    const unlockStep = 450;
+    const unlockStart = 300;
+    const unlockStep = 260;
     orderedFeatures.forEach((_, index) => {
       timersRef.current.push(setTimeout(() => {
         setUnlockedCount(index + 1);
@@ -3830,7 +3927,7 @@ export function FinalActivationScreen({
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             }
             onAnimationCompleteRef.current?.();
-          }, 400);
+          }, 300);
           timersRef.current.push(completeTimer);
         }
       }, unlockStart + index * unlockStep));
@@ -3863,9 +3960,14 @@ export function FinalActivationScreen({
       <Text style={{ color: colors.text, fontSize: clamp(width * 0.092, 32, 38), lineHeight: clamp(width * 0.105, 38, 44), fontWeight: '900', letterSpacing: -1.2, textAlign: 'center' }}>
         Activated!
       </Text>
-      <Text style={{ color: colors.textSecondary, fontSize: clamp(width * 0.036, 13, 14.5), lineHeight: clamp(width * 0.053, 19, 22), fontWeight: '500', textAlign: 'center', maxWidth: 330, marginTop: 8, marginBottom: 18 }}>
+      <Text style={{ color: colors.textSecondary, fontSize: clamp(width * 0.036, 13, 14.5), lineHeight: clamp(width * 0.053, 19, 22), fontWeight: '500', textAlign: 'center', maxWidth: 330, marginTop: 8, marginBottom: 12 }}>
         Your <Text style={{ color: GREEN, fontWeight: '800' }}>instant-insight scanner</Text> is fully online.
       </Text>
+      {painAnswer && (
+        <Text style={{ color: GREEN, fontSize: 11.5, fontWeight: '800', textAlign: 'center', letterSpacing: 0.2, marginBottom: 14, marginTop: -4 }}>
+          Built around: “{PAIN_BARRIER_LABELS[painAnswer]}”
+        </Text>
+      )}
 
       <View style={{ width: '100%', minHeight: columnHeight, gap: rowGap }}>
         {orderedFeatures.map((feature, index) => (

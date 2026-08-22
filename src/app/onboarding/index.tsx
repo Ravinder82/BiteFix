@@ -38,7 +38,6 @@ import {
   PainScreen as FlagshipPainScreen,
   PrioritiesScreen as FlagshipPrioritiesScreen,
   RevelationScreen as FlagshipRevelationScreen,
-  MomentOfTruthScreen,
   FinalActivationScreen,
   ActivationStatus,
 } from '../../components/onboarding/OnboardingScreens';
@@ -46,7 +45,7 @@ import type { ActivationStatusState } from '../../components/onboarding/Onboardi
 import { IngredientReadingFrequency, OnboardingPriority } from '../../types/onboarding.types';
 
 const GREEN = '#01922aff';
-const TOTAL_SCREENS = 8;
+const TOTAL_SCREENS = 7;
 const DEFAULT_ACTIVATION_STATUS: ActivationStatusState = {
   unlockedCount: 0,
   total: 7,
@@ -386,7 +385,6 @@ export default function OnboardingScreen() {
   const [priorities, setPriorities] = useState<OnboardingPriority[]>([]);
   const [ingredientReadingFrequency, setIngredientReadingFrequency] = useState<IngredientReadingFrequency>();
   const [revelationComplete, setRevelationComplete] = useState(false);
-  const [synthesisComplete, setSynthesisComplete] = useState(false);
   const [activationComplete, setActivationComplete] = useState(false);
   const [activationStatus, setActivationStatus] = useState<ActivationStatusState>(DEFAULT_ACTIVATION_STATUS);
 
@@ -434,8 +432,6 @@ export default function OnboardingScreen() {
     if (currentScreen === 5) {
       setRevelationComplete(false);
     } else if (currentScreen === 6) {
-      setSynthesisComplete(false);
-    } else if (currentScreen === 7) {
       setActivationComplete(false);
       setActivationStatus(DEFAULT_ACTIVATION_STATUS);
     } else {
@@ -558,7 +554,7 @@ export default function OnboardingScreen() {
   const ONBOARDING_CTA_LABELS: Record<number, string> = {
     0: 'Get Started',
     5: "Let's Continue",
-    7: 'I am Ready',
+    6: 'I am Ready',
   };
 
   const getCtaLabel = (screen: number) => {
@@ -566,9 +562,6 @@ export default function OnboardingScreen() {
       return revelationComplete ? "Let's Continue" : 'Revealing Verdict...';
     }
     if (screen === 6) {
-      return synthesisComplete ? "Let's Continue" : 'Calibrating Your Scanner';
-    }
-    if (screen === 7) {
       return activationComplete ? 'I am Ready' : 'Unlocking intelligence';
     }
     return ONBOARDING_CTA_LABELS[screen] ?? 'Continue';
@@ -601,26 +594,13 @@ export default function OnboardingScreen() {
         );
       case 6:
         return (
-          <MomentOfTruthScreen
-            selected={priorities}
-            name={name}
-            ingredientReadingFrequency={ingredientReadingFrequency}
-            allergens={allergens}
-            colors={colors}
-            isDark={isDark}
-            reduceMotion={screenReduceMotion}
-            isActive={isActive}
-            onAnimationComplete={() => setSynthesisComplete(true)}
-          />
-        );
-      case 7:
-        return (
           <FinalActivationScreen
             colors={colors}
             isDark={isDark}
             reduceMotion={screenReduceMotion}
             isActive={isActive}
             selected={priorities}
+            painAnswer={ingredientReadingFrequency}
             onStatusChange={setActivationStatus}
             onAnimationComplete={() => setActivationComplete(true)}
           />
@@ -641,8 +621,7 @@ export default function OnboardingScreen() {
       (screen === 3 && allergens.length === 0) ||
       (screen === 4 && priorities.length === 0) ||
       (screen === 5 && !revelationComplete) ||
-      (screen === 6 && !synthesisComplete) ||
-      (screen === 7 && !activationComplete);
+      (screen === 6 && !activationComplete);
     const disabledBg = isDark ? '#153622ff' : '#F0F4F1';
     const disabledBorder = isDark ? 'rgba(167, 231, 63, 0.1)' : 'rgba(7, 25, 15, 0.08)';
     const disabledText = isDark ? 'rgba(172, 172, 172, 0.59)' : 'rgba(6, 33, 18, 0.42)';
@@ -698,8 +677,8 @@ export default function OnboardingScreen() {
             {renderScreenContent(screen)}
           </ScrollView>
 
-          <View style={{ paddingHorizontal: Math.max(18, Math.min(24, screenWidth * 0.0615)), paddingBottom: Math.max(18, insets.bottom + 8), paddingTop: screen === 7 ? 8 : 12, gap: screen === 7 ? 10 : 0 }}>
-            {screen === 7 && (
+          <View style={{ paddingHorizontal: Math.max(18, Math.min(24, screenWidth * 0.0615)), paddingBottom: Math.max(18, insets.bottom + 8), paddingTop: screen === 6 ? 8 : 12, gap: screen === 6 ? 10 : 0 }}>
+            {screen === 6 && (
               <ActivationStatus
                 unlockedCount={activationStatus.unlockedCount}
                 total={activationStatus.total}
