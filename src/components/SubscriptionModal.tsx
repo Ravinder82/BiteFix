@@ -80,6 +80,25 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
       ? 'Billed monthly · Cancel Anytime'
       : 'Billed yearly · Cancel Anytime';
 
+  const getDailyPrice = (tier: PlanTier): string | undefined => {
+    if (isFetchingProducts) return undefined;
+    const prod = getProduct(tier);
+    if (!prod || !prod.price || prod.price <= 0) return undefined;
+
+    const days = tier === 'monthly' ? 30 : 365;
+    const dailyAmount = prod.price / days;
+
+    const symbol = prod.displayPrice.replace(/[\d.,\s]/g, '') || '$';
+
+    const formattedAmount = dailyAmount < 1
+      ? dailyAmount.toFixed(2)
+      : dailyAmount < 100
+      ? dailyAmount.toFixed(2)
+      : Math.round(dailyAmount).toString();
+
+    return `About ${symbol}${formattedAmount}/day`;
+  };
+
   // ── Lifecycle ────────────────────────────────────────────
   const initialise = useCallback(async () => {
     if (!mountedRef.current) return;
@@ -297,6 +316,7 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
                       tier="monthly"
                       title="Monthly Pass"
                       displayPrice={getDisplayPrice('monthly')}
+                      dailyPrice={getDailyPrice('monthly')}
                       subtitle={getSubtitle('monthly')}
                       badge={null}
                       isSelected={selectedPlan === 'monthly'}
@@ -310,6 +330,7 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
                       tier="annual"
                       title="Yearly Pass"
                       displayPrice={getDisplayPrice('annual')}
+                      dailyPrice={getDailyPrice('annual')}
                       subtitle={getSubtitle('annual')}
                       badge={null}
                       isSelected={selectedPlan === 'annual'}
@@ -445,6 +466,7 @@ interface PlanCardProps {
   tier: PlanTier;
   title: string;
   displayPrice: string;
+  dailyPrice?: string;
   subtitle: string;
   badge: string | null;
   isSelected: boolean;
@@ -452,7 +474,7 @@ interface PlanCardProps {
   colors: any;
 }
 
-function PlanCard({ title, displayPrice, subtitle, badge, isSelected, onPress, colors }: PlanCardProps) {
+function PlanCard({ title, displayPrice, dailyPrice, subtitle, badge, isSelected, onPress, colors }: PlanCardProps) {
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -508,9 +530,14 @@ function PlanCard({ title, displayPrice, subtitle, badge, isSelected, onPress, c
         </View>
       </View>
 
-      {/* Right: price */}
+      {/* Right: price + subtle daily cost anchor */}
       <View style={{ alignItems: 'flex-end', marginTop: badge ? 8 : 0 }}>
         <Text style={{ color: colors.text, fontSize: 16, fontWeight: '900' }}>{displayPrice}</Text>
+        {dailyPrice ? (
+          <Text style={{ color: colors.textMuted, fontSize: 10.5, fontWeight: '600', marginTop: 2 }}>
+            {dailyPrice}
+          </Text>
+        ) : null}
       </View>
     </TouchableOpacity>
   );
