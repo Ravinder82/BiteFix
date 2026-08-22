@@ -4,19 +4,18 @@ import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useAppStore } from '../../stores/appStore';
-import { useTheme } from '../../hooks/useTheme';
-import { OrbMascot as Mascot } from '../../components/features/OrbMascot';
-import ProductHeroCardDashboard from '../../components/features/ProductHeroCardDashboard';
-import { MainDisclaimerModal } from '../../components/MainDisclaimerModal';
-import { GutAndAdditivesCard } from '../../components/features/GutAndAdditivesCard';
-import { NutritionIntelligenceCard } from '../../components/features/NutritionIntelligenceCard';
-import { EcoScoreCard } from '../../components/EcoScoreCard';
+import { useAppStore } from '@/stores/appStore';
+import { useTheme } from '@/hooks/useTheme';
+import { OrbMascot as Mascot } from '@/components/features/OrbMascot';
+import ProductHeroCardDashboard from '@/components/features/ProductHeroCardDashboard';
+import { MainDisclaimerModal } from '@/components/MainDisclaimerModal';
+import { AdditivesIntelligenceCard } from '@/components/features/AdditivesIntelligenceCard';
+import { NutritionIntelligenceCard } from '@/components/features/NutritionIntelligenceCard';
+import { EcoScoreCard } from '@/components/EcoScoreCard';
 import { Settings, Flame, Candy, ShieldAlert, Globe, Activity, Award, Heart } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import Svg, { Circle } from 'react-native-svg';
-import { detectShieldAlerts, deriveNutritionIntelligence } from '../../utils/scannerAPI';
-import { evaluateGutHealth } from '../../utils/gutShieldEvaluator';
+import { detectShieldAlerts, deriveNutritionIntelligence } from '@/utils/scannerAPI';
 import AnimatedReanimated, {
   useSharedValue,
   useAnimatedStyle,
@@ -317,11 +316,6 @@ export default function HomeScreen() {
     return m > 0 ? `${h}h ${m}m` : `${h}h`;
   };
 
-  const gutHealthData = useMemo(() => {
-    if (!hasActiveResult) return { score: 100, insights: [] };
-    return evaluateGutHealth(activeScanResult.additives ?? []);
-  }, [activeScanResult, hasActiveResult]);
-
   const alerts = useMemo(() => {
     if (!hasActiveResult) return [];
     const hasText = !!activeScanResult.ingredientsText;
@@ -567,7 +561,6 @@ export default function HomeScreen() {
           colors={colors}
           isDark={isDark}
           onOpenDisclaimer={() => setDisclaimerModalVisible(true)}
-          gutHealthData={gutHealthData}
           animatedSugarProps={animatedSugarProps}
           animatedSmallSugarProps={animatedSmallSugarProps}
             totalSugarTeaspoons={totalSugarTeaspoons}
@@ -588,7 +581,7 @@ export default function HomeScreen() {
 // ─── Extracted result cards — each gets its own mount anim ───────
 // Keeps HomeScreen render lean; animations are isolated per-card.
 function ScanResultCards({
-  activeScanResult, alerts, colors, isDark, gutHealthData,
+  activeScanResult, alerts, colors, isDark,
   animatedSugarProps, animatedSmallSugarProps,
   totalSugarTeaspoons, totalBasketCalories, burnDownActivities, formatBurnTime, onOpenDisclaimer,
 }: any) {
@@ -619,11 +612,9 @@ function ScanResultCards({
         />
       </AnimatedReanimated.View>
 
-      {/* 2. Gut Shield + Additive Detective */}
+      {/* 2. Additives Intelligence — categories + LED levels */}
       <AnimatedReanimated.View style={card2}>
-        <GutAndAdditivesCard
-          gutScore={gutHealthData.score}
-          gutInsights={gutHealthData.insights}
+        <AdditivesIntelligenceCard
           additives={activeScanResult.additives ?? []}
           colors={colors}
           isDark={isDark}
