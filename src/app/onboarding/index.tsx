@@ -542,6 +542,10 @@ export default function OnboardingScreen() {
         const isAllSelected = core.every((p) => prev.includes(p));
         return isAllSelected ? [] : [...core];
       }
+      const isAllSelected = core.every((p) => prev.includes(p));
+      if (isAllSelected) {
+        return [id];
+      }
       return prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id];
     });
   }, []);
