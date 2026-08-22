@@ -1769,6 +1769,17 @@ export function PrioritiesScreen({ selected, onToggle, colors, isDark, reduceMot
         colors={colors}
       />
       <View style={{ gap: 9, marginTop: 4 }}>
+        <SelectionRow
+          key="all"
+          label="All of Them"
+          selected={allSelected}
+          onPress={() => onToggle('all')}
+          colors={colors}
+          isDark={isDark}
+          multi
+          Icon={Sparkles}
+          accent="#10B981"
+        />
         {PRIORITY_OPTIONS.map((option) => (
           <SelectionRow
             key={option.id}
@@ -1782,17 +1793,6 @@ export function PrioritiesScreen({ selected, onToggle, colors, isDark, reduceMot
             accent={option.color}
           />
         ))}
-        <SelectionRow
-          key="all"
-          label="All of Them"
-          selected={allSelected}
-          onPress={() => onToggle('all')}
-          colors={colors}
-          isDark={isDark}
-          multi
-          Icon={Sparkles}
-          accent="#10B981"
-        />
       </View>
     </ScreenFrame>
   );
