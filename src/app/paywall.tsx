@@ -774,7 +774,7 @@ export default function PaywallScreen() {
             {isRestoring ? (
               <ActivityIndicator size="small" color={colors.textSecondary} />
             ) : (
-              <Text style={{ color: colors.textSecondary, fontSize: 11.5, fontWeight: '800', textDecorationLine: 'underline' }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 11.5, fontWeight: '800', borderBottomWidth: 1, paddingBottom: 1 }}>
                 Restore Purchases
               </Text>
             )}
@@ -788,7 +788,7 @@ export default function PaywallScreen() {
             activeOpacity={0.75}
             style={{ paddingVertical: 4, paddingHorizontal: 8 }}
           >
-            <Text style={{ color: colors.textSecondary, fontSize: 11.5, fontWeight: '800', textDecorationLine: 'underline' }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 11.5, fontWeight: '800', borderBottomWidth: 1, paddingBottom: 1 }}>
               Disclaimer
             </Text>
           </TouchableOpacity>

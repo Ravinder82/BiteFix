@@ -875,7 +875,7 @@ function ScanResultCards({
             Results are based on available product data.
           </Text>
           <TouchableOpacity onPress={onOpenDisclaimer} activeOpacity={0.75}>
-            <Text style={{ color: colors.textSecondary, fontSize: 11.5, fontWeight: '800', textDecorationLine: 'underline' }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 11.5, fontWeight: '800', borderBottomWidth: 1, paddingBottom: 1 }}>
               Disclaimer
             </Text>
           </TouchableOpacity>

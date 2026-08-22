@@ -402,13 +402,13 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
                 </Text>
                 <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 4 }}>
                   <TouchableOpacity onPress={handleRestore} disabled={isProcessing}>
-                    <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textDecorationLine: 'underline' }}>Restore Purchases</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', borderBottomWidth: 1, paddingBottom: 1 }}>Restore Purchases</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={handleOpenTermsOfUse}>
-                    <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textDecorationLine: 'underline' }}>Terms</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', borderBottomWidth: 1, paddingBottom: 1 }}>Terms</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={handleOpenPrivacyPolicy}>
-                    <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', textDecorationLine: 'underline' }}>Privacy</Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '700', borderBottomWidth: 1, paddingBottom: 1 }}>Privacy</Text>
                   </TouchableOpacity>
                 </View>
               </View>

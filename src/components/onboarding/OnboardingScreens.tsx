@@ -3,7 +3,7 @@ import { Animated, Easing, Platform, TextInput, TouchableOpacity, View, useWindo
 import { Text } from '../Text';
 import { Activity, Check, Droplets, Leaf, ListChecks, Package, ShieldCheck, ShoppingBag, Sparkles, UserRound, Zap } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import Svg, { Circle, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, RadialGradient, LinearGradient as SvgLinearGradient, Rect, Stop } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { OrbMascot } from '../features/OrbMascot';
 
@@ -1354,7 +1354,7 @@ export function IdentityScreen({
       <View style={{ marginBottom: -20 }}>
         <ScreenHeading
           title="Let's make BiteFix **yours**."
-          subtitle="Tell us your name so we can **personalize BiteFix for you.**"
+          subtitle="Optional — we'll use it to **personalize your scanner.**"
           colors={colors}
         />
       </View>
@@ -1373,7 +1373,7 @@ export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion
       <ShieldStatusBar selected={selected} colors={colors} isDark={isDark} />
       <ScreenHeading
         title="Anything we should **watch for you**?"
-        subtitle=""
+        subtitle="We'll flag these **on every scan — instantly.**"
         colors={colors}
       />
       <View style={{ gap: 10, marginTop: -20 }}>
@@ -1609,8 +1609,8 @@ export function PainScreen({
       />
 
       <ScreenHeading
-        title="What makes it hard to choose from the **label** ?"
-        subtitle=""
+        title="What makes it hard to choose **based on** the label?"
+        subtitle="Most people feel this. That's why **BiteFix exists.**"
         colors={colors}
       />
 
@@ -1667,6 +1667,405 @@ export function PrioritiesScreen({ selected, onToggle, colors, isDark, reduceMot
 const AnimatedSvgCircle = Animated.createAnimatedComponent(Circle);
 
 const SURGE_SPARK_ANGLES = [15, 75, 135, 195, 255, 315].map((deg) => (deg * Math.PI) / 180);
+
+// ══════════════════════════════════════════════════════════════
+// DEMO SCAN — a real barcode in, an instant verdict out.
+// Hardcoded Nutella example (EAN 3017620422003); zero network.
+// ══════════════════════════════════════════════════════════════
+
+const DEMO_SCAN_MS = 3000;
+const DEMO_VERDICT_MS = 3400;
+const DEMO_BARCODE_DIGITS = '3017620422003';
+const DEMO_SCORE = 17;
+const DEMO_RING_SIZE = 150;
+
+const EAN13_L = ['0001101', '0011001', '0010011', '0111101', '0100011', '0110001', '0101111', '0111011', '0110111', '0001011'];
+const EAN13_G = ['0100111', '0110011', '0011011', '0100001', '0011101', '0111001', '0000101', '0010001', '0001001', '0010111'];
+const EAN13_R = ['1110010', '1100110', '1101100', '1000010', '1011100', '1001110', '1010000', '1000100', '1001000', '1110100'];
+const EAN13_PARITY = ['LLLLLL', 'LLGLGG', 'LLGGLG', 'LLGGGL', 'LGLLGG', 'LGGLLG', 'LGGGLL', 'LGLGLG', 'LGLGGL', 'LGGLGL'];
+
+function ean13Modules(digits: string): number[] {
+  const d = digits.split('').map(Number);
+  const parity = EAN13_PARITY[d[0]] ?? EAN13_PARITY[0];
+  const mods: number[] = [];
+  const push = (pattern: string) => {
+    for (const c of pattern) mods.push(c === '1' ? 1 : 0);
+  };
+  push('101');
+  for (let i = 0; i < 6; i += 1) push(parity[i] === 'L' ? EAN13_L[d[i + 1]] : EAN13_G[d[i + 1]]);
+  push('01010');
+  for (let i = 0; i < 6; i += 1) push(EAN13_R[d[i + 7]]);
+  push('101');
+  return mods;
+}
+
+function Ean13Barcode({ barColor, width }: { barColor: string; width: number }) {
+  const bars = useMemo(() => {
+    const modules = ean13Modules(DEMO_BARCODE_DIGITS);
+    const runs: Array<{ x: number; w: number }> = [];
+    let i = 0;
+    while (i < modules.length) {
+      if (modules[i] === 1) {
+        let j = i;
+        while (j < modules.length && modules[j] === 1) j += 1;
+        runs.push({ x: i, w: j - i });
+        i = j;
+      } else {
+        i += 1;
+      }
+    }
+    return runs;
+  }, []);
+  const height = Math.round(width * 0.42);
+  return (
+    <View style={{ alignItems: 'center' }}>
+      <Svg width={width} height={height} viewBox="0 0 95 40" preserveAspectRatio="none">
+        {bars.map((b, idx) => (
+          <Rect key={idx} x={b.x} y={0} width={b.w} height={40} fill={barColor} />
+        ))}
+      </Svg>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignSelf: 'stretch', paddingHorizontal: 6, marginTop: 5 }}>
+        <Text style={{ color: barColor, fontSize: 13, fontWeight: '700', letterSpacing: 2 }}>3</Text>
+        <Text style={{ color: barColor, fontSize: 13, fontWeight: '700', letterSpacing: 2 }}>017620</Text>
+        <Text style={{ color: barColor, fontSize: 13, fontWeight: '700', letterSpacing: 2 }}>422003</Text>
+      </View>
+    </View>
+  );
+}
+
+const DEMO_NUTRI_GRADES = ['A', 'B', 'C', 'D', 'E'];
+
+function DemoScanSequence({
+  colors,
+  isDark,
+  reduceMotion,
+  onComplete,
+}: {
+  colors: any;
+  isDark: boolean;
+  reduceMotion: boolean;
+  onComplete: () => void;
+}) {
+  const { width } = useWindowDimensions();
+  const [stage, setStage] = useState<'barcode' | 'verdict'>(reduceMotion ? 'verdict' : 'barcode');
+
+  const barcodeEntrance = useRef(new Animated.Value(0)).current;
+  const verdictEntrance = useRef(new Animated.Value(0)).current;
+  const beamY = useRef(new Animated.Value(0)).current;
+  const arcAnim = useRef(new Animated.Value(0)).current;
+  const scoreAnim = useRef(new Animated.Value(0)).current;
+  const [scoreText, setScoreText] = useState('0');
+
+  const cardBg = isDark ? 'rgba(17,23,19,0.97)' : '#FFFFFF';
+  const cardBorder = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(7,25,15,0.08)';
+  const barColor = isDark ? '#F0FDF4' : '#101410';
+  const red = isDark ? '#F87171' : '#DC2626';
+  const amber = isDark ? '#FBBF24' : '#D97706';
+  const barcodeWidth = Math.round(clamp(width * 0.58, 200, 260));
+  const ringCircumference = 2 * Math.PI * (DEMO_RING_SIZE / 2 - 8);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      verdictEntrance.setValue(1);
+      arcAnim.setValue(1);
+      setScoreText(String(DEMO_SCORE));
+      onComplete();
+      return;
+    }
+    if (stage === 'barcode') {
+      Animated.spring(barcodeEntrance, { toValue: 1, friction: 8, tension: 42, useNativeDriver: true }).start();
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(beamY, { toValue: 1, duration: 1050, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+          Animated.timing(beamY, { toValue: 0, duration: 1050, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        ])
+      ).start();
+      const t = setTimeout(() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        setStage('verdict');
+      }, DEMO_SCAN_MS);
+      return () => {
+        clearTimeout(t);
+        beamY.stopAnimation();
+      };
+    }
+    Animated.spring(verdictEntrance, { toValue: 1, friction: 8, tension: 42, useNativeDriver: true }).start();
+    Animated.timing(arcAnim, { toValue: 1, duration: 1400, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
+    const listenerId = scoreAnim.addListener(({ value }) => setScoreText(String(Math.round(value))));
+    Animated.timing(scoreAnim, { toValue: DEMO_SCORE, duration: 1400, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
+    const t = setTimeout(onComplete, DEMO_VERDICT_MS);
+    return () => {
+      clearTimeout(t);
+      scoreAnim.removeListener(listenerId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage, reduceMotion]);
+
+  return (    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 14 }}>
+      {/* Status chip — mirrors the live scanner status */}
+      <View
+        style={{
+          borderRadius: 999,
+          backgroundColor: isDark ? 'rgba(0,0,0,0.38)' : 'rgba(255,255,255,0.85)',
+          borderWidth: 1,
+          borderColor: GREEN + '45',
+          paddingHorizontal: 12,
+          paddingVertical: 6,
+        }}
+      >
+        <Text style={{ color: isDark ? '#FFFFFF' : '#11301F', fontSize: 9.5, fontWeight: '900', letterSpacing: 1.2, textTransform: 'uppercase' }}>
+          {stage === 'barcode' ? 'Scanning Product' : 'Instant Verdict'}
+        </Text>
+      </View>
+
+      {stage === 'barcode' ? (
+        /* ── Beat 1: the real barcode under the scan beam ── */
+        <Animated.View
+          style={{
+            opacity: barcodeEntrance,
+            transform: [{ scale: barcodeEntrance.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }) }, { translateY: barcodeEntrance.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }],
+            backgroundColor: cardBg,
+            borderColor: cardBorder,
+            borderWidth: 1.5,
+            borderRadius: 24,
+            paddingVertical: 26,
+            paddingHorizontal: 22,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: isDark ? 0.35 : 0.10,
+            shadowRadius: 24,
+            elevation: 8,
+          }}
+        >
+          <View>
+            <Ean13Barcode barColor={barColor} width={barcodeWidth} />
+            <Animated.View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                left: -8,
+                right: -8,
+                height: 16,
+                transform: [{ translateY: beamY.interpolate({ inputRange: [0, 1], outputRange: [-10, Math.round(barcodeWidth * 0.42) + 16] }) }],
+              }}
+            >
+              <LinearGradient
+                colors={['rgba(1,146,42,0)', 'rgba(1,146,42,0.30)', 'rgba(1,146,42,0)']}
+                locations={[0, 0.5, 1]}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 16, borderRadius: 8 }}
+              />
+              <View style={{ position: 'absolute', left: 0, right: 0, top: 7, height: 2, borderRadius: 1, backgroundColor: GREEN }} />
+            </Animated.View>
+          </View>
+        </Animated.View>
+      ) : (
+        /* ── Beat 2: the instant verdict card — mirrors the real result screen ── */
+        <Animated.View
+          style={{
+            opacity: verdictEntrance,
+            transform: [{ scale: verdictEntrance.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1] }) }, { translateY: verdictEntrance.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }],
+            backgroundColor: cardBg,
+            borderColor: cardBorder,
+            borderWidth: 1.5,
+            borderRadius: 24,
+            padding: 18,
+            gap: 10,
+            width: Math.min(width - 44, 372),
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: isDark ? 0.35 : 0.10,
+            shadowRadius: 24,
+            elevation: 8,
+          }}
+        >
+          {/* Header row */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <View
+              style={{
+                width: 46,
+                height: 46,
+                borderRadius: 12,
+                backgroundColor: isDark ? '#2C2020' : '#FFF3E4',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ fontSize: 24 }}>🍫</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 10, fontWeight: '900', letterSpacing: 1.4 }}>FERRERO</Text>
+              <Text style={{ color: colors.text, fontSize: 19, fontWeight: '900', letterSpacing: -0.4 }} numberOfLines={1}>
+                Nutella
+              </Text>
+            </View>
+            <View
+              style={{
+                backgroundColor: isDark ? 'rgba(248,113,113,0.14)' : '#FDECEC',
+                borderRadius: 999,
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+              }}
+            >
+              <Text style={{ color: red, fontSize: 10.5, fontWeight: '900', letterSpacing: 0.8 }}>NOVA 4</Text>
+            </View>
+          </View>
+
+          {/* Purity Score ring */}
+          <View style={{ alignItems: 'center', marginTop: 2 }}>
+            <View style={{ width: DEMO_RING_SIZE, height: DEMO_RING_SIZE, alignItems: 'center', justifyContent: 'center' }}>
+              <Svg width={DEMO_RING_SIZE} height={DEMO_RING_SIZE}>
+                <Circle cx={DEMO_RING_SIZE / 2} cy={DEMO_RING_SIZE / 2} r={DEMO_RING_SIZE / 2 - 8} stroke={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'} strokeWidth={9} fill="none" />
+                <AnimatedSvgCircle
+                  cx={DEMO_RING_SIZE / 2}
+                  cy={DEMO_RING_SIZE / 2}
+                  r={DEMO_RING_SIZE / 2 - 8}
+                  stroke={red}
+                  strokeWidth={9}
+                  strokeLinecap="round"
+                  fill="none"
+                  strokeDasharray={ringCircumference}
+                  strokeDashoffset={arcAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [ringCircumference, ringCircumference * (1 - DEMO_SCORE / 100)],
+                    extrapolate: 'clamp',
+                  })}
+                  transform={`rotate(-90 ${DEMO_RING_SIZE / 2} ${DEMO_RING_SIZE / 2})`}
+                />
+              </Svg>
+              <View style={{ position: 'absolute' }}>
+                <OrbMascot state="blocked" size={86} showShadow={false} />
+              </View>
+            </View>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 7,
+                marginTop: 8,
+                backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
+                borderWidth: 1,
+                borderColor: cardBorder,
+                borderRadius: 999,
+                paddingHorizontal: 13,
+                paddingVertical: 6,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: isDark ? 0.3 : 0.08,
+                shadowRadius: 8,
+                elevation: 3,
+              }}
+            >
+              <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: red }} />
+              <Text style={{ color: colors.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.6 }}>
+                PURITY SCORE: {scoreText}
+              </Text>
+            </View>
+          </View>
+
+          {/* NOVA row */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderRadius: 14,
+              borderWidth: 1,
+              borderColor: cardBorder,
+              paddingHorizontal: 12,
+              paddingVertical: 10,
+              backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#FCFEFC',
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ backgroundColor: isDark ? 'rgba(248,113,113,0.14)' : '#FDECEC', borderRadius: 7, paddingHorizontal: 8, paddingVertical: 4 }}>
+                <Text style={{ color: red, fontSize: 10, fontWeight: '900', letterSpacing: 0.6 }}>NOVA 4</Text>
+              </View>
+              <Text style={{ color: colors.text, fontSize: 13.5, fontWeight: '800' }}>Ultra-Processed</Text>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 4 }}>
+              {[GREEN, '#14AE97', amber, red].map((c) => (
+                <View key={c} style={{ width: 16, height: 7, borderRadius: 4, backgroundColor: c }} />
+              ))}
+            </View>
+          </View>
+
+          {/* Allergen row */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderRadius: 14,
+              borderWidth: 1,
+              borderColor: isDark ? 'rgba(248,113,113,0.28)' : 'rgba(220,38,38,0.18)',
+              paddingHorizontal: 12,
+              paddingVertical: 10,
+              backgroundColor: isDark ? 'rgba(248,113,113,0.07)' : '#FEF4F4',
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={{ fontSize: 14 }}>⚠️</Text>
+              <View>
+                <Text style={{ color: colors.text, fontSize: 13, fontWeight: '800' }}>Allergen Alert</Text>
+                <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '600' }}>Contains Milk</Text>
+              </View>
+            </View>
+            <View style={{ backgroundColor: isDark ? 'rgba(248,113,113,0.14)' : '#FDECEC', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 }}>
+              <Text style={{ color: red, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 }}>WARNING</Text>
+            </View>
+          </View>
+
+          {/* Nutri-Score strip */}
+          <View
+            style={{
+              borderRadius: 14,
+              borderWidth: 1,
+              borderColor: isDark ? 'rgba(251,191,36,0.28)' : 'rgba(217,119,6,0.18)',
+              paddingHorizontal: 12,
+              paddingVertical: 10,
+              gap: 8,
+              backgroundColor: isDark ? 'rgba(251,191,36,0.05)' : '#FFFBF3',
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '900', letterSpacing: 1.2 }}>NUTRI-SCORE</Text>
+              <View style={{ backgroundColor: isDark ? 'rgba(251,146,60,0.14)' : '#FFEDD5', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 }}>
+                <Text style={{ color: isDark ? '#FB923C' : '#EA580C', fontSize: 10.5, fontWeight: '900' }}>Grade E · Poor Quality</Text>
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 6 }}>
+              {DEMO_NUTRI_GRADES.map((grade) => {
+                const isWorst = grade === 'E';
+                return (
+                  <View
+                    key={grade}
+                    style={{
+                      flex: 1,
+                      alignItems: 'center',
+                      paddingVertical: 7,
+                      borderRadius: 9,
+                      backgroundColor: isWorst ? red : isDark ? 'rgba(255,255,255,0.05)' : '#F4F7F4',
+                      borderWidth: isWorst ? 0 : 1,
+                      borderColor: cardBorder,
+                    }}
+                  >
+                    <Text style={{ color: isWorst ? '#FFFFFF' : colors.textSecondary, fontSize: 12.5, fontWeight: '900' }}>{grade}</Text>
+                  </View>
+                );
+              })}
+            </View>
+            <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '600' }}>
+              High in sugars, saturated fats, calories, or salt
+            </Text>
+          </View>
+        </Animated.View>
+      )}
+    </View>
+  );
+}
+
 
 function MascotScoreRingTeaser({
   colors,
@@ -2086,6 +2485,12 @@ export function RevelationScreen({
   const { width, height } = useWindowDimensions();
   const horizontalPadding = clamp(width * 0.0615, 18, 24);
   const isCompact = height < 700;
+  const [demoDone, setDemoDone] = useState(false);
+
+  // Replay the demo whenever the screen is re-entered.
+  useEffect(() => {
+    if (!isActive) setDemoDone(false);
+  }, [isActive]);
 
   return (
     <View
@@ -2100,6 +2505,8 @@ export function RevelationScreen({
         justifyContent: 'space-between',
       }}
     >
+      {demoDone ? (
+        <>
       {/* Upper/Middle Hero Area — spacious, commanding hero */}
       <View
         style={{
@@ -2159,9 +2566,24 @@ export function RevelationScreen({
             maxWidth: 340,
           }}
         >
-          Your assistant is powered up — turn labels into answers in seconds.
+          Your assistant is powered up — one scan gives an{' '}
+          <Text style={{ color: GREEN, fontWeight: '800' }}>instant verdict</Text>, on any product.
         </Text>
       </View>
+        </>
+      ) : (
+        <TouchableOpacity activeOpacity={0.9} onPress={() => setDemoDone(true)} style={{ flex: 1 }}>
+          <DemoScanSequence
+            colors={colors}
+            isDark={isDark}
+            reduceMotion={reduceMotion}
+            onComplete={() => setDemoDone(true)}
+          />
+          <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: '600', textAlign: 'center' }}>
+            Tap to skip
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -3442,7 +3864,7 @@ export function FinalActivationScreen({
         Activated!
       </Text>
       <Text style={{ color: colors.textSecondary, fontSize: clamp(width * 0.036, 13, 14.5), lineHeight: clamp(width * 0.053, 19, 22), fontWeight: '500', textAlign: 'center', maxWidth: 330, marginTop: 8, marginBottom: 18 }}>
-        Your personal food radar is fully online.
+        Your <Text style={{ color: GREEN, fontWeight: '800' }}>instant-insight scanner</Text> is fully online.
       </Text>
 
       <View style={{ width: '100%', minHeight: columnHeight, gap: rowGap }}>
