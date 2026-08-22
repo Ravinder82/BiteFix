@@ -4,9 +4,10 @@ import { Text } from '@/components/Text';
 import { router } from 'expo-router';
 import { useAppStore } from '../../stores/appStore';
 import { useTheme } from '../../hooks/useTheme';
-import { ChevronRight, ArrowLeft, ShieldAlert, HeartHandshake, Eye, Moon, Layers, RotateCcw, LogOut, ShieldCheck, Crown, CreditCard, Mail, MessageSquare, Info, Globe } from 'lucide-react-native';
+import { ChevronRight, ArrowLeft, ShieldAlert, HeartHandshake, Eye, Moon, Layers, RotateCcw, LogOut, ShieldCheck, Crown, CreditCard, Mail, MessageSquare, Info, Globe, BellRing } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { getIapService } from '../../services/iapLoader';
+import { cancelRenewalReminder } from '../../services/notificationService';
 import Constants from 'expo-constants';
 import { MainDisclaimerModal } from '../../components/MainDisclaimerModal';
 
@@ -15,7 +16,8 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   const {
     sugarUnit, setSugarUnit, clearCollection, clearAllData,
     allergenFilters, toggleAllergenFilter, oilWatchFilters, toggleOilWatchFilter,
-    strictNovaAlert, setStrictNovaAlert, stealthAdditivesAlert, setStealthAdditivesAlert, isPremium
+    strictNovaAlert, setStrictNovaAlert, stealthAdditivesAlert, setStealthAdditivesAlert, isPremium,
+    renewalRemindersEnabled, setRenewalRemindersEnabled,
   } = useAppStore();
 
   const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
@@ -92,6 +94,33 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
     } catch {
       // Deep-link failed — show the informational fallback modal
       setSubscriptionModalVisible(true);
+    }
+  };
+
+  // Renewal reminder toggle — opts the user in/out of the local
+  // "2 days before renewal" notification. Toggling on re-syncs with
+  // the live App Store entitlement; toggling off cancels immediately.
+  const handleToggleRenewalReminders = async (enabled: boolean) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setRenewalRemindersEnabled(enabled);
+    if (!enabled) {
+      await cancelRenewalReminder();
+      return;
+    }
+    const service = await getIapService();
+    if (!service) return;
+    const scheduled = await service.refreshRenewalReminder();
+    // iOS only shows the permission dialog once — if it was denied
+    // earlier, guide the user to system settings.
+    if (!scheduled && isPremium) {
+      Alert.alert(
+        'Notifications Blocked',
+        'BiteFix is not allowed to send notifications on this device. Enable notifications in iOS Settings to receive renewal reminders.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: () => { void Linking.openSettings(); } },
+        ]
+      );
     }
   };
 
@@ -239,6 +268,27 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
               onValueChange={toggleTheme}
               trackColor={{ false: '#e2e8f0', true: colors.primary }}
               thumbColor={theme === 'dark' ? '#ffffff' : '#f4f4f5'}
+            />
+          </View>
+
+          <View
+            style={{ backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border }}
+            className="flex-row items-center justify-between p-4"
+          >
+            <View className="flex-row items-center gap-3" style={{ flex: 1, paddingRight: 12 }}>
+              <BellRing size={16} color={colors.primary} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.text }} className="font-bold text-sm">Renewal Reminders</Text>
+                <Text style={{ color: colors.textMuted }} className="text-xs mt-0.5">
+                  A local reminder 2 days before your subscription renews. Turn off anytime.
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={renewalRemindersEnabled}
+              onValueChange={handleToggleRenewalReminders}
+              trackColor={{ false: '#e2e8f0', true: colors.primary }}
+              thumbColor={renewalRemindersEnabled ? '#ffffff' : '#f4f4f5'}
             />
           </View>
 

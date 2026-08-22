@@ -764,6 +764,26 @@ export default function PaywallScreen() {
           </LinearGradient>
         </TouchableOpacity>
 
+        {/* Trust microcopy — renewal reminder reassurance */}
+        <View
+          style={{
+            alignItems: 'center',
+            justifyContent: 'center',
+            alignSelf: 'center',
+            marginTop: 14,
+            paddingHorizontal: 14,
+            paddingVertical: 7,
+            borderRadius: 999,
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+            backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.025)',
+          }}
+        >
+          <Text style={{ color: colors.textSecondary, fontSize: 11.5, fontWeight: '600', letterSpacing: 0.1 }}>
+            We will remind you 2 days before your renewal
+          </Text>
+        </View>
+
         <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 20, marginTop: 12 }}>
           <TouchableOpacity
             onPress={handleRestore}

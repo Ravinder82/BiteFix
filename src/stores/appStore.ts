@@ -32,6 +32,7 @@ interface AppState {
   oilWatchFilters: string[];
   strictNovaAlert: boolean;
   stealthAdditivesAlert: boolean;
+  renewalRemindersEnabled: boolean;
   isPremium: boolean;
   freeScansUsed: number;
   trialStarted: boolean;
@@ -57,6 +58,7 @@ interface AppState {
   toggleOilWatchFilter: (oilId: string) => void;
   setStrictNovaAlert: (enabled: boolean) => void;
   setStealthAdditivesAlert: (enabled: boolean) => void;
+  setRenewalRemindersEnabled: (enabled: boolean) => void;
   setProfile: (profile: {
     userName?: string;
     userGoal?: 'ultra_processed' | 'nutri_score' | 'clean_swaps' | 'healthy_habits' | 'none';
@@ -162,6 +164,7 @@ function normalizePersistedState(persistedState: unknown, version: number): Part
     oilWatchFilters: Array.isArray(state.oilWatchFilters) ? state.oilWatchFilters.filter((item: unknown) => typeof item === 'string') : [],
     strictNovaAlert: typeof state.strictNovaAlert === 'boolean' ? state.strictNovaAlert : true,
     stealthAdditivesAlert: typeof state.stealthAdditivesAlert === 'boolean' ? state.stealthAdditivesAlert : true,
+    renewalRemindersEnabled: typeof state.renewalRemindersEnabled === 'boolean' ? state.renewalRemindersEnabled : true,
     isPremium: typeof state.isPremium === 'boolean' ? state.isPremium : false,
     freeScansUsed: typeof state.freeScansUsed === 'number' ? state.freeScansUsed : 0,
     trialStarted: typeof state.trialStarted === 'boolean' ? state.trialStarted : false,
@@ -189,6 +192,7 @@ export const useAppStore = create<AppState>()(
       oilWatchFilters: [],
       strictNovaAlert: true,
       stealthAdditivesAlert: true,
+      renewalRemindersEnabled: true,
       isPremium: false,
       freeScansUsed: 0,
       trialStarted: false,
@@ -247,6 +251,7 @@ export const useAppStore = create<AppState>()(
       })),
       setStrictNovaAlert: (strictNovaAlert) => set({ strictNovaAlert }),
       setStealthAdditivesAlert: (stealthAdditivesAlert) => set({ stealthAdditivesAlert }),
+      setRenewalRemindersEnabled: (renewalRemindersEnabled) => set({ renewalRemindersEnabled }),
       setProfile: (profile) => set((state) => ({
         userName: profile.userName !== undefined ? profile.userName : state.userName,
         userGoal: profile.userGoal !== undefined ? profile.userGoal : state.userGoal,

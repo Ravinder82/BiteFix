@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { Text } from '../Text';
-import { BarChart2, Activity, ShieldAlert, CheckCircle2, AlertCircle } from 'lucide-react-native';
+import { BarChart2, AlertCircle } from 'lucide-react-native';
 import { NutritionIntelligenceData, NutritionInsightItem } from '../../types/app.types';
 
 interface NutritionIntelligenceCardProps {
@@ -18,8 +18,13 @@ export function NutritionIntelligenceCard({
   const insights = nutritionIntelligence?.insights ?? [];
   const hasInsights = insights.length > 0;
 
-  const accent = isDark ? '#38BDF8' : '#0284C7'; // Refined analytical cyan/sky accent
+  const basisLabel = nutritionIntelligence?.basis === 'per_serving' && nutritionIntelligence.servingSize
+    ? `PER SERVING (${nutritionIntelligence.servingSize})`
+    : 'PER 100G BASIS';
+
+  const accent = isDark ? '#38BDF8' : '#0284C7';
   const borderDivider = isDark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(0, 0, 0, 0.06)';
+  const rowDivider = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)';
 
   return (
     <View
@@ -28,8 +33,8 @@ export function NutritionIntelligenceCard({
         borderColor: borderDivider,
         borderWidth: 1,
         borderRadius: 20,
-        padding: 18,
-        marginBottom: 10,
+        padding: 16,
+        marginBottom: 8,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: isDark ? 0.12 : 0.05,
@@ -37,60 +42,61 @@ export function NutritionIntelligenceCard({
         elevation: 2,
       }}
     >
-      {/* ── Header ─────────────────────────────────────────── */}
+      {/* ── Header with Reference Basis Tag ─────────────────────── */}
       <View
         style={{
           flexDirection: 'row',
-          flexWrap: 'wrap',
           justifyContent: 'space-between',
-          alignItems: 'flex-start',
+          alignItems: 'center',
           marginBottom: 14,
-          gap: 12,
+          gap: 8,
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 }}>
           <View
             style={{
-              width: 36,
-              height: 36,
+              width: 34,
+              height: 34,
               borderRadius: 10,
               backgroundColor: isDark ? 'rgba(56, 189, 248, 0.12)' : 'rgba(2, 132, 199, 0.08)',
               alignItems: 'center',
               justifyContent: 'center',
+              borderWidth: 1,
+              borderColor: isDark ? 'rgba(56, 189, 248, 0.25)' : 'rgba(2, 132, 199, 0.18)',
             }}
           >
-            <BarChart2 size={18} color={accent} strokeWidth={2.2} />
+            <BarChart2 size={17} color={accent} strokeWidth={2.2} />
           </View>
           <View style={{ flexShrink: 1 }}>
-            <Text style={{ color: colors.text, fontSize: 15, fontWeight: '800', letterSpacing: -0.2 }} numberOfLines={1}>
-              Nutrition Intelligence
+            <Text style={{ color: colors.text, fontSize: 14.5, fontWeight: '800', letterSpacing: -0.2 }} numberOfLines={1}>
+              Nutrient Intelligence
             </Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '700', marginTop: 1 }} numberOfLines={2}>
-              What the available nutrition data suggests
+            <Text style={{ color: colors.textSecondary, fontSize: 10.5, fontWeight: '600', marginTop: 0.5 }} numberOfLines={1}>
+              Granular nutrient analysis & remarks
             </Text>
           </View>
         </View>
 
-        {hasInsights && (
-          <View
-            style={{
-              backgroundColor: isDark ? 'rgba(56, 189, 248, 0.12)' : 'rgba(2, 132, 199, 0.08)',
-              borderColor: isDark ? 'rgba(56, 189, 248, 0.28)' : 'rgba(2, 132, 199, 0.22)',
-              borderWidth: 1,
-              paddingHorizontal: 9,
-              paddingVertical: 4,
-              borderRadius: 8,
-              alignSelf: 'flex-start',
-            }}
-          >
-            <Text style={{ color: accent, fontSize: 9.5, fontWeight: '900', letterSpacing: 0.5 }}>
-              {insights.length} SIGNALS
-            </Text>
-          </View>
-        )}
+        {/* Prominent Calculation Frame / Basis Tag */}
+        <View
+          style={{
+            backgroundColor: isDark ? 'rgba(56, 189, 248, 0.12)' : 'rgba(2, 132, 199, 0.08)',
+            borderColor: isDark ? 'rgba(56, 189, 248, 0.32)' : 'rgba(2, 132, 199, 0.26)',
+            borderWidth: 1,
+            paddingHorizontal: 8.5,
+            paddingVertical: 4.5,
+            borderRadius: 8,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ color: accent, fontSize: 9.5, fontWeight: '900', letterSpacing: 0.6, textTransform: 'uppercase' }}>
+            {basisLabel}
+          </Text>
+        </View>
       </View>
 
-      {/* ── Content Rows ───────────────────────────────────── */}
+      {/* ── 3-Column Table Grid ─────────────────────────────────── */}
       {!hasInsights ? (
         <View
           style={{
@@ -109,8 +115,40 @@ export function NutritionIntelligenceCard({
           </Text>
         </View>
       ) : (
-        <View style={{ gap: 7 }}>
-          {insights.map((item: NutritionInsightItem) => {
+        <View
+          style={{
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: borderDivider,
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.015)' : 'rgba(0, 0, 0, 0.015)',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Table Header */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingVertical: 8,
+              paddingHorizontal: 12,
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)',
+              borderBottomWidth: 1,
+              borderBottomColor: borderDivider,
+            }}
+          >
+            <Text style={{ flex: 3, color: colors.textMuted || colors.textSecondary, fontSize: 9.5, fontWeight: '800', letterSpacing: 0.5 }}>
+              NUTRIENT
+            </Text>
+            <Text style={{ flex: 2, textAlign: 'center', color: colors.textMuted || colors.textSecondary, fontSize: 9.5, fontWeight: '800', letterSpacing: 0.5 }}>
+              VALUE
+            </Text>
+            <Text style={{ flex: 3.2, textAlign: 'right', color: colors.textMuted || colors.textSecondary, fontSize: 9.5, fontWeight: '800', letterSpacing: 0.5 }}>
+              REMARK
+            </Text>
+          </View>
+
+          {/* Table Rows */}
+          {insights.map((item: NutritionInsightItem, index: number) => {
             const isPositive = item.tone === 'positive';
             const isCaution = item.tone === 'caution';
 
@@ -132,26 +170,27 @@ export function NutritionIntelligenceCard({
               ? isDark ? 'rgba(248, 113, 113, 0.28)' : 'rgba(220, 38, 38, 0.20)'
               : isDark ? 'rgba(251, 191, 36, 0.25)' : 'rgba(217, 119, 6, 0.18)';
 
+            const displayRemark = item.remark || item.level;
+
             return (
               <View
                 key={item.id}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingVertical: 9,
+                  paddingVertical: 9.5,
                   paddingHorizontal: 12,
-                  borderRadius: 12,
-                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
-                  gap: 10,
+                  borderBottomWidth: index < insights.length - 1 ? 1 : 0,
+                  borderBottomColor: rowDivider,
+                  backgroundColor: index % 2 === 1 ? (isDark ? 'rgba(255, 255, 255, 0.015)' : 'rgba(0, 0, 0, 0.01)') : 'transparent',
                 }}
               >
-                {/* Left Label & Contextual Value */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
+                {/* Column 1: Nutrient Title */}
+                <View style={{ flex: 3, flexDirection: 'row', alignItems: 'center', gap: 7, paddingRight: 4 }}>
                   <View
                     style={{
-                      width: 6,
-                      height: 6,
+                      width: 5.5,
+                      height: 5.5,
                       borderRadius: 3,
                       backgroundColor: toneColor,
                     }}
@@ -160,52 +199,56 @@ export function NutritionIntelligenceCard({
                     style={{
                       color: colors.text,
                       fontSize: 12,
-                      fontWeight: '800',
+                      fontWeight: '700',
                       letterSpacing: -0.1,
-                      flexShrink: 1,
                     }}
                     numberOfLines={1}
                   >
                     {item.label}
                   </Text>
-                  {item.value ? (
-                    <Text
-                      style={{
-                        color: colors.textMuted || colors.textSecondary,
-                        fontSize: 10.5,
-                        fontWeight: '700',
-                        opacity: 0.85,
-                      }}
-                      numberOfLines={1}
-                    >
-                      ({item.value})
-                    </Text>
-                  ) : null}
                 </View>
 
-                {/* Right Status Badge */}
-                <View
-                  style={{
-                    backgroundColor: badgeBg,
-                    borderColor: badgeBorder,
-                    borderWidth: 1,
-                    paddingHorizontal: 8,
-                    paddingVertical: 3,
-                    borderRadius: 6,
-                    alignSelf: 'center',
-                  }}
-                >
+                {/* Column 2: Value in Grams / mg */}
+                <View style={{ flex: 2, alignItems: 'center', justifyContent: 'center' }}>
                   <Text
                     style={{
-                      color: toneColor,
-                      fontSize: 9.5,
-                      fontWeight: '900',
-                      letterSpacing: 0.3,
+                      color: colors.text,
+                      fontSize: 12.5,
+                      fontWeight: '800',
+                      letterSpacing: -0.2,
                     }}
                     numberOfLines={1}
                   >
-                    {item.level}
+                    {item.value || '—'}
                   </Text>
+                </View>
+
+                {/* Column 3: Remark & Status Badge */}
+                <View style={{ flex: 3.2, alignItems: 'flex-end', justifyContent: 'center' }}>
+                  <View
+                    style={{
+                      backgroundColor: badgeBg,
+                      borderColor: badgeBorder,
+                      borderWidth: 1,
+                      paddingHorizontal: 7.5,
+                      paddingVertical: 2.5,
+                      borderRadius: 6,
+                      maxWidth: '100%',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: toneColor,
+                        fontSize: 9.5,
+                        fontWeight: '800',
+                        letterSpacing: 0.2,
+                        textAlign: 'center',
+                      }}
+                      numberOfLines={1}
+                    >
+                      {displayRemark}
+                    </Text>
+                  </View>
                 </View>
               </View>
             );

@@ -588,11 +588,13 @@ function ScanResultCards({
   const footer = useMountAnim(400);
 
   const nutritionIntelligence = activeScanResult?.nutritionIntelligence ?? deriveNutritionIntelligence({
-    protein100g: activeScanResult?.proteinGrams,
+    protein100g: activeScanResult?.protein100g ?? activeScanResult?.proteinGrams,
     fibre100g: activeScanResult?.fibre100g,
     satFat100g: activeScanResult?.satFat100g,
     sodiumMg100g: activeScanResult?.sodiumMg100g,
     cholesterolMg100g: activeScanResult?.cholesterolMg100g,
+    servingSize: activeScanResult?.servingSize,
+    basis: 'per_100g',
   });
 
   return (

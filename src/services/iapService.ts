@@ -5,6 +5,7 @@
 import { Platform } from 'react-native';
 import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 import { useAppStore } from '../stores/appStore';
+import { scheduleRenewalReminder, cancelRenewalReminder, isRenewalReminderScheduled } from './notificationService';
 import {
   PRODUCT_IDS,
   ALL_PRODUCT_SKUS,
@@ -25,9 +26,57 @@ const API_KEY = Platform.select({
 });
 
 // ── IAP Service Singleton ─────────────────────────────────
+type ActiveEntitlementLike = {
+  expirationDate?: string | number | null;
+  periodType?: 'normal' | 'intro' | 'trial' | string;
+  willRenew?: boolean;
+};
+
 class BitefixIAPService {
   private isConfigured = false;
   private initPromise: Promise<boolean> | null = null;
+
+  /**
+   * Keeps the local renewal-reminder notification in sync with the
+   * active entitlement. Best-effort — wrapped so it never breaks the
+   * purchase flow. Schedules for ~2 days before renewal; cancels when
+   * the subscription will not renew. Awaited at purchase/restore call
+   * sites so the iOS permission dialog appears in purchase context.
+   */
+  private async syncRenewalReminder(entitlement: ActiveEntitlementLike | undefined): Promise<void> {
+    try {
+      if (!entitlement || entitlement.willRenew === false) {
+        await cancelRenewalReminder();
+        return;
+      }
+      const onTrial = entitlement.periodType === 'trial' || entitlement.periodType === 'intro';
+      await scheduleRenewalReminder(
+        entitlement.expirationDate != null
+          ? { renewalDate: entitlement.expirationDate, trialDays: onTrial ? 7 : undefined }
+          : { trialDays: 7 }
+      );
+    } catch {
+      // reminder is best-effort only
+    }
+  }
+
+  /**
+   * Public re-sync for the Settings toggle: reads the live entitlement
+   * from RevenueCat and schedules or clears the renewal reminder.
+   * Returns true when a reminder is currently scheduled.
+   */
+  public async refreshRenewalReminder(): Promise<boolean> {
+    const ready = this.isConfigured || (await Purchases.isConfigured()) || (await this.initialize());
+    if (!ready) return false;
+    try {
+      const customerInfo = await Purchases.getCustomerInfo();
+      const entitlement = customerInfo?.entitlements?.active?.[ENTITLEMENT_ID];
+      await this.syncRenewalReminder(entitlement);
+      return isRenewalReminderScheduled();
+    } catch {
+      return false;
+    }
+  }
 
   /**
    * Initializes RevenueCat Purchases EXACTLY ONCE per application lifecycle.
@@ -164,6 +213,7 @@ class BitefixIAPService {
       if (isEntitled) {
         console.log(`[RevenueCat] ✅ Purchase successful and entitled!`);
         useAppStore.getState().setPremium(true);
+        await this.syncRenewalReminder(customerInfo.entitlements.active[ENTITLEMENT_ID]);
         return { success: true };
       } else {
         console.log(`[RevenueCat] ⚠️ Purchase completed, but entitlement was not granted.`);
@@ -196,6 +246,11 @@ class BitefixIAPService {
 
       console.log(`[RevenueCat] Restore complete. Is Premium: ${isEntitled}`);
       useAppStore.getState().setPremium(isEntitled);
+      if (isEntitled) {
+        await this.syncRenewalReminder(customerInfo?.entitlements?.active?.[ENTITLEMENT_ID]);
+      } else {
+        void cancelRenewalReminder();
+      }
 
       return { success: true, isEntitled };
     } catch (e: any) {
@@ -222,6 +277,10 @@ class BitefixIAPService {
 
       console.log(`[RevenueCat] Entitlement check: ${isEntitled ? 'ACTIVE' : 'INACTIVE'}`);
       useAppStore.getState().setPremium(isEntitled);
+      if (!isEntitled) {
+        // Subscription expired or cancelled — drop the pending reminder.
+        void cancelRenewalReminder();
+      }
       return isEntitled;
     } catch (e: any) {
       console.warn('[RevenueCat] Subscription check error:', e?.message || e);

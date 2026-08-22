@@ -395,6 +395,26 @@ export function SubscriptionModal({ visible, onClose, showCloseButton = true }: 
                 </LinearGradient>
               </TouchableOpacity>
 
+              {/* Trust microcopy — renewal reminder reassurance */}
+              <View
+                style={{
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  alignSelf: 'center',
+                  marginTop: 12,
+                  paddingHorizontal: 13,
+                  paddingVertical: 6,
+                  borderRadius: 999,
+                  borderWidth: 1,
+                  borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.025)',
+                }}
+              >
+                <Text style={{ color: colors.textSecondary, fontSize: 11.5, fontWeight: '600', letterSpacing: 0.1 }}>
+                  We will remind you 2 days before your renewal
+                </Text>
+              </View>
+
               {/* Legal Links */}
               <View style={{ marginTop: 24, gap: 10 }}>
                 <Text style={{ color: colors.textMuted, fontSize: 10, textAlign: 'center', lineHeight: 14 }}>

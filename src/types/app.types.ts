@@ -54,14 +54,19 @@ export type NutritionInsightLevel =
   | 'Limited';
 
 export interface NutritionInsightItem {
-  id: 'protein' | 'fibre' | 'saturated_fat' | 'sodium' | 'cholesterol' | 'micronutrients';
+  id: 'protein' | 'fibre' | 'saturated_fat' | 'sodium' | 'cholesterol' | 'micronutrients' | string;
   label: string;
   value?: string;
+  amount?: number;
+  unit?: string;
+  remark?: string;
   level: NutritionInsightLevel;
   tone?: 'positive' | 'neutral' | 'caution';
 }
 
 export interface NutritionIntelligenceData {
+  basis?: 'per_100g' | 'per_serving' | string;
+  servingSize?: string;
   protein?: NutritionInsightItem;
   fibre?: NutritionInsightItem;
   saturatedFat?: NutritionInsightItem;

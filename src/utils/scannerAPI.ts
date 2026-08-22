@@ -46,6 +46,7 @@ export interface ScanResultData {
   
   // ── Nutrition Intelligence Extension ──────────────────
   nutritionIntelligence?: NutritionIntelligenceData;
+  protein100g?: number;
   satFat100g?: number;
   sodiumMg100g?: number;
   fibre100g?: number;
@@ -553,15 +554,19 @@ export function deriveNutritionIntelligence(opts: {
   sodiumMg100g?: number;
   cholesterolMg100g?: number;
   micronutrientCount?: number;
+  basis?: 'per_100g' | 'per_serving';
+  servingSize?: string;
 }): NutritionIntelligenceData {
   const insights: NutritionInsightItem[] = [];
+  const basis = opts.basis || 'per_100g';
 
   let proteinItem: NutritionInsightItem | undefined;
   if (opts.protein100g !== undefined) {
     const p = opts.protein100g;
     const level: NutritionInsightLevel = p >= 15 ? 'High' : p >= 6 ? 'Notable Amount' : p >= 2 ? 'Moderate' : 'Lower';
+    const remark = p >= 15 ? 'High' : p >= 6 ? 'Notable Amount' : p >= 2 ? 'Moderate' : 'Lower';
     const tone = p >= 6 ? 'positive' : 'neutral';
-    proteinItem = { id: 'protein', label: 'Protein', value: `${p}g`, level, tone };
+    proteinItem = { id: 'protein', label: 'Protein', value: `${p}g`, amount: p, unit: 'g', level, remark, tone };
     insights.push(proteinItem);
   }
 
@@ -569,8 +574,9 @@ export function deriveNutritionIntelligence(opts: {
   if (opts.fibre100g !== undefined) {
     const f = opts.fibre100g;
     const level: NutritionInsightLevel = f >= 6 ? 'High' : f >= 3 ? 'Notable Amount' : f >= 1 ? 'Moderate' : 'Lower';
+    const remark = f >= 6 ? 'High' : f >= 3 ? 'Notable Amount' : f >= 1 ? 'Moderate' : 'Lower';
     const tone = f >= 3 ? 'positive' : 'neutral';
-    fibreItem = { id: 'fibre', label: 'Fibre', value: `${f}g`, level, tone };
+    fibreItem = { id: 'fibre', label: 'Dietary Fibre', value: `${f}g`, amount: f, unit: 'g', level, remark, tone };
     insights.push(fibreItem);
   }
 
@@ -578,8 +584,9 @@ export function deriveNutritionIntelligence(opts: {
   if (opts.satFat100g !== undefined) {
     const sf = opts.satFat100g;
     const level: NutritionInsightLevel = sf <= 1.5 ? 'Lower' : sf <= 5 ? 'Moderate' : 'Higher';
+    const remark = sf <= 1.5 ? 'Lower · Favorable' : sf <= 5 ? 'Moderate' : 'Higher · Monitor';
     const tone = sf <= 1.5 ? 'positive' : sf <= 5 ? 'neutral' : 'caution';
-    satFatItem = { id: 'saturated_fat', label: 'Saturated Fat', value: `${sf}g`, level, tone };
+    satFatItem = { id: 'saturated_fat', label: 'Saturated Fat', value: `${sf}g`, amount: sf, unit: 'g', level, remark, tone };
     insights.push(satFatItem);
   }
 
@@ -587,8 +594,9 @@ export function deriveNutritionIntelligence(opts: {
   if (opts.sodiumMg100g !== undefined) {
     const sod = opts.sodiumMg100g;
     const level: NutritionInsightLevel = sod <= 120 ? 'Lower' : sod <= 600 ? 'Moderate' : 'Higher';
+    const remark = sod <= 120 ? 'Lower · Favorable' : sod <= 600 ? 'Moderate' : 'Higher · Monitor';
     const tone = sod <= 120 ? 'positive' : sod <= 600 ? 'neutral' : 'caution';
-    sodiumItem = { id: 'sodium', label: 'Sodium', value: `${Math.round(sod)}mg`, level, tone };
+    sodiumItem = { id: 'sodium', label: 'Sodium', value: `${Math.round(sod)}mg`, amount: Math.round(sod), unit: 'mg', level, remark, tone };
     insights.push(sodiumItem);
   }
 
@@ -596,8 +604,9 @@ export function deriveNutritionIntelligence(opts: {
   if (opts.cholesterolMg100g !== undefined) {
     const chol = opts.cholesterolMg100g;
     const level: NutritionInsightLevel = chol <= 20 ? 'Lower' : chol <= 60 ? 'Moderate' : 'Higher';
+    const remark = chol <= 20 ? 'Lower · Favorable' : chol <= 60 ? 'Moderate' : 'Higher · Monitor';
     const tone = chol <= 20 ? 'positive' : chol <= 60 ? 'neutral' : 'caution';
-    cholesterolItem = { id: 'cholesterol', label: 'Cholesterol', value: `${Math.round(chol)}mg`, level, tone };
+    cholesterolItem = { id: 'cholesterol', label: 'Cholesterol', value: `${Math.round(chol)}mg`, amount: Math.round(chol), unit: 'mg', level, remark, tone };
     insights.push(cholesterolItem);
   }
 
@@ -605,12 +614,15 @@ export function deriveNutritionIntelligence(opts: {
   if (opts.micronutrientCount !== undefined) {
     const count = opts.micronutrientCount;
     const level: NutritionInsightLevel = count >= 3 ? 'Available' : count >= 1 ? 'Partial' : 'Not Available';
+    const remark = count >= 3 ? `${count} Detected · Broad` : count >= 1 ? `${count} Detected` : 'Not Available';
     const tone = count >= 3 ? 'positive' : 'neutral';
-    microItem = { id: 'micronutrients', label: 'Vitamin & Mineral Profile', level, tone };
+    microItem = { id: 'micronutrients', label: 'Vitamins & Minerals', value: count > 0 ? `${count} types` : 'None', amount: count, unit: 'types', level, remark, tone };
     insights.push(microItem);
   }
 
   return {
+    basis,
+    servingSize: opts.servingSize,
     protein: proteinItem,
     fibre: fibreItem,
     saturatedFat: satFatItem,
@@ -1476,6 +1488,8 @@ export function normalizeProductPayload(
     sodiumMg100g,
     cholesterolMg100g,
     micronutrientCount,
+    servingSize,
+    basis: 'per_100g',
   });
 
   const labelTags = (p.labels_tags || []).map((t: string) => t.toLowerCase());
@@ -1512,6 +1526,7 @@ export function normalizeProductPayload(
     nutriScore,
     biteFixScore,
     nutritionIntelligence,
+    protein100g,
     satFat100g,
     sodiumMg100g,
     fibre100g,
