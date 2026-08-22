@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, SafeAreaView, ScrollView, TouchableOpacity, View } from 'react-native';
+import { Linking, Modal, SafeAreaView, ScrollView, TouchableOpacity, View } from 'react-native';
 import { Text } from '@/components/Text';
 import { useTheme } from '../hooks/useTheme';
 import { DISCLAIMER_SECTIONS } from '../constants/disclaimerContent';
@@ -91,6 +91,28 @@ export function MainDisclaimerModal({
               <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 20 }}>
                 {section.body}
               </Text>
+              {section.links && section.links.length > 0 && (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+                  {section.links.map((link) => (
+                    <TouchableOpacity
+                      key={link.url}
+                      onPress={() => Linking.openURL(link.url)}
+                      style={{
+                        backgroundColor: isDark ? 'rgba(110, 224, 65, 0.12)' : '#EBF8D6',
+                        borderWidth: 1,
+                        borderColor: isDark ? 'rgba(110, 224, 65, 0.35)' : 'rgba(74, 138, 26, 0.3)',
+                        borderRadius: 12,
+                        paddingHorizontal: 12,
+                        paddingVertical: 7,
+                      }}
+                    >
+                      <Text style={{ color: isDark ? '#6EE041' : '#2E5A0A', fontSize: 11.5, fontWeight: '800' }}>
+                        {link.label} ↗
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </View>
           ))}
         </ScrollView>

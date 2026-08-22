@@ -1,4 +1,10 @@
-export const DISCLAIMER_SECTIONS = [
+export interface DisclaimerSection {
+  title: string;
+  body: string;
+  links?: { label: string; url: string }[];
+}
+
+export const DISCLAIMER_SECTIONS: DisclaimerSection[] = [
   {
     title: 'Informational Purpose',
     body: 'BiteFix provides general food and nutrition information for informational purposes only.',
@@ -8,8 +14,16 @@ export const DISCLAIMER_SECTIONS = [
     body: 'Product identification and nutrition information are based on available barcode and product data from supported third-party food databases.',
   },
   {
-    title: 'Data Sources',
-    body: 'Open Food Facts and USDA FoodData Central, where applicable.',
+    title: 'Data Sources & Attribution',
+    body: 'Product and nutrition data are powered by Open Food Facts (Open Database License) and USDA FoodData Central, where applicable. We thank the contributors who maintain these open public databases.',
+    links: [
+      { label: 'Visit Open Food Facts', url: 'https://openfoodfacts.org' },
+      { label: 'Visit USDA FoodData Central', url: 'https://fooddatacentral.usda.gov/' },
+    ],
+  },
+  {
+    title: 'Ingredient Flags — Informational Only',
+    body: "Allergen Shield and Oil Watchlist flags are simple indicators of whether a selected ingredient or oil appears in a product's published ingredient data. They are not judgments about any product or brand, are not health advice, and do not measure how much of an ingredient a product contains.",
   },
   {
     title: 'Data Limitations',
@@ -39,4 +53,4 @@ export const DISCLAIMER_SECTIONS = [
     title: 'Third-Party Sources',
     body: 'BiteFix may rely on third-party databases and does not control their completeness, accuracy, or availability.',
   },
-] as const;
+];

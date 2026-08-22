@@ -210,6 +210,7 @@ export default function HomeScreen() {
   const {
     dietPreference,
     allergenFilters,
+    oilWatchFilters,
     activeScanResult,
     totalProductsScanned,
     totalProductsNotFound,
@@ -323,8 +324,9 @@ export default function HomeScreen() {
 
   const alerts = useMemo(() => {
     if (!hasActiveResult) return [];
-    const detected = activeScanResult.ingredientsText && allergenFilters.length > 0
-      ? detectShieldAlerts(activeScanResult.ingredientsText, allergenFilters)
+    const hasText = !!activeScanResult.ingredientsText;
+    const detected = hasText && (allergenFilters.length > 0 || oilWatchFilters.length > 0)
+      ? detectShieldAlerts(activeScanResult.ingredientsText, allergenFilters, oilWatchFilters)
       : [];
     const hasVeganAlert = dietPreference === 'vegan' && activeScanResult.isVegan === false;
     const hasVegAlert = dietPreference === 'vegetarian' && activeScanResult.isVegetarian === false;
@@ -333,7 +335,7 @@ export default function HomeScreen() {
       ...(hasVeganAlert ? [{ id: 'vegan', type: 'allergen' as const, name: 'Non-Vegan Ingredients' }] : []),
       ...(hasVegAlert ? [{ id: 'veg', type: 'allergen' as const, name: 'Non-Vegetarian Ingredients' }] : []),
     ];
-  }, [hasActiveResult, activeScanResult, allergenFilters, dietPreference]);
+  }, [hasActiveResult, activeScanResult, allergenFilters, oilWatchFilters, dietPreference]);
 
   const renderCarouselItem = useCallback(({ item }: { item: typeof CAROUSEL_ITEMS[0] }) => (
     <CarouselCard

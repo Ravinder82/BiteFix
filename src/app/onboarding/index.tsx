@@ -38,6 +38,7 @@ import {
   PainScreen as FlagshipPainScreen,
   PrioritiesScreen as FlagshipPrioritiesScreen,
   RevelationScreen as FlagshipRevelationScreen,
+  OilWatchlistScreen as FlagshipOilScreen,
   FinalActivationScreen,
   ActivationStatus,
 } from '../../components/onboarding/OnboardingScreens';
@@ -45,7 +46,7 @@ import type { ActivationStatusState } from '../../components/onboarding/Onboardi
 import { IngredientReadingFrequency, OnboardingPriority } from '../../types/onboarding.types';
 
 const GREEN = '#01922aff';
-const TOTAL_SCREENS = 7;
+const TOTAL_SCREENS = 8;
 const DEFAULT_ACTIVATION_STATUS: ActivationStatusState = {
   unlockedCount: 0,
   total: 7,
@@ -361,6 +362,70 @@ function WelcomeScreen({ colors, isDark, isActive, reduceMotion }: { colors: any
   );
 }
 
+// ── LED step indicator — glowing dot strip replacing the text pill ──
+function StepLedDots({ total, current, isDark, reduceMotion }: { total: number; current: number; isDark: boolean; reduceMotion: boolean }) {
+  const pulse = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (reduceMotion) {
+      pulse.setValue(1);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.quad), useNativeDriver: false }),
+        Animated.timing(pulse, { toValue: 0.25, duration: 900, easing: Easing.inOut(Easing.quad), useNativeDriver: false }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse, reduceMotion]);
+
+  return (
+    <View
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}
+      accessible
+      accessibilityLabel={`Step ${current + 1} of ${total}`}
+    >
+      {Array.from({ length: total }).map((_, i) => {
+        const done = i < current;
+        const active = i === current;
+        if (active && !reduceMotion) {
+          return (
+            <Animated.View
+              key={i}
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: 5,
+                backgroundColor: GREEN,
+                borderWidth: 1.5,
+                borderColor: isDark ? 'rgba(52, 216, 115, 0.6)' : 'rgba(1, 146, 42, 0.5)',
+                shadowColor: GREEN,
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.25, 0.9] }),
+                shadowRadius: pulse.interpolate({ inputRange: [0, 1], outputRange: [3, 8] }),
+              }}
+            />
+          );
+        }
+        return (
+          <View
+            key={i}
+            style={{
+              width: active ? 10 : 7,
+              height: active ? 10 : 7,
+              borderRadius: 5,
+              backgroundColor: done || active ? GREEN : (isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.12)'),
+              opacity: done ? 0.7 : 1,
+            }}
+          />
+        );
+      })}
+    </View>
+  );
+}
+
 // ══════════════════════════════════════════════════════════
 // Main Component
 // ══════════════════════════════════════════════════════════
@@ -372,6 +437,7 @@ export default function OnboardingScreen() {
     setProfile,
     setOnboardingPreferences,
     setAllergenFilters,
+    setOilWatchFilters,
     setDietPreference,
     setTrackEcoScore,
     setTrackOrganic,
@@ -382,6 +448,7 @@ export default function OnboardingScreen() {
 
   const [name, setName] = useState('');
   const [allergens, setAllergens] = useState<string[]>([]);
+  const [watchOils, setWatchOils] = useState<string[]>([]);
   const [priorities, setPriorities] = useState<OnboardingPriority[]>([]);
   const [ingredientReadingFrequency, setIngredientReadingFrequency] = useState<IngredientReadingFrequency>();
   const [revelationComplete, setRevelationComplete] = useState(false);
@@ -429,9 +496,9 @@ export default function OnboardingScreen() {
   }, [screenWidth]);
 
   useEffect(() => {
-    if (currentScreen === 5) {
+    if (currentScreen === 6) {
       setRevelationComplete(false);
-    } else if (currentScreen === 6) {
+    } else if (currentScreen === 7) {
       setActivationComplete(false);
       setActivationStatus(DEFAULT_ACTIVATION_STATUS);
     } else {
@@ -453,6 +520,15 @@ export default function OnboardingScreen() {
       if (id === 'none') return prev.includes('none') ? [] : ['none'];
       const withoutNone = prev.filter((a) => a !== 'none');
       return withoutNone.includes(id) ? withoutNone.filter((a) => a !== id) : [...withoutNone, id];
+    });
+  }, []);
+
+  const toggleOil = useCallback((id: string) => {
+    Haptics.selectionAsync();
+    setWatchOils((prev) => {
+      if (id === 'none') return prev.includes('none') ? [] : ['none'];
+      const withoutNone = prev.filter((o) => o !== 'none');
+      return withoutNone.includes(id) ? withoutNone.filter((o) => o !== id) : [...withoutNone, id];
     });
   }, []);
 
@@ -513,6 +589,7 @@ export default function OnboardingScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const realAllergens = allergens.filter((a) => a !== 'none');
     setAllergenFilters(realAllergens);
+    setOilWatchFilters(watchOils.filter((o) => o !== 'none'));
     setOnboardingPreferences({ userPriorities: priorities, ingredientReadingFrequency });
 
     const goalMap: Record<string, 'ultra_processed' | 'nutri_score' | 'clean_swaps' | 'healthy_habits' | 'none'> = {
@@ -529,7 +606,7 @@ export default function OnboardingScreen() {
 
     setOnboardingComplete(true);
     router.replace('/paywall');
-  }, [allergens, ingredientReadingFrequency, name, priorities, setAllergenFilters, setOnboardingComplete, setOnboardingPreferences, setProfile, setDietPreference, setTrackEcoScore, setTrackOrganic]);
+  }, [allergens, watchOils, ingredientReadingFrequency, name, priorities, setAllergenFilters, setOilWatchFilters, setOnboardingComplete, setOnboardingPreferences, setProfile, setDietPreference, setTrackEcoScore, setTrackOrganic]);
 
   const handleNext = useCallback(() => {
     if (pagingLockRef.current) return;
@@ -553,15 +630,15 @@ export default function OnboardingScreen() {
 
   const ONBOARDING_CTA_LABELS: Record<number, string> = {
     0: 'Get Started',
-    5: "Let's Continue",
-    6: 'I am Ready',
+    6: "Let's Continue",
+    7: 'I am Ready',
   };
 
   const getCtaLabel = (screen: number) => {
-    if (screen === 5) {
+    if (screen === 6) {
       return revelationComplete ? "Let's Continue" : 'Revealing Verdict...';
     }
-    if (screen === 6) {
+    if (screen === 7) {
       return activationComplete ? 'I am Ready' : 'Unlocking intelligence';
     }
     return ONBOARDING_CTA_LABELS[screen] ?? 'Continue';
@@ -581,8 +658,10 @@ export default function OnboardingScreen() {
       case 3:
         return <FlagshipAllergyScreen selected={allergens} onToggle={toggleAllergen} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       case 4:
-        return <FlagshipPrioritiesScreen selected={priorities} onToggle={togglePriority} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
+        return <FlagshipOilScreen selected={watchOils} onToggle={toggleOil} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
       case 5:
+        return <FlagshipPrioritiesScreen selected={priorities} onToggle={togglePriority} colors={colors} isDark={isDark} reduceMotion={screenReduceMotion} />;
+      case 6:
         return (
           <FlagshipRevelationScreen
             colors={colors}
@@ -592,7 +671,7 @@ export default function OnboardingScreen() {
             onAnimationComplete={() => setRevelationComplete(true)}
           />
         );
-      case 6:
+      case 7:
         return (
           <FinalActivationScreen
             colors={colors}
@@ -619,9 +698,10 @@ export default function OnboardingScreen() {
     const ctaDisabled =
       (screen === 2 && !ingredientReadingFrequency) ||
       (screen === 3 && allergens.length === 0) ||
-      (screen === 4 && priorities.length === 0) ||
-      (screen === 5 && !revelationComplete) ||
-      (screen === 6 && !activationComplete);
+      (screen === 4 && watchOils.length === 0) ||
+      (screen === 5 && priorities.length === 0) ||
+      (screen === 6 && !revelationComplete) ||
+      (screen === 7 && !activationComplete);
     const disabledBg = isDark ? '#153622ff' : '#F0F4F1';
     const disabledBorder = isDark ? 'rgba(167, 231, 63, 0.1)' : 'rgba(7, 25, 15, 0.08)';
     const disabledText = isDark ? 'rgba(172, 172, 172, 0.59)' : 'rgba(6, 33, 18, 0.42)';
@@ -636,25 +716,7 @@ export default function OnboardingScreen() {
                 <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600' }}>Back</Text>
               </TouchableOpacity>
 
-              <View style={{
-                backgroundColor: isDark ? 'rgba(52, 216, 115, 0.12)' : '#EAF8EE',
-                paddingHorizontal: 12,
-                paddingVertical: 5,
-                borderRadius: 999,
-                borderWidth: 1,
-                borderColor: isDark ? 'rgba(52, 216, 115, 0.25)' : 'rgba(1, 146, 42, 0.15)',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <Text style={{
-                  color: isDark ? '#34d873' : '#01922a',
-                  fontSize: 12,
-                  fontWeight: '900',
-                  letterSpacing: 0.2,
-                }}>
-                  Step {screen + 1} of {TOTAL_SCREENS}
-                </Text>
-              </View>
+              <StepLedDots total={TOTAL_SCREENS} current={screen} isDark={isDark} reduceMotion={reduceMotion} />
 
               <View style={{ width: 52 }} />
             </View>
@@ -677,8 +739,8 @@ export default function OnboardingScreen() {
             {renderScreenContent(screen)}
           </ScrollView>
 
-          <View style={{ paddingHorizontal: Math.max(18, Math.min(24, screenWidth * 0.0615)), paddingBottom: Math.max(18, insets.bottom + 8), paddingTop: screen === 6 ? 8 : 12, gap: screen === 6 ? 10 : 0 }}>
-            {screen === 6 && (
+          <View style={{ paddingHorizontal: Math.max(18, Math.min(24, screenWidth * 0.0615)), paddingBottom: Math.max(18, insets.bottom + 8), paddingTop: screen === 7 ? 8 : 12, gap: screen === 7 ? 10 : 0 }}>
+            {screen === 7 && (
               <ActivationStatus
                 unlockedCount={activationStatus.unlockedCount}
                 total={activationStatus.total}

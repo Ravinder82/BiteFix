@@ -122,6 +122,69 @@ const ALLERGEN_OPTIONS: AllergyOption[] = [
   },
 ];
 
+const OIL_OPTIONS: AllergyOption[] = [
+  {
+    id: 'none',
+    label: 'No oils to watch',
+    emoji: '🫒',
+    stickerBg: '#F4FAF3',
+    stickerBorder: '#1ADB13',
+    stickerShadow: '#4F8A43',
+    stickerRotation: '-8deg',
+    stickerSide: 'right',
+  },
+  {
+    id: 'palm_oil',
+    label: 'Palm Oil',
+    emoji: '🌴',
+    stickerBg: '#FFF9E9',
+    stickerBorder: '#FFCC00',
+    stickerShadow: '#B38A24',
+    stickerRotation: '8deg',
+    stickerSide: 'left',
+  },
+  {
+    id: 'pho_oil',
+    label: 'Hydrogenated Oils',
+    emoji: '🧪',
+    stickerBg: '#FFF6F0',
+    stickerBorder: '#E58B42',
+    stickerShadow: '#A86632',
+    stickerRotation: '-6deg',
+    stickerSide: 'right',
+  },
+  {
+    id: 'coconut_oil',
+    label: 'Coconut Oil',
+    emoji: '🥥',
+    stickerBg: '#F3F8FF',
+    stickerBorder: '#4E8BFF',
+    stickerShadow: '#5575A8',
+    stickerRotation: '8deg',
+    stickerSide: 'right',
+  },
+  {
+    id: 'palm_kernel_oil',
+    label: 'Palm Kernel Oil',
+    emoji: '🌰',
+    stickerBg: '#FFF6F0',
+    stickerBorder: '#E58B42',
+    stickerShadow: '#A86632',
+    stickerRotation: '-8deg',
+    stickerSide: 'left',
+  },
+  {
+    id: 'cottonseed_oil',
+    label: 'Cottonseed Oil',
+    emoji: '☁️',
+    stickerBg: '#F5F1FF',
+    stickerBorder: '#9B7BFF',
+    stickerShadow: '#6D5BA8',
+    stickerRotation: '10deg',
+    stickerSide: 'right',
+  },
+];
+
 const PRIORITY_OPTIONS: Array<{ id: OnboardingPriority; label: string; preview: string; icon: React.ComponentType<any>; color: string }> = [
   { id: 'ultra_processed', label: 'Less ultra-processed food', preview: 'NOVA 1–4', icon: Package, color: GREEN },
   { id: 'nutrition', label: 'Better nutrition profile', preview: 'Nutri-Score A–E', icon: Activity, color: TEAL },
@@ -686,36 +749,50 @@ function ShieldStatusBar({
   selected,
   colors,
   isDark,
+  options = ALLERGEN_OPTIONS,
+  lockedTitle = 'Allergen Shield Locked',
+  lockedSubtitle = 'Choose ingredients below to activate your allergen safeguard.',
+  noneTitle = 'Allergen Shield Unlocked',
+  noneSubtitle = 'No ingredients selected. Safe scanning enabled.',
+  activeTitle = 'Allergen Shield Unlocked',
+  activeSubtitle = 'BiteFix checks for selected ingredients for You.',
 }: {
   selected: string[];
   colors: any;
   isDark: boolean;
+  options?: AllergyOption[];
+  lockedTitle?: string;
+  lockedSubtitle?: string;
+  noneTitle?: string;
+  noneSubtitle?: string;
+  activeTitle?: string;
+  activeSubtitle?: string;
 }) {
   const isNone = selected.includes('none');
   const activeAllergens = selected.filter((id) => id !== 'none');
   const ledActive = isNone || activeAllergens.length > 0;
 
-  let statusTitle = 'Allergen Shield Locked';
-  let statusSubtitle = 'Choose ingredients below to activate your allergen safeguard.';
+  let statusTitle = lockedTitle;
+  let statusSubtitle = lockedSubtitle;
   let ledColor = '#e58b42'; // Standby/amber
   let ledGlow = '#ffaa66';
 
   if (isNone) {
-    statusTitle = 'Allergen Shield Unlocked';
-    statusSubtitle = 'No ingredients selected. Safe scanning enabled.';
+    statusTitle = noneTitle;
+    statusSubtitle = noneSubtitle;
     ledColor = '#7ec201'; // Lime
     ledGlow = '#a3cb48';
   } else if (activeAllergens.length > 0) {
-    statusTitle = 'Allergen Shield Unlocked';
-    statusSubtitle = 'BiteFix checks for selected ingredients for You.';
+    statusTitle = activeTitle;
+    statusSubtitle = activeSubtitle;
     ledColor = '#14ae97'; // Teal
     ledGlow = '#13f5b0';
   }
 
-  const activeOptions = ALLERGEN_OPTIONS.filter(opt => activeAllergens.includes(opt.id));
+  const activeOptions = options.filter(opt => activeAllergens.includes(opt.id));
 
   // 8K Progress Meter Bar calculation
-  const totalOptions = 5;
+  const totalOptions = options.filter((opt) => opt.id !== 'none').length;
   const progressPercent = isNone ? 100 : (activeAllergens.length / totalOptions) * 100;
 
   // Dark greenish black CTA button color scheme
@@ -804,7 +881,7 @@ function ShieldStatusBar({
       {activeOptions.length > 0 && (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 14 }}>
           {activeOptions.map((opt) => {
-            const cleanLabel = getCleanLabel(opt.id);
+            const cleanLabel = getCleanLabel(opt.id) || opt.label;
             return (
               <View
                 key={opt.id}
@@ -1373,11 +1450,51 @@ export function AllergyScreen({ selected, onToggle, colors, isDark, reduceMotion
       <ShieldStatusBar selected={selected} colors={colors} isDark={isDark} />
       <ScreenHeading
         title="Anything we should **watch for you**?"
-        subtitle="We'll flag these **on every scan — instantly.**"
+        subtitle="Informational only — we simply flag these when they appear in a product's published data."
         colors={colors}
       />
       <View style={{ gap: 10, marginTop: -20 }}>
         {ALLERGEN_OPTIONS.map((option) => (
+          <ShieldRow
+            key={option.id}
+            option={option}
+            selected={selected.includes(option.id)}
+            onPress={() => onToggle(option.id)}
+            colors={colors}
+            isDark={isDark}
+            reduceMotion={reduceMotion}
+          />
+        ))}
+      </View>
+    </ScreenFrame>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// OIL WATCHLIST SCREEN — mirrors the Allergy Shield pattern
+// ══════════════════════════════════════════════════════════════
+export function OilWatchlistScreen({ selected, onToggle, colors, isDark, reduceMotion }: { selected: string[]; onToggle: (id: string) => void; colors: any; isDark: boolean; reduceMotion: boolean }) {
+  return (
+    <ScreenFrame>
+      <ShieldStatusBar
+        selected={selected}
+        colors={colors}
+        isDark={isDark}
+        options={OIL_OPTIONS}
+        lockedTitle="Oil Watchlist Locked"
+        lockedSubtitle="Choose oils below to activate your oil indicator."
+        noneTitle="Oil Watchlist Unlocked"
+        noneSubtitle="No oils selected. Clean scanning enabled."
+        activeTitle="Oil Watchlist Unlocked"
+        activeSubtitle="BiteFix flags selected oils found in ingredient data."
+      />
+      <ScreenHeading
+        title="Any **oils** we should keep an eye on?"
+        subtitle="Purely informational — extracted from published data, no judgments."
+        colors={colors}
+      />
+      <View style={{ gap: 10, marginTop: -20 }}>
+        {OIL_OPTIONS.map((option) => (
           <ShieldRow
             key={option.id}
             option={option}

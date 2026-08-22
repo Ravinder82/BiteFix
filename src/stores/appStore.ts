@@ -5,6 +5,19 @@ import { ScanHistoryItem, CollectionItem, BiteFixCategory, NOVAClass, AdditiveDe
 import { mapToBiteFixCategory } from '../utils/categoryMapper';
 import { IngredientReadingFrequency, OnboardingPriority, ShoppingFrequency } from '../types/onboarding.types';
 
+// Canonical allergen filter ids accepted across Settings, onboarding, and detection.
+const ALLERGEN_ID_ALIASES: Record<string, string> = {
+  gluten: 'gluten', 'Gluten': 'gluten',
+  dairy: 'dairy', 'Dairy': 'dairy',
+  soy: 'soy', 'Soy': 'soy',
+  nuts: 'nuts', 'Nuts': 'nuts',
+  peanuts: 'peanuts', 'Peanuts': 'peanuts',
+  eggs: 'eggs', 'Eggs': 'eggs',
+  fish: 'fish', 'Fish': 'fish',
+  shellfish: 'shellfish', 'Shellfish': 'shellfish',
+  artificial_sweeteners: 'artificial_sweeteners', 'Artificial Sweeteners': 'artificial_sweeteners',
+};
+
 interface AppState {
   onboardingComplete: boolean;
   theme: 'light' | 'dark' | 'system';
@@ -16,6 +29,7 @@ interface AppState {
   shoppingFrequency?: ShoppingFrequency;
   ingredientReadingFrequency?: IngredientReadingFrequency;
   allergenFilters: string[];
+  oilWatchFilters: string[];
   strictNovaAlert: boolean;
   stealthAdditivesAlert: boolean;
   isPremium: boolean;
@@ -39,6 +53,8 @@ interface AppState {
   resetSubscriptionAndScans: () => void;
   setAllergenFilters: (allergens: string[]) => void;
   toggleAllergenFilter: (allergen: string) => void;
+  setOilWatchFilters: (oils: string[]) => void;
+  toggleOilWatchFilter: (oilId: string) => void;
   setStrictNovaAlert: (enabled: boolean) => void;
   setStealthAdditivesAlert: (enabled: boolean) => void;
   setProfile: (profile: {
@@ -111,6 +127,16 @@ function normalizePersistedState(persistedState: unknown, version: number): Part
     state.shoppingFrequency = state.shoppingFrequency ?? undefined;
     state.ingredientReadingFrequency = state.ingredientReadingFrequency ?? undefined;
   }
+  if (version < 9) {
+    // Canonicalize legacy allergen labels/ids to canonical ids, and hand any
+    // legacy "Palm Oil" allergen selection over to the Oil Watchlist.
+    const legacyAllergens: string[] = Array.isArray(state.allergenFilters) ? state.allergenFilters : [];
+    const palmWasSelected = legacyAllergens.includes('Palm Oil');
+    state.allergenFilters = legacyAllergens
+      .map((a) => ALLERGEN_ID_ALIASES[a])
+      .filter((a): a is string => Boolean(a));
+    state.oilWatchFilters = palmWasSelected ? ['palm_oil'] : [];
+  }
 
   return {
     ...state,
@@ -133,6 +159,7 @@ function normalizePersistedState(persistedState: unknown, version: number): Part
       ? state.ingredientReadingFrequency
       : undefined,
     allergenFilters: Array.isArray(state.allergenFilters) ? state.allergenFilters.filter((item: unknown) => typeof item === 'string') : [],
+    oilWatchFilters: Array.isArray(state.oilWatchFilters) ? state.oilWatchFilters.filter((item: unknown) => typeof item === 'string') : [],
     strictNovaAlert: typeof state.strictNovaAlert === 'boolean' ? state.strictNovaAlert : true,
     stealthAdditivesAlert: typeof state.stealthAdditivesAlert === 'boolean' ? state.stealthAdditivesAlert : true,
     isPremium: typeof state.isPremium === 'boolean' ? state.isPremium : false,
@@ -159,6 +186,7 @@ export const useAppStore = create<AppState>()(
       shoppingFrequency: undefined,
       ingredientReadingFrequency: undefined,
       allergenFilters: [],
+      oilWatchFilters: [],
       strictNovaAlert: true,
       stealthAdditivesAlert: true,
       isPremium: false,
@@ -210,6 +238,12 @@ export const useAppStore = create<AppState>()(
         allergenFilters: state.allergenFilters.includes(allergen)
           ? state.allergenFilters.filter((a) => a !== allergen)
           : [...state.allergenFilters, allergen],
+      })),
+      setOilWatchFilters: (oilWatchFilters) => set({ oilWatchFilters }),
+      toggleOilWatchFilter: (oilId) => set((state) => ({
+        oilWatchFilters: state.oilWatchFilters.includes(oilId)
+          ? state.oilWatchFilters.filter((o) => o !== oilId)
+          : [...state.oilWatchFilters, oilId],
       })),
       setStrictNovaAlert: (strictNovaAlert) => set({ strictNovaAlert }),
       setStealthAdditivesAlert: (stealthAdditivesAlert) => set({ stealthAdditivesAlert }),
@@ -268,6 +302,7 @@ export const useAppStore = create<AppState>()(
         shoppingFrequency: undefined,
         ingredientReadingFrequency: undefined,
         allergenFilters: [],
+      oilWatchFilters: [],
         strictNovaAlert: true,
         stealthAdditivesAlert: true,
         isPremium: false,
@@ -280,7 +315,7 @@ export const useAppStore = create<AppState>()(
     {
       name: '@bitefix-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 8,
+      version: 9,
       partialize: (state) => {
         // Exclude ephemeral in-memory activeScanResult from persistent storage
         const { activeScanResult, ...rest } = state;
@@ -289,7 +324,7 @@ export const useAppStore = create<AppState>()(
       migrate: normalizePersistedState,
       merge: (persistedState, currentState) => ({
         ...currentState,
-        ...normalizePersistedState(persistedState, 8),
+        ...normalizePersistedState(persistedState, 9),
       }),
       onRehydrateStorage: () => (_state, error) => {
         if (error) {

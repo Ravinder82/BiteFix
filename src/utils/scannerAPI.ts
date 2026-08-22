@@ -70,34 +70,69 @@ export interface ScanResultData {
 // ─────────────────────────────────────────────────────────
 // Shield Detection Helper
 // ─────────────────────────────────────────────────────────
-export function detectShieldAlerts(ingredientsText: string | undefined, allergenFilters: string[]): { id: string; type: 'allergen' | 'oil'; name: string }[] {
+
+// Canonical display labels for allergen filter ids (Settings / onboarding / result cards).
+export const ALLERGEN_FILTER_LABELS: Record<string, string> = {
+  gluten: 'Gluten',
+  dairy: 'Dairy',
+  soy: 'Soy',
+  nuts: 'Nuts',
+  peanuts: 'Peanuts',
+  eggs: 'Eggs',
+  fish: 'Fish',
+  shellfish: 'Shellfish',
+  artificial_sweeteners: 'Artificial Sweeteners',
+};
+
+// Canonical display labels for oil watchlist ids.
+export const OIL_FILTER_LABELS: Record<string, string> = {
+  palm_oil: 'Palm Oil',
+  pho_oil: 'Partially Hydrogenated Oils',
+  coconut_oil: 'Coconut Oil',
+  palm_kernel_oil: 'Palm Kernel Oil',
+  cottonseed_oil: 'Cottonseed Oil',
+};
+
+// Ingredient-list keyword aliases per canonical allergen id.
+const ALLERGEN_KEYWORDS: Record<string, string[]> = {
+  gluten: ['wheat', 'barley', 'rye', 'oat', 'malt', 'gluten'],
+  dairy: ['milk', 'whey', 'casein', 'butter', 'cheese', 'cream', 'lactose'],
+  soy: ['soy', 'edamame', 'miso', 'tempeh', 'tofu'],
+  nuts: ['almond', 'walnut', 'pecan', 'cashew', 'pistachio', 'macadamia', 'hazelnut', 'nut'],
+  peanuts: ['peanut'],
+  eggs: ['egg', 'albumen', 'globulin', 'livetin', 'lysozyme', 'vitellin'],
+  fish: ['fish', 'salmon', 'tuna', 'cod', 'tilapia', 'anchov'],
+  shellfish: ['crab', 'lobster', 'shrimp', 'prawn', 'crawfish', 'krill'],
+  artificial_sweeteners: ['aspartame', 'sucralose', 'saccharin', 'acesulfame', 'cyclamate', 'neotame', 'artificial sweetener'],
+};
+
+// Ingredient-list keyword aliases per oil watchlist id.
+const OIL_KEYWORDS: Record<string, string[]> = {
+  palm_oil: ['palm oil', 'palmolein', 'fractionated palm', 'palm shortening', 'elaeis guineensis'],
+  pho_oil: ['partially hydrogenated'],
+  coconut_oil: ['coconut oil', 'copra', 'cocos nucifera'],
+  palm_kernel_oil: ['palm kernel'],
+  cottonseed_oil: ['cottonseed'],
+};
+
+export function detectShieldAlerts(ingredientsText: string | undefined, allergenFilters: string[], oilWatchFilters: string[] = []): { id: string; type: 'allergen' | 'oil'; name: string }[] {
   if (!ingredientsText) return [];
   const text = ingredientsText.toLowerCase();
   const alerts: { id: string; type: 'allergen' | 'oil'; name: string }[] = [];
 
-  // Proactive Palm Oil Check (Always Active)
-  if (text.includes('palm oil') || text.includes('palm kernel') || text.includes('fractionated palm') || text.includes('palmolein')) {
-    alerts.push({ id: 'palm_oil', type: 'oil', name: 'Palm Oil' });
+  // Allergen matching — only for filters the user explicitly selected.
+  for (const filter of allergenFilters) {
+    const keywords = ALLERGEN_KEYWORDS[filter] ?? [filter.toLowerCase()];
+    if (keywords.some((kw) => text.includes(kw))) {
+      alerts.push({ id: filter, type: 'allergen', name: ALLERGEN_FILTER_LABELS[filter] ?? filter });
+    }
   }
 
-  // Allergen mapping (simple keyword matching)
-  const allergenKeywords: Record<string, string[]> = {
-    'Gluten': ['wheat', 'barley', 'rye', 'oat', 'malt', 'gluten'],
-    'Dairy': ['milk', 'whey', 'casein', 'butter', 'cheese', 'cream', 'lactose'],
-    'Soy': ['soy', 'edamame', 'miso', 'tempeh', 'tofu'],
-    'Nuts': ['almond', 'walnut', 'pecan', 'cashew', 'pistachio', 'macadamia', 'hazelnut', 'nut'],
-    'Peanuts': ['peanut'],
-    'Eggs': ['egg', 'albumen', 'globulin', 'livetin', 'lysozyme', 'vitellin'],
-    'Fish': ['fish', 'salmon', 'tuna', 'cod', 'tilapia', 'anchov'],
-    'Shellfish': ['crab', 'lobster', 'shrimp', 'prawn', 'crawfish', 'krill']
-  };
-
-  for (const filter of allergenFilters) {
-    if (filter === 'Palm Oil') continue; // Handled globally above
-
-    const keywords = allergenKeywords[filter] || [filter.toLowerCase()];
-    if (keywords.some(kw => text.includes(kw))) {
-      alerts.push({ id: filter.toLowerCase(), type: 'allergen', name: filter });
+  // Oil Watchlist matching — only for oils the user explicitly selected.
+  for (const filter of oilWatchFilters) {
+    const keywords = OIL_KEYWORDS[filter] ?? [filter.toLowerCase()];
+    if (keywords.some((kw) => text.includes(kw))) {
+      alerts.push({ id: filter, type: 'oil', name: OIL_FILTER_LABELS[filter] ?? filter });
     }
   }
 

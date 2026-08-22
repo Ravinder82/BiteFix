@@ -12,9 +12,10 @@ import { MainDisclaimerModal } from '../../components/MainDisclaimerModal';
 
 export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
   const { colors, theme, toggleTheme, isDark } = useTheme();
-  const { 
+  const {
     sugarUnit, setSugarUnit, clearCollection, clearAllData,
-    allergenFilters, toggleAllergenFilter, strictNovaAlert, setStrictNovaAlert, stealthAdditivesAlert, setStealthAdditivesAlert, isPremium 
+    allergenFilters, toggleAllergenFilter, oilWatchFilters, toggleOilWatchFilter,
+    strictNovaAlert, setStrictNovaAlert, stealthAdditivesAlert, setStealthAdditivesAlert, isPremium
   } = useAppStore();
 
   const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
@@ -288,17 +289,24 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
         <SettingsGroup title="Personal Allergen Alerts" colors={colors}>
           <View style={{ backgroundColor: colors.surface, padding: 16 }}>
             <Text style={{ color: colors.textSecondary }} className="text-xs font-semibold mb-3">
-              Select ingredients to trigger high-priority red shields when scanned:
+              Informational only — we flag these ingredients when they appear in a product's published data.
             </Text>
             <View className="flex-row flex-wrap gap-2">
-              {['Gluten', 'Dairy', 'Soy', 'Nuts', 'Eggs', 'Artificial Sweeteners', 'Palm Oil'].map((allergen) => {
-                const isSelected = allergenFilters.includes(allergen);
+              {[
+                { id: 'gluten', label: 'Gluten' },
+                { id: 'dairy', label: 'Dairy' },
+                { id: 'soy', label: 'Soy' },
+                { id: 'nuts', label: 'Nuts' },
+                { id: 'eggs', label: 'Eggs' },
+                { id: 'artificial_sweeteners', label: 'Artificial Sweeteners' },
+              ].map(({ id, label }) => {
+                const isSelected = allergenFilters.includes(id);
                 return (
                   <TouchableOpacity
-                    key={allergen}
+                    key={id}
                     onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      toggleAllergenFilter(allergen);
+                      toggleAllergenFilter(id);
                     }}
                     style={{
                       paddingHorizontal: 14,
@@ -309,13 +317,90 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
                       borderColor: isSelected ? colors.error : colors.border,
                     }}
                   >
-                    <Text style={{
-                      color: isSelected ? colors.error : colors.text,
-                      fontSize: 12,
-                      fontWeight: isSelected ? '900' : '700',
-                    }}>
-                      {isSelected ? `🚨 ${allergen}` : allergen}
-                    </Text>
+                    <View className="flex-row items-center gap-1.5">
+                      {isSelected && (
+                        <View
+                          style={{
+                            width: 7,
+                            height: 7,
+                            borderRadius: 4,
+                            backgroundColor: colors.error,
+                            shadowColor: colors.error,
+                            shadowOffset: { width: 0, height: 0 },
+                            shadowOpacity: 0.9,
+                            shadowRadius: 3,
+                          }}
+                        />
+                      )}
+                      <Text style={{
+                        color: isSelected ? colors.error : colors.text,
+                        fontSize: 12,
+                        fontWeight: isSelected ? '900' : '700',
+                      }}>
+                        {label}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        </SettingsGroup>
+
+        {/* OIL WATCHLIST SECTION */}
+        <SettingsGroup title="Oil Watchlist" colors={colors}>
+          <View style={{ backgroundColor: colors.surface, padding: 16 }}>
+            <Text style={{ color: colors.textSecondary }} className="text-xs font-semibold mb-3">
+              Informational only — we flag these oils when they appear in a product's published data.
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
+              {[
+                { id: 'palm_oil', label: 'Palm Oil' },
+                { id: 'pho_oil', label: 'Hydrogenated Oils' },
+                { id: 'coconut_oil', label: 'Coconut Oil' },
+                { id: 'palm_kernel_oil', label: 'Palm Kernel Oil' },
+                { id: 'cottonseed_oil', label: 'Cottonseed Oil' },
+              ].map(({ id, label }) => {
+                const isSelected = oilWatchFilters.includes(id);
+                return (
+                  <TouchableOpacity
+                    key={id}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      toggleOilWatchFilter(id);
+                    }}
+                    style={{
+                      paddingHorizontal: 14,
+                      paddingVertical: 8,
+                      borderRadius: 14,
+                      backgroundColor: isSelected ? '#F59E0B18' : (theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'),
+                      borderWidth: 1,
+                      borderColor: isSelected ? '#F59E0B' : colors.border,
+                    }}
+                  >
+                    <View className="flex-row items-center gap-1.5">
+                      {isSelected && (
+                        <View
+                          style={{
+                            width: 7,
+                            height: 7,
+                            borderRadius: 4,
+                            backgroundColor: '#F59E0B',
+                            shadowColor: '#F59E0B',
+                            shadowOffset: { width: 0, height: 0 },
+                            shadowOpacity: 0.9,
+                            shadowRadius: 3,
+                          }}
+                        />
+                      )}
+                      <Text style={{
+                        color: isSelected ? '#F59E0B' : colors.text,
+                        fontSize: 12,
+                        fontWeight: isSelected ? '900' : '700',
+                      }}>
+                        {label}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 );
               })}
@@ -341,18 +426,6 @@ export default function SettingsScreen({ onClose }: { onClose?: () => void }) {
             label="Disclaimer"
             icon={<Info size={16} color={colors.primary} />}
             onPress={() => setDisclaimerModalVisible(true)}
-            colors={colors}
-          />
-          <SettingsRowItem
-            label="Data Attribution & Licenses"
-            icon={<Info size={16} color={colors.primary} />}
-            onPress={() => {
-              Alert.alert(
-                'Open Food Facts Attribution',
-                'Product and nutrition data is powered by Open Food Facts, made available under the Open Database License (ODbL) at openfoodfacts.org.\n\nThank you to the contributors who support open public databases!',
-                [{ text: 'OK' }, { text: 'Visit Website', onPress: () => Linking.openURL('https://openfoodfacts.org') }]
-              );
-            }}
             colors={colors}
           />
           <SettingsRowItem

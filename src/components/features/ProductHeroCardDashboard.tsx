@@ -471,75 +471,112 @@ export default function ProductHeroCardDashboard({
         );
       })()}
 
-      {/* ── Compact Oil Watchlist & Dietary/Allergen Alerts Banner ── */}
-      {alerts && alerts.length > 0 && (
-        <View style={{ marginBottom: 16, gap: 8 }}>
-          {alerts.map((alert, idx) => {
-            const isAllergen = alert.type === 'allergen';
-            const alertColor = isAllergen ? '#EF4444' : '#F59E0B';
-            const IconComp = isAllergen ? AlertOctagon : Droplets;
+      {/* ── Allergen Shield & Oil Watchlist — compact status mini-cards ── */}
+      {alerts && alerts.length > 0 && (() => {
+        const allergenHits = alerts.filter((a) => a.type === 'allergen');
+        const oilHits = alerts.filter((a) => a.type === 'oil');
+        const groups = [
+          { key: 'allergen', title: 'Allergen Shield', items: allergenHits, color: '#EF4444', Icon: AlertOctagon, tag: 'ON ALERT' },
+          { key: 'oil', title: 'Oil Watchlist', items: oilHits, color: '#F59E0B', Icon: Droplets, tag: 'DETECTED' },
+        ].filter((g) => g.items.length > 0);
+        if (groups.length === 0) return null;
 
-            return (
+        return (
+          <View style={{ marginBottom: 16, gap: 8 }}>
+            {groups.map(({ key, title, items, color, Icon, tag }) => (
               <View
-                key={`${alert.id}-${idx}`}
+                key={key}
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.02)',
-                  borderColor: isDark ? `${alertColor}35` : `${alertColor}25`,
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.85)',
+                  borderColor: isDark ? `${color}35` : `${color}28`,
                   borderWidth: 1.2,
-                  borderRadius: 16,
-                  paddingVertical: 9,
-                  paddingHorizontal: 12,
-                  gap: 10,
-                  shadowColor: alertColor,
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: isDark ? 0.2 : 0.04,
-                  shadowRadius: 6,
+                  borderRadius: 18,
+                  overflow: 'hidden',
+                  shadowColor: color,
+                  shadowOffset: { width: 0, height: 3 },
+                  shadowOpacity: isDark ? 0.22 : 0.05,
+                  shadowRadius: 8,
                   elevation: 2,
                 }}
               >
-                <View
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 14,
-                    backgroundColor: `${alertColor}18`,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <IconComp size={15} color={alertColor} strokeWidth={2.4} />
+                {/* LED status strip */}
+                <View style={{ height: 3, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }}>
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      bottom: 0,
+                      width: `${Math.min(100, items.length * 34)}%`,
+                      backgroundColor: color,
+                      shadowColor: color,
+                      shadowOffset: { width: 0, height: 0 },
+                      shadowOpacity: 0.9,
+                      shadowRadius: 4,
+                    }}
+                  />
                 </View>
 
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: colors.text, fontSize: 12.5, fontWeight: '800', letterSpacing: -0.2 }}>
-                    {isAllergen ? 'Allergen Alert' : 'Oil Watchlist'}
-                  </Text>
-                  <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 1 }}>
-                    Contains {alert.name}
-                  </Text>
-                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 11, paddingHorizontal: 13, gap: 10 }}>
+                  <View
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: 11,
+                      backgroundColor: `${color}18`,
+                      borderWidth: 1,
+                      borderColor: `${color}30`,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Icon size={17} color={color} strokeWidth={2.4} />
+                  </View>
 
-                <View
-                  style={{
-                    backgroundColor: `${alertColor}15`,
-                    borderColor: `${alertColor}30`,
-                    borderWidth: 1,
-                    paddingHorizontal: 8,
-                    paddingVertical: 3,
-                    borderRadius: 8,
-                  }}
-                >
-                  <Text style={{ color: alertColor, fontSize: 9.5, fontWeight: '900', letterSpacing: 0.4 }}>
-                    {isAllergen ? 'WARNING' : 'DETECTED'}
-                  </Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.text, fontSize: 13.5, fontWeight: '900', letterSpacing: -0.2 }}>
+                      {title}
+                    </Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 1 }} numberOfLines={2}>
+                      Listed: {items.map((a) => a.name).join(' · ')}
+                    </Text>
+                  </View>
+
+                  {/* LED tag */}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 5,
+                      backgroundColor: `${color}15`,
+                      borderColor: `${color}35`,
+                      borderWidth: 1,
+                      paddingHorizontal: 9,
+                      paddingVertical: 4,
+                      borderRadius: 9,
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: 3,
+                        backgroundColor: color,
+                        shadowColor: color,
+                        shadowOffset: { width: 0, height: 0 },
+                        shadowOpacity: 1,
+                        shadowRadius: 3,
+                      }}
+                    />
+                    <Text style={{ color: color, fontSize: 9.5, fontWeight: '900', letterSpacing: 0.4 }}>
+                      {tag}
+                    </Text>
+                  </View>
                 </View>
               </View>
-            );
-          })}
-        </View>
-      )}
+            ))}
+          </View>
+        );
+      })()}
 
       {/* ── EU Nutri-Score Traffic Light ── */}
       {nutriScore ? (
